@@ -1,0 +1,42 @@
+<p>Use this rule to control the number of spaces inside braces (<code>{</code> and <code>}</code>).
+
+    <h2>Parameters</h2>
+    <dl>
+        <dt>min-spaces-inside</dt>
+        <dd>Defines the minimal number of spaces required inside braces.</dd>
+        <dt>max-spaces-inside</dt>
+        <dd>Defines the maximal number of spaces allowed inside braces.</dd>
+        <dt>min-spaces-inside-empty</dt>
+        <dd>Defines the minimal number of spaces required inside empty braces.</dd>
+        <dt>max-spaces-inside-empty</dt>
+        <dd>Defines the maximal number of spaces allowed inside empty braces.</dd>
+    </dl>
+    
+    <h2>Examples</h2>
+    <p>With <code>min-spaces-inside = 0</code> and <code>max-spaces-inside = 0</code>
+        the following code snippet would <strong>PASS</strong>:</p>
+    <pre>object: {key1: 4, key2: 8}</pre>
+    <p>the following code snippet would <strong>FAIL</strong>:</p>
+    <pre>object: { key1: 4, key2: 8 }</pre>
+    
+    <p>With <code>min-spaces-inside = 1</code> and <code>max-spaces-inside = 3</code>
+        the following code snippet would <strong>PASS</strong>:</p>
+    <pre>object: { key1: 4, key2: 8 }</pre>
+    <p>the following code snippet would <strong>PASS</strong>:</p>
+    <pre>object: { key1: 4, key2: 8   }</pre>
+    <p>the following code snippet would <strong>FAIL</strong>:</p>
+    <pre>object: {    key1: 4, key2: 8   }</pre>
+    <p>the following code snippet would <strong>FAIL</strong>:</p>
+    <pre>object: {key1: 4, key2: 8 }</pre>
+    
+    <p>With <code>min-spaces-inside-empty = 0</code> and <code>max-spaces-inside-empty = 0</code>
+    <p>the following code snippet would <strong>PASS</strong>:</p>
+    <pre>object: {}</pre>
+    <p>the following code snippet would <strong>FAIL</strong>:</p>
+    <pre>object: { }</pre>
+    
+    <p>With <code>min-spaces-inside-empty = 1</code> and <code>max-spaces-inside-empty = -1</code>
+    <p>the following code snippet would <strong>PASS</strong>:</p>
+    <pre>object: {         }</pre>
+    <p>the following code snippet would <strong>FAIL</strong>:</p>
+    <pre>object: {}</pre>
