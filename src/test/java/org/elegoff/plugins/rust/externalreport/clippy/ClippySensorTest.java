@@ -83,6 +83,30 @@ public class ClippySensorTest{
         assertNoErrorWarnDebugLogs(logTester);
     }
 
+    @Test
+    public void no_issues_without_report_paths_property() throws IOException {
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, null);
+        assertThat(externalIssues).isEmpty();
+        assertNoErrorWarnDebugLogs(logTester);
+    }
+
+    @Test
+    public void no_issues_with_invalid_report_path() throws IOException {
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "invalid-path.txt");
+        assertThat(externalIssues).isEmpty();
+        assertThat(onlyOneLogElement(logTester.logs(LoggerLevel.ERROR)))
+                .startsWith("No issues information will be saved as the report file '")
+                .contains("invalid-path.txt' can't be read.");
+    }
+
+    @Test
+    public void no_issues_with_empty_clippy_report() throws IOException {
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "clippy-report-empty.json");
+        assertThat(externalIssues).isEmpty();
+        assertNoErrorWarnDebugLogs(logTester);
+    }
+
+
     public static void assertNoErrorWarnDebugLogs(LogTester logTester) {
         org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
         org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
@@ -121,6 +145,11 @@ public class ClippySensorTest{
     private static String language(Path file) {
         String path = file.toString();
         return path.substring(path.lastIndexOf('.') + 1);
+    }
+
+    public static String onlyOneLogElement(List<String> elements) {
+        assertThat(elements).hasSize(1);
+        return elements.get(0);
     }
 
 }

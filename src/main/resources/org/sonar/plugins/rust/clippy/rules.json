@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "key": "clippy::absurd_extreme_comparisons",
+    "name": "Checks for comparisons where one side of the relation is either the minimum or maximum value for its type",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#absurd_extreme_comparisons"
+  }
+]
