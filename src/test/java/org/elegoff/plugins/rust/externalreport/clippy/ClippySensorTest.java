@@ -33,6 +33,7 @@ public class ClippySensorTest{
     private static final String CLIPPY_FILE = "rust-project:clippy/main.rs";
     private static final String CLIPPY_AEC="external_clippy:clippy::absurd_extreme_comparisons";
     private static final String CLIPPY_REPORT_TXT = "myreport.txt";
+    private static final String UNKNOWN_KEY_REPORT = "synreport.txt";
 
     private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "org", "sonar", "plugins", "rust", "clippy");
 
@@ -104,6 +105,12 @@ public class ClippySensorTest{
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
         assertThat(externalIssues).isEmpty();
         assertNoErrorWarnDebugLogs(logTester);
+    }
+
+    @Test
+    public void clippy_report_with_unknown_rule_key() throws IOException {
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, UNKNOWN_KEY_REPORT);
+        assertThat(externalIssues).hasSize(4);
     }
 
 

@@ -54,13 +54,17 @@ public class ClippyJsonReportReader {
         Issue issue = new Issue();
 
         JSONObject message = (JSONObject) result.get("message");
+        if (message == null) return;
         JSONObject code = (JSONObject) message.get("code");
         if (code == null) return;
         issue.ruleKey = (String) code.get("code");
 
+        System.out.println("[ELG] rule found : " + issue.ruleKey);
+
+
         JSONArray spans = (JSONArray) message.get("spans");
         if ((spans == null)||spans.size()==0) return;
-        JSONObject span = (JSONObject) spans.get(0); //TODO what if > 1 span ?
+        JSONObject span = (JSONObject) spans.get(0);
         issue.filePath = (String) span.get("file_name");
 
 
