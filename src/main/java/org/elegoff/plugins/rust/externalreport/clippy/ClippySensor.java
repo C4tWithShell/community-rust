@@ -27,6 +27,7 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.analyzer.commons.ExternalReportProvider;
 import org.sonarsource.analyzer.commons.ExternalRuleLoader;
+import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -52,7 +53,24 @@ public class ClippySensor implements Sensor {
   }
 
 
-  private void importReport(File reportPath, SensorContext context, Set<String> unresolvedInputFiles) {
+  private void importReport(File rawReport, SensorContext context, Set<String> unresolvedInputFiles) {
+    LOG.info("Importing {}", rawReport);
+
+
+
+    try {
+      InputStream in = ClippyJsonReportReader.toJSON(rawReport);
+      ClippyJsonReportReader.read(in, issue -> saveIssue(context, issue, unresolvedInputFiles));
+    } catch (IOException | ParseException e) {
+      LOG.error("No issues information will be saved as the report file '{}' can't be read. " +
+              e.getClass().getSimpleName() + ": " + e.getMessage(), rawReport, e);
+    }
+
+  }
+
+
+
+  private void importReportObsolete(File reportPath, SensorContext context, Set<String> unresolvedInputFiles) {
     try (InputStream in = new FileInputStream(reportPath)) {
       LOG.info("Importing {}", reportPath);
 

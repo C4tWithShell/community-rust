@@ -1,9 +1,11 @@
 package org.elegoff.plugins.rust.externalreport.clippy;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Stream;
 import java.util.function.Consumer;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONArray;
@@ -42,9 +44,9 @@ public class ClippyJsonReportReader {
 
     private void read(InputStream in) throws IOException, ParseException {
         JSONObject rootObject = (JSONObject) jsonParser.parse(new InputStreamReader(in, UTF_8));
-        JSONArray files = (JSONArray) rootObject.get("results");
-        if (files != null) {
-            ((Stream<JSONObject>) files.stream()).forEach(this::onResult);
+        JSONArray results = (JSONArray) rootObject.get("results");
+        if (results != null) {
+            ((Stream<JSONObject>) results.stream()).forEach(this::onResult);
         }
     }
 
@@ -77,6 +79,43 @@ public class ClippyJsonReportReader {
             return ((Number) value).intValue();
         }
         return null;
+    }
+
+    public static InputStream toJSON(File rawReport) throws IOException{
+        String BEGIN="{\"results\": [";
+        String END="]}";
+
+        if (rawReport == null) {
+            throw new FileNotFoundException();
+        }
+
+       StringBuffer sb = new StringBuffer(BEGIN);
+
+        //read text report line by line
+        String reportPath = rawReport.getAbsolutePath();
+        BufferedReader reader;
+
+        reader = new BufferedReader(new FileReader(
+                reportPath));
+        String line = reader.readLine();
+        String separator="";
+        while (line != null) {
+
+            // read next line
+
+            //a valid Clippy result needs to be a valid json String
+            if (line.startsWith("{") && line.endsWith("}")){
+                sb.append(separator).append(line);
+                separator= ",";
+            }
+            line = reader.readLine();
+        }
+        reader.close();
+
+       sb.append(END);
+
+        InputStream in = new ByteArrayInputStream(sb.toString().getBytes());
+        return in;
     }
 
 }

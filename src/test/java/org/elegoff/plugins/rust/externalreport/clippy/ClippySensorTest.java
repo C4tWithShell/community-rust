@@ -32,7 +32,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClippySensorTest{
     private static final String CLIPPY_FILE = "rust-project:clippy/main.rs";
     private static final String CLIPPY_AEC="external_clippy:clippy::absurd_extreme_comparisons";
-    private static final String CLIPPY_REPORT_JSON = "clippy-report.json";
+    private static final String CLIPPY_REPORT_TXT = "myreport.txt";
 
     private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "org", "sonar", "plugins", "rust", "clippy");
 
@@ -53,7 +53,7 @@ public class ClippySensorTest{
 
     @Test
     public void issues_with_sonarqube() throws IOException {
-        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, CLIPPY_REPORT_JSON);
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, CLIPPY_REPORT_TXT);
         assertThat(externalIssues).hasSize(2);
 
         ExternalIssue first = externalIssues.get(0);
@@ -101,7 +101,7 @@ public class ClippySensorTest{
 
     @Test
     public void no_issues_with_empty_clippy_report() throws IOException {
-        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "clippy-report-empty.json");
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
         assertThat(externalIssues).isEmpty();
         assertNoErrorWarnDebugLogs(logTester);
     }
