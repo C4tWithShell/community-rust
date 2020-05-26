@@ -1,4 +1,4 @@
-package org.elegoff.plugins.rust.externalreport.clippy;
+package org.elegoff.plugins.rust.clippy;
 
 import javax.annotation.Nullable;
 import java.io.*;

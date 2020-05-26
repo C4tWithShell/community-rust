@@ -1,4 +1,4 @@
-package org.elegoff.plugins.rust.externalreport.clippy;
+package org.elegoff.plugins.rust.clippy;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,25 +9,20 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.xml.stream.XMLStreamException;
 
 
 import org.elegoff.plugins.rust.languages.RustLanguage;
 import org.sonar.api.batch.rule.Severity;
-import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewExternalIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.rule.RuleKey;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.analyzer.commons.ExternalReportProvider;
-import org.sonarsource.analyzer.commons.ExternalRuleLoader;
-import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;

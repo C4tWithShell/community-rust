@@ -1,5 +1,6 @@
 package org.elegoff.plugins.rust.externalreport.clippy;
 
+import org.elegoff.plugins.rust.clippy.ClippyRulesDefinition;
 import org.junit.Test;
 import org.sonar.api.server.rule.RulesDefinition;
 

@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+
+import org.elegoff.plugins.rust.clippy.ClippySensor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sonar.api.SonarEdition;

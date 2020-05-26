@@ -1,7 +1,6 @@
 package org.elegoff.plugins.rust.languages;
 
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.elegoff.plugins.rust.checks.CheckRepository;
 
 
 /**
@@ -13,8 +12,6 @@ public final class RustQualityProfile implements BuiltInQualityProfilesDefinitio
   public void define(Context context) {
     NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile("RUST Rules", RustLanguage.KEY);
     profile.setDefault(true);
-
-    profile.activateRule(CheckRepository.REPOSITORY_KEY, "BracesCheck");
 
     profile.done();
   }

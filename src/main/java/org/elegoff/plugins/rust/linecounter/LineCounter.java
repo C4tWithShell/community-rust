@@ -1,6 +1,6 @@
 package org.elegoff.plugins.rust.linecounter;
 
-import org.elegoff.plugins.rust.checks.RustSourceCode;
+import org.elegoff.plugins.rust.languages.RustSourceCode;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.measures.CoreMetrics;

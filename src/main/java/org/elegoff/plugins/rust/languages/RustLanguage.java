@@ -34,8 +34,7 @@ public final class RustLanguage extends AbstractLanguage {
     if (suffixes.length == 0) {
       suffixes = StringUtils.split(RustLanguageSettings.FILE_SUFFIXES_DEFAULT_VALUE, ",");
     }
-
-    LOGGER.debug("[ELG] rustlanguage file suffixes " + suffixes.length + " => "+ suffixes[0]);
+    LOGGER.debug("Rust language file suffixes " + suffixes.length + " => "+ suffixes[0]);
     return suffixes;
   }
   private String[] filterEmptyStrings(String[] stringArray) {

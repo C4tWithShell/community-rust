@@ -1,5 +1,6 @@
 package org.elegoff.plugins.rust.externalreport.clippy;
 
+import org.elegoff.plugins.rust.clippy.ClippyJsonReportReader;
 import org.junit.Test;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONArray;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
@@ -8,7 +9,6 @@ import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseExcepti
 
 import java.io.*;
 import java.net.URL;
-import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
