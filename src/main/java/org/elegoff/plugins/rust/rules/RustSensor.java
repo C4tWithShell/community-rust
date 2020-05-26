@@ -1,13 +1,11 @@
 package org.elegoff.plugins.rust.rules;
 
-
 import org.elegoff.plugins.rust.languages.RustLanguage;
 import org.elegoff.plugins.rust.languages.RustSourceCode;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
@@ -24,8 +22,6 @@ import java.io.IOException;
  */
 public class RustSensor implements Sensor {
     private static final Logger LOGGER = Loggers.get(RustSensor.class);
-
-
     private final FileSystem fileSystem;
     private final FilePredicate mainFilesPredicate;
     private final FileLinesContextFactory fileLinesContextFactory;
@@ -58,10 +54,8 @@ public class RustSensor implements Sensor {
     public void execute(SensorContext context) {
         LOGGER.debug("RUST sensor executed with context: " + context);
 
-
         // Skip analysis if no rules enabled from this plugin
         boolean skipChecks = true;
-
 
         for (InputFile inputFile : fileSystem.inputFiles(mainFilesPredicate)) {
             LOGGER.debug("Analyzing file: " + inputFile.filename());

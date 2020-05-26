@@ -14,8 +14,8 @@ public class LineCountData {
     /**
      * Constructor
      *
-     * @param linesNumber a number of lines
-     * @param linesOfCodeLines set of line numbers of line of code
+     * @param linesNumber          a number of lines
+     * @param linesOfCodeLines     set of line numbers of line of code
      * @param effectiveCommentLine set of line numbers of comments
      */
     public LineCountData(Integer linesNumber, Set<Integer> linesOfCodeLines, Set<Integer> effectiveCommentLine) {

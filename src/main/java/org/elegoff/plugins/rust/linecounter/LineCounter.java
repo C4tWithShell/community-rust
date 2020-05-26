@@ -30,9 +30,9 @@ public class LineCounter {
     /**
      * Analyzes a file and saves its line measures. This method is called by dependency injection by the Sonar runner.
      *
-     * @param context the {@code SensorContext}
+     * @param context                 the {@code SensorContext}
      * @param fileLinesContextFactory {@code FileLinesContextFactory} used to save line measures
-     * @param sourceCode the source code to be analyzed
+     * @param sourceCode              the source code to be analyzed
      */
     public static void analyse(SensorContext context, FileLinesContextFactory fileLinesContextFactory, RustSourceCode sourceCode) {
         InputFile inputFile = sourceCode.getRustFile();
@@ -51,10 +51,10 @@ public class LineCounter {
     /**
      * Saves the measures of the passed RUST file: lines of code and comments
      *
-     * @param rustFile the RUST file being analyzed
-     * @param data the {@code LineCountData} describing this RUST file
+     * @param rustFile         the RUST file being analyzed
+     * @param data             the {@code LineCountData} describing this RUST file
      * @param fileLinesContext {@code FileLinesContext} used to save the code lines and comments of the RUST file
-     * @param context the {@code SensorContext}
+     * @param context          the {@code SensorContext}
      */
     private static void saveMeasures(InputFile rustFile, LineCountData data, FileLinesContext fileLinesContext, SensorContext context) {
         for (int line = 1; line <= data.linesNumber(); line++) {
@@ -72,10 +72,10 @@ public class LineCounter {
     /**
      * Saves the passed measure in SonarQube's database
      *
-     * @param context the {@code SensorContext}, used to save the measure
+     * @param context   the {@code SensorContext}, used to save the measure
      * @param inputFile the file being analyzed
-     * @param metric a metric to be saved
-     * @param value the metric's value
+     * @param metric    a metric to be saved
+     * @param value     the metric's value
      */
     private static <T extends Serializable> void saveMeasure(SensorContext context, InputFile inputFile, Metric<T> metric, T value) {
         context.<T>newMeasure()

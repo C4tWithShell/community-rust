@@ -14,8 +14,8 @@ public class RustSourceCode {
      * Constructor. Parses the passed file to determine if it is syntactically correct.
      *
      * @param rustFile a supposedly Rust file
-     * @param filter {@code true} to filter out UTF-8 line break characters (U+2028, U+2029 and U+0085) that may not be
-     *               correctly supported by SonarQube
+     * @param filter   {@code true} to filter out UTF-8 line break characters (U+2028, U+2029 and U+0085) that may not be
+     *                 correctly supported by SonarQube
      * @throws IOException if there is a problem reading the passed file
      */
     public RustSourceCode(InputFile rustFile, Optional<Boolean> filter) throws IOException {
@@ -47,9 +47,8 @@ public class RustSourceCode {
      */
     public String getContent() throws IOException {
         if (content == null) {
-                this.content = rustFile.contents();
+            this.content = rustFile.contents();
         }
-
         return content;
     }
 }

@@ -33,13 +33,13 @@ public class Parser {
          *
          * @param lineNo the line number
          * @param buffer the string in which the line can be found
-         * @param start the start index of the line in <var>buffer</var>
-         * @param end the end index of the line in <var>buffer</var>
+         * @param start  the start index of the line in <var>buffer</var>
+         * @param end    the end index of the line in <var>buffer</var>
          */
         public Line(int lineNo, String buffer, int start, int end) {
             this.lineNo = lineNo;
-            this.start  = start;
-            this.end    = end;
+            this.start = start;
+            this.end = end;
             this.buffer = buffer;
         }
 
@@ -90,9 +90,6 @@ public class Parser {
      */
     public static class Token implements Lined {
         private int lineNo;
-       
-
-
 
 
         @Override
@@ -100,7 +97,7 @@ public class Parser {
             return lineNo;
         }
 
-        
+
     }
 
     /**
@@ -112,11 +109,7 @@ public class Parser {
         private int columnNo;
         private int pointer;
         private String buffer;
-    
         private Comment commentBefore;
-
-
-       
 
         @Override
         public String toString() {
@@ -133,8 +126,8 @@ public class Parser {
         @Override
         public boolean equals(Object other) {
             return other instanceof Comment &&
-                    lineNo == ((Comment)other).lineNo &&
-                    columnNo == ((Comment)other).columnNo &&
+                    lineNo == ((Comment) other).lineNo &&
+                    columnNo == ((Comment) other).columnNo &&
                     toString().equals(other.toString());
         }
 
@@ -179,8 +172,6 @@ public class Parser {
             return pointer;
         }
 
-        
-       
 
         /**
          * Returns the possible comment located before this comment
@@ -227,9 +218,6 @@ public class Parser {
         return lines;
     }
 
-    
-    
-    
 
     /**
      * Generator that mixes tokens and lines, ordering them by line number
@@ -238,7 +226,7 @@ public class Parser {
      * @return all tokens, comments and lines found in the passed string
      */
     public static List<Lined> getTokensOrCommentsOrLines(String buffer) {
-        //TODO elg
+        //TODO
 
         return null;
     }
@@ -252,7 +240,7 @@ public class Parser {
      */
     private static String toString(int[] array) {
         StringBuilder sb = new StringBuilder();
-        Arrays.stream(array).forEach(i -> sb.append((char)i));
+        Arrays.stream(array).forEach(i -> sb.append((char) i));
         return sb.toString();
     }
 }

@@ -4,6 +4,8 @@ Sonar-rust plugin
 This plugin allows to visualize clippy lints report from the SonarQube UI
 It is compatible with SonarQube 7.9+
 
+Clippy lints are listed : https://rust-lang.github.io/rust-clippy/master/
+
 Build plugin
 -------------
 `mvn clean package`
