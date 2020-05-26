@@ -21,12 +21,12 @@
   },
   {
     "key": "clippy::assertions_on_constants",
-    "name": "TODO",
+    "name": "Checks for assert!(true) and assert!(false) calls.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants"
   },
   {
     "key": "clippy::assign_op_pattern",
-    "name": "TODO",
+    "name": "Checks for a = a op b or a = b commutative_op a patterns.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assign_op_pattern"
   },
   {

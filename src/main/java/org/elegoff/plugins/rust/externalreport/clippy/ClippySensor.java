@@ -104,7 +104,7 @@ public class ClippySensor implements Sensor {
             .on(inputFile);
 
     if (issue.lineNumberStart != null) {
-      primaryLocation.at(inputFile.selectLine(issue.lineNumberStart));
+      primaryLocation.at(inputFile.newRange(issue.lineNumberStart, issue.colNumberStart -1, issue.lineNumberEnd , issue.colNumberEnd -1));
     }
 
     newExternalIssue.at(primaryLocation);
@@ -114,11 +114,20 @@ public class ClippySensor implements Sensor {
 
   private static Severity toSonarQubeSeverity(String severity) {
     if ("error".equalsIgnoreCase(severity)) {
-      return  Severity.CRITICAL;
-    } else if ("MEDIUM".equalsIgnoreCase(severity)) {
       return Severity.MAJOR;
-    } else {
+    } else
       return Severity.MINOR;
+  }
+
+
+
+  private static RuleType toSonarQubeType(String severity) {
+    if ("error".equalsIgnoreCase(severity)) {
+      return RuleType.BUG;
+    } else if ("help".equalsIgnoreCase(severity)) {
+      return RuleType.CODE_SMELL;
+    } else {
+      return RuleType.CODE_SMELL;
     }
   }
 

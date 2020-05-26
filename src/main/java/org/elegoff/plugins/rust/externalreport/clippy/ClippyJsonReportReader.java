@@ -2,12 +2,11 @@ package org.elegoff.plugins.rust.externalreport.clippy;
 
 import javax.annotation.Nullable;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.stream.Stream;
 import java.util.function.Consumer;
+
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONArray;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.JSONParser;
@@ -18,6 +17,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClippyJsonReportReader {
     private final JSONParser jsonParser = new JSONParser();
     private final Consumer<Issue> consumer;
+    private static final Logger LOG = Loggers.get(ClippyJsonReportReader.class);
 
     public static class Issue {
         @Nullable
@@ -30,6 +30,10 @@ public class ClippyJsonReportReader {
         Integer lineNumberStart;
         @Nullable
         Integer lineNumberEnd;
+        @Nullable
+        Integer colNumberStart;
+        @Nullable
+        Integer colNumberEnd;
         @Nullable
         String severity;
     }
@@ -59,7 +63,7 @@ public class ClippyJsonReportReader {
         if (code == null) return;
         issue.ruleKey = (String) code.get("code");
 
-        System.out.println("[ELG] rule found : " + issue.ruleKey);
+       LOG.debug("Clippy rule found : " + issue.ruleKey);
 
 
         JSONArray spans = (JSONArray) message.get("spans");
@@ -70,8 +74,10 @@ public class ClippyJsonReportReader {
 
         issue.message = (String) message.get("message");
 
-        issue.lineNumberStart = toInteger(span.get("line_start"));
+        issue.lineNumberStart = toInteger(span.get("line_start")) ;
         issue.lineNumberEnd = toInteger(span.get("line_end"));
+        issue.colNumberStart = toInteger(span.get("column_start"));
+        issue.colNumberEnd = toInteger(span.get("column_end")) ;
 
         issue.severity = (String) message.get("level");
 
