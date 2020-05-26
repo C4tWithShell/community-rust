@@ -13,3 +13,4 @@ sonar-example-plugin.iml
 # -----VSCode
 .vscode
 publish
+/.scannerwork/

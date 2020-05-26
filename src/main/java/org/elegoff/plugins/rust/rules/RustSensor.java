@@ -54,9 +54,6 @@ public class RustSensor implements Sensor {
     public void execute(SensorContext context) {
         LOGGER.debug("RUST sensor executed with context: " + context);
 
-        // Skip analysis if no rules enabled from this plugin
-        boolean skipChecks = true;
-
         for (InputFile inputFile : fileSystem.inputFiles(mainFilesPredicate)) {
             LOGGER.debug("Analyzing file: " + inputFile.filename());
             try {

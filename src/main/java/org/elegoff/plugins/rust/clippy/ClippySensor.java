@@ -1,7 +1,6 @@
 package org.elegoff.plugins.rust.clippy;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -55,17 +54,6 @@ public class ClippySensor implements Sensor {
         }
     }
 
-    private void importReportObsolete(File reportPath, SensorContext context, Set<String> unresolvedInputFiles) {
-        try (InputStream in = new FileInputStream(reportPath)) {
-            LOG.info("Importing {}", reportPath);
-
-            ClippyJsonReportReader.read(in, clippyIssue -> saveIssue(context, clippyIssue, unresolvedInputFiles));
-        } catch (IOException | ParseException | RuntimeException e) {
-            LOG.error("No issues information will be saved as the report file '{}' can't be read. " +
-                    e.getClass().getSimpleName() + ": " + e.getMessage(), reportPath, e);
-        }
-    }
-
     private static void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
         if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
             LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
@@ -102,17 +90,6 @@ public class ClippySensor implements Sensor {
             return Severity.MAJOR;
         } else
             return Severity.MINOR;
-    }
-
-
-    private static RuleType toSonarQubeType(String severity) {
-        if ("error".equalsIgnoreCase(severity)) {
-            return RuleType.BUG;
-        } else if ("help".equalsIgnoreCase(severity)) {
-            return RuleType.CODE_SMELL;
-        } else {
-            return RuleType.CODE_SMELL;
-        }
     }
 
     private static final int MAX_LOGGED_FILE_NAMES = 20;

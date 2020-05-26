@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ClippyRulesDefinitionTest {
 
     @Test
-    public void clippy_external_repository() {
+    public void clippyExternalRepository() {
         RulesDefinition.Context context = new RulesDefinition.Context();
         ClippyRulesDefinition rulesDefinition = new ClippyRulesDefinition();
         rulesDefinition.define(context);

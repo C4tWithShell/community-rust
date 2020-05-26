@@ -5,8 +5,6 @@ import java.io.*;
 import java.util.stream.Stream;
 import java.util.function.Consumer;
 
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONArray;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.JSONParser;
@@ -17,7 +15,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClippyJsonReportReader {
     private final JSONParser jsonParser = new JSONParser();
     private final Consumer<ClippyIssue> consumer;
-    private static final Logger LOG = Loggers.get(ClippyJsonReportReader.class);
+    private static final String BEGINJSON = "{\"results\": [";
+    private static final String ENDJSON = "]}";
 
     public static class ClippyIssue {
         @Nullable
@@ -57,28 +56,23 @@ public class ClippyJsonReportReader {
     private void onResult(JSONObject result) {
         ClippyIssue clippyIssue = new ClippyIssue();
 
+
+        //Exit silently when JSON is not compliant
+
         JSONObject message = (JSONObject) result.get("message");
         if (message == null) return;
         JSONObject code = (JSONObject) message.get("code");
         if (code == null) return;
         clippyIssue.ruleKey = (String) code.get("code");
-
-        LOG.debug("Clippy rule found : " + clippyIssue.ruleKey);
-
-
         JSONArray spans = (JSONArray) message.get("spans");
         if ((spans == null) || spans.size() == 0) return;
         JSONObject span = (JSONObject) spans.get(0);
         clippyIssue.filePath = (String) span.get("file_name");
-
-
         clippyIssue.message = (String) message.get("message");
-
         clippyIssue.lineNumberStart = toInteger(span.get("line_start"));
         clippyIssue.lineNumberEnd = toInteger(span.get("line_end"));
         clippyIssue.colNumberStart = toInteger(span.get("column_start"));
         clippyIssue.colNumberEnd = toInteger(span.get("column_end"));
-
         clippyIssue.severity = (String) message.get("level");
 
         consumer.accept(clippyIssue);
@@ -92,35 +86,34 @@ public class ClippyJsonReportReader {
     }
 
     public static InputStream toJSON(File rawReport) throws IOException {
-        String BEGIN = "{\"results\": [";
-        String END = "]}";
+
 
         if (rawReport == null) {
             throw new FileNotFoundException();
         }
 
-        StringBuffer sb = new StringBuffer(BEGIN);
+        StringBuilder sb = new StringBuilder(BEGINJSON);
 
         //read text report line by line
         String reportPath = rawReport.getAbsolutePath();
         BufferedReader reader;
 
-        reader = new BufferedReader(new FileReader(
-                reportPath));
-        String line = reader.readLine();
-        String separator = "";
-        while (line != null) {
-            //a valid Clippy result needs to be a valid json String
-            if (line.startsWith("{") && line.endsWith("}")) {
-                sb.append(separator).append(line);
-                separator = ",";
+        try (BufferedReader bufferedReader = reader = new BufferedReader(new FileReader(reportPath))) {
+            String line = reader.readLine();
+            String separator = "";
+            while (line != null) {
+                //a valid Clippy result needs to be a valid json String
+                if (line.startsWith("{") && line.endsWith("}")) {
+                    sb.append(separator).append(line);
+                    separator = ",";
+                }
+                line = reader.readLine();
             }
-            line = reader.readLine();
         }
         reader.close();
-        sb.append(END);
-        InputStream in = new ByteArrayInputStream(sb.toString().getBytes());
-        return in;
+        sb.append(ENDJSON);
+        return new ByteArrayInputStream(sb.toString().getBytes());
+
     }
 
 }

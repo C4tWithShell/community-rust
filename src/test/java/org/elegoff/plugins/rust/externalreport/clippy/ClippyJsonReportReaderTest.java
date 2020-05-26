@@ -20,14 +20,14 @@ public class ClippyJsonReportReaderTest {
     @Test
     public void noReportProvided(){
         assertThatThrownBy(() -> {
-            InputStream in = ClippyJsonReportReader.toJSON(null);;
+            InputStream in = ClippyJsonReportReader.toJSON(null);
         }).isInstanceOf(IOException.class);
     }
 
     @Test
     public void invalidReportPathProvided(){
         assertThatThrownBy(() -> {
-            InputStream in = ClippyJsonReportReader.toJSON(new File("invalid.txt"));;
+            InputStream in = ClippyJsonReportReader.toJSON(new File("invalid.txt"));
         }).isInstanceOf(IOException.class);
     }
 
@@ -41,10 +41,8 @@ public class ClippyJsonReportReaderTest {
             assertThat(isValidJsonReport(in)).isTrue();
             in = ClippyJsonReportReader.toJSON(empty);
             assertThat(issueCount(in)).isZero();
-
-
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -59,7 +57,7 @@ public class ClippyJsonReportReaderTest {
             in = ClippyJsonReportReader.toJSON(report);
             assertThat(issueCount(in)).isEqualTo(2);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -86,14 +84,14 @@ public class ClippyJsonReportReaderTest {
             if (results != null) return true;
 
         } catch (ParseException |IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
         return res;
     }
 
     private int issueCount(InputStream in){
         JSONObject rootObject = null;
-        int NbIssue = 0;
+        int nbIssue = 0;
         try {
             rootObject = (JSONObject) jsonParser.parse(new InputStreamReader(in, UTF_8));
 
@@ -103,19 +101,14 @@ public class ClippyJsonReportReaderTest {
                 JSONObject message = (JSONObject)jo.get("message");
                 JSONArray spans = (JSONArray)message.get("spans");
                 if ((spans != null)&& spans.size()>0){
-                    NbIssue++;
+                    nbIssue++;
                 }
 
             }
-
-            //JSONObject message = (JSONObject) results.get("message");
-            //if (results != null) return results.size();
-
-
         } catch (ParseException |IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
-        return NbIssue;
+        return nbIssue;
     }
 
 }

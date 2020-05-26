@@ -45,7 +45,7 @@ public class ClippySensorTest{
     public LogTester logTester = new LogTester();
 
     @Test
-    public void test_descriptor() {
+    public void testDescriptor() {
         DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
         clippySensor.describe(sensorDescriptor);
         assertThat(sensorDescriptor.name()).isEqualTo("Import of Clippy issues");
@@ -55,7 +55,7 @@ public class ClippySensorTest{
     }
 
     @Test
-    public void issues_with_sonarqube() throws IOException {
+    public void issuesDetection() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, CLIPPY_REPORT_TXT);
         assertThat(externalIssues).hasSize(2);
 
@@ -73,7 +73,7 @@ public class ClippySensorTest{
         assertThat(firstTextRange.end().line()).isEqualTo(9);
 
         ExternalIssue second = externalIssues.get(1);
-        assertThat(second.ruleKey().toString()).isEqualTo("external_clippy:clippy::absurd_extreme_comparisons");
+        assertThat(second.ruleKey().toString()).isEqualTo(CLIPPY_AEC);
         assertThat(second.type()).isEqualTo(RuleType.CODE_SMELL);
         assertThat(second.severity()).isEqualTo(Severity.MAJOR);
         IssueLocation secondPrimaryLoc = second.primaryLocation();
@@ -87,14 +87,14 @@ public class ClippySensorTest{
     }
 
     @Test
-    public void no_issues_without_report_paths_property() throws IOException {
+    public void noIssuesWithoutReportPathsProperty() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, null);
         assertThat(externalIssues).isEmpty();
         assertNoErrorWarnDebugLogs(logTester);
     }
 
     @Test
-    public void no_issues_with_invalid_report_path() throws IOException {
+    public void noIssuesWithInvalidReportPath() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "invalid-path.txt");
         assertThat(externalIssues).isEmpty();
         assertThat(onlyOneLogElement(logTester.logs(LoggerLevel.ERROR)))
@@ -103,14 +103,14 @@ public class ClippySensorTest{
     }
 
     @Test
-    public void no_issues_with_empty_clippy_report() throws IOException {
+    public void noIssuesWithEmptyClippyReport() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
         assertThat(externalIssues).isEmpty();
         assertNoErrorWarnDebugLogs(logTester);
     }
 
     @Test
-    public void clippy_report_with_unknown_rule_key() throws IOException {
+    public void clippyReportWithUnknownRuleKey() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, UNKNOWN_KEY_REPORT);
         assertThat(externalIssues).hasSize(4);
     }
@@ -119,7 +119,7 @@ public class ClippySensorTest{
     public static void assertNoErrorWarnDebugLogs(LogTester logTester) {
         org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
         org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
-        //org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.DEBUG)).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.DEBUG)).isEmpty();
     }
 
     private static List<ExternalIssue> executeSensorImporting(int majorVersion, int minorVersion, @Nullable String fileName) throws IOException {

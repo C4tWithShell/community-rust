@@ -1,9 +1,6 @@
 package org.elegoff.plugins.rust.linecounter;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -91,13 +88,10 @@ public class Parser {
     public static class Token implements Lined {
         private int lineNo;
 
-
         @Override
         public int getLineNo() {
             return lineNo;
         }
-
-
     }
 
     /**
@@ -134,19 +128,6 @@ public class Parser {
         @Override
         public int hashCode() {
             return (lineNo + ":" + columnNo + ":" + toString()).hashCode();
-        }
-
-        /**
-         * Returns {@code true} if the comment is inline. Inline comments appear on a line after some text:
-         * <pre>
-         *     foo: bar # This is inline comment
-         * </pre>
-         *
-         * @return {@code true} if the comment is inline, {@code false} if not
-         */
-        public boolean isInline() {
-            return false;
-            //elg todo
         }
 
         @Override
@@ -216,31 +197,5 @@ public class Parser {
         lines.add(new Line(lineNo, buffer, cur, buffer.length()));
 
         return lines;
-    }
-
-
-    /**
-     * Generator that mixes tokens and lines, ordering them by line number
-     *
-     * @param buffer a string to be parsed
-     * @return all tokens, comments and lines found in the passed string
-     */
-    public static List<Lined> getTokensOrCommentsOrLines(String buffer) {
-        //TODO
-
-        return null;
-    }
-
-
-    /**
-     * Converts the passed array of bytes represented by ints into a string
-     *
-     * @param array an array of bytes
-     * @return a string
-     */
-    private static String toString(int[] array) {
-        StringBuilder sb = new StringBuilder();
-        Arrays.stream(array).forEach(i -> sb.append((char) i));
-        return sb.toString();
     }
 }
