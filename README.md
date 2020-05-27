@@ -44,3 +44,7 @@ is available on the SonarQube Marketplace
 ## Analysis parameter
 
 Add parameter `sonar.rust.clippy.reportPaths=<clippy report file>`
+
+## Analyze this plugin with SonarQube
+
+`mvn -Pcoverage clean install sonar:sonar`

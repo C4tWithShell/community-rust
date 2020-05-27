@@ -64,4 +64,28 @@ public final class RustLanguage extends AbstractLanguage {
         return nonEmptyStrings.toArray(new String[nonEmptyStrings.size()]);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof RustLanguage)) {
+            return false;
+        }
+        RustLanguage that = (RustLanguage) o;
+        return KEY.equals(that.getKey());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return KEY.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return NAME;
+    }
+
+
 }

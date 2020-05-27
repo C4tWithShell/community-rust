@@ -81,7 +81,7 @@ public class ClippyJsonReportReader {
         if (code == null) return;
         clippyIssue.ruleKey = (String) code.get("code");
         JSONArray spans = (JSONArray) message.get("spans");
-        if ((spans == null) || spans.size() == 0) return;
+        if ((spans == null) || spans.isEmpty()) return;
         JSONObject span = (JSONObject) spans.get(0);
         clippyIssue.filePath = (String) span.get("file_name");
         clippyIssue.message = (String) message.get("message");
