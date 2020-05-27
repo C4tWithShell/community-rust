@@ -6,10 +6,11 @@
     <groupId>org.elegoff.plugins</groupId>
     <artifactId>sonar-rust-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
-    <version>1.0.0</version>
+    <version>0.0.1</version>
 
-    <name>Rust</name>
+    <name>Rust analyzer</name>
     <description>Plugin for the Rust programming language</description>
+    <url>https://github.com/elegoff/sonar-rust</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -18,10 +19,38 @@
         <sslr.version>1.23</sslr.version>
         <mockito.version>2.21.0</mockito.version>
         <assertj-core.version>3.15.0</assertj-core.version>
+        <jacoco.version>0.8.4</jacoco.version>
     </properties>
 
-    <dependencies>
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/elegoff/sonar-rust/issues</url>
+    </issueManagement>
 
+    <scm>
+        <connection>scm:git:https://github.com/elegoff/sonar-rust.git</connection>
+        <developerConnection>scm:git:ssh://github.com/elegoff/sonar-rust.git</developerConnection>
+        <url>https://github.com/elegoff/sonar-rust.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>elegoff</id>
+            <name>Eric Le Goff</name>
+            <email>elegoff@protonmail.com</email>
+        </developer>
+    </developers>
+
+    <dependencies>
         <dependency>
             <groupId>org.sonarsource.sonarqube</groupId>
             <artifactId>sonar-plugin-api</artifactId>
@@ -55,7 +84,11 @@
             <artifactId>sonar-analyzer-commons</artifactId>
             <version>1.11.0.541</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.11</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -89,6 +122,12 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.agent</artifactId>
+            <version>${jacoco.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -135,6 +174,61 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.10.b1</version>
+                <configuration>
+                    <header>src/etc/header.txt</header>
+                    <quiet>false</quiet>
+                    <failIfMissing>true</failIfMissing>
+                    <aggregate>false</aggregate>
+                    <includes>
+                        <include>src/**/*.java</include>
+                    </includes>
+                    <useDefaultExcludes>true</useDefaultExcludes>
+                    <useDefaultMapping>true</useDefaultMapping>
+                    <strictCheck>true</strictCheck>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>audit</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>default-report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -1,5 +1,24 @@
+/**
+ *  Licensed to the Apache Software Foundation (ASF) under one or more
+ *  contributor license agreements.  See the NOTICE file distributed with
+ *  this work for additional information regarding copyright ownership.
+ *  The ASF licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.elegoff.plugins.rust;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.rust.clippy.ClippySensor;
@@ -16,7 +35,12 @@ public class RustPlugin implements Plugin {
 
     private static final String EXTERNAL_ANALYZERS_CATEGORY = "External Analyzers";
     private static final String RUST_SUBCATEGORY = "Rust";
-    public static final String FILE_SUFFIXES_KEY = "sonar.rust.file.suffixes";
+
+    public RustPlugin(){
+        // Disable INFO logs for Reflections (see )
+        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        context.getLogger(org.reflections.Reflections.class).setLevel(Level.ERROR);
+    }
 
     @Override
     public void define(Context context) {
