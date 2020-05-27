@@ -30,378 +30,373 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assign_op_pattern"
   },
   {
-    "key": "clippy::assign_ops",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assign_ops"
-  },
-  {
     "key": "clippy::await_holding_lock",
-    "name": "TODO",
+    "name": "Checks for calls to await while holding a non-async-aware MutexGuard.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#await_holding_lock"
   },
   {
     "key": "clippy::bad_bit_mask",
-    "name": "TODO",
+    "name": "Checks for incompatible bit masks in comparisons",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#bad_bit_mask"
   },
   {
     "key": "clippy::bind_instead_of_map",
-    "name": "TODO",
+    "name": "Checks for usage of _.and_then(|x| Some(y)), _.and_then(|x| Ok(y)) or _.or_else(|x| Err(y)).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#bind_instead_of_map"
   },
   {
     "key": "clippy::blacklisted_name",
-    "name": "TODO",
+    "name": "Checks for usage of blacklisted names for variables, such as foo.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#blacklisted_name"
   },
   {
     "key": "clippy::blocks_in_if_conditions",
-    "name": "TODO",
+    "name": "Checks for if conditions that use blocks containing an expression, statements or conditions that use closures with blocks.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#blocks_in_if_conditions"
   },
   {
     "key": "clippy::bool_comparison",
-    "name": "TODO",
+    "name": "Checks for expressions of the form x == true, x != true and order comparisons such as x < true",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#bool_comparison"
   },
   {
     "key": "clippy::borrow_interior_mutable_const",
-    "name": "TODO",
+    "name": "Checks if const items which is interior mutable ",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrow_interior_mutable_const"
   },
   {
     "key": "clippy::borrowed_box",
-    "name": "TODO",
+    "name": "Checks for use of &Box<T> anywhere in the code.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrowed_box"
   },
   {
     "key": "clippy::box_vec",
-    "name": "TODO",
+    "name": "Checks for use of Box<Vec<_>> anywhere in the code.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#box_vec"
   },
   {
     "key": "clippy::boxed_local",
-    "name": "TODO",
+    "name": "Checks for usage of Box<T> where an unboxed T would work fine.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#boxed_local"
   },
   {
     "key": "clippy::builtin_type_shadow",
-    "name": "TODO",
+    "name": "Warns if a generic shadows a built-in type.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#builtin_type_shadow"
   },
   {
     "key": "clippy::cargo_common_metadata",
-    "name": "TODO",
+    "name": "Checks to see if all common metadata is defined in Cargo.toml",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cargo_common_metadata"
   },
   {
     "key": "clippy::cast_lossless",
-    "name": "TODO",
+    "name": "Checks for casts between numerical types that may be replaced by safe conversion functions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_lossless"
   },
   {
     "key": "clippy::cast_possible_truncation",
-    "name": "TODO",
+    "name": "Checks for casts between numerical types that may truncate large values",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_possible_truncation"
   },
   {
     "key": "clippy::cast_possible_wrap",
-    "name": "TODO",
+    "name": "Checks for casts from an unsigned type to a signed type of the same size",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_possible_wrap"
   },
   {
     "key": "clippy::cast_precision_loss",
-    "name": "TODO",
+    "name": "Checks for casts from any numerical to a float type where the receiving type cannot store all values from the original type without rounding errors",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_precision_loss"
   },
   {
     "key": "clippy::cast_ptr_alignment",
-    "name": "TODO",
+    "name": "Checks for casts from a less-strictly-aligned pointer to a more-strictly-aligned pointer",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_ptr_alignment"
   },
   {
     "key": "clippy::cast_ref_to_mut",
-    "name": "TODO",
+    "name": "Checks for casts of &T to &mut T anywhere in the code.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_ref_to_mut"
   },
   {
     "key": "clippy::cast_sign_loss",
-    "name": "TODO",
+    "name": "Checks for casts from a signed to an unsigned numerical type",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_sign_loss"
   },
   {
     "key": "clippy::char_lit_as_u8",
-    "name": "TODO",
+    "name": "Checks for expressions where a character literal is cast to u8 and suggests using a byte literal instead.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#char_lit_as_u8"
   },
   {
     "key": "clippy::chars_last_cmp",
-    "name": "TODO",
+    "name": "Checks for usage of .chars().last() or .chars().next_back() on a str to check if it ends with a given char.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#chars_last_cmp"
   },
   {
     "key": "clippy::chars_next_cmp",
-    "name": "TODO",
+    "name": "Checks for usage of .chars().next() on a str to check if it starts with a given char.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#chars_next_cmp"
   },
   {
     "key": "clippy::checked_conversions",
-    "name": "TODO",
+    "name": "Checks for explicit bounds checking when casting.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#checked_conversions"
   },
   {
     "key": "clippy::clone_double_ref",
-    "name": "TODO",
+    "name": "Checks for usage of .clone() on an &&T.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#clone_double_ref"
   },
   {
     "key": "clippy::clone_on_copy",
-    "name": "TODO",
+    "name": "Checks for usage of .clone() on a Copy type.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#clone_on_copy"
   },
   {
     "key": "clippy::clone_on_ref_ptr",
-    "name": "TODO",
+    "name": "Checks for usage of .clone() on a ref-counted pointer",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#clone_on_ref_ptr"
   },
   {
     "key": "clippy::cmp_nan",
-    "name": "TODO",
+    "name": "Checks for comparisons to NaN.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cmp_nan"
   },
   {
     "key": "clippy::cmp_null",
-    "name": "TODO",
+    "name": "This lint checks for equality comparisons with ptr::null",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cmp_null"
   },
   {
     "key": "clippy::cmp_owned",
-    "name": "TODO",
+    "name": "Checks for conversions to owned values just for the sake of a comparison.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cmp_owned"
   },
   {
     "key": "clippy::cognitive_complexity",
-    "name": "TODO",
+    "name": "Checks for methods with high cognitive complexity.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cognitive_complexity"
   },
   {
     "key": "clippy::collapsible_if",
-    "name": "TODO",
+    "name": "Checks for nested if statements which can be collapsed by &&-combining their conditions and for else { if ... } expressions that can be collapsed to else if ....",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#collapsible_if"
   },
   {
     "key": "clippy::comparison_chain",
-    "name": "TODO",
+    "name": "Checks comparison chains written with if that can be rewritten with match and cmp.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#comparison_chain"
   },
   {
     "key": "clippy::copy_iterator",
-    "name": "TODO",
+    "name": "Checks for types that implement Copy as well as Iterator.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#copy_iterator"
   },
   {
     "key": "clippy::crosspointer_transmute",
-    "name": "TODO",
+    "name": "Checks for transmutes between a type T and *T.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#crosspointer_transmute"
   },
   {
     "key": "clippy::dbg_macro",
-    "name": "TODO",
+    "name": "Checks for usage of dbg!() macro.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#dbg_macro"
   },
   {
     "key": "clippy::debug_assert_with_mut_call",
-    "name": "TODO",
+    "name": "Checks for function/method calls with a mutable parameter in debug_assert!, debug_assert_eq! and debug_assert_ne! macros.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#debug_assert_with_mut_call"
   },
   {
     "key": "clippy::decimal_literal_representation",
-    "name": "TODO",
+    "name": "Warns if there is a better representation for a numeric literal.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#decimal_literal_representation"
   },
   {
     "key": "clippy::declare_interior_mutable_const",
-    "name": "TODO",
+    "name": "Checks for declaration of const items which is interior mutable ",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#declare_interior_mutable_const"
   },
   {
     "key": "clippy::default_trait_access",
-    "name": "TODO",
+    "name": "Checks for literal calls to Default::default().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#default_trait_access"
   },
   {
     "key": "clippy::deprecated_cfg_attr",
-    "name": "TODO",
+    "name": "Checks for #[cfg_attr(rustfmt, rustfmt_skip)] and suggests to replace it with #[rustfmt::skip].",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#deprecated_cfg_attr"
   },
   {
     "key": "clippy::deprecated_semver",
-    "name": "TODO",
+    "name": "Checks for #[deprecated] annotations with a since field that is not a valid semantic version.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#deprecated_semver"
   },
   {
     "key": "clippy::deref_addrof",
-    "name": "TODO",
+    "name": "Checks for usage of *& and *&mut in expressions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#deref_addrof"
   },
   {
     "key": "clippy::derive_hash_xor_eq",
-    "name": "TODO",
+    "name": "Checks for deriving Hash but implementing PartialEq explicitly or vice versa.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derive_hash_xor_eq"
   },
   {
     "key": "clippy::diverging_sub_expression",
-    "name": "TODO",
+    "name": "Checks for diverging calls that are not match arms or statements.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#diverging_sub_expression"
   },
   {
     "key": "clippy::doc_markdown",
-    "name": "TODO",
+    "name": "Checks for the presence of _, :: or camel-case words outside ticks in documentation.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#doc_markdown"
   },
   {
     "key": "clippy::double_comparisons",
-    "name": "TODO",
+    "name": "Checks for double comparisons that could be simplified to a single expression.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#double_comparisons"
   },
   {
     "key": "clippy::double_must_use",
-    "name": "TODO",
+    "name": "Checks for a [#[must_use]] attribute without further information on functions and methods that return a type already marked as #[must_use].",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#double_must_use"
   },
   {
     "key": "clippy::double_neg",
-    "name": "TODO",
+    "name": "Detects expressions of the form --x.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#double_neg"
   },
   {
     "key": "clippy::double_parens",
-    "name": "TODO",
+    "name": "Checks for unnecessary double parentheses.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#double_parens"
   },
   {
     "key": "clippy::drop_bounds",
-    "name": "TODO",
+    "name": "Checks for generics with std::ops::Drop as bounds.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#drop_bounds"
   },
   {
     "key": "clippy::drop_copy",
-    "name": "TODO",
+    "name": "Checks for calls to std::mem::drop with a value that derives the Copy trait",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#drop_copy"
   },
   {
     "key": "clippy::drop_ref",
-    "name": "TODO",
+    "name": "Checks for calls to std::mem::drop with a reference instead of an owned value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#drop_ref"
   },
   {
     "key": "clippy::duplicate_underscore_argument",
-    "name": "TODO",
+    "name": "Checks for function arguments having the similar names differing by an underscore.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#duplicate_underscore_argument"
   },
   {
     "key": "clippy::duration_subsec",
-    "name": "TODO",
+    "name": "Checks for calculation of subsecond microseconds or milliseconds from other Duration methods.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#duration_subsec"
   },
   {
     "key": "clippy::else_if_without_else",
-    "name": "TODO",
+    "name": "Checks for usage of if expressions with an else if branch, but without a final else branch.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#else_if_without_else"
   },
   {
     "key": "clippy::empty_enum",
-    "name": "TODO",
+    "name": "Checks for enums with no variants.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_enum"
   },
   {
     "key": "clippy::empty_line_after_outer_attr",
-    "name": "TODO",
+    "name": "Checks for empty lines after outer attributes",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_line_after_outer_attr"
   },
   {
     "key": "clippy::empty_loop",
-    "name": "TODO",
+    "name": "Checks for empty loop expressions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_loop"
   },
   {
     "key": "clippy::enum_clike_unportable_variant",
-    "name": "TODO",
+    "name": "Checks for C-like enumerations that are repr(isize/usize) and have values that don’t fit into an i32.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#enum_clike_unportable_variant"
   },
   {
     "key": "clippy::enum_glob_use",
-    "name": "TODO",
+    "name": "Checks for use Enum::*.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#enum_glob_use"
   },
   {
     "key": "clippy::enum_variant_names",
-    "name": "TODO",
+    "name": "Detects enumeration variants that are prefixed or suffixed by the same characters.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#enum_variant_names"
   },
   {
     "key": "clippy::eq_op",
-    "name": "TODO",
+    "name": "Checks for equal operands to comparison, logical and bitwise, difference and division binary operators",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#eq_op"
   },
   {
     "key": "clippy::erasing_op",
-    "name": "TODO",
+    "name": "Checks for erasing operations, e.g., x * 0.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#erasing_op"
   },
   {
     "key": "clippy::eval_order_dependence",
-    "name": "TODO",
+    "name": "Checks for a read and a write to the same variable where whether the read occurs before or after the write depends on the evaluation order of sub-expressions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#eval_order_dependence"
   },
   {
     "key": "clippy::excessive_precision",
-    "name": "TODO",
+    "name": "Checks for float literals with a precision greater than that supported by the underlying type.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#excessive_precision"
   },
   {
     "key": "clippy::exit",
-    "name": "TODO",
+    "name": "exit() terminates the program and doesn’t provide a stack trace.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#exit"
   },
   {
     "key": "clippy::expect_fun_call",
-    "name": "TODO",
+    "name": "Checks for calls to .expect(&format!(...)), .expect(foo(..)), etc., and suggests to use unwrap_or_else instead",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#expect_fun_call"
   },
   {
     "key": "clippy::expect_used",
-    "name": "TODO",
+    "name": "Checks for .expect() calls on Options and Results.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#expect_used"
   },
   {
     "key": "clippy::expl_impl_clone_on_copy",
-    "name": "TODO",
+    "name": "Checks for explicit Clone implementations for Copy types.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#expl_impl_clone_on_copy"
   },
   {
     "key": "clippy::explicit_counter_loop",
-    "name": "TODO",
+    "name": "Checks for loops over slices with an explicit counter and suggests the use of .enumerate().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#explicit_counter_loop"
   },
   {
     "key": "clippy::explicit_deref_methods",
-    "name": "TODO",
+    "name": "Checks for explicit deref() or deref_mut() method calls.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#explicit_deref_methods"
   },
   {
     "key": "clippy::explicit_into_iter_loop",
-    "name": "TODO",
+    "name": "Checks for loops on y.into_iter() where y will do, and suggests the latter.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#explicit_into_iter_loop"
   },
   {
     "key": "clippy::explicit_iter_loop",
-    "name": "TODO",
+    "name": "Checks for loops on x.iter() where &x will do, and suggests the latter.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#explicit_iter_loop"
   },
   {
     "key": "clippy::explicit_write",
-    "name": "TODO",
+    "name": "Checks for usage of write!() / writeln()! which can be replaced with (e)print!() / (e)println!()",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#explicit_write"
   },
   {
