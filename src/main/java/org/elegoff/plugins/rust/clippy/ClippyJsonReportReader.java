@@ -31,8 +31,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClippyJsonReportReader {
     private final JSONParser jsonParser = new JSONParser();
     private final Consumer<ClippyIssue> consumer;
-    private static final String BEGINJSON = "{\"results\": [";
+    private static final String RESULTS="results";
+    private static final String BEGINJSON = "{\""+ RESULTS+ "\": [";
     private static final String ENDJSON = "]}";
+    private static final String VISIT_MSG="for further information visit";
+    private static final String MESSAGE="message";
 
     public static class ClippyIssue {
         @Nullable
@@ -63,19 +66,19 @@ public class ClippyJsonReportReader {
 
     private void read(InputStream in) throws IOException, ParseException {
         JSONObject rootObject = (JSONObject) jsonParser.parse(new InputStreamReader(in, UTF_8));
-        JSONArray results = (JSONArray) rootObject.get("results");
+        JSONArray results = (JSONArray) rootObject.get(RESULTS);
         if (results != null) {
             ((Stream<JSONObject>) results.stream()).forEach(this::onResult);
         }
     }
 
     private void onResult(JSONObject result) {
+
+
         ClippyIssue clippyIssue = new ClippyIssue();
-
-
         //Exit silently when JSON is not compliant
 
-        JSONObject message = (JSONObject) result.get("message");
+        JSONObject message = (JSONObject) result.get(MESSAGE);
         if (message == null) return;
         JSONObject code = (JSONObject) message.get("code");
         if (code == null) return;
@@ -84,7 +87,11 @@ public class ClippyJsonReportReader {
         if ((spans == null) || spans.isEmpty()) return;
         JSONObject span = (JSONObject) spans.get(0);
         clippyIssue.filePath = (String) span.get("file_name");
-        clippyIssue.message = (String) message.get("message");
+        clippyIssue.message = (String) message.get(MESSAGE);
+        JSONArray children = (JSONArray) message.get("children");
+        if ((children != null) && !children.isEmpty()){
+            addHelpDetails(clippyIssue, children);
+        }
         clippyIssue.lineNumberStart = toInteger(span.get("line_start"));
         clippyIssue.lineNumberEnd = toInteger(span.get("line_end"));
         clippyIssue.colNumberStart = toInteger(span.get("column_start"));
@@ -92,6 +99,37 @@ public class ClippyJsonReportReader {
         clippyIssue.severity = (String) message.get("level");
 
         consumer.accept(clippyIssue);
+    }
+
+    private void addHelpDetails(ClippyIssue clippyIssue, JSONArray children) {
+        int sz = children.size();
+        StringBuilder sb = new StringBuilder(clippyIssue.message);
+        for (int i = 0;i< sz;i++){
+            JSONObject child = (JSONObject)children.get(i);
+            String level = (String)child.get("level");
+            String childMsg = (String)child.get(MESSAGE);
+
+            //ignore some of the children
+            boolean isNote = level.equalsIgnoreCase("note");
+            boolean isVisitLink = childMsg.startsWith(VISIT_MSG);
+            if (isNote || isVisitLink) continue;
+
+            sb.append("\n").append(childMsg);
+
+            //Are there any suggested replacement ?
+            String replStr = suggestedMessage(child);
+            if (replStr != null) sb.append("\n").append(replStr);
+
+        }
+        clippyIssue.message = sb.toString();
+    }
+
+    private static String suggestedMessage(JSONObject obj){
+        if (obj == null) return null;
+        JSONArray spans = (JSONArray)obj.get("spans");
+        if ((spans == null) || spans.isEmpty()) return null;
+        JSONObject span = (JSONObject)spans.get(0);
+        return (String)span.get("suggested_replacement");
     }
 
     private static Integer toInteger(Object value) {

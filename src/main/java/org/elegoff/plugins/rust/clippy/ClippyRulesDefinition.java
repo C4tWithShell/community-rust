@@ -38,8 +38,4 @@ public class ClippyRulesDefinition implements RulesDefinition {
   public void define(Context context) {
       RULE_LOADER.createExternalRuleRepository(context);
   }
-
-  static boolean isTextFile(String file) {
-    return TEXT_FILE_EXTENSIONS.stream().anyMatch(file::endsWith);
-  }
 }

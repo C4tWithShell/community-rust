@@ -400,188 +400,178 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#explicit_write"
   },
   {
-    "key": "clippy::extend_from_slice",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#extend_from_slice"
-  },
-  {
     "key": "clippy::extra_unused_lifetimes",
-    "name": "TODO",
+    "name": "Checks for lifetimes in generics that are never used anywhere else.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#extra_unused_lifetimes"
   },
   {
     "key": "clippy::fallible_impl_from",
-    "name": "TODO",
+    "name": "Checks for impls of From<..> that contain panic!() or unwrap()",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#fallible_impl_from"
   },
   {
     "key": "clippy::filetype_is_file",
-    "name": "TODO",
+    "name": "Checks for FileType::is_file().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#filetype_is_file"
   },
   {
     "key": "clippy::filter_map",
-    "name": "TODO",
+    "name": "Checks for usage of _.filter(_).map(_), _.filter(_).flat_map(_), _.filter_map(_).flat_map(_) and similar.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#filter_map"
   },
   {
     "key": "clippy::filter_map_next",
-    "name": "TODO",
+    "name": "Checks for usage of _.filter_map(_).next().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#filter_map_next"
   },
   {
     "key": "clippy::filter_next",
-    "name": "TODO",
+    "name": "Checks for usage of _.filter(_).next().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#filter_next"
   },
   {
     "key": "clippy::find_map",
-    "name": "TODO",
+    "name": "Checks for usage of _.find(_).map(_).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#find_map"
   },
   {
     "key": "clippy::flat_map_identity",
-    "name": "TODO",
+    "name": "Checks for usage of flat_map(|x| x).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#flat_map_identity"
   },
   {
     "key": "clippy::float_arithmetic",
-    "name": "TODO",
+    "name": "Checks for float arithmetic.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#float_arithmetic"
   },
   {
     "key": "clippy::float_cmp",
-    "name": "TODO",
+    "name": "Checks for (in-)equality comparisons on floating-point values (apart from zero)",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#float_cmp"
   },
   {
     "key": "clippy::float_cmp_const",
-    "name": "TODO",
+    "name": "Checks for (in-)equality comparisons on floating-point value and constant",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#float_cmp_const"
   },
   {
     "key": "clippy::fn_address_comparisons",
-    "name": "TODO",
+    "name": "Checks for comparisons with an address of a function item.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#fn_address_comparisons"
   },
   {
     "key": "clippy::fn_params_excessive_bools",
-    "name": "TODO",
+    "name": "Checks for excessive use of bools in function definitions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#fn_params_excessive_bools"
   },
   {
     "key": "clippy::fn_to_numeric_cast",
-    "name": "TODO",
+    "name": "Checks for casts of function pointers to something other than usize",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#fn_to_numeric_cast"
   },
   {
     "key": "clippy::fn_to_numeric_cast_with_truncation",
-    "name": "TODO",
+    "name": "Checks for casts of a function pointer to a numeric type not wide enough to store address.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#fn_to_numeric_cast_with_truncation"
   },
   {
     "key": "clippy::for_kv_map",
-    "name": "TODO",
+    "name": "Checks for iterating a map (HashMap or BTreeMap) and ignoring either the keys or values.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#for_kv_map"
   },
   {
     "key": "clippy::for_loops_over_fallibles",
-    "name": "TODO",
+    "name": "Checks for for loops over Option or Result values.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#for_loops_over_fallibles"
   },
   {
     "key": "clippy::forget_copy",
-    "name": "TODO",
+    "name": "Checks for calls to std::mem::forget with a value that derives the Copy trait",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#forget_copy"
   },
   {
     "key": "clippy::forget_ref",
-    "name": "TODO",
+    "name": "Checks for calls to std::mem::forget with a reference instead of an owned value",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#forget_ref"
   },
   {
     "key": "clippy::future_not_send",
-    "name": "TODO",
+    "name": "This lint requires Future implementations returned from functions and methods to implement the Send marker trait.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#future_not_send"
   },
   {
     "key": "clippy::get_last_with_len",
-    "name": "TODO",
+    "name": "hecks for using x.get(x.len() - 1) instead of x.last().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#get_last_with_len"
   },
   {
     "key": "clippy::get_unwrap",
-    "name": "TODO",
+    "name": "Checks for use of .get().unwrap() (or .get_mut().unwrap) on a standard library type which implements Index",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#get_unwrap"
   },
   {
     "key": "clippy::identity_op",
-    "name": "TODO",
+    "name": "Checks for identity operations",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#identity_op"
   },
   {
     "key": "clippy::if_let_mutex",
-    "name": "TODO",
+    "name": "Checks for Mutex::lock calls in if let expression with lock calls in any of the else blocks.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#if_let_mutex"
   },
   {
-    "key": "clippy::if_let_redundant_pattern_matching",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#if_let_redundant_pattern_matching"
-  },
-  {
     "key": "clippy::if_let_some_result",
-    "name": "TODO",
+    "name": "Checks for unnecessary ok() in if let.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#if_let_some_result"
   },
   {
     "key": "clippy::if_not_else",
-    "name": "TODO",
+    "name": "Checks for usage of ! or != in an if condition with an else branch.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#if_not_else"
   },
   {
     "key": "clippy::if_same_then_else",
-    "name": "TODO",
+    "name": "Checks for if/else with the same body as the then part and the else part.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#if_same_then_else"
   },
   {
     "key": "clippy::ifs_same_cond",
-    "name": "TODO",
+    "name": "Checks for consecutive ifs with the same condition.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ifs_same_cond"
   },
   {
     "key": "clippy::implicit_hasher",
-    "name": "TODO",
+    "name": "Checks for public impl or fn missing generalization over different hashers",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#implicit_hasher"
   },
   {
     "key": "clippy::implicit_return",
-    "name": "TODO",
+    "name": "Checks for missing return statements at the end of a block.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#implicit_return"
   },
   {
     "key": "clippy::implicit_saturating_sub",
-    "name": "TODO",
+    "name": "Checks for implicit saturating subtraction.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#implicit_saturating_sub"
   },
   {
     "key": "clippy::imprecise_flops",
-    "name": "TODO",
+    "name": "Looks for floating-point expressions that can be expressed using built-in methods to improve accuracy at the cost of performance.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#imprecise_flops"
   },
   {
     "key": "clippy::inconsistent_digit_grouping",
-    "name": "TODO",
+    "name": "Warns if an integral or floating-point constant is grouped inconsistently with underscores.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inconsistent_digit_grouping"
   },
   {
     "key": "clippy::indexing_slicing",
-    "name": "TODO",
+    "name": "Checks for usage of indexing or slicing",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#indexing_slicing"
   },
   {
     "key": "clippy::ineffective_bit_mask",
-    "name": "TODO",
+    "name": "Checks for bit masks in comparisons which can be removed without changing the outcome",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ineffective_bit_mask"
   },
   {
@@ -591,517 +581,502 @@
   },
   {
     "key": "clippy::infallible_destructuring_match",
-    "name": "TODO",
+    "name": "Checks for matches being used to destructure a single-variant enum or tuple struct where a let will suffice.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#infallible_destructuring_match"
   },
   {
     "key": "clippy::infinite_iter",
-    "name": "TODO",
+    "name": "Checks for iteration that is guaranteed to be infinite.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#infinite_iter"
   },
   {
     "key": "clippy::inherent_to_string",
-    "name": "TODO",
+    "name": "Checks for the definition of inherent methods with a signature of to_string(&self) -> String.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inherent_to_string"
   },
   {
     "key": "clippy::inherent_to_string_shadow_display",
-    "name": "TODO",
+    "name": "Checks for the definition of inherent methods with a signature of to_string(&self) -> String and if the type implementing this method also implements the Display trait.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inherent_to_string_shadow_display"
   },
   {
     "key": "clippy::inline_always",
-    "name": "TODO",
+    "name": "Checks for items annotated with #[inline(always)], unless the annotated function is empty or simply panics.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inline_always"
   },
   {
     "key": "clippy::inline_fn_without_body",
-    "name": "TODO",
+    "name": "Checks for #[inline] on trait methods without bodies",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inline_fn_without_body"
   },
   {
     "key": "clippy::int_plus_one",
-    "name": "TODO",
+    "name": "Checks for usage of x >= y + 1 or x - 1 >= y (and <=) in a block",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#int_plus_one"
   },
   {
     "key": "clippy::integer_arithmetic",
-    "name": "TODO",
+    "name": "Checks for integer arithmetic operations which could overflow or panic.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#integer_arithmetic"
   },
   {
     "key": "clippy::integer_division",
-    "name": "TODO",
+    "name": "Checks for division of integers",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#integer_division"
   },
   {
-    "key": "clippy::into_iter_on_array",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#into_iter_on_array"
-  },
-  {
     "key": "clippy::into_iter_on_ref",
-    "name": "TODO",
+    "name": "Checks for into_iter calls on references which should be replaced by iter or iter_mut.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#into_iter_on_ref"
   },
   {
     "key": "clippy::invalid_atomic_ordering",
-    "name": "TODO",
+    "name": "Checks for usage of invalid atomic ordering in atomic loads/stores and memory fences.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#invalid_atomic_ordering"
   },
   {
-    "key": "clippy::invalid_ref",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#invalid_ref"
-  },
-  {
     "key": "clippy::invalid_regex",
-    "name": "TODO",
+    "name": "Checks regex creation",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#invalid_regex"
   },
   {
     "key": "clippy::invalid_upcast_comparisons",
-    "name": "TODO",
+    "name": "Checks for comparisons where the relation is always either true or false",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#invalid_upcast_comparisons"
   },
   {
     "key": "clippy::items_after_statements",
-    "name": "TODO",
+    "name": "Checks for items declared after some statement in a block.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#items_after_statements"
   },
   {
     "key": "clippy::iter_cloned_collect",
-    "name": "TODO",
+    "name": "Checks for the use of .cloned().collect() on slice to create a Vec.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_cloned_collect"
   },
   {
     "key": "clippy::iter_next_loop",
-    "name": "TODO",
+    "name": "Checks for loops on x.next().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_next_loop"
   },
   {
     "key": "clippy::iter_nth",
-    "name": "TODO",
+    "name": "Checks for use of .iter().nth() ",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_nth"
   },
   {
     "key": "clippy::iter_nth_zero",
-    "name": "TODO",
+    "name": "Checks for the use of iter.nth(0).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_nth_zero"
   },
   {
     "key": "clippy::iter_skip_next",
-    "name": "TODO",
+    "name": "Checks for use of .skip(x).next() on iterators.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_skip_next"
   },
   {
     "key": "clippy::iterator_step_by_zero",
-    "name": "TODO",
+    "name": "Checks for calling .step_by(0) on iterators which panics.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iterator_step_by_zero"
   },
   {
     "key": "clippy::just_underscores_and_digits",
-    "name": "TODO",
+    "name": "Checks if you have variables whose name consists of just underscores and digits.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#just_underscores_and_digits"
   },
   {
     "key": "clippy::large_const_arrays",
-    "name": "TODO",
+    "name": "Checks for large const arrays that should be defined as static instead.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_const_arrays"
   },
   {
     "key": "clippy::large_digit_groups",
-    "name": "TODO",
+    "name": "Warns if the digits of an integral or floating-point constant are grouped into groups that are too large.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_digit_groups"
   },
   {
     "key": "clippy::large_enum_variant",
-    "name": "TODO",
+    "name": "Checks for large size differences between variants on enums.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant"
   },
   {
     "key": "clippy::large_stack_arrays",
-    "name": "TODO",
+    "name": "Checks for local arrays that may be too large.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_stack_arrays"
   },
   {
     "key": "clippy::len_without_is_empty",
-    "name": "TODO",
+    "name": "Checks for items that implement .len() but not .is_empty().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#len_without_is_empty"
   },
   {
     "key": "clippy::len_zero",
-    "name": "TODO",
+    "name": "Checks for getting the length of something via .len() just to compare to zero, and suggests using .is_empty() where applicable.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#len_zero"
   },
   {
     "key": "clippy::let_and_return",
-    "name": "TODO",
+    "name": "Checks for let-bindings, which are subsequently returned.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_and_return"
   },
   {
     "key": "clippy::let_underscore_lock",
-    "name": "TODO",
+    "name": "Checks for let _ = sync_lock",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_underscore_lock"
   },
   {
     "key": "clippy::let_underscore_must_use",
-    "name": "TODO",
+    "name": "Checks for let _ = <expr> where expr is #[must_use]",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_underscore_must_use"
   },
   {
     "key": "clippy::let_unit_value",
-    "name": "TODO",
+    "name": "Checks for binding a unit value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_unit_value"
   },
   {
     "key": "clippy::linkedlist",
-    "name": "TODO",
+    "name": "Checks for usage of any LinkedList",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#linkedlist"
   },
   {
     "key": "clippy::logic_bug",
-    "name": "TODO",
+    "name": "Checks for boolean expressions that contain terminals that can be eliminated.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#logic_bug"
   },
   {
     "key": "clippy::lossy_float_literal",
-    "name": "TODO",
+    "name": "Checks for whole number float literals that cannot be represented as the underlying type without loss.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#lossy_float_literal"
   },
   {
     "key": "clippy::macro_use_imports",
-    "name": "TODO",
+    "name": "Checks for #[macro_use] use....",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#macro_use_imports"
   },
   {
     "key": "clippy::main_recursion",
-    "name": "TODO",
+    "name": "Checks for recursion using the entrypoint.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#main_recursion"
   },
   {
     "key": "clippy::manual_async_fn",
-    "name": "TODO",
+    "name": "It checks for manual implementations of async functions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_async_fn"
   },
   {
     "key": "clippy::manual_memcpy",
-    "name": "TODO",
+    "name": "Checks for for-loops that manually copy items between slices that could be optimized by having a memcpy.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_memcpy"
   },
   {
     "key": "clippy::manual_non_exhaustive",
-    "name": "TODO",
+    "name": "Checks for manual implementations of the non-exhaustive pattern.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_non_exhaustive"
   },
   {
     "key": "clippy::manual_saturating_arithmetic",
-    "name": "TODO",
+    "name": "Checks for .checked_add/sub(x).unwrap_or(MAX/MIN).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_saturating_arithmetic"
   },
   {
     "key": "clippy::manual_swap",
-    "name": "TODO",
+    "name": "Checks for manual swapping.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_swap"
   },
   {
     "key": "clippy::many_single_char_names",
-    "name": "TODO",
+    "name": "Checks for too many variables whose name consists of a single character.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#many_single_char_names"
   },
   {
     "key": "clippy::map_clone",
-    "name": "TODO",
+    "name": "Checks for usage of iterator.map(|x| x.clone()) and suggests iterator.cloned() instead",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#map_clone"
   },
   {
     "key": "clippy::map_entry",
-    "name": "TODO",
+    "name": "Checks for uses of contains_key + insert on HashMap or BTreeMap.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#map_entry"
   },
   {
     "key": "clippy::map_flatten",
-    "name": "TODO",
+    "name": "Checks for usage of _.map(_).flatten(_)",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#map_flatten"
   },
   {
     "key": "clippy::map_unwrap_or",
-    "name": "TODO",
+    "name": "Checks for usage of option.map(_).unwrap_or(_) or option.map(_).unwrap_or_else(_) or result.map(_).unwrap_or_else(_).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#map_unwrap_or"
   },
   {
     "key": "clippy::match_as_ref",
-    "name": "TODO",
+    "name": "Checks for match which is used to add a reference to an Option value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_as_ref"
   },
   {
     "key": "clippy::match_bool",
-    "name": "TODO",
+    "name": "Checks for matches where match expression is a bool",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_bool"
   },
   {
     "key": "clippy::match_on_vec_items",
-    "name": "TODO",
+    "name": "Checks for match vec[idx] or match vec[n..m].",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_on_vec_items"
   },
   {
     "key": "clippy::match_overlapping_arm",
-    "name": "TODO",
+    "name": "Checks for overlapping match arms.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_overlapping_arm"
   },
   {
     "key": "clippy::match_ref_pats",
-    "name": "TODO",
+    "name": "Checks for matches where all arms match a reference, suggesting to remove the reference and deref the matched expression instead",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_ref_pats"
   },
   {
     "key": "clippy::match_same_arms",
-    "name": "TODO",
+    "name": "Checks for match with identical arm bodies.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_same_arms"
   },
   {
     "key": "clippy::match_single_binding",
-    "name": "TODO",
+    "name": "Checks for useless match that binds to only one value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_single_binding"
   },
   {
     "key": "clippy::match_wild_err_arm",
-    "name": "TODO",
+    "name": "Checks for arm which matches all errors with Err(_) and take drastic actions like panic!.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_wild_err_arm"
   },
   {
     "key": "clippy::match_wildcard_for_single_variants",
-    "name": "TODO",
+    "name": "Checks for wildcard enum matches for a single variant.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#match_wildcard_for_single_variants"
   },
   {
     "key": "clippy::maybe_infinite_iter",
-    "name": "TODO",
+    "name": "Checks for iteration that may be infinite.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#maybe_infinite_iter"
   },
   {
     "key": "clippy::mem_discriminant_non_enum",
-    "name": "TODO",
+    "name": "Checks for calls of mem::discriminant() on a non-enum type.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mem_discriminant_non_enum"
   },
   {
     "key": "clippy::mem_forget",
-    "name": "TODO",
+    "name": "Checks for usage of std::mem::forget(t) where t is Drop.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mem_forget"
   },
   {
     "key": "clippy::mem_replace_option_with_none",
-    "name": "TODO",
+    "name": "Checks for mem::replace() on an Option with None.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mem_replace_option_with_none"
   },
   {
     "key": "clippy::mem_replace_with_default",
-    "name": "TODO",
+    "name": "Checks for std::mem::replace on a value of type T with T::default().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mem_replace_with_default"
   },
   {
     "key": "clippy::mem_replace_with_uninit",
-    "name": "TODO",
+    "name": "Checks for mem::replace(&mut _, mem::uninitialized()) and mem::replace(&mut _, mem::zeroed()).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mem_replace_with_uninit"
   },
   {
     "key": "clippy::min_max",
-    "name": "TODO",
+    "name": "Checks for expressions where std::cmp::min and max are used to clamp values, but switched so that the result is constant.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#min_max"
   },
   {
-    "key": "clippy::misaligned_transmute",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#misaligned_transmute"
-  },
-  {
     "key": "clippy::mismatched_target_os",
-    "name": "TODO",
+    "name": "Checks for cfg attributes having operating systems used in target family position.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mismatched_target_os"
   },
   {
     "key": "clippy::misrefactored_assign_op",
-    "name": "TODO",
+    "name": "Checks for a op= a op b or a op= b op a patterns.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#misrefactored_assign_op"
   },
   {
     "key": "clippy::missing_const_for_fn",
-    "name": "TODO",
+    "name": "Suggests the use of const in functions and methods where possible.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_const_for_fn"
   },
   {
     "key": "clippy::missing_docs_in_private_items",
-    "name": "TODO",
+    "name": "Warns if there is missing doc for any documentable item (public or private).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_docs_in_private_items"
   },
   {
     "key": "clippy::missing_errors_doc",
-    "name": "TODO",
+    "name": "Checks the doc comments of publicly visible functions that return a Result type and warns if there is no # Errors section.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_errors_doc"
   },
   {
     "key": "clippy::missing_inline_in_public_items",
-    "name": "TODO",
+    "name": "it lints if an exported function, method, trait method with default impl, or trait method impl is not #[inline].",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_inline_in_public_items"
   },
   {
     "key": "clippy::missing_safety_doc",
-    "name": "TODO",
+    "name": "Checks for the doc comments of publicly visible unsafe functions and warns if there is no # Safety section.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_safety_doc"
   },
   {
     "key": "clippy::mistyped_literal_suffixes",
-    "name": "TODO",
+    "name": "Warns for mistyped suffix in literals",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mistyped_literal_suffixes"
   },
   {
     "key": "clippy::mixed_case_hex_literals",
-    "name": "TODO",
+    "name": "Warns on hexadecimal literals with mixed-case letter digits.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mixed_case_hex_literals"
   },
   {
     "key": "clippy::module_inception",
-    "name": "TODO",
+    "name": "Checks for modules that have the same name as their parent module",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#module_inception"
   },
   {
     "key": "clippy::module_name_repetitions",
-    "name": "TODO",
+    "name": "Detects type names that are prefixed or suffixed by the containing module’s name.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#module_name_repetitions"
   },
   {
     "key": "clippy::modulo_arithmetic",
-    "name": "TODO",
+    "name": "Checks for modulo arithemtic.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#modulo_arithmetic"
   },
   {
     "key": "clippy::modulo_one",
-    "name": "TODO",
+    "name": "Checks for getting the remainder of a division by one.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#modulo_one"
   },
   {
     "key": "clippy::multiple_crate_versions",
-    "name": "TODO",
+    "name": "Checks to see if multiple versions of a crate are being used.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#multiple_crate_versions"
   },
   {
     "key": "clippy::multiple_inherent_impl",
-    "name": "TODO",
+    "name": "Checks for multiple inherent implementations of a struct",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#multiple_inherent_impl"
   },
   {
     "key": "clippy::must_use_candidate",
-    "name": "TODO",
+    "name": "Checks for public functions that have no [#[must_use]] attribute, but return something not already marked must-use, have no mutable arg and mutate no statics.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#must_use_candidate"
   },
   {
     "key": "clippy::must_use_unit",
-    "name": "TODO",
+    "name": "Checks for a [#[must_use]] attribute on unit-returning functions and methods.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#must_use_unit"
   },
   {
     "key": "clippy::mut_from_ref",
-    "name": "TODO",
+    "name": "This lint checks for functions that take immutable references and return mutable ones.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mut_from_ref"
   },
   {
     "key": "clippy::mut_mut",
-    "name": "TODO",
+    "name": "Checks for instances of mut mut references.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mut_mut"
   },
   {
     "key": "clippy::mut_range_bound",
-    "name": "TODO",
+    "name": "Checks for loops which have a range bound that is a mutable variable",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mut_range_bound"
   },
   {
     "key": "clippy::mutable_key_type",
-    "name": "TODO",
+    "name": "Checks for sets/maps with mutable key types.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mutable_key_type"
   },
   {
     "key": "clippy::mutex_atomic",
-    "name": "TODO",
+    "name": "Checks for usages of Mutex<X> where an atomic will do.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mutex_atomic"
   },
   {
     "key": "clippy::mutex_integer",
-    "name": "TODO",
+    "name": "Checks for usages of Mutex<X> where X is an integral type.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mutex_integer"
   },
   {
     "key": "clippy::naive_bytecount",
-    "name": "TODO",
+    "name": "Checks for naive byte counts",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#naive_bytecount"
   },
   {
     "key": "clippy::needless_bool",
-    "name": "TODO",
+    "name": "Checks for expressions of the form if c { true } else { false } (or vice versa) and suggest using the condition directly.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_bool"
   },
   {
     "key": "clippy::needless_borrow",
-    "name": "TODO",
+    "name": "Checks for address of operations (&) that are going to be dereferenced immediately by the compiler.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrow"
   },
   {
     "key": "clippy::needless_borrowed_reference",
-    "name": "TODO",
+    "name": "Checks for useless borrowed references.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrowed_reference"
   },
   {
     "key": "clippy::needless_collect",
-    "name": "TODO",
+    "name": "Checks for functions collecting an iterator when collect is not needed.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_collect"
   },
   {
     "key": "clippy::needless_continue",
-    "name": "TODO",
+    "name": "The lint checks for if-statements appearing in loops that contain a continue statement in either their main blocks or their else-blocks",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_continue"
   },
   {
     "key": "clippy::needless_doctest_main",
-    "name": "TODO",
+    "name": "Checks for fn main() { .. } in doctests",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_doctest_main"
   },
   {
     "key": "clippy::needless_lifetimes",
-    "name": "TODO",
+    "name": "Checks for lifetime annotations which can be removed by relying on lifetime elision.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_lifetimes"
   },
   {
     "key": "clippy::needless_pass_by_value",
-    "name": "TODO",
+    "name": "Checks for functions taking arguments by value, but not consuming them in its body.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_pass_by_value"
   },
   {
     "key": "clippy::needless_range_loop",
-    "name": "TODO",
+    "name": "Checks for looping over the range of 0..len of some collection just to get the values by index.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_range_loop"
   },
   {
     "key": "clippy::needless_return",
-    "name": "TODO",
+    "name": "Checks for return statements at the end of a block.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_return"
   },
   {
     "key": "clippy::needless_update",
-    "name": "TODO",
+    "name": "Checks for needlessly including a base struct on update when all fields are changed anyway.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_update"
   },
   {
     "key": "clippy::neg_cmp_op_on_partial_ord",
-    "name": "TODO",
+    "name": "Checks for the usage of negated comparison operators on types which only implement PartialOrd.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#neg_cmp_op_on_partial_ord"
   },
   {
     "key": "clippy::neg_multiply",
-    "name": "TODO",
+    "name": "Checks for multiplication by -1 as a form of negation.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#neg_multiply"
   },
   {
     "key": "clippy::never_loop",
-    "name": "TODO",
+    "name": "Checks for loops that will always break, return or continue an outer loop.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#never_loop"
   },
   {

@@ -82,7 +82,8 @@ public class ClippySensorTest{
         IssueLocation firstPrimaryLoc = first.primaryLocation();
         assertThat(firstPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
         assertThat(firstPrimaryLoc.message())
-                .isEqualTo("this comparison involving the minimum or maximum element for this type contains a case that is always true or always false");
+                .isEqualTo("this comparison involving the minimum or maximum element for this type contains a case that is always true or always false\n" +
+                        "because `0` is the minimum value for this type, the case where the two sides are not equal never occurs, consider using `vec.len() == 0` instead");
         TextRange firstTextRange = firstPrimaryLoc.textRange();
         assertThat(firstTextRange).isNotNull();
         assertThat(firstTextRange.start().line()).isEqualTo(9);
@@ -94,7 +95,8 @@ public class ClippySensorTest{
         assertThat(second.severity()).isEqualTo(Severity.MAJOR);
         IssueLocation secondPrimaryLoc = second.primaryLocation();
         assertThat(secondPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
-        assertThat(secondPrimaryLoc.message()).isEqualTo("this comparison involving the minimum or maximum element for this type contains a case that is always true or always false");
+        assertThat(secondPrimaryLoc.message()).isEqualTo("this comparison involving the minimum or maximum element for this type contains a case that is always true or always false\n" +
+                "because `std::i32::MAX` is the maximum value for this type, this comparison is always false");
         TextRange secondTextRange = secondPrimaryLoc.textRange();
         assertThat(secondTextRange).isNotNull();
         assertThat(secondTextRange.start().line()).isEqualTo(10);
@@ -129,6 +131,18 @@ public class ClippySensorTest{
     public void clippyReportWithUnknownRuleKey() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, UNKNOWN_KEY_REPORT);
         assertThat(externalIssues).hasSize(4);
+
+        ExternalIssue first = externalIssues.get(0);
+        IssueLocation firstPrimaryLoc = first.primaryLocation();
+        assertThat(firstPrimaryLoc.message())
+                .isEqualTo("`if _ { .. } else { .. }` is an expression\n" +
+                        "it is more idiomatic to write\n" +
+                        "let <mut> default = if is_maybe_const { ..; Some(Type::Verbatim(verbatim::between(begin_bound, input))) } else { if eq_token.is_some() {\n" +
+                        "                Some(input.parse::<Type>()?)\n" +
+                        "            } else {\n" +
+                        "                None\n" +
+                        "            } };");
+
     }
 
 
