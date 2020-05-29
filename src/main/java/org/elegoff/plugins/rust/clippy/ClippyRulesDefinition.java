@@ -16,13 +16,9 @@
  */
 package org.elegoff.plugins.rust.clippy;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.elegoff.plugins.rust.languages.RustLanguage;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonarsource.analyzer.commons.ExternalRuleLoader;
-
 
 import static org.elegoff.plugins.rust.clippy.ClippySensor.LINTER_KEY;
 import static org.elegoff.plugins.rust.clippy.ClippySensor.LINTER_NAME;

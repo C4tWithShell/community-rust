@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.elegoff.plugins.rust.externalreport.clippy;
+package org.elegoff.plugins.rust.clippy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,7 +53,7 @@ public class ClippySensorTest{
     private static final String CLIPPY_REPORT_TXT = "myreport.txt";
     private static final String UNKNOWN_KEY_REPORT = "synreport.txt";
 
-    private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "org", "sonar", "plugins", "rust", "clippy");
+    private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "org", "elegoff", "plugins", "rust", "clippy");
 
     private static ClippySensor clippySensor = new ClippySensor();
 

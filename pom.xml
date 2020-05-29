@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.elegoff.plugins</groupId>
+    <groupId>org.elegoff</groupId>
     <artifactId>sonar-rust-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
     <version>0.0.1</version>
 
-    <name>Rust analyzer</name>
-    <description>Plugin for the Rust programming language</description>
+    <name>Rust report analyzer</name>
+    <description>Plugin for importing Rust reports</description>
     <url>https://github.com/elegoff/sonar-rust</url>
 
     <properties>
@@ -162,7 +162,7 @@
                 <version>1.18.0.372</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <pluginKey>rustlint</pluginKey>
+                    <pluginKey>rustreport</pluginKey>
                     <pluginClass>org.elegoff.plugins.rust.RustPlugin</pluginClass>
                 </configuration>
             </plugin>

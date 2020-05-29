@@ -14,9 +14,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.elegoff.plugins.rust.externalreport.clippy;
+package org.elegoff.plugins.rust.clippy;
 
-import org.elegoff.plugins.rust.clippy.ClippyJsonReportReader;
 import org.junit.Test;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONArray;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
@@ -49,7 +48,7 @@ public class ClippyJsonReportReaderTest {
 
     @Test
     public void emptyReport() {
-        File empty = this.getFileFromResources("org/sonar/plugins/rust/clippy/empty-report.txt");
+        File empty = this.getFileFromResources("org/elegoff/plugins/rust/clippy/empty-report.txt");
         InputStream in = null;
         try {
             in = ClippyJsonReportReader.toJSON(empty);
@@ -64,7 +63,7 @@ public class ClippyJsonReportReaderTest {
 
     @Test
     public void validReport() {
-        File report = this.getFileFromResources("org/sonar/plugins/rust/clippy/myreport.txt");
+        File report = this.getFileFromResources("org/elegoff/plugins/rust/clippy/myreport.txt");
         InputStream in = null;
         try {
             in = ClippyJsonReportReader.toJSON(report);
