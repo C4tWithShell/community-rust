@@ -89,7 +89,7 @@ public class ClippyJsonReportReader {
         clippyIssue.filePath = (String) span.get("file_name");
         clippyIssue.message = (String) message.get(MESSAGE);
         JSONArray children = (JSONArray) message.get("children");
-        if ((children != null) && !children.isEmpty()){
+        if ((clippyIssue.message != null)&&(children != null) && !children.isEmpty()){
             addHelpDetails(clippyIssue, children);
         }
         clippyIssue.lineNumberStart = toInteger(span.get("line_start"));

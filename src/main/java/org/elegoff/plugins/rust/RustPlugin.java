@@ -54,8 +54,8 @@ public class RustPlugin implements Plugin {
         context.addExtension(ClippySensor.class);
         context.addExtensions(
                 PropertyDefinition.builder(ClippySensor.REPORT_PROPERTY_KEY)
-                        .name("Bandit Report Files")
-                        .description("Paths (absolute or relative) to json files with Bandit issues.")
+                        .name("Clippy Report Files")
+                        .description("Paths (absolute or relative) to json files with Clippy issues.")
                         .category(EXTERNAL_ANALYZERS_CATEGORY)
                         .subCategory(RUST_SUBCATEGORY)
                         .onQualifiers(Qualifiers.PROJECT)

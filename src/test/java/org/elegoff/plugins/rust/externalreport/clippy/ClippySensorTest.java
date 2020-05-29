@@ -119,7 +119,26 @@ public class ClippySensorTest{
                 .startsWith("No issues information will be saved as the report file '")
                 .contains("invalid-path.txt' can't be read.");
     }
+/*
+    @Test
+    public void issuesWhenClippyFileHasErrors() throws IOException {
+        List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "wrongpaths.txt");
+        assertThat(externalIssues).hasSize(1);
 
+        ExternalIssue first = externalIssues.get(0);
+        assertThat(first.primaryLocation().inputComponent().key()).isEqualTo(CLIPPY_FILE);
+        assertThat(first.ruleKey().toString()).isEqualTo(CLIPPY_AEC);
+        assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
+        assertThat(first.severity()).isEqualTo(Severity.MAJOR);
+        assertThat(first.primaryLocation().message()).isEqualTo("A message");
+        assertThat(first.primaryLocation().textRange()).isNull();
+
+        assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
+        assertThat(onlyOneLogElement(logTester.logs(LoggerLevel.WARN)))
+                .isEqualTo("Failed to resolve 1 file path(s) in Clippy report. No issues imported related to file(s): clippy/wrong.rs");
+        assertThat(logTester.logs(LoggerLevel.DEBUG)).containsExactly("Missing information for ruleKey:'clippy::absurd_extreme_comparisons', filePath:'clippy/wrong.rs', message:'null'");
+    }
+*/
     @Test
     public void noIssuesWithEmptyClippyReport() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
@@ -128,7 +147,7 @@ public class ClippySensorTest{
     }
 
     @Test
-    public void clippyReportWithUnknownRuleKey() throws IOException {
+    public void clippyReportWithSuggestedChanges() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, UNKNOWN_KEY_REPORT);
         assertThat(externalIssues).hasSize(4);
 
