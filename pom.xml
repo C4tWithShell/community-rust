@@ -21,6 +21,10 @@
         <assertj-core.version>3.15.0</assertj-core.version>
         <jacoco.version>0.8.4</jacoco.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+        <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
+        <sonar.organization>elegoff-1</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.login>12bcac0ffedc58033a8a677b28859e774e187d19</sonar.login>
     </properties>
 
     <issueManagement>
