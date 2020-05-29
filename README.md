@@ -26,18 +26,13 @@ It is compatible with SonarQube 7.9+
 
 Clippy lints are listed at : https://rust-lang.github.io/rust-clippy/master/
 
-## Build plugin
+## Installation
+
+Just [download the plugin JAR file](https://github.com/elegoff/sonar-rust/releases) and copy it to the `extensions/plugins` directory of SonarQube and restart.
+
+## Build the plugin from source
 
 `mvn clean package`
-
-* Copy the jar in your SonarQube server
-
-`cp target/sonar-rust-plugin-0.0.1.jar [sonarqube_install_folder]/extensions/plugins/`
-
-Please note this plugin can only be installed manually until it 
-is available on the SonarQube Marketplace
-
-* After plugin is copied, restart your SonarQube server
 
 ## Generate clippy report file:
 
