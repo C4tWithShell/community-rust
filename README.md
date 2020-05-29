@@ -20,10 +20,11 @@ Sonar-rust plugin
 [![Apache License, Version 2.0, January 2004](https://img.shields.io/github/license/apache/maven.svg?label=License)](http://www.apache.org/licenses/LICENSE-2.0)
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-orange.svg)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust)
+
 This plugin allows to visualize clippy lints report from the SonarQube UI
 It is compatible with SonarQube 7.9+
 
-Clippy lints are listed : https://rust-lang.github.io/rust-clippy/master/
+Clippy lints are listed at : https://rust-lang.github.io/rust-clippy/master/
 
 ## Build plugin
 
@@ -45,7 +46,3 @@ is available on the SonarQube Marketplace
 ## Analysis parameter
 
 Add parameter `sonar.rust.clippy.reportPaths=<clippy report file>`
-
-## Analyze this plugin with SonarQube
-
-`mvn -Pcoverage clean install sonar:sonar`
