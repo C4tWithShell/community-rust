@@ -24,7 +24,6 @@
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.login>12bcac0ffedc58033a8a677b28859e774e187d19</sonar.login>
         <sonar.projectVersion>0.0.1</sonar.projectVersion>
     </properties>
 

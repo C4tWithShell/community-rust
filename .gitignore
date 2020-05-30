@@ -14,3 +14,4 @@ sonar-example-plugin.iml
 .vscode
 publish
 /.scannerwork/
+private-notes.txt
