@@ -6,6 +6,7 @@
     <groupId>org.elegoff</groupId>
     <artifactId>rust</artifactId>
     <version>0.0.2</version>
+
     <packaging>pom</packaging>
 
     <name>Rust</name>
@@ -59,8 +60,10 @@
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
+        <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.projectVersion>0.0.1</sonar.projectVersion>
+        <sonar.projectVersion>${project.version}</sonar.projectVersion>
+
         <commons.io.version>2.5</commons.io.version>
         <junit.version>4.11</junit.version>
     </properties>
@@ -132,6 +135,12 @@
 
             <!-- test dependencies -->
             <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>org.jacoco.agent</artifactId>
+                <version>${jacoco.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.sonarsource.sonarqube</groupId>
                 <artifactId>sonar-testing-harness</artifactId>
                 <version>${sonar.version}</version>
@@ -185,23 +194,31 @@
         </dependencies>
     </dependencyManagement>
 
-    <profiles>
-        <profile>
-            <id>its</id>
-            <properties>
-                <skip.its>false</skip.its>
-            </properties>
-        </profile>
+    <build>
 
-        <profile>
-            <!-- Use javac's release flag for Java 9 and higher -->
-            <id>java9+</id>
-            <activation>
-                <jdk>[9,)</jdk>
-            </activation>
-            <properties>
-                <maven.compiler.release>8</maven.compiler.release>
-            </properties>
-        </profile>
-    </profiles>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <id>prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>default-report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+
+    </build>
+
 </project>

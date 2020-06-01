@@ -12,6 +12,8 @@
 
     <name>Rust :: Frontend</name>
 
+
+
     <dependencies>
         <dependency>
             <groupId>org.sonarsource.sslr</groupId>

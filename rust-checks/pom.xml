@@ -12,6 +12,8 @@
 
     <name>Rust :: Checks</name>
 
+
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

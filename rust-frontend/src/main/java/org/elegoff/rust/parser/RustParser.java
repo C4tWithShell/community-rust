@@ -1,4 +1,4 @@
-package org.elegoff.plugins.rust.api.rust.parser;
+package org.elegoff.rust.parser;
 
 public class RustParser {
 
