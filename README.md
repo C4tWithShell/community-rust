@@ -41,3 +41,7 @@ Just [download the plugin JAR file](https://github.com/elegoff/sonar-rust/releas
 ## Analysis parameter
 
 Add parameter `sonar.rust.clippy.reportPaths=<clippy report file>`
+
+## Known issues 
+
+The counting of comment lines is not accurate
