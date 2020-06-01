@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.elegoff</groupId>
-    <artifactId>sonar-rust-plugin</artifactId>
+    <artifactId>sonar-rust</artifactId>
     <packaging>sonar-plugin</packaging>
     <version>0.0.1</version>
 
