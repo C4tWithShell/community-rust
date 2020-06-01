@@ -16,8 +16,6 @@
  */
 package org.elegoff.plugins.rust.language;
 
-import org.elegoff.plugins.rust.RustPlugin;
-import org.elegoff.plugins.rust.languages.RustLanguage;
 import org.elegoff.plugins.rust.settings.RustLanguageSettings;
 import org.junit.Test;
 import org.sonar.api.config.internal.ConfigurationBridge;

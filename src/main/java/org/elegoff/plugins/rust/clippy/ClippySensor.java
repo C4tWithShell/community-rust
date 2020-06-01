@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-import org.elegoff.plugins.rust.languages.RustLanguage;
+import org.elegoff.plugins.rust.language.RustLanguage;
 import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;

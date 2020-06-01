@@ -16,21 +16,18 @@
  */
 package org.elegoff.plugins.rust.language;
 
-import junit.framework.TestCase;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 
 
+/**
+ * Default, BuiltIn Quality Profile for the projects having files of the language "rust"
+ */
+public final class RustQualityProfile implements BuiltInQualityProfilesDefinition {
 
-public class RustQualityProfileTest extends TestCase{
-    public void testDefine() {
-        BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-        RustQualityProfile qp = new RustQualityProfile();
-        qp.define(context);
-        BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("rust", "RUST Rules");
-        assertNotNull(profile);
-        assertTrue(profile.isDefault());
-        assertEquals(0, profile.rules().size());
+    @Override
+    public void define(Context context) {
+        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile("RUST Rules", RustLanguage.KEY);
+        profile.setDefault(true);
+        profile.done();
     }
-
-
 }

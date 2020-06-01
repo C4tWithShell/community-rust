@@ -18,13 +18,15 @@ package org.elegoff.plugins.rust;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import org.elegoff.plugins.rust.rules.RustRulesDefinition;
+import org.elegoff.plugins.rust.rules.RustSensor;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.rust.clippy.ClippySensor;
 import org.elegoff.plugins.rust.clippy.ClippyRulesDefinition;
-import org.elegoff.plugins.rust.languages.RustLanguage;
-import org.elegoff.plugins.rust.languages.RustQualityProfile;
+import org.elegoff.plugins.rust.language.RustLanguage;
+import org.elegoff.plugins.rust.language.RustQualityProfile;
 import org.elegoff.plugins.rust.settings.RustLanguageSettings;
 import org.sonar.api.resources.Qualifiers;
 
@@ -49,6 +51,7 @@ public class RustPlugin implements Plugin {
 
         // Add plugin settings (file extensions, etc.)
         context.addExtensions(RustLanguageSettings.getProperties());
+        context.addExtensions(RustRulesDefinition.class, RustSensor.class);
 
         // clippy rules
         context.addExtension(ClippySensor.class);

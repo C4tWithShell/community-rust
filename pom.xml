@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.elegoff</groupId>
-    <artifactId>sonar-rust</artifactId>
+    <artifactId>sonar-rust-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
 
     <name>Rust report analyzer</name>
     <description>Plugin for importing Rust reports</description>

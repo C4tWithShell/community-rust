@@ -17,7 +17,6 @@
 package org.elegoff.plugins.rust.language;
 
 import org.elegoff.plugins.rust.Utils;
-import org.elegoff.plugins.rust.languages.RustSourceCode;
 import org.junit.Before;
 import org.junit.Test;
 import org.sonar.api.batch.fs.InputFile;

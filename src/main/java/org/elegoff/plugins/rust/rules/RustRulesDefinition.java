@@ -14,20 +14,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.elegoff.plugins.rust.languages;
+package org.elegoff.plugins.rust.rules;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
+import org.elegoff.plugins.rust.language.RustLanguage;
+import org.sonar.api.server.rule.RulesDefinition;
 
+public class RustRulesDefinition implements RulesDefinition {
+    /**
+     * Path to the directory/folder containing the descriptor files (JSON and HTML) for the rules
+     */
+    public static final String RULES_DEFINITION_FOLDER = "org/elegoff/l10n/rust/rules";
 
-/**
- * Default, BuiltIn Quality Profile for the projects having files of the language "rust"
- */
-public final class RustQualityProfile implements BuiltInQualityProfilesDefinition {
 
     @Override
     public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile("RUST Rules", RustLanguage.KEY);
-        profile.setDefault(true);
-        profile.done();
+        NewRepository repository = context.createRepository("rust", RustLanguage.KEY).setName("RUST Analyzer");
+
+        //Current repository is empty
+        repository.done();
     }
 }

@@ -16,7 +16,7 @@
  */
 package org.elegoff.plugins.rust.clippy;
 
-import org.elegoff.plugins.rust.languages.RustLanguage;
+import org.elegoff.plugins.rust.language.RustLanguage;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonarsource.analyzer.commons.ExternalRuleLoader;
 

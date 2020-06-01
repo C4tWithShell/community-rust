@@ -16,7 +16,7 @@
  */
 package org.elegoff.plugins.rust;
 
-import org.elegoff.plugins.rust.languages.RustLanguage;
+import org.elegoff.plugins.rust.language.RustLanguage;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
