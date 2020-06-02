@@ -1,57 +1,92 @@
 /**
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2020 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package org.elegoff.plugins.rust;
 
-import org.elegoff.plugins.rust.language.RustLanguage;
+import org.assertj.core.util.Files;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.internal.DefaultFileSystem;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 
+
+import javax.annotation.CheckForNull;
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
+
+
 
 public class Utils {
-    public static final String MODULE_KEY = "sonar-rust";
-
-    public static final Path BASE_DIR = Paths.get("src", "test", "resources", "org", "elegoff", "plugins", "rust");
-
 
     private Utils() {
+        // utility class
     }
 
+    public static File loadResource(String resourceName) {
+        URL resource = Utils.class.getResource(resourceName);
+        File resourceAsFile = null;
+        try {
+            resourceAsFile = new File(resource.toURI());
+        } catch (URISyntaxException e) {
+            System.out.println("Cannot load resource: " + resourceName);
+        }
 
-    public static InputFile getInputFile(String relativePath) throws IOException {
-        return TestInputFileBuilder.create(MODULE_KEY, BASE_DIR.resolve(relativePath).toString())
-                .setModuleBaseDir(Paths.get("."))
-                .setContents(new String(Files.readAllBytes(BASE_DIR.resolve(relativePath))))
-                .setLanguage(RustLanguage.KEY)
+        return resourceAsFile;
+    }
+
+    /**
+     * Search for a test resource in the classpath. For example getResource("org/sonar/MyClass/foo.txt");
+     *
+     * @param path the starting slash is optional
+     * @return the resource. Null if resource not found
+     */
+    @CheckForNull
+    public static File getResource(String path) {
+        String resourcePath = path;
+        if (!resourcePath.startsWith("/")) {
+            resourcePath = "/" + resourcePath;
+        }
+        URL url = Utils.class.getResource(resourcePath);
+        if (url != null) {
+            try {
+                return new File(url.toURI());
+            } catch (URISyntaxException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public static DefaultInputFile buildInputFile(File baseDir, String fileName) throws IOException {
+        var target = new File(baseDir, fileName);
+        String content = Files.contentOf(target, StandardCharsets.UTF_8);
+        DefaultInputFile inputFile = TestInputFileBuilder.create("ProjectKey", baseDir, target)
+                .setContents(content)
                 .setCharset(StandardCharsets.UTF_8)
-                .build();
+                .setLanguage("Rust")
+                .setType(InputFile.Type.MAIN).build();
+        return inputFile;
     }
 
-    public static SensorContextTester getSensorContext() {
-        return SensorContextTester.create(BASE_DIR);
-    }
 
-    public static DefaultFileSystem getFileSystem() {
-        return new DefaultFileSystem(BASE_DIR);
-    }
 }

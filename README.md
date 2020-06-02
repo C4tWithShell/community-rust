@@ -1,34 +1,23 @@
-<!---
- Licensed to the Apache Software Foundation (ASF) under one or more
- contributor license agreements.  See the NOTICE file distributed with
- this work for additional information regarding copyright ownership.
- The ASF licenses this file to You under the Apache License, Version 2.0
- (the "License"); you may not use this file except in compliance with
- the License.  You may obtain a copy of the License at
+|     |     |     |
+| --- | --- | --- |
+| **SonarCloud**<br>(Technical Debt analysis) | [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=coverage) |
+| [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)|[Download latest release](https://github.com/elegoff/sonar-rust/releases) |
 
-      http://www.apache.org/licenses/LICENSE-2.0
+## SonarQube Rust plugin (Community)
 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
--->
-Sonar-rust plugin
+[SonarQube](https://www.sonarqube.org) is an open platform to manage code quality. This plugin
+adds Rust support to SonarQube with the focus on integration of existing Rust tools.
 ==================
 
-[![Apache License, Version 2.0, January 2004](https://img.shields.io/github/license/apache/maven.svg?label=License)](http://www.apache.org/licenses/LICENSE-2.0)
-[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-orange.svg)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust)
+This plugin is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
-This plugin allows to visualize clippy lints report from the SonarQube UI
+This plugin allows to visualize [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) report from the SonarQube UI
 It is compatible with SonarQube 7.9+
 
-Clippy lints are listed at : https://rust-lang.github.io/rust-clippy/master/
 
 ## Installation
 
-Just [download the plugin JAR file](https://github.com/elegoff/sonar-rust/releases) and copy it to the `extensions/plugins` directory of SonarQube and restart.
+Just [download the latest plugin JAR file](https://github.com/elegoff/sonar-rust/releases) and copy it to the `extensions/plugins` directory of SonarQube and restart.
 
 ## Build the plugin from source
 

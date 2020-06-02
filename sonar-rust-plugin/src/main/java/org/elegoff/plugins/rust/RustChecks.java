@@ -1,53 +1,77 @@
 /**
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2020 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package org.elegoff.plugins.rust;
 
+import com.sonar.sslr.api.Grammar;
 import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
-import org.elegoff.plugins.rust.api.RustCheck;
-
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import javax.annotation.CheckForNull;
+import java.util.*;
+import org.sonar.api.batch.rule.Checks;
+import org.sonar.squidbridge.SquidAstVisitor;
 
 public class RustChecks {
     private final CheckFactory checkFactory;
-    private List<Checks<RustCheck>> checksByRepository = new ArrayList<>();
+    private final Set<Checks<SquidAstVisitor<Grammar>>> checksByRepository = new HashSet<>();
 
-    RustChecks(CheckFactory checkFactory) {
+    private RustChecks(CheckFactory checkFactory) {
         this.checkFactory = checkFactory;
     }
+
+    public static RustChecks createRustCheck(CheckFactory checkFactory) {
+        return new RustChecks(checkFactory);
+    }
+
+    @SuppressWarnings("rawtypes")
     public RustChecks addChecks(String repositoryKey, Iterable<Class> checkClass) {
-        checksByRepository.add(checkFactory.<RustCheck>create(repositoryKey).addAnnotatedChecks(checkClass));
+        checksByRepository.add(checkFactory
+                .<SquidAstVisitor<Grammar>>create(repositoryKey)
+                .addAnnotatedChecks(checkClass));
 
         return this;
     }
 
 
+    public List<SquidAstVisitor<Grammar>> all() {
+        var allVisitors = new ArrayList<SquidAstVisitor<Grammar>>();
 
-    public List<RustCheck> all() {
-        return checksByRepository.stream().flatMap(c -> c.all().stream()).collect(Collectors.toList());
+        for (var checks : checksByRepository) {
+            allVisitors.addAll(checks.all());
+        }
+
+        return allVisitors;
     }
 
-    @Nullable
-    public RuleKey ruleKey(RustCheck check) {
-        return checksByRepository.stream().map(c -> c.ruleKey(check)).filter(Objects::nonNull).findFirst().orElse(null);
+    @CheckForNull
+    public RuleKey ruleKey(SquidAstVisitor<Grammar> check) {
+        for (var checks : checksByRepository) {
+            RuleKey ruleKey = checks.ruleKey(check);
+            if (ruleKey != null) {
+                return ruleKey;
+            }
+        }
+        return null;
+    }
+
+    public Set<Checks<SquidAstVisitor<Grammar>>> getChecks() {
+        return new HashSet<>(checksByRepository);
     }
 }

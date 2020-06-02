@@ -34,6 +34,7 @@
     <modules>
         <module>rust-frontend</module>
         <module>rust-checks</module>
+        <module>rust-squid</module>
         <module>sonar-rust-plugin</module>
     </modules>
 
@@ -51,8 +52,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.version>7.9</sonar.version>
-        <jdk.min.version>1.8</jdk.min.version>
+        <java.version>11</java.version>
+        <maven.compiler.version>3.8.1</maven.compiler.version>
         <sslr.version>1.23</sslr.version>
+        <sslr-squid-bridge.version>2.6.1</sslr-squid-bridge.version>
         <mockito.version>2.21.0</mockito.version>
         <assertj-core.version>3.15.0</assertj-core.version>
         <jacoco.version>0.8.4</jacoco.version>
@@ -79,6 +82,37 @@
                     <exclusion>
                         <groupId>cglib</groupId>
                         <artifactId>cglib-nodep</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.sonarsource.sslr-squid-bridge</groupId>
+                <artifactId>sslr-squid-bridge</artifactId>
+                <version>${sslr-squid-bridge.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.codehaus.sonar.sslr</groupId>
+                        <artifactId>sslr-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.sonar.sslr</groupId>
+                        <artifactId>sslr-xpath</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.codehaus.sonar</groupId>
+                        <artifactId>sonar-plugin-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.picocontainer</groupId>
+                        <artifactId>picocontainer</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>jcl-over-slf4j</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -131,6 +165,11 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.ant</groupId>
+                <artifactId>ant</artifactId>
+                <version>1.10.4</version>
             </dependency>
 
             <!-- test dependencies -->
@@ -193,8 +232,61 @@
 
         </dependencies>
     </dependencyManagement>
-
     <build>
+    <pluginManagement>
+        <plugins>
+
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <header>NOTICE</header>
+                    <quiet>false</quiet>
+                    <failIfMissing>true</failIfMissing>
+                    <aggregate>false</aggregate>
+                    <includes>
+                        <include>src/**/*.java</include>
+                    </includes>
+                    <useDefaultExcludes>true</useDefaultExcludes>
+                    <useDefaultMapping>true</useDefaultMapping>
+                    <strictCheck>true</strictCheck>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.version}</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <showDeprecation>true</showDeprecation>
+                    <release>${java.version}</release>
+                    <debug>true</debug>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.7.0.1746</version>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+
+
 
             <plugins>
                 <plugin>
