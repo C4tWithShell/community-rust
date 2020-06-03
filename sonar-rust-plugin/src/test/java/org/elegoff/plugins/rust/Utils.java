@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 
@@ -86,6 +87,14 @@ public class Utils {
                 .setLanguage("Rust")
                 .setType(InputFile.Type.MAIN).build();
         return inputFile;
+    }
+
+    public static String fileContent(File file, Charset charset) {
+        try {
+            return new String(java.nio.file.Files.readAllBytes(file.toPath()), charset);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot read " + file, e);
+        }
     }
 
 

@@ -23,17 +23,21 @@ package org.elegoff.plugins.rust;
 
 import org.elegoff.plugins.rust.RustSensor;
 import org.elegoff.plugins.rust.clippy.ClippySensor;
+import org.elegoff.plugins.rust.language.RustLanguage;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.issue.NoSonarFilter;
+import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.api.utils.log.LogTester;
@@ -41,6 +45,7 @@ import org.sonar.api.utils.log.LogTester;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -57,10 +62,17 @@ public class RustSensorTest {
     private ActiveRules activeRules;
     private static Path workDir;
 
-
+    private static final String FILE_1 = "file1.rs";
 
     @Rule
     public LogTester logTester = new LogTester();
+
+    @Before
+    public void init() throws IOException {
+        context = SensorContextTester.create(baseDir);
+        workDir = Files.createTempDirectory("workDir");
+        context.fileSystem().setWorkDir(workDir);
+    }
 
 
 
@@ -83,7 +95,42 @@ public class RustSensorTest {
         when(fileLinesContextFactory.createFor(Mockito.any(InputFile.class))).thenReturn(fileLinesContext);
         CheckFactory checkFactory = new CheckFactory(activeRules);
         return new RustSensor(fileLinesContextFactory, checkFactory, new NoSonarFilter());
-
-
     }
+
+    @Test
+    public void testExecuteNoIssue(){
+        activeRules = new ActiveRulesBuilder().build();
+        InputFile inputFile = inputFile(FILE_1);
+        sensor().execute(context);
+        assertThat(context.allIssues()).hasSize(0);
+    }
+
+    @Test
+    public void cancelledAnalysis() {
+        InputFile inputFile = inputFile(FILE_1);
+        activeRules = (new ActiveRulesBuilder()).build();
+        context.setCancelled(true);
+        sensor().execute(context);
+        assertThat(context.measure(inputFile.key(), CoreMetrics.NCLOC)).isNull();
+        assertThat(context.allAnalysisErrors()).isEmpty();
+    }
+
+    private InputFile inputFile(String name) {
+        DefaultInputFile inputFile = createInputFile(name);
+        context.fileSystem().add(inputFile);
+        return inputFile;
+    }
+
+    private DefaultInputFile createInputFile(String name) {
+        return TestInputFileBuilder.create("moduleKey", name)
+                .setModuleBaseDir(baseDir.toPath())
+                .setCharset(StandardCharsets.UTF_8)
+                .setType(InputFile.Type.MAIN)
+                .setLanguage(RustLanguage.KEY)
+                .initMetadata(Utils.fileContent(new File(baseDir, name), StandardCharsets.UTF_8))
+                .build();
+    }
+
+
+
 }

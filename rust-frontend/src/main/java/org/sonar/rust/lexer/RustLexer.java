@@ -7,8 +7,16 @@ public class RustLexer {
 
     }
 
-    public static Lexer create(LexerState lexerState) {
+    public static Lexer create() {
         Lexer.Builder builder = Lexer.builder().withFailIfNoChannelToConsumeOneCharacter(true);
+        addCommonChannels(builder);
         return builder.build();
     }
+
+    private static void addCommonChannels(Lexer.Builder builder) {
+        builder
+                .withChannel(new NewLineChannel());
+    }
+
+
 }
