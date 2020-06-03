@@ -21,8 +21,10 @@ package org.elegoff.plugins.rust;
 
 import org.elegoff.plugins.rust.language.RustLanguage;
 import org.elegoff.rust.checks.CheckList;
+import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
+import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.issue.NoSonarFilter;
@@ -31,29 +33,18 @@ import org.sonar.api.scanner.sensor.ProjectSensor;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
  * Main sensor
  */
-public class RustSensor implements ProjectSensor {
+public class RustSensor implements Sensor {
 
-
-    /**
-     * Key of the file suffix parameter
-     */
-    public static final String API_FILE_SUFFIXES_KEY = "sonar.rust.api.file.suffixes";
-
-    /**
-     * Default API files knows suffixes
-     */
-    public static final String API_DEFAULT_FILE_SUFFIXES = ".rs,.toml";
-
-    private final FileLinesContextFactory fileLinesContextFactory;
     private final RustChecks checks;
+    private final FileLinesContextFactory fileLinesContextFactory;
     private final NoSonarFilter noSonarFilter;
-
-    private SensorContext context;
 
     public RustSensor(FileLinesContextFactory fileLinesContextFactory, CheckFactory checkFactory, NoSonarFilter noSonarFilter) {
         this.checks = RustChecks.createRustCheck(checkFactory)
@@ -76,15 +67,18 @@ public class RustSensor implements ProjectSensor {
      */
     @Override
     public void execute(SensorContext context) {
-        this.context = context;
-        Iterable<InputFile> inputFiles = context.fileSystem().inputFiles(
-                context.fileSystem().predicates().and(context.fileSystem().predicates().hasLanguage("Rust"),
-                        context.fileSystem().predicates().hasType(InputFile.Type.MAIN)));
+        List<InputFile> mainFiles = getInputFiles(InputFile.Type.MAIN, context);
+        List<InputFile> testFiles = getInputFiles(InputFile.Type.TEST, context);
+        RustScanner scanner = new RustScanner(context, checks, fileLinesContextFactory, noSonarFilter, mainFiles);
+        scanner.execute(mainFiles, context);
+    }
 
-        var files = new ArrayList<File>();
-        for (var file : inputFiles) {
-            files.add(new File(file.uri().getPath()));
-        }
+    private static List<InputFile> getInputFiles(InputFile.Type type, SensorContext context) {
+        FilePredicates p = context.fileSystem().predicates();
+        Iterable<InputFile> it = context.fileSystem().inputFiles(p.and(p.hasType(type), p.hasLanguage(RustLanguage.KEY)));
+        List<InputFile> list = new ArrayList<>();
+        it.forEach(list::add);
+        return Collections.unmodifiableList(list);
     }
 
 }

@@ -123,7 +123,7 @@ public class ClippySensorTest{
                 .startsWith("No issues information will be saved as the report file '")
                 .contains("invalid-path.txt' can't be read.");
     }
-/*
+
     @Test
     public void issuesWhenClippyFileHasErrors() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "wrongpaths.txt");
@@ -142,7 +142,7 @@ public class ClippySensorTest{
                 .isEqualTo("Failed to resolve 1 file path(s) in Clippy report. No issues imported related to file(s): clippy/wrong.rs");
         assertThat(logTester.logs(LoggerLevel.DEBUG)).containsExactly("Missing information for ruleKey:'clippy::absurd_extreme_comparisons', filePath:'clippy/wrong.rs', message:'null'");
     }
-*/
+
     @Test
     public void noIssuesWithEmptyClippyReport() throws IOException {
         List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
