@@ -1386,202 +1386,192 @@
   },
   {
     "key": "clippy::single_component_path_imports",
-    "name": "TODO",
+    "name": "Checking for imports with single component use path.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#single_component_path_imports"
   },
   {
     "key": "clippy::single_match",
-    "name": "TODO",
+    "name": "Checks for matches with a single arm where an if let will usually suffice.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#single_match"
   },
   {
     "key": "clippy::single_match_else",
-    "name": "TODO",
+    "name": "Checks for matches with two arms where an if let else will usually suffice.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#single_match_else"
   },
   {
     "key": "clippy::skip_while_next",
-    "name": "TODO",
+    "name": "Checks for usage of _.skip_while(condition).next().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#skip_while_next"
   },
   {
     "key": "clippy::slow_vector_initialization",
-    "name": "TODO",
+    "name": "Checks slow zero-filled vector initialization",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#slow_vector_initialization"
   },
   {
-    "key": "clippy::str_to_string",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#str_to_string"
-  },
-  {
     "key": "clippy::string_add",
-    "name": "TODO",
+    "name": "Checks for all instances of x + _ where x is of type String, but only if string_add_assign does not match.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#string_add"
   },
   {
     "key": "clippy::string_add_assign",
-    "name": "TODO",
+    "name": "Checks for string appends of the form x = x + y (without let!).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#string_add_assign"
   },
   {
     "key": "clippy::string_extend_chars",
-    "name": "TODO",
+    "name": "Checks for the use of .extend(s.chars()) where s is a &str or String.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#string_extend_chars"
   },
   {
     "key": "clippy::string_lit_as_bytes",
-    "name": "TODO",
+    "name": "Checks for the as_bytes method called on string literals that contain only ASCII characters.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#string_lit_as_bytes"
   },
   {
-    "key": "clippy::string_to_string",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#string_to_string"
-  },
-  {
     "key": "clippy::struct_excessive_bools",
-    "name": "TODO",
+    "name": "Checks for excessive use of bools in structs.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#struct_excessive_bools"
   },
   {
     "key": "clippy::suboptimal_flops",
-    "name": "TODO",
+    "name": "Looks for floating-point expressions that can be expressed using built-in methods to improve both accuracy and performance.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suboptimal_flops"
   },
   {
     "key": "clippy::suspicious_arithmetic_impl",
-    "name": "TODO",
+    "name": "Lints for suspicious operations in impls of arithmetic operators, e.g. subtracting elements in an Add impl.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_arithmetic_impl"
   },
   {
     "key": "clippy::suspicious_assignment_formatting",
-    "name": "TODO",
+    "name": "Checks for use of the non-existent =*, =! and =- operators.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_assignment_formatting"
   },
   {
     "key": "clippy::suspicious_else_formatting",
-    "name": "TODO",
+    "name": "Checks for formatting of else. It lints if the else is followed immediately by a newline or the else seems to be missing.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_else_formatting"
   },
   {
     "key": "clippy::suspicious_map",
-    "name": "TODO",
+    "name": "Checks for calls to map followed by a count.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_map"
   },
   {
     "key": "clippy::suspicious_op_assign_impl",
-    "name": "TODO",
+    "name": "Lints for suspicious operations in impls of OpAssign",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_op_assign_impl"
   },
   {
     "key": "clippy::suspicious_unary_op_formatting",
-    "name": "TODO",
+    "name": "Checks the formatting of a unary operator on the right hand side of a binary operator",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_unary_op_formatting"
   },
   {
     "key": "clippy::tabs_in_doc_comments",
-    "name": "TODO",
+    "name": "Checks doc comments for usage of tab characters.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#tabs_in_doc_comments"
   },
   {
     "key": "clippy::temporary_assignment",
-    "name": "TODO",
+    "name": "Checks for construction of a structure or tuple just to assign a value in it.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#temporary_assignment"
   },
   {
     "key": "clippy::temporary_cstring_as_ptr",
-    "name": "TODO",
+    "name": "Checks for getting the inner pointer of a temporary CString.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#temporary_cstring_as_ptr"
   },
   {
     "key": "clippy::to_digit_is_some",
-    "name": "TODO",
+    "name": "Checks for .to_digit(..).is_some() on chars.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#to_digit_is_some"
   },
   {
     "key": "clippy::todo",
-    "name": "TODO",
+    "name": "Checks for usage of todo!.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#todo"
   },
   {
     "key": "clippy::too_many_arguments",
-    "name": "TODO",
+    "name": "Checks for functions with too many parameters.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#too_many_arguments"
   },
   {
     "key": "clippy::too_many_lines",
-    "name": "TODO",
+    "name": "Checks for functions with a large amount of lines.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#too_many_lines"
   },
   {
     "key": "clippy::toplevel_ref_arg",
-    "name": "TODO",
+    "name": "Checks for function arguments and let bindings denoted as ref.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#toplevel_ref_arg"
   },
   {
     "key": "clippy::transmute_bytes_to_str",
-    "name": "TODO",
+    "name": "Checks for transmutes from a &[u8] to a &str.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_bytes_to_str"
   },
   {
     "key": "clippy::transmute_float_to_int",
-    "name": "TODO",
+    "name": "Checks for transmutes from a float to an integer.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_float_to_int"
   },
   {
     "key": "clippy::transmute_int_to_bool",
-    "name": "TODO",
+    "name": "Checks for transmutes from an integer to a bool.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_int_to_bool"
   },
   {
     "key": "clippy::transmute_int_to_char",
-    "name": "TODO",
+    "name": "Checks for transmutes from an integer to a char.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_int_to_char"
   },
   {
     "key": "clippy::transmute_int_to_float",
-    "name": "TODO",
+    "name": "Checks for transmutes from an integer to a float.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_int_to_float"
   },
   {
     "key": "clippy::transmute_ptr_to_ptr",
-    "name": "TODO",
+    "name": "Checks for transmutes from a pointer to a pointer, or from a reference to a reference.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_ptr_to_ptr"
   },
   {
     "key": "clippy::transmute_ptr_to_ref",
-    "name": "TODO",
+    "name": "Checks for transmutes from a pointer to a reference.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmute_ptr_to_ref"
   },
   {
     "key": "clippy::transmuting_null",
-    "name": "TODO",
+    "name": "Checks for transmute calls which would receive a null pointer.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmuting_null"
   },
   {
     "key": "clippy::trivial_regex",
-    "name": "TODO",
+    "name": "Checks for trivial regex creation ",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#trivial_regex"
   },
   {
     "key": "clippy::trivially_copy_pass_by_ref",
-    "name": "TODO",
+    "name": "Checks for functions taking arguments by reference, where the argument type is Copy and small enough to be more efficient to always pass by value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#trivially_copy_pass_by_ref"
   },
   {
     "key": "clippy::try_err",
-    "name": "TODO",
+    "name": "Checks for usages of Err(x)?.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#try_err"
   },
   {
     "key": "clippy::type_complexity",
-    "name": "TODO",
+    "name": "Checks for types used in structs, parameters and let declarations above a certain complexity threshold.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#type_complexity"
   },
   {
     "key": "clippy::type_repetition_in_bounds",
-    "name": "TODO",
+    "name": "This lint warns about unnecessary type repetitions in trait bounds",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#type_repetition_in_bounds"
   },
   {

@@ -10,12 +10,6 @@ import org.sonar.sslr.channel.CodeReader;
 
 public class NewLineChannel extends Channel<Lexer> {
 
-
-
-    public NewLineChannel() {
-
-    }
-
     @Override
     public boolean consume(CodeReader code, Lexer output) {
         char ch = (char) code.peek();
@@ -54,14 +48,6 @@ public class NewLineChannel extends Channel<Lexer> {
                 .build());
         consumeEOL(code);
         return false;
-    }
-
-
-
-    private void joinLines(CodeReader code) {
-        while (Character.isWhitespace(code.peek())) {
-            code.pop();
-        }
     }
 
     private static void consumeEOL(CodeReader code) {

@@ -34,7 +34,6 @@
     <modules>
         <module>rust-frontend</module>
         <module>rust-checks</module>
-        <module>rust-squid</module>
         <module>sonar-rust-plugin</module>
     </modules>
 
@@ -66,9 +65,6 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <sonar.branch.name>add-toml-support</sonar.branch.name>
-        <sonar.brancg.target>master</sonar.brancg.target>
-
         <commons.io.version>2.5</commons.io.version>
         <junit.version>4.11</junit.version>
     </properties>

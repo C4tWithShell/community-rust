@@ -47,7 +47,7 @@ public class RustSensor implements Sensor {
     private final NoSonarFilter noSonarFilter;
 
     public RustSensor(FileLinesContextFactory fileLinesContextFactory, CheckFactory checkFactory, NoSonarFilter noSonarFilter) {
-        this.checks = RustChecks.createRustCheck(checkFactory)
+        this.checks = new RustChecks(checkFactory)
                 .addChecks(CheckList.REPOSITORY_KEY, CheckList.getChecks());
         this.fileLinesContextFactory = fileLinesContextFactory;
         this.noSonarFilter = noSonarFilter;
