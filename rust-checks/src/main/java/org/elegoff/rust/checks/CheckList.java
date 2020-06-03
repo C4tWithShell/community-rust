@@ -30,9 +30,9 @@ public class CheckList {
     private CheckList() {
     }
 
-    public static Iterable<Class> getChecks() {
-        List<Class> emptySoFar = new ArrayList<Class>();
-        return Collections.unmodifiableSet(new HashSet<Class>(emptySoFar));
+    public static List<Class> getChecks() {
+        //empty array so far, until a first rule is defined
+        return new ArrayList<Class>();
     }
 
 }
