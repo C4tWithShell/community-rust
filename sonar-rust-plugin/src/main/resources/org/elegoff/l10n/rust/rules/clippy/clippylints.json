@@ -1336,57 +1336,52 @@
   },
   {
     "key": "clippy::same_functions_in_if_condition",
-    "name": "TODO",
+    "name": "Checks for consecutive ifs with the same function call.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#same_functions_in_if_condition"
   },
   {
     "key": "clippy::search_is_some",
-    "name": "TODO",
+    "name": "Checks for an iterator search (such as find(), position(), or rposition()) followed by a call to is_some().",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#search_is_some"
   },
   {
     "key": "clippy::serde_api_misuse",
-    "name": "TODO",
+    "name": "Checks for mis-uses of the serde API.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#serde_api_misuse"
   },
   {
     "key": "clippy::shadow_reuse",
-    "name": "TODO",
+    "name": "Checks for bindings that shadow other bindings already in scope, while reusing the original value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#shadow_reuse"
   },
   {
     "key": "clippy::shadow_same",
-    "name": "TODO",
+    "name": "Checks for bindings that shadow other bindings already in scope, while just changing reference level or mutability.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#shadow_same"
   },
   {
     "key": "clippy::shadow_unrelated",
-    "name": "TODO",
+    "name": "Checks for bindings that shadow other bindings already in scope",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#shadow_unrelated"
   },
   {
     "key": "clippy::short_circuit_statement",
-    "name": "TODO",
+    "name": "Checks for the use of short circuit boolean conditions as a statement.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#short_circuit_statement"
   },
   {
-    "key": "clippy::should_assert_eq",
-    "name": "TODO",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#should_assert_eq"
-  },
-  {
     "key": "clippy::should_implement_trait",
-    "name": "TODO",
+    "name": "Checks for methods that should live in a trait implementation of a std trait",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#should_implement_trait"
   },
   {
     "key": "clippy::similar_names",
-    "name": "TODO",
+    "name": "Checks for names that are very similar and thus confusing.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#similar_names"
   },
   {
     "key": "clippy::single_char_pattern",
-    "name": "TODO",
+    "name": "Checks for string methods that receive a single-character str as an argument",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#single_char_pattern"
   },
   {

@@ -33,15 +33,15 @@ public class RustLanguageTest {
         RustLanguage language = new RustLanguage(new ConfigurationBridge(new MapSettings()));
         assertThat(language.getKey()).isEqualTo("rust");
         assertThat(language.getName()).isEqualTo("Rust");
-        assertThat(language.getFileSuffixes()).hasSize(1).contains(".rs");
+        assertThat(language.getFileSuffixes()).hasSize(2).contains(".rs");
     }
 
     @Test
     public void custom_file_suffixes() {
         MapSettings settings = new MapSettings();
-        settings.setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, "rs");
+        settings.setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, "foo,bar");
 
         RustLanguage language = new RustLanguage(new ConfigurationBridge(settings));
-        assertThat(language.getFileSuffixes()).hasSize(1).contains("rs");
+        assertThat(language.getFileSuffixes()).hasSize(2).contains("foo");
     }
 }
