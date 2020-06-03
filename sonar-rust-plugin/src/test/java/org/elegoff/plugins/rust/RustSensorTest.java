@@ -62,12 +62,7 @@ public class RustSensorTest {
     @Rule
     public LogTester logTester = new LogTester();
 
-    @Before
-    public void init() throws IOException {
-        context = SensorContextTester.create(baseDir);
-        workDir = Files.createTempDirectory("workDir");
-        context.fileSystem().setWorkDir(workDir);
-    }
+
 
     @Test
     public void sensor_descriptor() {

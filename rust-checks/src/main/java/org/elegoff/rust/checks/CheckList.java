@@ -31,8 +31,8 @@ public class CheckList {
     }
 
     public static Iterable<Class> getChecks() {
-        List emptySoFar = new ArrayList();
-        return Collections.unmodifiableSet(new HashSet<>(emptySoFar));
+        List<Class> emptySoFar = new ArrayList<Class>();
+        return Collections.unmodifiableSet(new HashSet<Class>(emptySoFar));
     }
 
 }
