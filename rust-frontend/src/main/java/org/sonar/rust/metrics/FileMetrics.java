@@ -15,6 +15,8 @@ public class FileMetrics {
         FileInput fileInput = context.rootTree();
         fileLinesVisitor = new FileLinesVisitor();
         fileLinesVisitor.scanFile(context);
-
+    }
+    public FileLinesVisitor fileLinesVisitor() {
+        return fileLinesVisitor;
     }
 }

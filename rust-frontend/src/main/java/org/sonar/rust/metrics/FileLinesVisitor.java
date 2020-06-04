@@ -66,4 +66,8 @@ public class FileLinesVisitor extends RustSubscriptionCheck {
         }
 
     }
+
+    public Set<Integer> getLinesOfCode() {
+        return Collections.unmodifiableSet(linesOfCode);
+    }
 }
