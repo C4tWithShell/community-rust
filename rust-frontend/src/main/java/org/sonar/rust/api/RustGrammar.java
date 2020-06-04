@@ -6,6 +6,7 @@ import org.sonar.sslr.grammar.LexerfulGrammarBuilder;
 
 
 public enum RustGrammar implements GrammarRuleKey {
+    EXPRESSION
     ;
 
     public static Grammar create() {

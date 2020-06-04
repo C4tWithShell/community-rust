@@ -65,6 +65,8 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
+        <sonar.branch.name>save-measures</sonar.branch.name>
+        <sonar.branch.target>master</sonar.branch.target>
         <commons.io.version>2.5</commons.io.version>
         <junit.version>4.11</junit.version>
     </properties>

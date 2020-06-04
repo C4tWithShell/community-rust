@@ -22,7 +22,7 @@ package org.elegoff.plugins.rust;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.rust.api.RustCheck;
+import org.sonar.plugins.rust.api.RustCheck;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
