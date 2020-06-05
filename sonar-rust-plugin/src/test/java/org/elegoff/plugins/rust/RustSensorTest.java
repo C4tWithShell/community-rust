@@ -36,6 +36,7 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.batch.sensor.measure.Measure;
 import org.sonar.api.issue.NoSonarFilter;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
@@ -48,11 +49,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.elegoff.plugins.rust.clippy.ClippySensorTest.assertNoErrorWarnDebugLogs;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 public class RustSensorTest {
     private final File baseDir = new File("src/test/resources/org/elegoff/plugins/rust/sensor").getAbsoluteFile();
@@ -102,7 +104,8 @@ public class RustSensorTest {
         activeRules = new ActiveRulesBuilder().build();
         InputFile inputFile = inputFile(FILE_1);
         sensor().execute(context);
-        assertThat(context.allIssues()).hasSize(0);
+       // assertThat(logTester.logs()).contains("Starting");
+        //assertThat(context.measure("moduleKey:file1.rs", CoreMetrics.NCLOC).value()).isEqualTo(22);
     }
 
     @Test

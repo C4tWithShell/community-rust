@@ -1,6 +1,7 @@
 package org.elegoff.plugins.rust;
 
 import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.RecognitionException;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.issue.NoSonarFilter;
@@ -79,10 +80,22 @@ public class RustScanner {
     public void scanFile(InputFile file) throws IOException{
         RustFile rustFile = new RustFile(file);
         RustVisitorContext visitorContext;
-        AstNode astNode = parser.parse(rustFile.contents());
-        FileInput parse = new RustTreeMaker().fileInput(astNode);
-        visitorContext = new RustVisitorContext(parse, rustFile, context.fileSystem().workDir());
-        saveMeasures(file, visitorContext);
+
+        try {
+            AstNode astNode = parser.parse(rustFile.contents());
+            FileInput parse = new RustTreeMaker().fileInput(astNode);
+            visitorContext = new RustVisitorContext(parse, rustFile, context.fileSystem().workDir());
+            saveMeasures(file, visitorContext);
+        }catch (RecognitionException e) {
+            visitorContext = new RustVisitorContext(rustFile, e);
+            LOG.error("Unable to parse file: " + file.toString());
+            LOG.error(e.getMessage());
+            context.newAnalysisError()
+                    .onFile(file)
+                    .at(file.newPointer(e.getLine(), 0))
+                    .message(e.getMessage())
+                    .save();
+        }
     }
 
     private void saveMeasures(InputFile inputFile, RustVisitorContext visitorContext) {

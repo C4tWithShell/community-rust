@@ -18,6 +18,12 @@ public class RustVisitorContext {
         this.parsingException = null;
     }
 
+    public RustVisitorContext(RustFile rustFile, RecognitionException parsingException) {
+        this.rootTree = null;
+        this.rustFile = rustFile;
+        this.parsingException = parsingException;
+    }
+
     public FileInput rootTree() {
         return rootTree;
     }

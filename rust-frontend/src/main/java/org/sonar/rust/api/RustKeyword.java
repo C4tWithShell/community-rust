@@ -42,6 +42,19 @@ public enum RustKeyword implements TokenType {
     KW_USE("use"),
     KW_WHERE("where"),
     KW_WHILE("while"),
+    /* Reserved keywords */
+    KW_ABSTRACT("abstract"),
+    KW_BECOME("become"),
+    KW_BOX("box"),
+    KW_DO(" do"),
+    KW_FINAL("final"),
+    KW_MACRO("macro"),
+    KW_OVERRIDE(" override"),
+    KW_PRIV("priv"),
+    KW_TYPEOF("typeof"),
+    KW_UNSIZED("unsized"),
+    KW_VIRTUAL("virtual"),
+    KW_YIELD("yield"),
     /*Weak keywords*/
     KW_UNION ("union"),
     KW_STATICLIFETIME("'static")
