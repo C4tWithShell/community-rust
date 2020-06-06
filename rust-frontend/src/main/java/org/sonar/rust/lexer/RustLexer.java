@@ -8,7 +8,7 @@ import com.sonar.sslr.impl.channel.UnknownCharacterChannel;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustPunctuator;
 
-import static com.sonar.sslr.impl.channel.RegexpChannelBuilder.or;
+import static com.sonar.sslr.impl.channel.RegexpChannelBuilder.*;
 
 public class RustLexer {
     /* https://doc.rust-lang.org/reference/identifiers.html */
@@ -22,19 +22,26 @@ public class RustLexer {
 
     public static Lexer create() {
         Lexer.Builder builder = Lexer.builder().withFailIfNoChannelToConsumeOneCharacter(true);
-        addCommonChannels(builder);
+        addChannels(builder);
         return builder.build();
     }
 
-    private static void addCommonChannels(Lexer.Builder builder) {
+    private static void addChannels(Lexer.Builder builder) {
         builder
-                .withChannel(new NewLineChannel())
+                .withChannel(commentRegexp("//[^\\n\\r]*+"))
+                .withChannel(commentRegexp("/\\*", ANY_CHAR + "*?", "\\*/"))
                 .withChannel(new BlackHoleChannel("\\s"))
                 .withChannel(new IdentifierAndKeywordChannel(IDENTIFIER, true, RustKeyword.values()))
-
+                .withChannel(new StringLiteralsChannel())
                 .withChannel(new PunctuatorChannel(RustPunctuator.values()))
 
                 .withChannel(new UnknownCharacterChannel());
+        tuple(builder);
+    }
+
+    private static void tuple(Lexer.Builder builder){
+        builder.withChannel(LexerDefintion.TUPLE_INDEX);
+
     }
 
 
