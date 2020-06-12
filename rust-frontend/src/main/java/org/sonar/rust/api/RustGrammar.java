@@ -1,3 +1,23 @@
+/**
+ *
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2020 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 package org.sonar.rust.api;
 
 import com.sonar.sslr.api.Grammar;
@@ -72,7 +92,7 @@ public enum RustGrammar implements GrammarRuleKey {
     LIFETIME,
     LIFETIME_BOUNDS,
     LIFETIME_OR_LABEL,
-    LIFE_TIME_TOKEN,
+    LIFETIME_TOKEN,
     LITERAL_PATTERN,
     LITTERAL_EXPRESSION,
     LOOP_EXPRESSION,
@@ -176,7 +196,7 @@ public enum RustGrammar implements GrammarRuleKey {
     ENUMERATION,
     UNION,
     CONSTANT_ITEM,
-    STATIC_ITEM,
+    STATIC_ITEM,TRAIT_FUNC, TRAIT_METHOD, TRAIT_CONST, TRAIT_TYPE,
     TRAIT,
     IMPLEMENTATION,
     CRATE_REF,
@@ -199,8 +219,12 @@ public enum RustGrammar implements GrammarRuleKey {
     FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC,
     BARE_FUNCTION_RETURN_TYPE,
     MAYBE_NAMED_FUNCTION_PARAMETERS,
-    MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC, MAYBE_NAMED_PARAM;
-
+    MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC, MAYBE_NAMED_PARAM, STRUCT_FIELDS,
+    STRUCT_STRUCT, TUPLE_STRUCT, TUPLE_FIELDS, STRUCT_FIELD, TUPLE_FIELD,
+    FUNCTION_PARAMETERS, ASYNC_CONST_QUALIFIERS, FUNCTION_PARAM, GENERiC_PARAMS,
+    LIFETIME_PARAMS, LIFETIME_PARAM, TYPE_PARAMS, TYPE_PARAM,
+    INHERENT_IMPL, TRAIT_IMPL,
+    INHERENT_IMPL_ITEM, METHOD, TRAIT_IMPL_ITEM, ENUM_ITEMS, ENUM_ITEM, ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT, ENUM_ITEM_DISCRIMINANT, SELF_PARAM, SHORTHAND_SELF, TYPED_SELF, TRAIT_ITEM, TRAIT_FUNCTION_DECL, TRAIT_METHOD_DECL, TRAIT_FUNCTION_PARAMETERS, TRAIT_FUNCTION_PARAM, WHERE_CLAUSE_ITEM, LIFETIME_WHERE_CLAUSE_ITEM, TYPE_BOUND_CLAUSE_ITEM;
 
 
     public static Grammar create() {
@@ -220,8 +244,8 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     /* recurring grammar pattern */
-    private static Object seq(LexerfulGrammarBuilder b, GrammarRuleKey g, String sep){
-        return b.sequence(g, b.sequence(b.zeroOrMore(sep,g), b.optional(sep)));
+    private static Object seq(LexerfulGrammarBuilder b, GrammarRuleKey g, String sep) {
+        return b.sequence(g, b.sequence(b.zeroOrMore(sep, g), b.optional(sep)));
     }
 
     private static void items(LexerfulGrammarBuilder b) {
@@ -256,18 +280,69 @@ public enum RustGrammar implements GrammarRuleKey {
         traits_item(b);
         impl_item(b);
         extblocks_item(b);
-        type_item(b);
+        generic_item(b);
         assoc_item(b);
         visibility_item(b);
     }
 
+    /* https://doc.rust-lang.org/reference/items/traits.html */
     private static void traits_item(LexerfulGrammarBuilder b) {
+        b.rule(TRAIT).is(b.sequence(
+                b .optional("unsafe"), "trait", IDENTIFIER, b.optional(GENERICS),
+                b.optional(b.sequence(":", b.optional(TYPE_PARAM_BOUNDS))),
+                b.optional(WHERE_CLAUSE),"{",b.zeroOrMore(TRAIT_ITEM), "}"
+        ));
+        b.rule(TRAIT_ITEM).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE), b.optional(VISIBILITY),
+                b.firstOf(TRAIT_FUNC, TRAIT_METHOD, TRAIT_CONST, TRAIT_TYPE)
+        ));
+        b.rule(TRAIT_FUNC).is(b.sequence(
+                TRAIT_FUNCTION_DECL, b.firstOf(";", BLOCK_EXPRESSION)
+        ));
+        b.rule(TRAIT_METHOD).is(b.sequence(
+                TRAIT_METHOD_DECL, b.firstOf(";", BLOCK_EXPRESSION)
+        ));
+        b.rule(TRAIT_FUNCTION_DECL).is(b.sequence(
+                FUNCTION_QUALIFIERS, "fn", IDENTIFIER, b.optional(GENERICS),
+                "(", b.optional(TRAIT_FUNCTION_PARAMETERS), ")",
+                b.optional(FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE)
+        ));
+        b.rule(TRAIT_METHOD_DECL).is(b.sequence(
+                FUNCTION_QUALIFIERS, "fn", IDENTIFIER, b.optional(GENERICS),
+                "(", SELF_PARAM, b.zeroOrMore(b.sequence(",",TRAIT_FUNCTION_PARAM)), b.optional(","), ")",
+                b.optional(FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE)
+        ));
+        b.rule(TRAIT_FUNCTION_PARAMETERS).is(seq(b,TRAIT_FUNCTION_PARAM, ","));
+        b.rule(TRAIT_FUNCTION_PARAM).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE), b.optional(b.sequence(PATTERN, ":")), TYPE
+        ));
+        b.rule(TRAIT_CONST).is(b.sequence(
+                "const",IDENTIFIER,":",TYPE,b.optional(b.sequence("=",EXPRESSION)), ";"
+        ));
+        b.rule(TRAIT_TYPE).is(b.sequence(
+                "type", IDENTIFIER, b.optional(b.sequence(":", b.optional(TYPE_PARAM_BOUNDS))),";"
+        ));
     }
 
+    /* https://doc.rust-lang.org/reference/items/enumerations.html */
     private static void enumerations_item(LexerfulGrammarBuilder b) {
+        b.rule(ENUMERATION).is(b.sequence("enum", IDENTIFIER,
+                b.optional(GENERICS), b.optional(WHERE_CLAUSE), "{", ENUM_ITEMS, "}"));
+        b.rule(ENUM_ITEMS).is(seq(b,ENUM_ITEM,","));
+        b.rule(ENUM_ITEM).is(b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE), b.optional(VISIBILITY),
+                IDENTIFIER, b.optional(b.firstOf(ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT, ENUM_ITEM_DISCRIMINANT))
+                ));
+        b.rule(ENUM_ITEM_TUPLE).is(b.sequence("(", b.optional(TUPLE_FIELDS), ")"));
+        b.rule(ENUM_ITEM_STRUCT).is(b.sequence("{", b.optional(STRUCT_FIELDS), "}"));
+        b.rule(ENUM_ITEM_DISCRIMINANT).is(b.sequence("=", EXPRESSION));
     }
 
+    /* https://doc.rust-lang.org/reference/items/type-aliases.html */
     private static void alias_item(LexerfulGrammarBuilder b) {
+        b.rule(TYPE_ALIAS).is(b.sequence(
+                "type", IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
+                "=", TYPE, ";"
+        ));
     }
 
     private static void use_item(LexerfulGrammarBuilder b) {
@@ -288,18 +363,63 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void functions_item(LexerfulGrammarBuilder b) {
+        b.rule(FUNCTION).is(b.sequence(
+                FUNCTION_QUALIFIERS, "fn", IDENTIFIER, b.optional(GENERICS),
+                "(", FUNCTION_PARAMETERS, ")",
+                b.optional(FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE),
+                BLOCK_EXPRESSION
+        ));
+        b.rule(FUNCTION_QUALIFIERS).is(b.sequence(
+                b.optional(ASYNC_CONST_QUALIFIERS),
+                b.optional("unsafe"),
+                b.optional(b.sequence("extern", b.optional(ABI)))
+        ));
+        b.rule(ASYNC_CONST_QUALIFIERS).is(b.firstOf("const", "async"));
+        b.rule(ABI).is(RustTokenType.STRING);
+        b.rule(FUNCTION_PARAMETERS).is(seq(b, FUNCTION_PARAM, ","));
+        b.rule(FUNCTION_PARAM).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE), PATTERN, ":", TYPE
+        ));
+        b.rule(FUNCTION_RETURN_TYPE).is(b.sequence("->", TYPE));
+
     }
 
+    /* https://doc.rust-lang.org/reference/items/structs.html */
     private static void structs_item(LexerfulGrammarBuilder b) {
+        b.rule(STRUCT).is(b.firstOf(STRUCT_STRUCT, TUPLE_STRUCT));
+        b.rule(STRUCT_STRUCT).is(b.sequence(
+                "struct", IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
+                b.firstOf(b.sequence("{", b.optional(STRUCT_FIELDS), "}"), ";")));
+        b.rule(TUPLE_STRUCT).is(b.sequence(
+                "struct", IDENTIFIER, b.optional(GENERICS), "(", b.optional(TUPLE_FIELDS), ")",
+                b.optional(GENERICS), ";"
+        ));
+        b.rule(STRUCT_FIELDS).is(seq(b, STRUCT_FIELD, ","));
+        b.rule(STRUCT_FIELD).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.optional(VISIBILITY),
+                IDENTIFIER, ":", TYPE
+        ));
+        b.rule(TUPLE_FIELDS).is(seq(b, TUPLE_FIELD, ","));
+        b.rule(TUPLE_FIELD).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.optional(VISIBILITY), TYPE
+        ));
+
     }
 
+    /* https://doc.rust-lang.org/reference/items/unions.html */
     private static void unions_item(LexerfulGrammarBuilder b) {
+        b.rule(UNION).is(b.sequence(
+                "union", IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
+                "{", STRUCT_FIELDS, "}"
+        ));
     }
 
     /* https://doc.rust-lang.org/reference/items/constant-items.html */
     private static void constants_item(LexerfulGrammarBuilder b) {
         b.rule(CONSTANT_ITEM).is(b.sequence(
-                "const", b.firstOf(IDENTIFIER,"_"),
+                "const", b.firstOf(IDENTIFIER, "_"),
                 ":", TYPE, "=", EXPRESSION, ";"
         ));
 
@@ -308,19 +428,46 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/static-items.html */
     private static void static_item(LexerfulGrammarBuilder b) {
         b.rule(STATIC_ITEM).is(b.sequence(
-                "static", b.optional("mut"),IDENTIFIER, ":", TYPE,"=", EXPRESSION, ";"
+                "static", b.optional("mut"), IDENTIFIER, ":", TYPE, "=", EXPRESSION, ";"
         ));
     }
 
+    /* https://doc.rust-lang.org/reference/items/implementations.html */
     private static void impl_item(LexerfulGrammarBuilder b) {
+        b.rule(IMPLEMENTATION).is(b.firstOf(INHERENT_IMPL, TRAIT_IMPL));
+        b.rule(INHERENT_IMPL).is(b.sequence(
+                "impl", b.optional(GENERICS), TYPE, b.optional(WHERE_CLAUSE), "{",
+                b.zeroOrMore(INNER_ATTRIBUTE),
+                b.zeroOrMore(INHERENT_IMPL_ITEM)
+        ));
+        b.rule(INHERENT_IMPL_ITEM).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.firstOf(MACRO_INVOCATION_SEMI,
+                        b.sequence("(", b.optional(VISIBILITY), b.firstOf(
+                                CONSTANT_ITEM, FUNCTION, METHOD
+                        )))));
+        b.rule(TRAIT_IMPL).is(b.sequence(
+                b.optional("unsafe"), "impl", b.optional(GENERICS),
+                b.optional("!"), TYPE_PATH, "for", TYPE,
+                b.optional(WHERE_CLAUSE), "{",
+                b.zeroOrMore(INNER_ATTRIBUTE), b.zeroOrMore(TRAIT_IMPL_ITEM), "}"
+        ));
+
+        b.rule(TRAIT_IMPL_ITEM).is(b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE), "(",
+                b.firstOf(MACRO_INVOCATION_SEMI,
+                        b.sequence("(", b.optional(VISIBILITY), b.firstOf(TYPE_ALIAS,CONSTANT_ITEM, FUNCTION,METHOD ), ")")
+                        )
+        ));
+
     }
 
     /* https://doc.rust-lang.org/reference/items/external-blocks.html */
     private static void extblocks_item(LexerfulGrammarBuilder b) {
         b.rule(EXTERN_BLOCK).is(b.sequence(
-                "extern",b.optional(ABI), "{",
+                "extern", b.optional(ABI), "{",
                 b.zeroOrMore(INNER_ATTRIBUTE),
-                b.zeroOrMore(EXTERNAL_ITEM),"}"
+                b.zeroOrMore(EXTERNAL_ITEM), "}"
         ));
         b.rule(EXTERNAL_ITEM).is(b.sequence(
                 b.zeroOrMore(OUTER_ATTRIBUTE), "(",
@@ -333,28 +480,74 @@ public enum RustGrammar implements GrammarRuleKey {
                 "static", b.optional("mut"), IDENTIFIER, ":", TYPE, ";"
         ));
         b.rule(EXTERNAL_FUNCTION_ITEM).is(b.sequence(
-                "fn",IDENTIFIER, b.optional(GENERICS), "(",
-                b.optional(b.firstOf(NAMED_FUNCTION_PARAMETERS,NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS )),
-                ")",b.optional(FUNCTION_RETURN_TYPE),b.optional(WHERE_CLAUSE),";"
+                "fn", IDENTIFIER, b.optional(GENERICS), "(",
+                b.optional(b.firstOf(NAMED_FUNCTION_PARAMETERS, NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS)),
+                ")", b.optional(FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE), ";"
         ));
         b.rule(NAMED_FUNCTION_PARAMETERS).is(seq(b, NAMED_FUNCTION_PARAM, ","));
         b.rule(NAMED_FUNCTION_PARAM).is(b.sequence(
                 b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(IDENTIFIER, "_"),
-                ":",TYPE
+                ":", TYPE
         ));
         b.rule(NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS).is(b.sequence(
                 b.zeroOrMore(b.sequence(NAMED_FUNCTION_PARAM, ",")),
-                NAMED_FUNCTION_PARAM, ",",b.zeroOrMore(OUTER_ATTRIBUTE),"..."
-                ));
+                NAMED_FUNCTION_PARAM, ",", b.zeroOrMore(OUTER_ATTRIBUTE), "..."
+        ));
     }
 
 
-
-    private static void type_item(LexerfulGrammarBuilder b) {
+    /* https://doc.rust-lang.org/reference/items/generics.html */
+    private static void generic_item(LexerfulGrammarBuilder b) {
+        b.rule(GENERICS).is(b.sequence("<", GENERiC_PARAMS, ">"));
+        b.rule(GENERiC_PARAMS).is(b.firstOf(
+                LIFETIME_PARAMS,
+                b.sequence(b.zeroOrMore(b.sequence(LIFETIME_PARAM, ",")), TYPE_PARAMS)
+        ));
+        b.rule(LIFETIME_PARAMS).is(b.sequence(
+                b.zeroOrMore(b.sequence(LIFETIME_PARAM, ",")), b.optional(LIFETIME_PARAM)
+        ));
+        b.rule(LIFETIME_PARAM).is(b.sequence(
+                b.optional(OUTER_ATTRIBUTE), LIFETIME_OR_LABEL, b.optional(b.sequence(":", LIFETIME_BOUNDS))
+        ));
+        b.rule(TYPE_PARAMS).is(b.sequence(
+                b.zeroOrMore(b.sequence(TYPE_PARAM, ",")), b.optional(TYPE_PARAM)
+        ));
+        b.rule(TYPE_PARAM).is(b.sequence(
+                b.optional(OUTER_ATTRIBUTE), IDENTIFIER,
+                b.optional(b.sequence(":", b.optional(TYPE_PARAM_BOUNDS))),
+                b.optional(b.sequence("=", TYPE))
+        ));
+        b.rule(WHERE_CLAUSE).is(b.sequence(
+                "where",b.zeroOrMore(b.sequence(WHERE_CLAUSE_ITEM,",")),b.optional(WHERE_CLAUSE_ITEM)
+        ));
+        b.rule(WHERE_CLAUSE_ITEM).is(b.firstOf(
+                LIFETIME_WHERE_CLAUSE_ITEM
+                , TYPE_BOUND_CLAUSE_ITEM));
+        b.rule(LIFETIME_WHERE_CLAUSE_ITEM).is(b.sequence(LIFETIME, ":", LIFETIME_BOUNDS));
+        b.rule(TYPE_BOUND_CLAUSE_ITEM).is(b.sequence(
+                b.optional(FOR_LIFETIMES), TYPE, ":", b.optional(TYPE_PARAM_BOUNDS)
+        ));
+        b.rule(FOR_LIFETIMES).is(b.sequence("for","<",LIFETIME_PARAMS, ">"));
     }
 
     private static void assoc_item(LexerfulGrammarBuilder b) {
+        b.rule(METHOD).is(b.sequence(
+                FUNCTION_QUALIFIERS, "fn", IDENTIFIER, b.optional(GENERICS),
+                "(", SELF_PARAM, b.optional(b.sequence(",", FUNCTION_PARAM)),
+                b.optional(","), ")",
+                b.optional(FUNCTION_RETURN_TYPE),b.optional(WHERE_CLAUSE),
+                BLOCK_EXPRESSION
+        ));
+        b.rule(SELF_PARAM).is(b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE), b.firstOf(
+                SHORTHAND_SELF, TYPED_SELF
+        )));
+        b.rule(SHORTHAND_SELF).is(b.sequence(
+                b.optional(b.firstOf("&", b.sequence("&", LIFETIME))),
+                b.optional("mut"), "self"
+                ));
+        b.rule(TYPED_SELF).is(b.sequence(b.optional("mut"),"self", ":", TYPE));
+
     }
 
     private static void visibility_item(LexerfulGrammarBuilder b) {
@@ -393,6 +586,9 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TOKEN).is(b.oneOrMore(
                 (b.sequence(b.zeroOrMore(RustTokenType.STRING),
                         b.zeroOrMore(RustTokenType.NUMBER)))));
+        b.rule(LIFETIME_TOKEN).is(b.sequence("'", IDENTIFIER_OR_KEYWORD));
+        b.rule(LIFETIME_OR_LABEL).is(b.sequence("'", RustTokenType.STRING));
+        b.rule(IDENTIFIER_OR_KEYWORD).is(RustTokenType.STRING);
 
         lexicalpath(b);
     }
@@ -429,11 +625,16 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence("(", MACRO_RULES, ")", ";"),
                 b.sequence("[", MACRO_RULES, "]", ";"),
                 b.sequence("{", MACRO_RULES, "}")
-                ));
+        ));
         b.rule(MACRO_RULES).is(b.sequence(
-                MACRO_RULE, b.zeroOrMore(b.sequence(",",MACRO_RULE)), b.optional(",")
+                MACRO_RULE, b.zeroOrMore(b.sequence(",", MACRO_RULE)), b.optional(",")
         ));
         b.rule(MACRO_RULE).is(b.sequence(MACRO_MATCHER, "=>", MACRO_TRANSCRIBER));
+        b.rule(MACRO_MATCHER).is(b.firstOf(
+                b.sequence("(", MACRO_MATCH, ")" ),
+                b.sequence("[", MACRO_MATCH, "]" ),
+                b.sequence("{", MACRO_MATCH, "}")
+        ));
         b.rule(MACRO_MATCH).is(b.firstOf(
                 TOKEN, //except $ and delimiters
                 MACRO_MATCHER,
@@ -442,15 +643,12 @@ public enum RustGrammar implements GrammarRuleKey {
                         , b.optional(MACRO_REP_SEP), MACRO_REP_OP)
         ));
         b.rule(MACRO_FRAG_SPEC).is(b.firstOf(
-                "block" ,"expr" , "ident" , "item" , "lifetime","literal"
-                        , "meta" ,"pat","path","stmt","tt","ty","vis"
+                "block", "expr", "ident", "item", "lifetime", "literal"
+                , "meta", "pat", "path", "stmt", "tt", "ty", "vis"
         ));
         b.rule(MACRO_REP_SEP).is(TOKEN); //except $ and delimiters
         b.rule(MACRO_REP_OP).is(b.firstOf("*", "+", "?"));
         b.rule(MACRO_TRANSCRIBER).is(DELIM_TOKEN_TREE);
-
-
-
 
 
     }
@@ -565,15 +763,15 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/types/function-pointer.html */
     private static void functionpointer(LexerfulGrammarBuilder b) {
         b.rule(BARE_FUNCTION_TYPE).is(b.sequence(
-                b.optional(FOR_LIFETIMES),FUNCTION_QUALIFIERS, "fn",
-                "(", b.optional(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC),")",
+                b.optional(FOR_LIFETIMES), FUNCTION_QUALIFIERS, "fn",
+                "(", b.optional(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC), ")",
                 b.optional(BARE_FUNCTION_RETURN_TYPE)
         ));
         b.rule(BARE_FUNCTION_RETURN_TYPE).is(b.sequence("->", TYPE_NO_BOUNDS));
         b.rule(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC).is(b.firstOf(
-                MAYBE_NAMED_FUNCTION_PARAMETERS , MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC
+                MAYBE_NAMED_FUNCTION_PARAMETERS, MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC
         ));
-        b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS).is(seq(b, MAYBE_NAMED_PARAM,","));
+        b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS).is(seq(b, MAYBE_NAMED_PARAM, ","));
         b.rule(MAYBE_NAMED_PARAM).is(b.sequence(
                 b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.optional(b.sequence(
@@ -582,7 +780,7 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(b.sequence(
                 b.zeroOrMore(b.sequence(MAYBE_NAMED_PARAM, ",")),
-                MAYBE_NAMED_PARAM, ",",b.zeroOrMore(OUTER_ATTRIBUTE),"..."
+                MAYBE_NAMED_PARAM, ",", b.zeroOrMore(OUTER_ATTRIBUTE), "..."
         ));
 
 
@@ -1031,7 +1229,6 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(LIFETIME)
         ));
         b.rule(LIFETIME).is(b.firstOf(LIFETIME_OR_LABEL, "'static", "'_"));
-        b.rule(FOR_LIFETIMES).is("for"); //not sure since reference does not say explcitly
     }
 
     public static void tupletype(LexerfulGrammarBuilder b) {
@@ -1097,10 +1294,20 @@ public enum RustGrammar implements GrammarRuleKey {
                 IDENTIFIER, "=", TYPE
         ));
 
+        b.rule(QUALIFIED_PATH_IN_EXPRESSION).is(b.sequence(
+                QUALIFIED_PATH_TYPE, b.oneOrMore(b.sequence("::", PATH_EXPR_SEGMENT))));
+
+        b.rule(QUALIFIED_PATH_TYPE).is(b.sequence(
+                "<", TYPE, b.optional(b.sequence("as", TYPE_PATH)), ">"
+        ));
+
         b.rule(QUALIFIED_PATH_IN_TYPE).is(b.sequence(QUALIFIED_PATH_TYPE, b.oneOrMore(
                 b.sequence("::", TYPE_PATH_SEGMENT)
 
         )));
+        b.rule(TYPE_PATH).is(b.sequence(
+                b.optional("::"),TYPE_PATH_SEGMENT, b.zeroOrMore(b.sequence("::", TYPE_PATH_SEGMENT))
+        ));
         b.rule(TYPE_PATH_SEGMENT).is(b.sequence(
                 PATH_IDENT_SEGMENT,
                 b.optional("::"),
@@ -1118,18 +1325,13 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(",")
         ));
 
-        b.rule(QUALIFIED_PATH_IN_EXPRESSION).is(b.sequence(
-                QUALIFIED_PATH_TYPE, b.oneOrMore(b.sequence("::", PATH_EXPR_SEGMENT))));
 
-        b.rule(QUALIFIED_PATH_TYPE).is(b.sequence(
-                "<", TYPE, b.optional(b.sequence("as", TYPE_PATH)), ">"
-        ));
 
 
     }
 
     public static void lexicaltoken(LexerfulGrammarBuilder b) {
-        b.rule(LIFE_TIME_TOKEN).is(b.firstOf(
+        b.rule(LIFETIME_TOKEN).is(b.firstOf(
                 b.sequence("'", IDENTIFIER_OR_KEYWORD),
                 b.sequence("'", "_")
         ));
