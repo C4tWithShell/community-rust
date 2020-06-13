@@ -69,6 +69,7 @@
         <sonar.branch.target>master</sonar.branch.target>
         <commons.io.version>2.5</commons.io.version>
         <junit.version>4.11</junit.version>
+        <sonar-analyzer-commons.version>1.11.0.541</sonar-analyzer-commons.version>
     </properties>
 
     <dependencyManagement>

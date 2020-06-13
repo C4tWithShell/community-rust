@@ -39,15 +39,23 @@ public class SonarComponents {
     }
 
     public void setSensorContext(SensorContext context) {
+        //TODO
     }
 
     public void registerCheckClasses(String repositoryKey, List<Class<? extends RustCheck>> checks) {
+        //TODO
     }
 
     public void saveAnalysisErrors() {
+        //TODO
     }
 
     public RustCheck[] checkClasses() {
         return checks.stream().flatMap(ce -> ce.all().stream()).toArray(RustCheck[]::new);
+    }
+
+    public boolean analysisCancelled() {
+        //TODO
+        return false;
     }
 }

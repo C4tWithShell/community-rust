@@ -24,6 +24,7 @@ import com.sonar.sslr.api.typed.ActionParser;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+import org.sonar.api.utils.log.Profiler;
 import org.sonar.plugins.rust.api.RustCheck;
 import org.sonar.plugins.rust.api.tree.Tree;
 import org.sonar.rust.ast.RustAstScanner;
@@ -57,16 +58,19 @@ public class RustScanner {
         //AstScanner for main files
         ActionParser<Tree> parser = RustParser.createParser();
         astScanner = new RustAstScanner(parser, sonarComponents);
-        astScanner.setVisitorBridge(createVisitorBridge(sonarComponents));
+        astScanner.setVisitorBridge(createVisitorBridge(codeVisitors,sonarComponents));
 
     }
 
 
     public void scan(Iterable<InputFile> sourceFiles) {
+        Profiler profiler = Profiler.create(LOG).startInfo("Rust Files AST scan");
+        astScanner.scan(sourceFiles);
+        profiler.stopInfo();
     }
 
-    private static VisitorsBridge createVisitorBridge(@Nullable SonarComponents sonarComponents) {
-        VisitorsBridge visitorsBridge = new VisitorsBridge(sonarComponents);
+    private static VisitorsBridge createVisitorBridge(Iterable visitors, @Nullable SonarComponents sonarComponents) {
+        VisitorsBridge visitorsBridge = new VisitorsBridge(visitors, sonarComponents);
 
         return visitorsBridge;
     }
