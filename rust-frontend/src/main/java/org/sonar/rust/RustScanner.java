@@ -1,42 +1,32 @@
 /**
- *
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2020 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust.metrics;
+package org.sonar.rust;
 
-import org.sonar.plugins.rust.api.RustVisitorContext;
-import org.sonar.plugins.rust.api.tree.FileInput;
+import org.sonar.api.batch.fs.InputFile;
 
-import java.util.ArrayList;
-import java.util.List;
+public class RustScanner {
 
-public class FileMetrics {
-
-    private final FileLinesVisitor fileLinesVisitor;
-    private List<Integer> functionComplexities = new ArrayList<>();
-
-    public FileMetrics(RustVisitorContext context) {
-        FileInput fileInput = context.rootTree();
-        fileLinesVisitor = new FileLinesVisitor();
-        fileLinesVisitor.scanFile(context);
+    public RustScanner(SonarComponents sonarComponents, Measurer measurer) {
     }
-    public FileLinesVisitor fileLinesVisitor() {
-        return fileLinesVisitor;
+
+
+    public void scan(Iterable<InputFile> sourceFiles) {
     }
 }

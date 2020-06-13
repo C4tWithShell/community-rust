@@ -22,6 +22,8 @@
 
 package org.elegoff.rust.checks;
 
+import org.sonar.plugins.rust.api.RustCheck;
+
 import java.util.*;
 
 public class CheckList {
@@ -30,9 +32,11 @@ public class CheckList {
     private CheckList() {
     }
 
-    public static List<Class> getChecks() {
+    public static List<Class<? extends RustCheck>> getRustChecks() {
+
         //empty array so far, until a first rule is defined
-        return new ArrayList<Class>();
+        return new ArrayList();
     }
+
 
 }

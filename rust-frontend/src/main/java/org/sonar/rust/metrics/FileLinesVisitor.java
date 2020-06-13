@@ -44,10 +44,7 @@ public class FileLinesVisitor extends RustSubscriptionCheck {
 
     private static final List<Tree.Kind> EXECUTABLE_LINES = Arrays.asList( Tree.Kind.EXPRESSION_STMT, Tree.Kind.FILE_INPUT);
 
-    @Override
-    public void scanFile(RustVisitorContext visitorContext) {
-        SubscriptionVisitor.analyze(Collections.singleton(this), visitorContext);
-    }
+
 
     @Override
     public void initialize(Context context) {
