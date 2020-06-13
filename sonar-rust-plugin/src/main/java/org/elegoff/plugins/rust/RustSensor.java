@@ -68,14 +68,12 @@ public class RustSensor implements Sensor {
 
         List<Class<? extends RustCheck>> checks = ImmutableList.<Class<? extends RustCheck>>builder()
                 .addAll(CheckList.getRustChecks())
-
                 .build();
         sonarComponents.registerCheckClasses(CheckList.REPOSITORY_KEY, checks);
 
-
         Measurer measurer = new Measurer(context, noSonarFilter);
 
-        RustScanner scanner = new RustScanner( sonarComponents, measurer);
+        RustScanner scanner = new RustScanner( sonarComponents, measurer,sonarComponents.checkClasses());
         scanner.scan(getSourceFiles());
         sonarComponents.saveAnalysisErrors();
     }

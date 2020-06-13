@@ -18,57 +18,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust.tree;
+package org.sonar.rust.ast.parser;
 
-import org.sonar.plugins.rust.api.tree.*;
 
-import java.util.List;
+import com.sonar.sslr.api.typed.ActionParser;
+import org.sonar.plugins.rust.api.tree.Tree;
 
-public class StatementListImpl extends RsTree implements StatementList {
+public final class RustParser  {
 
-    private List<Statement> statements;
-
-    public StatementListImpl(List<Statement> statements) {
-        this.statements = statements;
-    }
-
-    @Override
-    public List<Statement> statements() {
-        return statements;
-    }
-
-    @Override
-    public void accept(TreeVisitor visitor) {
-
-    }
-
-    @Override
-    public boolean is(Kind... kinds) {
-        return false;
-    }
-
-    @Override
-    public Token firstToken() {
+    public static ActionParser<Tree> createParser() {
         return null;
-    }
-
-    @Override
-    public Token lastToken() {
-        return null;
-    }
-
-    @Override
-    public Tree parent() {
-        return null;
-    }
-
-    @Override
-    public List<Tree> children() {
-        return null;
-    }
-
-    @Override
-    public Kind getKind() {
-        return null;
+        //TODO
     }
 }

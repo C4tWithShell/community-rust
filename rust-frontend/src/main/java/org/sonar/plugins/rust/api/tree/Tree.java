@@ -20,37 +20,42 @@
  */
 package org.sonar.plugins.rust.api.tree;
 
+import org.sonar.rust.tree.SyntaxToken;
+import org.sonar.sslr.grammar.GrammarRuleKey;
+
+import javax.annotation.Nullable;
 import java.util.List;
 
 public interface Tree {
 
-    void accept(TreeVisitor visitor);
-
     boolean is(Kind... kinds);
 
-    Token firstToken();
+    void accept(TreeVisitor visitor);
 
-    /**
-     * @return the last meaningful token of the Tree.
-     * Separators of simple statements (semicolon and/or newline) are not be returned by this method.
-     */
-    Token lastToken();
-
+    @Nullable
     Tree parent();
 
-    List<Tree> children();
+    @Nullable
+    SyntaxToken firstToken();
 
-    enum Kind {
-        EXPRESSION_STMT(ExpressionStatement.class),
-       FILE_INPUT(FileInput.class),
-        STATEMENT_LIST(StatementList.class),
-        STRING_LITERAL(StringLiteral.class),
-        TOKEN(Token.class);
+    @Nullable
+    SyntaxToken lastToken();
+
+    enum Kind implements GrammarRuleKey {
+       //TODO
+
+        ;
+
         final Class<? extends Tree> associatedInterface;
+
         Kind(Class<? extends Tree> associatedInterface) {
             this.associatedInterface = associatedInterface;
         }
+
+        public Class<? extends Tree> getAssociatedInterface() {
+            return associatedInterface;
+        }
     }
 
-    Kind getKind();
+    Kind kind();
 }

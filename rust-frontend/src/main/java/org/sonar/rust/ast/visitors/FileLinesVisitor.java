@@ -18,26 +18,31 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust.tree;
+package org.sonar.rust.ast.visitors;
 
-import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.GenericTokenType;
+import org.sonar.plugins.rust.api.RustSubscriptionCheck;
+import org.sonar.plugins.rust.api.RustVisitorContext;
+import org.sonar.plugins.rust.api.SubscriptionCheck;
+import org.sonar.plugins.rust.api.SubscriptionContext;
+import org.sonar.plugins.rust.api.tree.Token;
+import org.sonar.plugins.rust.api.tree.Tree;
+import org.sonar.rust.SonarComponents;
+import org.sonar.rust.SubscriptionVisitor;
+import org.sonar.rust.api.RustTokenType;
 
 import javax.annotation.Nullable;
+import java.util.*;
 
-public class StatementWithSeparator {
-    private AstNode statement;
-    private Separators separators;
+public class FileLinesVisitor extends SubscriptionVisitor {
 
-    public StatementWithSeparator(AstNode statement, @Nullable Separators separators) {
-        this.statement = statement;
-        this.separators = separators == null ? Separators.EMPTY : separators;
+    public FileLinesVisitor(SonarComponents sonarComponents) {
+        super();
+        //TODO
     }
 
-    public AstNode statement() {
-        return statement;
-    }
 
-    public Separators separator() {
-        return separators;
-    }
+
+
+
 }

@@ -19,14 +19,55 @@
  */
 package org.sonar.rust;
 
+import com.google.common.collect.Iterables;
+import com.sonar.sslr.api.typed.ActionParser;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
+import org.sonar.plugins.rust.api.RustCheck;
+import org.sonar.plugins.rust.api.tree.Tree;
+import org.sonar.rust.ast.RustAstScanner;
+import org.sonar.rust.ast.visitors.SyntaxHighlighterVisitor;
+import org.sonar.rust.ast.visitors.FileLinesVisitor;
+import org.sonar.rust.ast.parser.RustParser;
+import org.sonar.rust.model.VisitorsBridge;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class RustScanner {
+    private static final Logger LOG = Loggers.get(RustScanner.class);
 
-    public RustScanner(SonarComponents sonarComponents, Measurer measurer) {
+    private final RustAstScanner astScanner;
+
+    public RustScanner(SonarComponents sonarComponents, Measurer measurer, RustCheck... visitors) {
+
+
+        Iterable<RustCheck> codeVisitors = Iterables.concat(new ArrayList(), Arrays.asList(visitors));
+
+
+
+        if (sonarComponents != null) {
+            codeVisitors =  Iterables.concat(codeVisitors, Arrays.asList(new FileLinesVisitor(sonarComponents), new SyntaxHighlighterVisitor(sonarComponents)));
+        }
+
+        //AstScanner for main files
+        ActionParser<Tree> parser = RustParser.createParser();
+        astScanner = new RustAstScanner(parser, sonarComponents);
+        astScanner.setVisitorBridge(createVisitorBridge(sonarComponents));
+
     }
 
 
     public void scan(Iterable<InputFile> sourceFiles) {
+    }
+
+    private static VisitorsBridge createVisitorBridge(@Nullable SonarComponents sonarComponents) {
+        VisitorsBridge visitorsBridge = new VisitorsBridge(sonarComponents);
+
+        return visitorsBridge;
     }
 }
