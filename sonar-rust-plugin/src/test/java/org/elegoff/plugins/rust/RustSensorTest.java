@@ -64,7 +64,8 @@ public class RustSensorTest {
     private ActiveRules activeRules;
     private static Path workDir;
 
-    private static final String FILE_1 = "file1.rs";
+    private static final String FILE_1 = "main.rs";
+    private static final String FILE_2 = "file1.rs";
 
     @Rule
     public LogTester logTester = new LogTester();
@@ -104,7 +105,8 @@ public class RustSensorTest {
         activeRules = new ActiveRulesBuilder().build();
         InputFile inputFile = inputFile(FILE_1);
         sensor().execute(context);
-       // assertThat(logTester.logs()).contains("Starting");
+        assertThat(logTester.logs()).contains("Starting rules execution");
+        assertThat(logTester.logs()).doesNotContain("Unable to analyze file: main.rs");
         //assertThat(context.measure("moduleKey:file1.rs", CoreMetrics.NCLOC).value()).isEqualTo(22);
     }
 
