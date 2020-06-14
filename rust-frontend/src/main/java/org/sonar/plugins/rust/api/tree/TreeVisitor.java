@@ -20,5 +20,8 @@
  */
 package org.sonar.plugins.rust.api.tree;
 
+import org.sonar.rust.model.RustTree;
+
 public interface TreeVisitor {
+    void visitCompilationUnit(RustTree.CompilationUnitTreeImpl compilationUnitTree);
 }

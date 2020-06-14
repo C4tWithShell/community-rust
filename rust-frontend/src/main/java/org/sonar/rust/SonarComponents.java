@@ -58,4 +58,13 @@ public class SonarComponents {
         //TODO
         return false;
     }
+
+    public boolean shouldFailAnalysisOnException() {
+        //TODO
+        return false;
+    }
+
+    public void addAnalysisError(org.sonar.rust.AnalysisError analysisError) {
+        //TODO
+    }
 }

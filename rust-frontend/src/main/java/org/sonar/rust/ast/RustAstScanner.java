@@ -34,7 +34,7 @@ public class RustAstScanner {
     }
 
     public void scan(Iterable<InputFile> inputFiles) {
-        ProgressReport progressReport = new ProgressReport("Report about progress of Java AST analyzer", TimeUnit.SECONDS.toMillis(10));
+        ProgressReport progressReport = new ProgressReport("Report about progress of Rust AST analyzer", TimeUnit.SECONDS.toMillis(10));
         progressReport.start(Iterables.transform(inputFiles, InputFile::toString));
 
         boolean successfullyCompleted = false;

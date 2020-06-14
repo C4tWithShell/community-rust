@@ -20,6 +20,7 @@
  */
 package org.sonar.rust.ast.visitors;
 
+import com.google.common.collect.ImmutableList;
 import com.sonar.sslr.api.GenericTokenType;
 import org.sonar.plugins.rust.api.RustSubscriptionCheck;
 import org.sonar.plugins.rust.api.RustVisitorContext;
@@ -34,6 +35,8 @@ import org.sonar.rust.api.RustTokenType;
 import javax.annotation.Nullable;
 import java.util.*;
 
+import static org.sonar.plugins.rust.api.tree.Tree.Kind.TOKEN;
+
 public class FileLinesVisitor extends SubscriptionVisitor {
 
     public FileLinesVisitor(SonarComponents sonarComponents) {
@@ -43,6 +46,16 @@ public class FileLinesVisitor extends SubscriptionVisitor {
 
 
 
+        @Override
+        public List<Tree.Kind> nodesToVisit() {
+            return ImmutableList.of(TOKEN
+                   // ,METHOD, CONSTRUCTOR,
+                    //INITIALIZER, STATIC_INITIALIZER,
+                    //VARIABLE,
+                    //FOR_EACH_STATEMENT, FOR_STATEMENT, WHILE_STATEMENT, DO_STATEMENT,
+                    //LAMBDA_EXPRESSION
+                    );
 
+        }
 
 }

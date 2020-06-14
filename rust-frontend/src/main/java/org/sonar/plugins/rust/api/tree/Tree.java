@@ -21,6 +21,7 @@
 package org.sonar.plugins.rust.api.tree;
 
 import org.sonar.rust.tree.SyntaxToken;
+import org.sonar.rust.tree.SyntaxTrivia;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
 import javax.annotation.Nullable;
@@ -42,7 +43,14 @@ public interface Tree {
     SyntaxToken lastToken();
 
     enum Kind implements GrammarRuleKey {
-       //TODO
+        COMPILATION_UNIT(CompilationUnitTree.class),
+        EXPRESSION(Expression.class),
+        OTHER(Tree.class),
+
+        TOKEN(SyntaxToken.class),
+
+        TRIVIA(SyntaxTrivia.class)
+
 
         ;
 
