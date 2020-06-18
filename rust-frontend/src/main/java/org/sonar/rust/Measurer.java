@@ -5,6 +5,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.issue.NoSonarFilter;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
+import org.sonar.plugins.rust.api.RustFileScanner;
 import org.sonar.plugins.rust.api.RustFileScannerContext;
 import org.sonar.plugins.rust.api.tree.Tree;
 import org.sonar.rust.ast.visitors.LinesOfCodeVisitor;
@@ -23,6 +24,15 @@ public class Measurer extends SubscriptionVisitor{
         this.sensorContext = context;
         this.noSonarFilter = noSonarFilter;
     }
+
+    public class TestFileMeasurer implements RustFileScanner {
+        @Override
+        public void scanFile(RustFileScannerContext context) {
+            sonarFile = context.getInputFile();
+
+        }
+    }
+
 
     @Override
     public List<Tree.Kind> nodesToVisit() {

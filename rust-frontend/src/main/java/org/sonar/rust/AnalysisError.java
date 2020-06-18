@@ -3,20 +3,22 @@ package org.sonar.rust;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class AnalysisError {
-    public enum Kind {
-        PARSE_ERROR,
-        SEMANTIC_ERROR,
-        CHECK_ERROR,
-        SE_ERROR,
-    }
+public class AnalysisError
+    {
 
-    private final String message;
-    private final String cause;
-    private final String filename;
-    private final Kind kind;
+        public enum Kind {
+            PARSE_ERROR,
+            SEMANTIC_ERROR,
+            CHECK_ERROR,
+            SE_ERROR,
+        }
 
-    public AnalysisError(Exception exception, String filename, Kind kind) {
+        private final String message;
+        private final String cause;
+        private final String filename;
+        private final Kind kind;
+
+  public AnalysisError(Exception exception, String filename, Kind kind) {
         this.message = exception.getMessage() == null ? "" : exception.getMessage();
         StringWriter sw = new StringWriter();
         exception.printStackTrace(new PrintWriter(sw));
@@ -25,23 +27,24 @@ public class AnalysisError {
         this.kind = kind;
     }
 
-    public String getMessage() {
+        public String getMessage() {
         return message;
     }
 
-    public String getCause() {
+        public String getCause() {
         return cause;
     }
 
-    public String getFilename() {
+        public String getFilename() {
         return filename;
     }
 
-    public Kind getKind() {
+        public Kind getKind() {
         return kind;
     }
 
-    public int serializedSize() {
+        public int serializedSize() {
         return message.length()+cause.length()+filename.length()+ kind.name().length();
     }
-}
+    }
+

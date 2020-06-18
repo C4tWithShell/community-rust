@@ -25,7 +25,6 @@ import org.sonar.rust.tree.SyntaxTrivia;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 public interface Tree {
 
@@ -44,8 +43,9 @@ public interface Tree {
 
     enum Kind implements GrammarRuleKey {
         COMPILATION_UNIT(CompilationUnitTree.class),
-        EXPRESSION(Expression.class),
+        EXPRESSION(ExpressionTree.class),
         OTHER(Tree.class),
+        STRING_LITERAL(LiteralTree.class),
 
         TOKEN(SyntaxToken.class),
 

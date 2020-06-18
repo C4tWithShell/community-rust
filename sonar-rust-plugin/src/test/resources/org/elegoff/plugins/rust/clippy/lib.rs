@@ -147,7 +147,7 @@
 //!
 //! ```text
 //! error[E0277]: the trait bound `std::thread::Thread: HeapSize` is not satisfied
-//!  --> src/main.rs:7:5
+//!  --> src/LinesOfCode.rs:7:5
 //!   |
 //! 7 |     bad: std::thread::Thread,
 //!   |     ^^^^^^^^^^^^^^^^^^^^^^^^ the trait `HeapSize` is not implemented for `Thread`
@@ -181,7 +181,7 @@
 //!
 //! ```text
 //! warning: come on, pick a more creative name
-//!   --> src/main.rs:10:16
+//!   --> src/LinesOfCode.rs:10:16
 //!    |
 //! 10 |     static ref FOO: String = "lazy_static".to_owned();
 //!    |                ^^^

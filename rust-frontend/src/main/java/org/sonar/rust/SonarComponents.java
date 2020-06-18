@@ -1,11 +1,12 @@
 package org.sonar.rust;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.sonar.sslr.api.RecognitionException;
 import org.sonar.api.batch.fs.FileSystem;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.plugins.rust.api.RustCheck;
 
@@ -20,10 +21,11 @@ public class SonarComponents {
     private final FileSystem fs;
 
     private final List<Checks<RustCheck>> checks;
+    private static final int ERROR_SERIALIZATION_LIMIT = 100_000;
     @VisibleForTesting
     public List<AnalysisError> analysisErrors;
     private SensorContext context;
-    private final int errorsSize = 0;
+    private int errorsSize = 0;
 
     public SonarComponents(FileLinesContextFactory fileLinesContextFactory, FileSystem fs,
              CheckFactory checkFactory) {
@@ -64,7 +66,15 @@ public class SonarComponents {
         return false;
     }
 
-    public void addAnalysisError(org.sonar.rust.AnalysisError analysisError) {
+    public void addAnalysisError(AnalysisError analysisError) {
+        if (errorsSize < ERROR_SERIALIZATION_LIMIT) {
+            errorsSize += analysisError.serializedSize();
+            analysisErrors.add(analysisError);
+        }
+    }
+
+    public Object reportAnalysisError(RecognitionException any, InputFile any1) {
         //TODO
+        return null;
     }
 }

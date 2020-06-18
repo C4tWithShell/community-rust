@@ -21,8 +21,9 @@ package org.sonar.rust.api;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.TokenType;
+import org.sonar.sslr.grammar.GrammarRuleKey;
 
-public enum RustPunctuator implements TokenType {
+public enum RustPunctuator implements GrammarRuleKey {
 
 
     PLUS("+"),
@@ -73,32 +74,25 @@ public enum RustPunctuator implements TokenType {
 
     private final String value;
 
-    RustPunctuator(String word) {
-        this.value = word;
+    RustPunctuator(String value) {
+        this.value = value;
     }
 
-
-    @Override
     public String getName() {
         return name();
     }
 
-    @Override
     public String getValue() {
         return value;
     }
 
-    @Override
-    public boolean hasToBeSkippedFromAst(AstNode astNode) {
-        return false;
-    }
 
-	public static String[] punctuatorValues() {
-		RustPunctuator[] punctatorEnum = RustPunctuator.values();
-		String[] punctuators = new String[punctatorEnum.length];
-		for (int i = 0; i < punctuators.length; i++) {
-			punctuators[i] = punctatorEnum[i].getValue();
-		}
-		return punctuators;
-	}
+    public static String[] punctuatorValues() {
+        RustKeyword[] punctuatorEnum = RustKeyword.values();
+        String[] keywords = new String[punctuatorEnum.length];
+        for (int i = 0; i < keywords.length; i++) {
+            keywords[i] = punctuatorEnum[i].getValue();
+        }
+        return keywords;
+    }
 }

@@ -79,12 +79,6 @@
                 <groupId>org.sonarsource.sslr</groupId>
                 <artifactId>sslr-core</artifactId>
                 <version>${sslr.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>cglib</groupId>
-                        <artifactId>cglib-nodep</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.sonarsource.sslr-squid-bridge</groupId>
@@ -178,6 +172,12 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>org.jacoco.agent</artifactId>
                 <version>${jacoco.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib-nodep</artifactId>
+                <version>3.2.5</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

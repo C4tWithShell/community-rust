@@ -102,4 +102,6 @@ public class InternalSyntaxToken extends RustTree implements SyntaxToken {
     public void setGrammarRuleKey(GrammarRuleKey grammarRuleKey) {
         this.grammarRuleKey = grammarRuleKey;
     }
+
+
 }

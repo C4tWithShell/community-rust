@@ -1,9 +1,8 @@
 package org.sonar.rust.model;
 
 import com.google.common.collect.Iterables;
-import org.sonar.plugins.rust.api.tree.CompilationUnitTree;
-import org.sonar.plugins.rust.api.tree.Tree;
-import org.sonar.plugins.rust.api.tree.TreeVisitor;
+import com.sonar.sslr.api.typed.Optional;
+import org.sonar.plugins.rust.api.tree.*;
 import org.sonar.rust.tree.SyntaxToken;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
@@ -35,6 +34,32 @@ public abstract class RustTree implements Tree {
         return parent;
     }
 
+
+    @Override
+    @Nullable
+    public SyntaxToken firstToken() {
+        for (Tree child : getChildren()) {
+            SyntaxToken first = child.firstToken();
+            if (first != null) {
+                return first;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    @Nullable
+    public SyntaxToken lastToken() {
+        List<Tree> trees = getChildren();
+        for (int index = trees.size() - 1; index >= 0; index--) {
+            SyntaxToken last = trees.get(index).lastToken();
+            if (last != null) {
+                return last;
+            }
+        }
+        return null;
+    }
+
     @Override
     public final boolean is(Kind... kinds) {
         Kind treeKind = kind();
@@ -59,6 +84,10 @@ public abstract class RustTree implements Tree {
         return children;
     }
 
+    public void setParent(Tree parent) {
+        this.parent = parent;
+    }
+
     public int getLine() {
         SyntaxToken firstSyntaxToken = firstToken();
         if (firstSyntaxToken == null) {
@@ -67,18 +96,50 @@ public abstract class RustTree implements Tree {
         return firstSyntaxToken.line();
     }
 
+    public GrammarRuleKey getGrammarRuleKey() {
+        return grammarRuleKey;
+    }
+
+
+    public static class NotImplementedTreeImpl extends AbstractTypedTree implements ExpressionTree {
+
+        public NotImplementedTreeImpl() {
+            super(Kind.OTHER);
+        }
+
+        @Override
+        public Kind kind() {
+            return Kind.OTHER;
+        }
+
+        @Override
+        public void accept(TreeVisitor visitor) {
+            visitor.visitOther(this);
+        }
+
+        @Override
+        public boolean isLeaf() {
+            return true;
+        }
+
+        @Override
+        public Iterable<Tree> children() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     public static class CompilationUnitTreeImpl extends RustTree implements CompilationUnitTree {
 
-        private final List<Tree> types;
-        @Nullable
+
 
         private final SyntaxToken eofToken;
+        private final SyntaxToken any;
 
 
-        public CompilationUnitTreeImpl(List<Tree> types, SyntaxToken eofToken) {
+        public CompilationUnitTreeImpl(SyntaxToken any, SyntaxToken eofToken) {
             super(Kind.COMPILATION_UNIT);
-            this.types = types;
             this.eofToken = eofToken;
+            this.any = any;
         }
 
         @Override
@@ -86,12 +147,6 @@ public abstract class RustTree implements Tree {
             return Kind.COMPILATION_UNIT;
         }
 
-
-
-        @Override
-        public List<Tree> types() {
-            return types;
-        }
 
 
 
@@ -122,8 +177,7 @@ public abstract class RustTree implements Tree {
         @Override
         public Iterable<Tree> children() {
              return Iterables.concat(
-
-                    types,
+                     Collections.singletonList(any),
 
                     Collections.singletonList(eofToken));
         }

@@ -24,5 +24,5 @@ import java.util.List;
 
 
 public interface ExpressionStatement extends Statement {
-    List<Expression> expressions();
+    List<ExpressionTree> expressions();
 }

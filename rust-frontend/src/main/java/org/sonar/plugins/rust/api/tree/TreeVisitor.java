@@ -21,7 +21,12 @@
 package org.sonar.plugins.rust.api.tree;
 
 import org.sonar.rust.model.RustTree;
+import org.sonar.rust.model.expression.LiteralTreeImpl;
 
 public interface TreeVisitor {
     void visitCompilationUnit(RustTree.CompilationUnitTreeImpl compilationUnitTree);
+
+    void visitLiteral(LiteralTreeImpl literalTree);
+
+    void visitOther(Tree tree);
 }

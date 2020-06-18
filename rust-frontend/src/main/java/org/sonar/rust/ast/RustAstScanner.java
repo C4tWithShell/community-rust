@@ -1,5 +1,6 @@
 package org.sonar.rust.ast;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.sonar.sslr.api.RecognitionException;
@@ -10,11 +11,13 @@ import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.rust.api.tree.Tree;
 import org.sonar.rust.AnalysisException;
 import org.sonar.rust.SonarComponents;
+import org.sonar.rust.ast.parser.RustParser;
 import org.sonar.rust.model.VisitorsBridge;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
 import javax.annotation.Nullable;
 import java.io.InterruptedIOException;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class RustAstScanner {
@@ -102,5 +105,14 @@ public class RustAstScanner {
         } catch (Exception e2) {
             throw new AnalysisException(getAnalysisExceptionMessage(inputFile), e2);
         }
+    }
+
+
+
+    @VisibleForTesting
+    public static void scanSingleFileForTests(InputFile inputFile, VisitorsBridge visitorsBridge) {
+        RustAstScanner astScanner = new RustAstScanner(RustParser.createParser(), null);
+        astScanner.setVisitorBridge(visitorsBridge);
+        astScanner.scan(Collections.singleton(inputFile));
     }
 }

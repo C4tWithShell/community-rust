@@ -22,11 +22,12 @@ package org.sonar.rust.api;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.TokenType;
+import org.sonar.sslr.grammar.GrammarRuleKey;
 
 /*
 See https://doc.rust-lang.org/reference/keywords.html
  */
-public enum RustKeyword implements TokenType {
+public enum RustKeyword implements GrammarRuleKey {
     KW_AS("as"),
     KW_BREAK("break"),
     KW_CONST("const"),
@@ -62,6 +63,9 @@ public enum RustKeyword implements TokenType {
     KW_USE("use"),
     KW_WHERE("where"),
     KW_WHILE("while"),
+    KW_ASYNC("async"),
+    KW_AWAIT("await"),
+    KW_DYN("dyn"),
     /* Reserved keywords */
     KW_ABSTRACT("abstract"),
     KW_BECOME("become"),
@@ -76,8 +80,8 @@ public enum RustKeyword implements TokenType {
     KW_VIRTUAL("virtual"),
     KW_YIELD("yield"),
     /*Weak keywords*/
-    KW_UNION ("union"),
-    KW_STATICLIFETIME("'static")
+   // KW_UNION ("union"),
+    //KW_STATICLIFETIME("'static")
     ;
 
     private final String value;
@@ -86,21 +90,18 @@ public enum RustKeyword implements TokenType {
         this.value = value;
     }
 
-    @Override
     public String getName() {
         return name();
     }
 
-    @Override
     public String getValue() {
         return value;
     }
 
-    @Override
-    public boolean hasToBeSkippedFromAst(AstNode node) {
-        return false;
-    }
-
+    /**
+     * keywords as String.
+     * @return an array containing all keywords as typed in Java
+     */
     public static String[] keywordValues() {
         RustKeyword[] keywordsEnum = RustKeyword.values();
         String[] keywords = new String[keywordsEnum.length];

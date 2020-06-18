@@ -20,5 +20,5 @@
  */
 package org.sonar.plugins.rust.api.tree;
 
-public interface Expression extends Tree{
+public interface ExpressionTree extends Tree{
 }

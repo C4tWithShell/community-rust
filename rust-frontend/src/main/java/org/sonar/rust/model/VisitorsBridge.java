@@ -1,5 +1,6 @@
 package org.sonar.rust.model;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.sonar.sslr.api.RecognitionException;
 import org.sonar.api.batch.fs.InputFile;
@@ -9,7 +10,6 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.check.Rule;
 import org.sonar.plugins.rust.api.IssuableSubscriptionVisitor;
-import org.sonar.plugins.rust.api.RustCheck;
 import org.sonar.plugins.rust.api.RustFileScanner;
 import org.sonar.plugins.rust.api.RustFileScannerContext;
 import org.sonar.plugins.rust.api.tree.CompilationUnitTree;
@@ -19,6 +19,7 @@ import org.sonar.rust.resolve.SemanticModel;
 import org.sonar.rust.tree.SyntaxToken;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.io.InterruptedIOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -48,6 +49,14 @@ public class VisitorsBridge {
         }
     }
 
+    @VisibleForTesting
+    public VisitorsBridge(RustFileScanner visitor) {
+        this(Collections.singletonList(visitor),  null);
+    }
+
+
+
+
     public void endOfAnalysis() {
         if(!classesNotFound.isEmpty()) {
             String message = "";
@@ -69,7 +78,7 @@ public class VisitorsBridge {
 
     public void visitFile(@Nullable Tree parsedTree) {
         semanticModel = null;
-        CompilationUnitTree tree = new RustTree.CompilationUnitTreeImpl( new ArrayList<>(), null);
+        CompilationUnitTree tree = new RustTree.CompilationUnitTreeImpl(null, null);
         boolean fileParsed = parsedTree != null;
         if (fileParsed && parsedTree.is(Tree.Kind.COMPILATION_UNIT)) {
             tree = (CompilationUnitTree) parsedTree;
