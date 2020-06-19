@@ -330,7 +330,7 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(SPACING).is(
                 b.skippedTrivia(whitespace(b)),
                 b.zeroOrMore(
-                        b.commentTrivia(b.firstOf(inlineComment(b), multilineComment(b))),
+                        b.commentTrivia(BLOCK_COMMENT_OR_DOC),
                         b.skippedTrivia(whitespace(b))));
 
 
@@ -338,9 +338,11 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(EOF).is(b.token(GenericTokenType.EOF, b.endOfInput()));
 
 
-        b.rule(CHAR_LITERAL).is("'",
-                b.firstOf(b.regexp("~[' \\ \\n \\r \\t]"), QUOTE_ESCAPE , ASCII_ESCAPE , UNICODE_ESCAPE),
-                "'", SPACING);
+        b.rule(CHAR_LITERAL).is(
+                b.firstOf(b.regexp("^\\'[^\\\\n\\r\\t\\'].*\\'"),
+                        b.sequence("'",UNICODE_ESCAPE,"'"),
+                        b.sequence("'",QUOTE_ESCAPE,"'"),
+                        b.sequence("'",ASCII_ESCAPE,"'")));
 
         b.rule(RustTokenType.STRING_LITERAL).is(stringLiteral(b), SPACING);
 
@@ -1637,12 +1639,12 @@ public enum RustLexer implements GrammarRuleKey {
 
     private static void  characters(LexerlessGrammarBuilder b) {
 
-        b.rule(QUOTE_ESCAPE).is(b.firstOf("'", "\""));
+        b.rule(QUOTE_ESCAPE).is(b.firstOf("\\'", "\\\""));
         b.rule(ASCII_ESCAPE).is(b.firstOf(b.sequence("\\x", OCT_DIGIT, HEX_DIGIT),
-                "\n" , "\r", "\t" , "\\","\0"));
+                "\\n" , "\\r", "\\t" , "\\","\0"));
         b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT,b.zeroOrMore("_"))), "}");
         b.rule(STRING_LITERAL).is("\"", b.zeroOrMore(b.firstOf(
-                b.regexp(" ~[\" \\ \\r \\n]"),QUOTE_ESCAPE
+                b.regexp("[^\" \\ \\r \\n].*"),QUOTE_ESCAPE
                 , ASCII_ESCAPE
                 , UNICODE_ESCAPE
                 , STRING_CONTINUE)));

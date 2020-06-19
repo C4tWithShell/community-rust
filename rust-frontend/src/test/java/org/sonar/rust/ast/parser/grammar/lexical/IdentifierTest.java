@@ -4,14 +4,15 @@ import org.junit.Test;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.ast.parser.RustGrammar;
 import org.sonar.rust.ast.parser.RustLexer;
+import org.sonar.rust.ast.parser.grammar.GrammarTest;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
 import org.sonar.sslr.tests.Assertions;
 
 
-public class IdentifierTest {
+public class IdentifierTest extends GrammarTest  {
 
-    private final LexerlessGrammar g = RustLexer.createGrammarBuilder().build();
+
 
     @Test
     public void checkIDENTIFIER_OR_KEYWORD() {

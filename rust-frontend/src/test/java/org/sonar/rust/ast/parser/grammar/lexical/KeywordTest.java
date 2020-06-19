@@ -2,14 +2,14 @@ package org.sonar.rust.ast.parser.grammar.lexical;
 
 import org.junit.Test;
 import org.sonar.rust.ast.parser.RustLexer;
+import org.sonar.rust.ast.parser.grammar.GrammarTest;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.tests.Assertions;
 
 
 
-public class KeywordTest {
+public class KeywordTest extends GrammarTest {
 
-    private final LexerlessGrammar g = RustLexer.createGrammarBuilder().build();
 
     @Test
     public void checkList() {
