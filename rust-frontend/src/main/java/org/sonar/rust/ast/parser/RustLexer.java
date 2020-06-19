@@ -24,14 +24,10 @@ import org.sonar.api.internal.apachecommons.lang.ArrayUtils;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.rust.api.RustTokenType;
-import org.sonar.sslr.grammar.GrammarRuleBuilder;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
 
 import java.util.Arrays;
-
-import static com.sonar.sslr.impl.channel.RegexpChannelBuilder.or;
-import static org.sonar.rust.api.RustTokenType.DOUBLE_LITERAL;
 
 public enum RustLexer implements GrammarRuleKey {
     ABI,
@@ -303,7 +299,7 @@ public enum RustLexer implements GrammarRuleKey {
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
     WHITESPACE,
-    WILDCARD_PATTERN, LINE_COMMENT;
+    WILDCARD_PATTERN, LINE_COMMENT, BLOCK_COMMENT, BLOCK_COMMENT_OR_DOC, INNER_LINE_DOC, INNER_BLOCK_DOC, OUTER_LINE_DOC, OUTER_BLOCK_DOC;
 
     private static String IDF_REGEXP1 = "[a-zA-Z][a-z A-Z 0-9 _]*";
     private static String IDF_REGEXP2="_[a-z A-Z 0-9 _]+";
@@ -336,12 +332,7 @@ public enum RustLexer implements GrammarRuleKey {
                 b.zeroOrMore(
                         b.commentTrivia(b.firstOf(inlineComment(b), multilineComment(b))),
                         b.skippedTrivia(whitespace(b))));
-        b.rule(LINE_COMMENT).is(b.commentTrivia(
-                 b.regexp("////[^!/\\n]*|//[^!/\\n]*")
-                )
 
-
-        );
 
 
         b.rule(EOF).is(b.token(GenericTokenType.EOF, b.endOfInput()));
@@ -358,6 +349,30 @@ public enum RustLexer implements GrammarRuleKey {
                 b.nextNot(KEYWORD),
                 ASCII_FOR_STRING,
                 SPACING);
+
+        comments(b);
+    }
+
+    private static void comments(LexerlessGrammarBuilder b){
+        b.rule(LINE_COMMENT).is(b.commentTrivia(
+                b.regexp("////[^!/\\n]*|//[^!/\\n]*")
+                ));
+        b.rule(BLOCK_COMMENT).is(b.commentTrivia(
+                b.firstOf(
+                "/***/",
+                "/**/",
+                b.regexp("^\\/\\*\\*\\*.*\\*\\/")
+        )));
+        b.rule(INNER_LINE_DOC).is(b.commentTrivia(b.regexp("(?!\\n\\r)//!.*")));
+        b.rule(INNER_BLOCK_DOC).is(
+                        b.regexp("^\\/\\*!.*\\*\\/")
+        );
+        b.rule(OUTER_LINE_DOC).is(b.commentTrivia(b.regexp("///[^\\r\\n\\/]*")));
+        b.rule(OUTER_BLOCK_DOC).is(b.regexp("^\\/\\*\\*[^\\r\\n\\*].*\\*\\/")
+                );
+        b.rule(BLOCK_COMMENT_OR_DOC).is(b.commentTrivia(
+                b.firstOf(BLOCK_COMMENT, OUTER_BLOCK_DOC, INNER_BLOCK_DOC)
+        ));
     }
 
     private static Object stringLiteral(LexerlessGrammarBuilder b) {
