@@ -110,6 +110,30 @@ public class LitteralsTest extends GrammarTest {
 
     }
 
+    @Test
+    public void testAsciiString() {
+        Assertions.assertThat(g.rule(RustLexer.ASCII_FOR_STRING))
+                .matches("a")
+                .matches("abc string")
+                ;
+    }
+
+
+
+
+    @Test
+    public void testByteStringLiteral() {
+        Assertions.assertThat(g.rule(RustLexer.BYTE_STRING_LITERAL))
+                .matches("b\"a\"")
+                .matches("b\"5\"")
+                .matches("b\"a string\"")
+                .matches("b\"\\xff\"")
+        ;
+
+    }
+
+
+
 
 
 }

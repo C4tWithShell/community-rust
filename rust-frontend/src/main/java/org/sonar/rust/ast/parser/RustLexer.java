@@ -1570,7 +1570,6 @@ public enum RustLexer implements GrammarRuleKey {
 
 
         b.rule(DELIMITERS).is(b.firstOf("{","}", "[","]","(",")"));
-        b.rule(ASCII_FOR_STRING).is(b.regexp("[\\x00-\\x7F]"));// except ", \ and IsolatedCR (lookahead? (?![m-o])[a-z])
 
         characters(b);
         bytes(b);
@@ -1595,22 +1594,22 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     private static void bytes(LexerlessGrammarBuilder b) {
-       
+
         b.rule(BYTE_LITERAL).is(b.firstOf(
                 b.regexp("^b\\'"+"[^\\'\\n\\r\\t\\\\].*"+"\\'"),
                 b.sequence("b'",BYTE_ESCAPE,"'")
                 ));
 
         b.rule(ASCII_FOR_CHAR).is(b.regexp("[^\\'\\n\\r\\t\\\\].*"));
+        b.rule(ASCII_FOR_STRING).is(b.regexp("[^\"\\r\\\\].*"));// except ", \ and IsolatedCR (lookahead? (?![m-o])[a-z])
 
+        b.rule(BYTE_STRING_LITERAL).is(b.firstOf(
+                b.regexp("^b\""+"[^\"\\r\\\\].*"+"\""),
+                b.sequence("b\"",BYTE_ESCAPE,"\"")
+        ));
 
-        b.rule(BYTE_STRING_LITERAL).is("b", "\"", b.zeroOrMore(b.firstOf(
-                ASCII_FOR_STRING, BYTE_ESCAPE, STRING_CONTINUE
-        )), "\"");
 
         b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\", "\\0"));
-
-
 
         b.rule(RAW_BYTE_STRING_LITERAL).is("br",RAW_BYTE_STRING_CONTENT);
         b.rule(RAW_BYTE_STRING_CONTENT).is(b.firstOf(
