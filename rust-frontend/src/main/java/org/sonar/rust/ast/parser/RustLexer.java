@@ -55,7 +55,8 @@ public enum RustLexer implements GrammarRuleKey {
     BOOLEAN_LITERAL,
     BORROW_EXPRESSION,
     BREAK_EXPRESSION,
-    BYTE_ESCAPE, STRING_CONTINUE,
+    BYTE_ESCAPE,
+    STRING_CONTINUE,
     BYTE_LITERAL,
     BYTE_STRING_LITERAL,
     CALL_EXPRESSION,
@@ -1594,15 +1595,22 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     private static void bytes(LexerlessGrammarBuilder b) {
-        b.rule(BYTE_LITERAL).is("b'", b.firstOf(ASCII_FOR_CHAR , BYTE_ESCAPE), "'", SPACING);
-        b.rule(ASCII_FOR_CHAR).is(b.regexp("[\\x00-\\x7F]"));//except ', \, \n, \r or \t
+       
+        b.rule(BYTE_LITERAL).is(b.firstOf(
+                b.regexp("^b\\'"+"[^\\'\\n\\r\\t\\\\].*"+"\\'"),
+                b.sequence("b'",BYTE_ESCAPE,"'")
+                ));
+
+        b.rule(ASCII_FOR_CHAR).is(b.regexp("[^\\'\\n\\r\\t\\\\].*"));
 
 
         b.rule(BYTE_STRING_LITERAL).is("b", "\"", b.zeroOrMore(b.firstOf(
                 ASCII_FOR_STRING, BYTE_ESCAPE, STRING_CONTINUE
         )), "\"");
-        b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT),
-                "\n" , "\r", "\t" , "\\","\0"));
+
+        b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\", "\\0"));
+
+
 
         b.rule(RAW_BYTE_STRING_LITERAL).is("br",RAW_BYTE_STRING_CONTENT);
         b.rule(RAW_BYTE_STRING_CONTENT).is(b.firstOf(
@@ -1651,7 +1659,7 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(STRING_CONTINUE).is("\\\n");
         b.rule(RAW_STRING_LITERAL).is("r", RAW_STRING_CONTENT);
         b.rule(RAW_STRING_CONTENT).is(b.firstOf(
-                b.sequence("\"",b.zeroOrMore(b.regexp("~[\r \n]")), "\""),
+                b.regexp("^\"[^\\r\\n].*\""),
                 b.sequence("#",RAW_STRING_CONTENT, "#")));
 
 
@@ -1673,7 +1681,7 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(OCT_DIGIT).is(b.regexp("[0-7]"));
         b.rule(DEC_DIGIT).is(b.regexp("[0-9]"));
         b.rule(NON_ZERO_DEC_DIGIT).is(b.regexp("[1-9]"));
-        b.rule(HEX_DIGIT).is(b.regexp("[0-9 a-f A-F]"));
+        b.rule(HEX_DIGIT).is(b.regexp("[0-9a-fA-F]"));
         b.rule(INTEGER_SUFFIX).is(b.firstOf("u8", "u16", "u32", "u64", "u128", "usize"
                 , "i8", "i16", "i32", "i64", "i128", "isize"));
 
