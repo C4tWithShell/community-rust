@@ -71,7 +71,7 @@ public class LitteralsTest extends GrammarTest {
     }
 
     @Test
-    public void testByteEscape(){
+    public void testByteEscape() {
         Assertions.assertThat(g.rule(RustLexer.BYTE_ESCAPE))
                 .matches("\\xff")
                 .matches("\\xBB")
@@ -81,11 +81,11 @@ public class LitteralsTest extends GrammarTest {
                 .matches("\\t")
                 .matches("\\")
 
-                ;
-   }
+        ;
+    }
 
     @Test
-    public void testAsciiChar(){
+    public void testAsciiChar() {
         Assertions.assertThat(g.rule(RustLexer.ASCII_FOR_CHAR))
                 .matches("a")
                 .matches("5")
@@ -115,10 +115,8 @@ public class LitteralsTest extends GrammarTest {
         Assertions.assertThat(g.rule(RustLexer.ASCII_FOR_STRING))
                 .matches("a")
                 .matches("abc string")
-                ;
+        ;
     }
-
-
 
 
     @Test
@@ -132,8 +130,100 @@ public class LitteralsTest extends GrammarTest {
 
     }
 
+    @Test
+    public void testRawByteStrings() {
+        Assertions.assertThat(g.rule(RustLexer.RAW_BYTE_STRING_LITERAL))
+                .matches("br\"foo\"")
+                .matches("br#\"\"foo\"\"#")
+                .matches("br\"R\"")
+                .matches("br\"\\x52\"")
+
+        ;
+    }
+
+    @Test
+    public void testDecLiteral() {
+        Assertions.assertThat(g.rule(RustLexer.DEC_LITERAL))
+                .matches("123")
+        ;
+
+    }
+
+    @Test
+    public void testHexa() {
+        Assertions.assertThat(g.rule(RustLexer.HEX_LITERAL))
+                .matches("0xf") // type i32
+                .matches("0xff")
+
+        ;
+    }
+
+        @Test
+        public void testOct(){
+            Assertions.assertThat(g.rule(RustLexer.OCT_LITERAL))
+                    .matches("0o70")
+
+            ;
 
 
+    }
+
+    @Test
+    public void testBin(){
+        Assertions.assertThat(g.rule(RustLexer.BIN_LITERAL))
+                .matches("0b1111_1111")
+
+        ;
+
+
+    }
+
+    @Test
+    public void testInteger() {
+        Assertions.assertThat(g.rule(RustLexer.INTEGER_LITERAL))
+                .matches("123") // type i32
+
+
+                .matches("123i32")                           // type i32
+                .matches("123u32")                           // type u32
+                .matches("123_u32")                          // type u32
+
+
+                .matches("0xff")                             // type i32
+                .matches("0xff_u8")                           // type u8
+
+                .matches("0o70")                             // type i32
+                .matches("0o70_i16")                          // type i16
+
+                .matches("0b1111_1111_1001_0000")            // type i32
+                .matches("0b1111_1111_1001_0000i64")          // type i64
+                .matches("0b________1")                       // type i32
+
+                .matches("0usize")  // type usize
+                // invalid suffixes
+
+                .notMatches("0invalidSuffix")
+
+// uses numbers of the wrong base
+
+                .notMatches("123AFB43")
+                .notMatches("0b0102")
+                .notMatches("0o0581")
+
+// integers too big for their type (they overflow)
+
+                //FIXME .notMatches("128_i8")
+                //FIXME .notMatches("256_u8")
+
+// bin, hex, and octal literals must have at least one digit
+
+                //FIXME .notMatches("0b_")
+                //FIXME .notMatches("0b____")
+
+
+        ;
+
+    }
 
 
 }

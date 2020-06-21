@@ -1613,10 +1613,14 @@ public enum RustLexer implements GrammarRuleKey {
 
         b.rule(RAW_BYTE_STRING_LITERAL).is("br",RAW_BYTE_STRING_CONTENT);
         b.rule(RAW_BYTE_STRING_CONTENT).is(b.firstOf(
-                b.sequence("\"", b.zeroOrMore(ASCII), "\""),
+                b.regexp("^\"[\\x00-\\x7F]*\""),
                 b.sequence("#",RAW_STRING_CONTENT,"#")
         ));
         b.rule(ASCII).is(b.regexp("[\\x00-\\x7F]"));
+
+
+
+
 
 
     }
@@ -1666,16 +1670,16 @@ public enum RustLexer implements GrammarRuleKey {
 
     /* https://doc.rust-lang.org/reference/tokens.html#integer-literals */
     private static void integerliteral(LexerlessGrammarBuilder b) {
-        b.rule(INTEGER_LITERAL).is(b.firstOf(DEC_LITERAL, BIN_LITERAL, OCT_LITERAL, HEX_LITERAL), b.optional(INTEGER_SUFFIX),SPACING);
-        b.rule(DEC_LITERAL).is(DEC_DIGIT, b.optional(b.firstOf(DEC_DIGIT, "_")));
+        b.rule(INTEGER_LITERAL).is(b.firstOf(HEX_LITERAL, OCT_LITERAL, BIN_LITERAL, DEC_LITERAL), b.optional(INTEGER_SUFFIX),SPACING);
+        b.rule(DEC_LITERAL).is(DEC_DIGIT, b.zeroOrMore(b.firstOf(DEC_DIGIT, "_")));
         b.rule(TUPLE_INDEX).is(b.firstOf("0", b.sequence(b.zeroOrMore(NON_ZERO_DEC_DIGIT),DEC_DIGIT)));
 
-        b.rule(BIN_LITERAL).is("0b", b.zeroOrMore(b.firstOf(BIN_DIGIT, "_")), BIN_DIGIT,
-                b.zeroOrMore(b.firstOf(BIN_DIGIT, "_")));
-        b.rule(OCT_LITERAL).is("0o", b.zeroOrMore(b.firstOf(OCT_DIGIT, "_")), OCT_DIGIT,
-                b.zeroOrMore(b.firstOf(OCT_DIGIT, "_")));
-        b.rule(HEX_LITERAL).is("0x", b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")), HEX_DIGIT,
-                b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")));
+        b.rule(BIN_LITERAL).is("0b", b.zeroOrMore(b.firstOf(BIN_DIGIT, "_")));
+        b.rule(OCT_LITERAL).is("0o", b.zeroOrMore(b.firstOf(OCT_DIGIT, "_")));
+        //b.rule(HEX_LITERAL).is("0x", b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")), HEX_DIGIT,
+        //        b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")));
+        b.rule(HEX_LITERAL).is("0x", b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")));
+
         b.rule(BIN_DIGIT).is(b.regexp("[0-1]"));
         b.rule(OCT_DIGIT).is(b.regexp("[0-7]"));
         b.rule(DEC_DIGIT).is(b.regexp("[0-9]"));
