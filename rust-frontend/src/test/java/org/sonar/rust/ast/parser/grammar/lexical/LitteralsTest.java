@@ -2,10 +2,10 @@ package org.sonar.rust.ast.parser.grammar.lexical;
 
 import org.junit.Test;
 import org.sonar.rust.ast.parser.RustLexer;
-import org.sonar.rust.ast.parser.grammar.GrammarTest;
+import org.sonar.rust.ast.parser.grammar.GrammarTesting;
 import org.sonar.sslr.tests.Assertions;
 
-public class LitteralsTest extends GrammarTest {
+public class LitteralsTest extends GrammarTesting {
 
     @Test
     public void testUnicode() {

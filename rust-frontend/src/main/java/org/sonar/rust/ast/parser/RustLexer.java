@@ -115,7 +115,7 @@ public enum RustLexer implements GrammarRuleKey {
     GENERIC_ARGS_BINDINGS,
     GENERIC_ARGS_LIFETIMES,
     GENERIC_ARGS_TYPES,
-    GENERiC_PARAMS,
+    GENERIC_PARAMS,
     GROUPED_EXPRESSION,
     GROUPED_PATTERN,
     HEX_DIGIT,
@@ -302,8 +302,13 @@ public enum RustLexer implements GrammarRuleKey {
     WHITESPACE,
     WILDCARD_PATTERN, LINE_COMMENT, BLOCK_COMMENT, BLOCK_COMMENT_OR_DOC, INNER_LINE_DOC, INNER_BLOCK_DOC, OUTER_LINE_DOC, OUTER_BLOCK_DOC;
 
-    private static String IDF_REGEXP1 = "[a-zA-Z][a-z A-Z 0-9 _]*";
-    private static String IDF_REGEXP2="_[a-z A-Z 0-9 _]+";
+    private static final String IDFREGEXP1 = "[a-zA-Z][a-z A-Z 0-9 _]*";
+    private static final String IDFREGEXP2 ="_[a-z A-Z 0-9 _]+";
+    private static final String UNSAFE= "unsafe";
+    private static final String CONST= "const";
+    private static final String EXTERN= "extern";
+    private static final String CRATE= "crate";
+    private static final String SUPER= "super";
 
 
     public static LexerlessGrammarBuilder createGrammarBuilder() {
@@ -414,13 +419,6 @@ public enum RustLexer implements GrammarRuleKey {
         return b.regexp("\\s*+");
     }
 
-    private static Object inlineComment(LexerlessGrammarBuilder b) {
-        return b.regexp("//[^\\n\\r]*+");
-    }
-
-    private static Object multilineComment(LexerlessGrammarBuilder b) {
-        return b.regexp("/\\*[\\s\\S]*?\\*\\/");
-    }
 
     /* recurring grammar pattern */
     private static Object seq(LexerlessGrammarBuilder b, GrammarRuleKey g, String sep) {
@@ -448,26 +446,26 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(MACRO_ITEM).is(b.firstOf(MACRO_INVOCATION_SEMI, MACRO_RULES_DEFINITION));
         modules(b);
         externcrates(b);
-        use_item(b);
-        alias_item(b);
-        functions_item(b);
+        useItem(b);
+        aliasItem(b);
+        functionsItem(b);
         structsItem(b);
-        enumerations_item(b);
-        unions_item(b);
-        constants_item(b);
-        static_item(b);
-        traits_item(b);
-        impl_item(b);
-        extblocks_item(b);
-        generic_item(b);
-        assoc_item(b);
-        visibility_item(b);
+        enumerationsItem(b);
+        unionsItem(b);
+        constantsItem(b);
+        staticItem(b);
+        traitsItem(b);
+        implItem(b);
+        extblocksItem(b);
+        genericItem(b);
+        assocItem(b);
+        visibilityItem(b);
     }
 
     /* https://doc.rust-lang.org/reference/items/traits.html */
-    private static void traits_item(LexerlessGrammarBuilder b) {
+    private static void traitsItem(LexerlessGrammarBuilder b) {
         b.rule(TRAIT).is(
-                b.optional("unsafe"), "trait", IDENTIFIER, b.optional(GENERICS),
+                b.optional(UNSAFE), "trait", IDENTIFIER, b.optional(GENERICS),
                 b.optional(b.sequence(":", b.optional(TYPE_PARAM_BOUNDS))),
                 b.optional(WHERE_CLAUSE), "{", b.zeroOrMore(TRAIT_ITEM), "}"
         );
@@ -496,7 +494,7 @@ public enum RustLexer implements GrammarRuleKey {
                 b.zeroOrMore(OUTER_ATTRIBUTE), b.optional(b.sequence(PATTERN, ":")), TYPE
         );
         b.rule(TRAIT_CONST).is(
-                "const", IDENTIFIER, ":", TYPE, b.optional(b.sequence("=", EXPRESSION)), ";"
+                CONST, IDENTIFIER, ":", TYPE, b.optional(b.sequence("=", EXPRESSION)), ";"
         );
         b.rule(TRAIT_TYPE).is(
                 "type", IDENTIFIER, b.optional(b.sequence(":", b.optional(TYPE_PARAM_BOUNDS))), ";"
@@ -504,7 +502,7 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     /* https://doc.rust-lang.org/reference/items/enumerations.html */
-    private static void enumerations_item(LexerlessGrammarBuilder b) {
+    private static void enumerationsItem(LexerlessGrammarBuilder b) {
         b.rule(ENUMERATION).is("enum", IDENTIFIER,
                 b.optional(GENERICS), b.optional(WHERE_CLAUSE), "{", ENUM_ITEMS, "}");
         b.rule(ENUM_ITEMS).is(seq(b, ENUM_ITEM, ","));
@@ -517,14 +515,14 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     /* https://doc.rust-lang.org/reference/items/type-aliases.html */
-    private static void alias_item(LexerlessGrammarBuilder b) {
+    private static void aliasItem(LexerlessGrammarBuilder b) {
         b.rule(TYPE_ALIAS).is(
                 "type", IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
                 "=", TYPE, ";"
         );
     }
 
-    private static void use_item(LexerlessGrammarBuilder b) {
+    private static void useItem(LexerlessGrammarBuilder b) {
         b.rule(USE_DECLARATION).is("use", USE_TREE, ";");
         b.rule(USE_TREE).is(b.firstOf(
                 b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), "::")),
@@ -541,7 +539,7 @@ public enum RustLexer implements GrammarRuleKey {
 
     }
 
-    private static void functions_item(LexerlessGrammarBuilder b) {
+    private static void functionsItem(LexerlessGrammarBuilder b) {
         b.rule(FUNCTION).is(
                 FUNCTION_QUALIFIERS, "fn", IDENTIFIER, b.optional(GENERICS),
                 "(", FUNCTION_PARAMETERS, ")",
@@ -550,10 +548,10 @@ public enum RustLexer implements GrammarRuleKey {
         );
         b.rule(FUNCTION_QUALIFIERS).is(
                 b.optional(ASYNC_CONST_QUALIFIERS),
-                b.optional("unsafe"),
-                b.optional(b.sequence("extern", b.optional(ABI)))
+                b.optional(UNSAFE),
+                b.optional(b.sequence(EXTERN, b.optional(ABI)))
         );
-        b.rule(ASYNC_CONST_QUALIFIERS).is(b.firstOf("const", "async"));
+        b.rule(ASYNC_CONST_QUALIFIERS).is(b.firstOf(CONST, "async"));
         b.rule(ABI).is(b.firstOf(STRING_LITERAL, RAW_STRING_LITERAL));
         b.rule(FUNCTION_PARAMETERS).is(seq(b, FUNCTION_PARAM, ","));
         b.rule(FUNCTION_PARAM).is(
@@ -588,7 +586,7 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     /* https://doc.rust-lang.org/reference/items/unions.html */
-    private static void unions_item(LexerlessGrammarBuilder b) {
+    private static void unionsItem(LexerlessGrammarBuilder b) {
         b.rule(UNION).is(
                 "union", IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
                 "{", STRUCT_FIELDS, "}"
@@ -596,23 +594,23 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     /* https://doc.rust-lang.org/reference/items/constant-items.html */
-    private static void constants_item(LexerlessGrammarBuilder b) {
+    private static void constantsItem(LexerlessGrammarBuilder b) {
         b.rule(CONSTANT_ITEM).is(
-                "const", b.firstOf(IDENTIFIER, "_"),
+                CONST, b.firstOf(IDENTIFIER, "_"),
                 ":", TYPE, "=", EXPRESSION, ";"
         );
 
     }
 
     /* https://doc.rust-lang.org/reference/items/static-items.html */
-    private static void static_item(LexerlessGrammarBuilder b) {
+    private static void staticItem(LexerlessGrammarBuilder b) {
         b.rule(STATIC_ITEM).is(
                 "static", b.optional("mut"), IDENTIFIER, ":", TYPE, "=", EXPRESSION, ";"
         );
     }
 
     /* https://doc.rust-lang.org/reference/items/implementations.html */
-    private static void impl_item(LexerlessGrammarBuilder b) {
+    private static void implItem(LexerlessGrammarBuilder b) {
         b.rule(IMPLEMENTATION).is(b.firstOf(INHERENT_IMPL, TRAIT_IMPL));
         b.rule(INHERENT_IMPL).is(
                 "impl", b.optional(GENERICS), TYPE, b.optional(WHERE_CLAUSE), "{",
@@ -626,7 +624,7 @@ public enum RustLexer implements GrammarRuleKey {
                                 CONSTANT_ITEM, FUNCTION, METHOD
                         ))));
         b.rule(TRAIT_IMPL).is(
-                b.optional("unsafe"), "impl", b.optional(GENERICS),
+                b.optional(UNSAFE), "impl", b.optional(GENERICS),
                 b.optional("!"), TYPE_PATH, "for", TYPE,
                 b.optional(WHERE_CLAUSE), "{",
                 b.zeroOrMore(INNER_ATTRIBUTE), b.zeroOrMore(TRAIT_IMPL_ITEM), "}"
@@ -642,9 +640,9 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     /* https://doc.rust-lang.org/reference/items/external-blocks.html */
-    private static void extblocks_item(LexerlessGrammarBuilder b) {
+    private static void extblocksItem(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_BLOCK).is(
-                "extern", b.optional(ABI), "{",
+                EXTERN, b.optional(ABI), "{",
                 b.zeroOrMore(INNER_ATTRIBUTE),
                 b.zeroOrMore(EXTERNAL_ITEM), "}"
         );
@@ -677,9 +675,9 @@ public enum RustLexer implements GrammarRuleKey {
 
 
     /* https://doc.rust-lang.org/reference/items/generics.html */
-    private static void generic_item(LexerlessGrammarBuilder b) {
-        b.rule(GENERICS).is("<", GENERiC_PARAMS, ">");
-        b.rule(GENERiC_PARAMS).is(b.firstOf(
+    private static void genericItem(LexerlessGrammarBuilder b) {
+        b.rule(GENERICS).is("<", GENERIC_PARAMS, ">");
+        b.rule(GENERIC_PARAMS).is(b.firstOf(
                 LIFETIME_PARAMS,
                 b.sequence(b.zeroOrMore(b.sequence(LIFETIME_PARAM, ",")), TYPE_PARAMS)));
         b.rule(LIFETIME_PARAMS).is(
@@ -709,7 +707,7 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(FOR_LIFETIMES).is("for", "<", LIFETIME_PARAMS, ">");
     }
 
-    private static void assoc_item(LexerlessGrammarBuilder b) {
+    private static void assocItem(LexerlessGrammarBuilder b) {
         b.rule(METHOD).is(
                 FUNCTION_QUALIFIERS, "fn", IDENTIFIER, b.optional(GENERICS),
                 "(", SELF_PARAM, b.optional(b.sequence(",", FUNCTION_PARAM)),
@@ -728,12 +726,14 @@ public enum RustLexer implements GrammarRuleKey {
 
     }
 
-    private static void visibility_item(LexerlessGrammarBuilder b) {
+    private static void visibilityItem(LexerlessGrammarBuilder b) {
         b.rule(VISIBILITY).is(b.firstOf(
+
+
                 "pub",
-                b.sequence("pub", "(", "crate", ")"),
+                b.sequence("pub", "(", CRATE, ")"),
                 b.sequence("pub", "(", "self", ")"),
-                b.sequence("pub", "(", "super", ")"),
+                b.sequence("pub", "(", SUPER, ")"),
                 b.sequence("pub", "(", "in", SIMPLE_PATH, ")")
 
         ));
@@ -742,7 +742,7 @@ public enum RustLexer implements GrammarRuleKey {
 
     private static void externcrates(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_CRATE).is(
-                "extern", "crate", CRATE_REF, b.optional(AS_CLAUSE)
+                EXTERN, CRATE, CRATE_REF, b.optional(AS_CLAUSE)
         );
         b.rule(CRATE_REF).is(b.firstOf(IDENTIFIER, "self"));
         b.rule(AS_CLAUSE).is("as", b.firstOf(IDENTIFIER, "_"));
@@ -785,12 +785,11 @@ public enum RustLexer implements GrammarRuleKey {
                 b.sequence(SIMPLE_PATH, "!", "[", b.zeroOrMore(TOKEN_TREE), "];"),
                 b.sequence(SIMPLE_PATH, "!", "{", b.zeroOrMore(TOKEN_TREE), "}")
         ));
-        macros_by_example(b);
-        procedural_macros(b);
+        macrosByExample(b);
     }
 
     /* https://doc.rust-lang.org/reference/macros-by-example.html */
-    private static void macros_by_example(LexerlessGrammarBuilder b) {
+    private static void macrosByExample(LexerlessGrammarBuilder b) {
         b.rule(MACRO_RULES_DEFINITION).is(
                 "macro_rule", "!", IDENTIFIER, MACRO_RULES_DEF
         );
@@ -824,9 +823,6 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(MACRO_TRANSCRIBER).is(DELIM_TOKEN_TREE);
 
 
-    }
-
-    private static void procedural_macros(LexerlessGrammarBuilder b) {
     }
 
     private static void patterns(LexerlessGrammarBuilder b) {
@@ -1003,9 +999,9 @@ public enum RustLexer implements GrammarRuleKey {
         closure(b);
         loops(b);
         range(b);
-        if_expr(b);
+        ifExpr(b);
         match(b);
-        return_expr(b);
+        returnExpr(b);
         await(b);
         b.rule(EXPRESSION).is(b.firstOf(EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
@@ -1046,7 +1042,7 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(AWAIT_EXPRESSION).is(EXPRESSION, ".", "await");
     }
 
-    private static void return_expr(LexerlessGrammarBuilder b) {
+    private static void returnExpr(LexerlessGrammarBuilder b) {
         b.rule(RETURN_EXPRESSION).is("return", b.optional(EXPRESSION));
     }
 
@@ -1084,7 +1080,7 @@ public enum RustLexer implements GrammarRuleKey {
 
     }
 
-    private static void if_expr(LexerlessGrammarBuilder b) {
+    private static void ifExpr(LexerlessGrammarBuilder b) {
         b.rule(IF_EXPRESSION).is(
                 "if", EXPRESSION, //except struct expressions !!
                 b.optional(b.sequence(
@@ -1305,7 +1301,7 @@ public enum RustLexer implements GrammarRuleKey {
                 EXPRESSION_WITHOUT_BLOCK
         ));
         b.rule(ASYNC_BLOCK_EXPRESSION).is("async", b.optional("move"), BLOCK_EXPRESSION);
-        b.rule(UNSAFE_BLOCK_EXPRESSION).is("unsafe", BLOCK_EXPRESSION);
+        b.rule(UNSAFE_BLOCK_EXPRESSION).is(UNSAFE, BLOCK_EXPRESSION);
 
     }
 
@@ -1407,7 +1403,7 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(PARENTHESIZED_TYPE).is("(", TYPE, ")");
         b.rule(TRAIT_OBJECT_TYPE).is(b.optional("dyn"), TYPE_PARAM_BOUNDS);
         b.rule(TRAIT_OBJECT_TYPE_ONE_BOUND).is(b.optional("dyn"), TRAIT_BOUND);
-        b.rule(RAW_POINTER_TYPE).is("*", b.firstOf("mut", "const"), TYPE_NO_BOUNDS);
+        b.rule(RAW_POINTER_TYPE).is("*", b.firstOf("mut", CONST), TYPE_NO_BOUNDS);
         b.rule(INFERRED_TYPE).is("_");
         b.rule(SLICE_TYPE).is("[", TYPE, "]");
         b.rule(ARRAY_TYPE).is("[", TYPE, ";", EXPRESSION, "]");
@@ -1459,7 +1455,7 @@ public enum RustLexer implements GrammarRuleKey {
                 b.zeroOrMore(b.sequence("::", SIMPLE_PATH_SEGMENT))
         );
         b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
-                IDENTIFIER, "super", "self", "crate", "$crate"
+                IDENTIFIER, SUPER, "self", CRATE, "$crate"
         ));
 
         b.rule(PATH_IN_EXPRESSION).is(
@@ -1472,7 +1468,7 @@ public enum RustLexer implements GrammarRuleKey {
                 PATH_IDENT_SEGMENT, b.optional(b.sequence("::", GENERIC_ARGS))
         );
         b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(IDENTIFIER,
-                "super", "self", "Self", "crate", "$crate"
+                SUPER, "self", "Self", CRATE, "$crate"
         ));
         b.rule(GENERIC_ARGS).is(b.firstOf(
                 b.sequence("<", ">"),
@@ -1529,23 +1525,6 @@ public enum RustLexer implements GrammarRuleKey {
         );
 
 
-    }
-
-    private static String toRegexp(String[] arr) {
-        StringBuilder sb = new StringBuilder("[");
-        //assume non empty array
-        sb.append("\"");
-        sb.append(arr[0]);
-        sb.append("\"");
-
-        for (int i = 1; i < arr.length; i++) {
-            sb.append("|");
-            sb.append("\"");
-            sb.append(arr[i]);
-            sb.append("\"");
-        }
-        sb.append("]");
-        return sb.toString();
     }
 
     public static void lexicaltoken(LexerlessGrammarBuilder b) {
@@ -1630,9 +1609,9 @@ public enum RustLexer implements GrammarRuleKey {
 
 
     private static void identifiers(LexerlessGrammarBuilder b) {
-        b.rule(IDENTIFIER_OR_KEYWORD).is(b.firstOf(b.regexp("^"+IDF_REGEXP1), b.regexp("^"+IDF_REGEXP2)));
-        b.rule(RAW_IDENTIFIER).is(b.firstOf(b.regexp("^r#"+IDF_REGEXP1+"(?<!r#(crate|self|super|Self))"), b.regexp("^r#"+IDF_REGEXP2)));;//except Except crate, self, super, Self
-        b.rule(NON_KEYWORD_IDENTIFIER).is(b.regexp("^"+IDF_REGEXP1 +exceptKeywords()));//Except a strict or reserved keyword
+        b.rule(IDENTIFIER_OR_KEYWORD).is(b.firstOf(b.regexp("^"+ IDFREGEXP1), b.regexp("^"+ IDFREGEXP2)));
+        b.rule(RAW_IDENTIFIER).is(b.firstOf(b.regexp("^r#"+ IDFREGEXP1 +"(?<!r#(crate|self|super|Self))"), b.regexp("^r#"+ IDFREGEXP2)));
+        b.rule(NON_KEYWORD_IDENTIFIER).is(b.regexp("^"+ IDFREGEXP1 +exceptKeywords()));//Except a strict or reserved keyword
         b.rule(IDENTIFIER).is(b.firstOf(RAW_IDENTIFIER,NON_KEYWORD_IDENTIFIER));
     }
 
@@ -1678,8 +1657,6 @@ public enum RustLexer implements GrammarRuleKey {
 
         b.rule(BIN_LITERAL).is("0b", b.zeroOrMore(b.firstOf(BIN_DIGIT, "_")));
         b.rule(OCT_LITERAL).is("0o", b.zeroOrMore(b.firstOf(OCT_DIGIT, "_")));
-        //b.rule(HEX_LITERAL).is("0x", b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")), HEX_DIGIT,
-        //        b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")));
         b.rule(HEX_LITERAL).is("0x", b.zeroOrMore(b.firstOf(HEX_DIGIT, "_")));
 
         b.rule(BIN_DIGIT).is(b.regexp("[0-1]"));
