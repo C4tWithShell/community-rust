@@ -384,7 +384,7 @@ public enum RustLexer implements GrammarRuleKey {
 
     private static void punctuators(LexerlessGrammarBuilder b) {
         for (RustPunctuator tokenType : RustPunctuator.values()) {
-            b.rule(tokenType).is(tokenType.getValue(), SPACING);
+            b.rule(tokenType).is(tokenType.getValue());
         }
         String[] punctuators = RustPunctuator.punctuatorValues();
         Arrays.sort(punctuators);
@@ -1580,17 +1580,19 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     private static void floatliteral(LexerlessGrammarBuilder b) {
+
         b.rule(FLOAT_LITERAL).is(b.firstOf(
-                b.sequence(DEC_LITERAL,"."),//(not immediately followed by ., _ or an identifier)
-                b.sequence(DEC_LITERAL, FLOAT_EXPONENT),
+
+                b.sequence(DEC_LITERAL,b.optional(b.sequence(".", DEC_LITERAL)), b.optional(FLOAT_EXPONENT), FLOAT_SUFFIX),
                 b.sequence(DEC_LITERAL, ".", DEC_LITERAL, b.optional(FLOAT_EXPONENT)),
-                b.sequence(DEC_LITERAL,b.optional(b.sequence(".", DEC_LITERAL)), b.optional(FLOAT_EXPONENT), FLOAT_SUFFIX)
-        ), SPACING);
-        b.rule(FLOAT_EXPONENT).is(b.sequence(
-                b.firstOf("e","E"), b.optional(b.firstOf("+","-")),
-                b.zeroOrMore(b.firstOf(DEC_DIGIT,"_")), DEC_DIGIT,b.zeroOrMore(b.firstOf(DEC_DIGIT,"_"))
+                b.sequence(DEC_LITERAL, FLOAT_EXPONENT),
+
+
+                b.sequence(DEC_LITERAL,".")//(not immediately followed by ., _ or an identifier)
         ));
-        b.rule(FLOAT_SUFFIX).is(b.firstOf("f32","f64"));
+        b.rule(FLOAT_EXPONENT).is(b.regexp("[eE]+[+-]?[0-9][0-9_]*"));
+
+        b.rule(FLOAT_SUFFIX).is(b.firstOf("f64","f32"));
     }
 
     private static void bytes(LexerlessGrammarBuilder b) {

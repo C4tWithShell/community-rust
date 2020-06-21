@@ -158,18 +158,18 @@ public class LitteralsTest extends GrammarTest {
         ;
     }
 
-        @Test
-        public void testOct(){
-            Assertions.assertThat(g.rule(RustLexer.OCT_LITERAL))
-                    .matches("0o70")
+    @Test
+    public void testOct() {
+        Assertions.assertThat(g.rule(RustLexer.OCT_LITERAL))
+                .matches("0o70")
 
-            ;
+        ;
 
 
     }
 
     @Test
-    public void testBin(){
+    public void testBin() {
         Assertions.assertThat(g.rule(RustLexer.BIN_LITERAL))
                 .matches("0b1111_1111")
 
@@ -212,16 +212,137 @@ public class LitteralsTest extends GrammarTest {
 
 // integers too big for their type (they overflow)
 
-                //FIXME .notMatches("128_i8")
-                //FIXME .notMatches("256_u8")
+        //FIXME .notMatches("128_i8")
+        //FIXME .notMatches("256_u8")
 
 // bin, hex, and octal literals must have at least one digit
 
-                //FIXME .notMatches("0b_")
-                //FIXME .notMatches("0b____")
+        //FIXME .notMatches("0b_")
+        //FIXME .notMatches("0b____")
 
 
         ;
+
+    }
+
+    @Test
+    public void testFloatSuffix() {
+        Assertions.assertThat(g.rule(RustLexer.FLOAT_SUFFIX))
+                .matches("f32")
+                .matches("f64")
+        ;
+    }
+
+    @Test
+    public void testFloatExponent() {
+        Assertions.assertThat(g.rule(RustLexer.FLOAT_EXPONENT))
+                .matches("E-33")
+                .matches("e5_1")
+                .matches("E+99_")
+        ;
+    }
+
+    @Test
+    public void testFloat() {
+        Assertions.assertThat(g.rule(RustLexer.FLOAT_LITERAL))
+                .matches("12E+99f32")
+                .matches("12E+99_f64")      // type f64
+                .matches("1.23")
+                .matches("123.0f64")       // type f64
+                .matches("0.1f64")          // type f64
+                .matches("0.1f32")         // type f32
+
+                .matches("2.")
+        ;
+    }
+
+    @Test
+    public void testBoolean() {
+        Assertions.assertThat(g.rule(RustLexer.BOOLEAN_LITERAL))
+                .matches("true")
+                .matches("false");
+    }
+
+    @Test
+    public void testLifetimeToken() {
+        Assertions.assertThat(g.rule(RustLexer.LIFETIME_TOKEN))
+                .matches("'_")
+                .matches("'abc")
+                .matches("'U123")
+                .matches("'_42")
+        ;
+    }
+
+    @Test
+    public void testLifetimeOrLabel() {
+        Assertions.assertThat(g.rule(RustLexer.LIFETIME_OR_LABEL))
+                .matches("'a")
+                .matches("'ABC")
+                .notMatches("'as") //as is a keyword
+        ;
+
+    }
+
+    @Test
+    public void testPunctuation() {
+        Assertions.assertThat(g.rule(RustLexer.PUNCTUATION))
+                .matches("+")
+                .matches("-")
+                .matches("*")
+                .matches("/")
+                .matches("%")
+                .matches("^")
+                .matches("!")
+                .matches("&")
+                .matches("||")
+                .matches("<<")
+                .matches(">>")
+                .matches("+=")
+                .matches("-=")
+                .matches("*=")
+                .matches("/=")
+                .matches("%=")
+                .matches("^=")
+                .matches("&=")
+                .matches("|=")
+                .matches("<<=")
+                .matches(">>=")
+                .matches("=")
+                .matches("==")
+                .matches("!=")
+                .matches(">")
+                .matches("<")
+                .matches(">=")
+                .matches("<=")
+                .matches("@")
+                .matches("_")
+                .matches(".")
+                .matches("..")
+                .matches("...")
+                .matches("..=")
+                .matches(",")
+                .matches(";")
+                .matches(":")
+                .matches("::")
+                .matches("->")
+                .matches("=>")
+                .matches("#")
+                .matches("$")
+                .matches("?")
+        ;
+
+    }
+
+    @Test
+    public void testDelimiters(){
+        Assertions.assertThat(g.rule(RustLexer.DELIMITERS))
+                .matches("{")
+                .matches("}")
+                .matches("(")
+                .matches(")")
+                .matches("[")
+                .matches("]")
+                ;
 
     }
 

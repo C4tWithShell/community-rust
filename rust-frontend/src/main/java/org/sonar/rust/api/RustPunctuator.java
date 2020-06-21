@@ -88,11 +88,11 @@ public enum RustPunctuator implements GrammarRuleKey {
 
 
     public static String[] punctuatorValues() {
-        RustKeyword[] punctuatorEnum = RustKeyword.values();
-        String[] keywords = new String[punctuatorEnum.length];
-        for (int i = 0; i < keywords.length; i++) {
-            keywords[i] = punctuatorEnum[i].getValue();
+        RustPunctuator[] punctuatorEnum = RustPunctuator.values();
+        String[] punctuators = new String[punctuatorEnum.length];
+        for (int i = 0; i < punctuators.length; i++) {
+            punctuators[i] = punctuatorEnum[i].getValue();
         }
-        return keywords;
+        return punctuators;
     }
 }
