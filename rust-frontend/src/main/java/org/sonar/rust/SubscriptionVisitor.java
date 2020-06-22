@@ -22,15 +22,12 @@ package org.sonar.rust;
 
 import org.sonar.plugins.rust.api.RustFileScanner;
 import org.sonar.plugins.rust.api.RustFileScannerContext;
-import org.sonar.plugins.rust.api.RustSubscriptionCheck;
-import org.sonar.plugins.rust.api.RustVisitorContext;
 import org.sonar.plugins.rust.api.tree.Tree;
 import org.sonar.rust.model.RustTree;
 import org.sonar.rust.resolve.SemanticModel;
 import org.sonar.rust.tree.SyntaxToken;
 import org.sonar.rust.tree.SyntaxTrivia;
 
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 

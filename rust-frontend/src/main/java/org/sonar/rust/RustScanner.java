@@ -34,10 +34,8 @@ import org.sonar.rust.ast.parser.RustParser;
 import org.sonar.rust.model.VisitorsBridge;
 
 import javax.annotation.Nullable;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class RustScanner {
     private static final Logger LOG = Loggers.get(RustScanner.class);
@@ -47,7 +45,7 @@ public class RustScanner {
     public RustScanner(SonarComponents sonarComponents, Measurer measurer, RustCheck... visitors) {
 
 
-        Iterable<RustCheck> codeVisitors = Iterables.concat(new ArrayList(), Arrays.asList(visitors));
+        Iterable<RustCheck> codeVisitors = Iterables.concat(new ArrayList<RustCheck>(), Arrays.asList(visitors));
 
 
 
@@ -70,8 +68,6 @@ public class RustScanner {
     }
 
     private static VisitorsBridge createVisitorBridge(Iterable visitors, @Nullable SonarComponents sonarComponents) {
-        VisitorsBridge visitorsBridge = new VisitorsBridge(visitors, sonarComponents);
-
-        return visitorsBridge;
+       return new VisitorsBridge(visitors, sonarComponents);
     }
 }

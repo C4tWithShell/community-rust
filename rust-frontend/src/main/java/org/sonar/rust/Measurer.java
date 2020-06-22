@@ -42,11 +42,9 @@ public class Measurer extends SubscriptionVisitor{
     @Override
     public void scanFile(RustFileScannerContext context) {
         sonarFile = context.getInputFile();
-        //CommentLinesVisitor commentLinesVisitor = createCommentLineVisitorAndFindNoSonar(context);
         super.setContext(context);
         scanTree(context.getTree());
 
-        //int fileComplexity = context.getComplexityNodes(context.getTree()).size();
         saveMetricOnFile(CoreMetrics.NCLOC, new LinesOfCodeVisitor().linesOfCode(context.getTree()));
     }
 

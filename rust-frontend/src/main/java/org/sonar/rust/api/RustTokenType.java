@@ -20,8 +20,6 @@
  */
 package org.sonar.rust.api;
 
-import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.TokenType;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
 public enum RustTokenType implements GrammarRuleKey {

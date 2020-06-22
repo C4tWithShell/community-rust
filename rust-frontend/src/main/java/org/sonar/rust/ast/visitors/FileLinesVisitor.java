@@ -21,18 +21,9 @@
 package org.sonar.rust.ast.visitors;
 
 import com.google.common.collect.ImmutableList;
-import com.sonar.sslr.api.GenericTokenType;
-import org.sonar.plugins.rust.api.RustSubscriptionCheck;
-import org.sonar.plugins.rust.api.RustVisitorContext;
-import org.sonar.plugins.rust.api.SubscriptionCheck;
-import org.sonar.plugins.rust.api.SubscriptionContext;
-import org.sonar.plugins.rust.api.tree.Token;
 import org.sonar.plugins.rust.api.tree.Tree;
 import org.sonar.rust.SonarComponents;
 import org.sonar.rust.SubscriptionVisitor;
-import org.sonar.rust.api.RustTokenType;
-
-import javax.annotation.Nullable;
 import java.util.*;
 
 import static org.sonar.plugins.rust.api.tree.Tree.Kind.TOKEN;

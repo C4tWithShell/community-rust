@@ -2,7 +2,6 @@ package org.sonar.plugins.rust.api;
 
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.rust.api.tree.CompilationUnitTree;
-import org.sonar.plugins.rust.api.tree.Tree;
 
 import javax.annotation.Nullable;
 import java.util.List;

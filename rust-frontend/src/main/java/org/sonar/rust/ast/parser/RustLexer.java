@@ -1455,7 +1455,7 @@ public enum RustLexer implements GrammarRuleKey {
                 b.zeroOrMore(b.sequence("::", SIMPLE_PATH_SEGMENT))
         );
         b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
-                IDENTIFIER, SUPER, "self", CRATE, "$crate"
+                SUPER, "self", CRATE, "$crate",IDENTIFIER
         ));
 
         b.rule(PATH_IN_EXPRESSION).is(
@@ -1467,8 +1467,8 @@ public enum RustLexer implements GrammarRuleKey {
         b.rule(PATH_EXPR_SEGMENT).is(
                 PATH_IDENT_SEGMENT, b.optional(b.sequence("::", GENERIC_ARGS))
         );
-        b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(IDENTIFIER,
-                SUPER, "self", "Self", CRATE, "$crate"
+        b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(
+                SUPER, "self", "Self", CRATE, "$crate",IDENTIFIER
         ));
         b.rule(GENERIC_ARGS).is(b.firstOf(
                 b.sequence("<", ">"),
@@ -1504,9 +1504,11 @@ public enum RustLexer implements GrammarRuleKey {
                 b.sequence("::", TYPE_PATH_SEGMENT)
 
         ));
-        b.rule(TYPE_PATH).is(
-                b.optional("::"), TYPE_PATH_SEGMENT, b.zeroOrMore(b.sequence("::", TYPE_PATH_SEGMENT))
-        );
+/*
+
+*/
+
+       // b.rule(TYPE_PATH).is(TYPE_PATH_SEGMENT,"::", TYPE_PATH_SEGMENT);
         b.rule(TYPE_PATH_SEGMENT).is(
                 PATH_IDENT_SEGMENT,
                 b.optional("::"),
@@ -1516,12 +1518,17 @@ public enum RustLexer implements GrammarRuleKey {
                 "(",
                 b.optional(TYPE_PATH_FN_INPUTS),
                 ")",
-                b.optional(b.sequence("->", TYPE))
+                b.optional(b.sequence(b.optional(SPACING),"->",b.optional(SPACING), TYPE))
         );
         b.rule(TYPE_PATH_FN_INPUTS).is(
                 TYPE,
                 b.zeroOrMore(b.sequence(",", TYPE)),
                 b.optional(",")
+        );
+        b.rule(TYPE_PATH).is(
+                //b.optional("::"), TYPE_PATH_SEGMENT, b.zeroOrMore(b.sequence("::", TYPE_PATH_SEGMENT))
+                b.optional("::"),TYPE_PATH_SEGMENT,  b.zeroOrMore(b.sequence( b.optional("::"), TYPE_PATH_SEGMENT))
+
         );
 
 

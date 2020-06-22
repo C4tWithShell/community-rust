@@ -1,7 +1,6 @@
 package org.sonar.rust.ast.parser;
 
 import com.sonar.sslr.api.typed.GrammarBuilder;
-import org.sonar.plugins.rust.api.tree.ExpressionTree;
 import org.sonar.rust.model.InternalSyntaxToken;
 import org.sonar.rust.model.RustTree;
 
