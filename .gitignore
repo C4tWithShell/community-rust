@@ -15,3 +15,4 @@ sonar-example-plugin.iml
 publish
 /.scannerwork/
 private-notes.txt
+*.iml

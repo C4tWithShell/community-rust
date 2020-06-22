@@ -139,8 +139,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>10</source>
-                    <target>10</target>
+                    <source>8</source>
+                    <target>8</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -162,6 +162,101 @@
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <failOnUnresolvableSignatures>false</failOnUnresolvableSignatures>
+                            <signatures>
+                                <![CDATA[
+                com.google.common.base.Preconditions#checkNotNull(java.lang.Object) @ use java.util.Objects#requireNonNull(java.lang.Object) instead
+
+                com.google.common.collect.ImmutableList#of(java.lang.Object) @ use java.util.Collections#singletonList(java.util.Objects#requireNonNull(java.lang.Object)) instead, and also consider omitting unnecessary null-checks
+                com.google.common.collect.ImmutableSet#of(java.lang.Object) @ use java.util.Collections#singleton(java.util.Objects#requireNonNull(java.lang.Object)) instead, and also consider omitting unnecessary null-checks
+
+                com.google.common.collect.ImmutableList#of() @ use java.util.Collections#emptyList() instead
+                com.google.common.collect.ImmutableSet#of() @ use java.util.Collections#emptySet() instead
+
+                # According to javadoc of following methods
+                # "for Java 7 and later: this method is now unnecessary and should be treated as deprecated"
+                @defaultMessage use diamond operator instead
+                com.google.common.collect.Lists#newArrayList()
+                com.google.common.collect.Lists#newLinkedList()
+                com.google.common.collect.Maps#newHashMap()
+                com.google.common.collect.Sets#newHashSet()
+                com.google.common.base.Objects @ use java.util.Objects instead
+                ]]>
+                            </signatures>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <minimizeJar>true</minimizeJar>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/LICENSE*</exclude>
+                                        <exclude>META-INF/NOTICE*</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>LICENSE*</exclude>
+                                        <exclude>NOTICE*</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>cglib:cglib-nodep</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.jacoco:org.jacoco.core</artifact>
+                                    <excludes>
+                                        <exclude>*.html</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.sonarsource.java:java-frontend</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>xerces:xercesImpl</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>xml-apis:xml-apis</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                            </filters>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

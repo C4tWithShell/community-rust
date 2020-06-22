@@ -79,7 +79,7 @@ public class Utils {
     }
 
     public static DefaultInputFile buildInputFile(File baseDir, String fileName) throws IOException {
-        var target = new File(baseDir, fileName);
+        File target = new File(baseDir, fileName);
         String content = Files.contentOf(target, StandardCharsets.UTF_8);
         DefaultInputFile inputFile = TestInputFileBuilder.create("ProjectKey", baseDir, target)
                 .setContents(content)
