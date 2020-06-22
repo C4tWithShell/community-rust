@@ -24,8 +24,6 @@ public class RustSensorTest {
         when(checkFactory.create(anyString())).thenReturn(checks);
     }
 
-    @Rule
-    public final TemporaryFolder tmp = new TemporaryFolder();
 
     @Test
     public void test_toString() {

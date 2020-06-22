@@ -31,8 +31,6 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.issue.NoSonarFilter;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.rust.api.RustCheck;
 import org.sonar.rust.Measurer;
 import org.sonar.rust.RustScanner;
@@ -41,7 +39,6 @@ import org.sonar.rust.SonarComponents;
 import java.util.List;
 
 public class RustSensor implements Sensor {
-    private static final Logger LOG = Loggers.get(RustSensor.class);
 
     private final SonarComponents sonarComponents;
     private final FileSystem fs;
@@ -79,12 +76,12 @@ public class RustSensor implements Sensor {
     }
 
     private Iterable<InputFile> getSourceFiles() {
-        return javaFiles(InputFile.Type.MAIN);
+        return rustFiles(InputFile.Type.MAIN);
     }
 
 
 
-    private Iterable<InputFile> javaFiles(InputFile.Type type) {
+    private Iterable<InputFile> rustFiles(InputFile.Type type) {
         return fs.inputFiles(fs.predicates().and(fs.predicates().hasLanguage(RustLanguage.KEY), fs.predicates().hasType(type)));
     }
 

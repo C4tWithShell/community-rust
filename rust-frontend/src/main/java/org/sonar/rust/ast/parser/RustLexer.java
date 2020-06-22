@@ -1504,11 +1504,7 @@ public enum RustLexer implements GrammarRuleKey {
                 b.sequence("::", TYPE_PATH_SEGMENT)
 
         ));
-/*
 
-*/
-
-       // b.rule(TYPE_PATH).is(TYPE_PATH_SEGMENT,"::", TYPE_PATH_SEGMENT);
         b.rule(TYPE_PATH_SEGMENT).is(
                 PATH_IDENT_SEGMENT,
                 b.optional("::"),
