@@ -751,8 +751,8 @@ public enum RustLexer implements GrammarRuleKey {
 
     private static void modules(LexerlessGrammarBuilder b) {
         b.rule(MODULE).is(b.firstOf(
-                b.sequence("mod", IDENTIFIER, ";"),
-                b.sequence("mod", IDENTIFIER, "{",
+                b.sequence("mod", SPACING, IDENTIFIER, b.optional(SPACING),";"),
+                b.sequence("mod", SPACING, IDENTIFIER, b.optional(SPACING), "{",
                         b.zeroOrMore(INNER_ATTRIBUTE),
                         b.zeroOrMore(ITEM), "}"
                 )));

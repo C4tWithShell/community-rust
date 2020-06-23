@@ -65,7 +65,7 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <sonar.branch.name>save-measures</sonar.branch.name>
+        <sonar.branch.name>grammar</sonar.branch.name>
         <sonar.branch.target>master</sonar.branch.target>
         <commons.io.version>2.5</commons.io.version>
         <junit.version>4.11</junit.version>
@@ -219,7 +219,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>22.0</version>
+                <version>26.0-jre</version>
             </dependency>
 
 

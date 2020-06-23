@@ -2,10 +2,10 @@ package org.sonar.rust.ast.parser.grammar.lexical;
 
 import org.junit.Test;
 import org.sonar.rust.ast.parser.RustLexer;
-import org.sonar.rust.ast.parser.grammar.GrammarTesting;
+import org.sonar.rust.ast.parser.grammar.LexerTesting;
 import org.sonar.sslr.tests.Assertions;
 
-public class PathTest extends GrammarTesting {
+public class PathTest extends LexerTesting {
 
     @Test
     public void testSimplePathSegment() {

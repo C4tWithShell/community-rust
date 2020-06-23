@@ -1,11 +1,13 @@
 package org.sonar.rust.model;
 
+import com.sonar.sslr.api.TokenType;
 import org.sonar.plugins.rust.api.tree.Tree;
 import org.sonar.plugins.rust.api.tree.TreeVisitor;
 import org.sonar.rust.tree.SyntaxToken;
 import org.sonar.rust.tree.SyntaxTrivia;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class InternalSyntaxToken extends RustTree implements SyntaxToken {
@@ -103,5 +105,8 @@ public class InternalSyntaxToken extends RustTree implements SyntaxToken {
         this.grammarRuleKey = grammarRuleKey;
     }
 
+    public int toIndex() {
+        return startIndex + value.length();
+    }
 
 }

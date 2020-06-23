@@ -1,4 +1,4 @@
-package org.sonar.rust;
+package org.sonar.rust.utils;
 
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
