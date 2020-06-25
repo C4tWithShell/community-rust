@@ -238,7 +238,7 @@
                                     </excludes>
                                 </filter>
                                 <filter>
-                                    <artifact>org.sonarsource.java:java-frontend</artifact>
+                                    <artifact>org.elegoff:rust-frontend</artifact>
                                     <includes>
                                         <include>**</include>
                                     </includes>

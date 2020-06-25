@@ -22,6 +22,7 @@ package org.sonar.plugins.rust.api;
 
 import org.sonar.api.batch.fs.InputFile;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 public class RustFile  {
@@ -41,5 +42,14 @@ public class RustFile  {
         } catch (IOException e) {
             throw new IllegalStateException("Could not read content of input file " + inputFile, e);
         }
+    }
+
+    public static RustFile create(InputFile inputFile) throws IOException {
+        return new RustFile(inputFile);
+    }
+
+    @Nullable
+    public InputFile getInputFile() {
+        return this.inputFile;
     }
 }
