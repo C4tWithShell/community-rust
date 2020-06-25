@@ -73,7 +73,7 @@ public class RustSensorTest {
 
     @Test
     public void test_analysis_cancellation() throws Exception {
-        init(false);
+        init();
         fs.add(createInputFile(FILE1));
 
         context.setCancelled(true);
@@ -84,7 +84,7 @@ public class RustSensorTest {
 
     @Test
     public void test_nothing_is_executed_if_no_file() throws Exception {
-        init(false);
+        init();
 
         sensor.execute(context);
 
@@ -93,7 +93,7 @@ public class RustSensorTest {
 
     @Test
     public void test_descriptor() throws Exception {
-        init(false);
+        init();
         DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
         sensor.describe(sensorDescriptor);
         assertThat(sensorDescriptor.name()).isEqualTo("RustSensor");
@@ -105,7 +105,7 @@ public class RustSensorTest {
      */
     @Test
     public void test_sensor() throws Exception {
-        init(false);
+        init();
         DefaultInputFile inputFile = createInputFile(FILE1);
         fs.add(inputFile);
 
@@ -114,7 +114,7 @@ public class RustSensorTest {
 
 
         // other measures
-        assertThat(context.measure(inputFile.key(), CoreMetrics.NCLOC).value()).isEqualTo(0);//FIXME
+        assertThat(context.measure(inputFile.key(), CoreMetrics.NCLOC).value()).isEqualTo(173);
 
     }
 
@@ -124,7 +124,7 @@ public class RustSensorTest {
 
     @Test
     public void should_not_execute_test_on_corrupted_file_and_should_not_raise_parsing_issue() throws Exception {
-        init(false);
+        init();
         fs.add(createInputFile(WRONG));
 
         sensor.execute(context);
@@ -134,7 +134,7 @@ public class RustSensorTest {
         assertLog("1 source files to be analyzed", false);
     }
 
-    private void init(boolean activateParsingErrorCheck) throws Exception {
+    private void init() throws Exception {
         File moduleBaseDir = new File("src/test/resources");
         context = SensorContextTester.create(moduleBaseDir);
 
@@ -204,7 +204,7 @@ public class RustSensorTest {
         sensor.execute(context);
 
         String componentKey = modulekey + ":" + filename;
-        assertThat(context.measure(componentKey, CoreMetrics.NCLOC).value()).isEqualTo(0);//FIXME
+        assertThat(context.measure(componentKey, CoreMetrics.NCLOC).value()).isEqualTo(3);
     }
 
     private void assertLog(String expected, boolean isRegexp) {
@@ -220,7 +220,7 @@ public class RustSensorTest {
     }
 
     private void initFileSystemWithFile(File file) throws Exception {
-        init(false);
+        init();
 
         DefaultInputFile inputFile = TestInputFileBuilder.create("modulekey", file.getName())
                 .setModuleBaseDir(Paths.get(file.getParent()))

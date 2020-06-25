@@ -6,6 +6,7 @@ import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.api.measures.Metric;
+import org.sonar.api.utils.Version;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.rust.api.RustFile;
@@ -13,6 +14,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,31 +35,32 @@ public class LineCounter {
     }
 
     public static void analyse(SensorContext context, FileLinesContextFactory fileLinesContextFactory, RustFile rustFile) {
-        LOG.debug("Count lines in {}", rustFile.getInputFile().uri());
+        InputFile inputFile = rustFile.getInputFile();
+        LOG.debug("Count lines in {}", inputFile.uri());
+        saveMeasures(
+                inputFile,
+                new LineCountParser(rustFile.contents()).getLineCountData(),
+                fileLinesContextFactory.createFor(inputFile), context);
 
-        Set<Integer> linesOfCode = new HashSet<>();
-        Set<Integer> commentLines = new HashSet<>();
+    }
 
-
-
-        FileLinesContext fileLinesContext = fileLinesContextFactory.createFor(rustFile.getInputFile());
-        linesOfCode.forEach(lineOfCode -> fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, lineOfCode, 1));
+    private static void saveMeasures(InputFile rustFile, LineCountData data, FileLinesContext fileLinesContext, SensorContext context) {
+        for (int line = 1; line <= data.linesNumber(); line++) {
+            fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line, data.linesOfCodeLines().contains(line) ? 1 : 0);
+            if (Version.create(7, 3).isGreaterThanOrEqual(context.getSonarQubeVersion())) {
+                fileLinesContext.setIntValue(CoreMetrics.COMMENT_LINES_DATA_KEY, line, data.effectiveCommentLines().contains(line) ? 1 : 0);
+            }
+        }
         fileLinesContext.save();
 
-        saveMeasure(context, rustFile.getInputFile(), CoreMetrics.COMMENT_LINES, commentLines.size());
-        saveMeasure(context, rustFile.getInputFile(), CoreMetrics.NCLOC, linesOfCode.size());
-
+        saveMeasure(context, rustFile, CoreMetrics.COMMENT_LINES, data.effectiveCommentLines().size());
+        saveMeasure(context, rustFile, CoreMetrics.NCLOC, data.linesOfCodeLines().size());
     }
 
 
 
 
 
-    private static void addLinesRange(Set<Integer> set, int start, int end) {
-        for (int line = start; line <= end; line++) {
-            set.add(line);
-        }
-    }
 
 
 
