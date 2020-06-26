@@ -18,17 +18,12 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust;
+package org.sonar.rust.ast.parser.grammar;
 
-import com.sonar.sslr.api.RecognitionException;
+import org.sonar.rust.ast.parser.RustLexer;
+import org.sonar.sslr.parser.LexerlessGrammar;
 
-/**
- * Interface defining how a rust check should react when errors are occurring during analysis.
- */
-public interface ExceptionHandler {
+public abstract class LexerTesting {
 
-    void processRecognitionException(RecognitionException e);
-
-    void processException(Exception e);
-
+    public final LexerlessGrammar g = RustLexer.createGrammarBuilder().build();
 }
