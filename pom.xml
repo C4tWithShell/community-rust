@@ -65,8 +65,10 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
+        <!--
         <sonar.branch.name>grammar</sonar.branch.name>
         <sonar.branch.target>master</sonar.branch.target>
+        -->
         <commons.io.version>2.5</commons.io.version>
         <junit.version>4.10</junit.version>
         <sonar-analyzer-commons.version>1.11.0.541</sonar-analyzer-commons.version>
