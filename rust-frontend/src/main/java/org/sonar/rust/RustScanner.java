@@ -43,7 +43,7 @@ public class RustScanner {
 
     private final RustAstScanner astScanner;
 
-    public RustScanner(SonarComponents sonarComponents, Measurer measurer, RustCheck... visitors) {
+    public RustScanner(SonarComponents sonarComponents,  RustCheck... visitors) {
 
 
         Iterable<RustCheck> codeVisitors = Iterables.concat(new ArrayList<RustCheck>(), Arrays.asList(visitors));
