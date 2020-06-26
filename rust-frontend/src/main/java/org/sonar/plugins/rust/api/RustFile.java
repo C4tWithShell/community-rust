@@ -44,7 +44,7 @@ public class RustFile  {
         }
     }
 
-    public static RustFile create(InputFile inputFile) throws IOException {
+    public static RustFile create(InputFile inputFile)  {
         return new RustFile(inputFile);
     }
 

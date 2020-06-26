@@ -1,4 +1,24 @@
-package org.elegoff.plugins.rust;
+/**
+ *
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2020 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+package org.elegoff.plugins.rust.lines;
 
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -10,14 +30,8 @@ import org.sonar.api.utils.Version;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.rust.api.RustFile;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 public class LineCounter {
 
@@ -47,9 +61,6 @@ public class LineCounter {
     private static void saveMeasures(InputFile rustFile, LineCountData data, FileLinesContext fileLinesContext, SensorContext context) {
         for (int line = 1; line <= data.linesNumber(); line++) {
             fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line, data.linesOfCodeLines().contains(line) ? 1 : 0);
-            if (Version.create(7, 3).isGreaterThanOrEqual(context.getSonarQubeVersion())) {
-                fileLinesContext.setIntValue(CoreMetrics.COMMENT_LINES_DATA_KEY, line, data.effectiveCommentLines().contains(line) ? 1 : 0);
-            }
         }
         fileLinesContext.save();
 

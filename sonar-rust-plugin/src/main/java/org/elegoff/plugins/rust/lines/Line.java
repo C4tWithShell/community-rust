@@ -18,17 +18,38 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust;
+package org.elegoff.plugins.rust.lines;
 
-import com.sonar.sslr.api.RecognitionException;
+public class Line {
+    private int lineNo;
+    private int start;
+    private int end;
+    private String buffer;
 
-/**
- * Interface defining how a rust check should react when errors are occurring during analysis.
- */
-public interface ExceptionHandler {
+    public Line(int lineNo, String buffer, int start, int end) {
+        this.lineNo = lineNo;
+        this.start = start;
+        this.end = end;
+        this.buffer = buffer;
+    }
 
-    void processRecognitionException(RecognitionException e);
+    public String getContent() {
+        return this.buffer.substring(this.start, this.end);
+    }
 
-    void processException(Exception e);
+    public int getLineNo() {
+        return this.lineNo;
+    }
 
+    public int getEnd() {
+        return this.end;
+    }
+
+    public int getStart() {
+        return this.start;
+    }
+
+    public String getBuffer() {
+        return this.buffer;
+    }
 }

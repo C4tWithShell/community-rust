@@ -18,17 +18,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust;
+package org.elegoff.plugins.rust.lines;
 
-import com.sonar.sslr.api.RecognitionException;
+import java.util.Set;
 
-/**
- * Interface defining how a rust check should react when errors are occurring during analysis.
- */
-public interface ExceptionHandler {
+public class LineCountData {
+    private Integer linesNumber;
+    private Set<Integer> linesOfCodeLines;
+    private Set<Integer> effectiveCommentLine;
 
-    void processRecognitionException(RecognitionException e);
+    public LineCountData(Integer linesNumber, Set<Integer> linesOfCodeLines, Set<Integer> effectiveCommentLine) {
+        this.linesNumber = linesNumber;
+        this.linesOfCodeLines = linesOfCodeLines;
+        this.effectiveCommentLine = effectiveCommentLine;
+    }
 
-    void processException(Exception e);
+    public Integer linesNumber() {
+        return linesNumber;
+    }
 
+    public Set<Integer> linesOfCodeLines() {
+        return linesOfCodeLines;
+    }
+
+    public Set<Integer> effectiveCommentLines() {
+        return effectiveCommentLine;
+    }
 }
