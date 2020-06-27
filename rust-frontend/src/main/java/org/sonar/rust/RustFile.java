@@ -18,23 +18,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust;
 
 
-package org.elegoff.rust.checks;
 
-import java.util.*;
+import java.net.URI;
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+public interface RustFile {
 
-    private CheckList() {
-    }
+    String name();
 
-    public static List<Class<? extends RustCheck>> getRustChecks() {
+    String content();
 
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
-    }
-
+    URI uri();
 
 }
