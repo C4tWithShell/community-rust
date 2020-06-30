@@ -33,7 +33,7 @@ public enum RustPunctuator implements GrammarRuleKey {
     CARET("^"),
     NOT("!"),
     AND("&"),
-    OR("||"),
+    OR("|"),
     ANDAND(""),
     OROR("||"),
     SHL("<<"),

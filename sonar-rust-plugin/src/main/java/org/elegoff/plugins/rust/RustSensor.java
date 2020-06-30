@@ -1,18 +1,19 @@
 /**
+ *
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2020 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- * <p>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -99,10 +100,10 @@ public class RustSensor implements Sensor {
         MetricsVisitor metricsVisitor = new MetricsVisitor(parserConfiguration);
         RustTokensVisitor tokensVisitor = new RustTokensVisitor(context, RustLexer.create(parserConfiguration));
 
-        Collection<RustCheck> pliChecks = checks.all();
+        Collection<RustCheck> rustChecks = checks.all();
 
         for (InputFile file : fileSystem.inputFiles(mainFilePredicates)) {
-            scanFile(context, file, metricsVisitor, tokensVisitor, parser, pliChecks);
+            scanFile(context, file, metricsVisitor, tokensVisitor, parser,rustChecks );
             if (context.isCancelled()) {
                 return;
             }
@@ -118,16 +119,16 @@ public class RustSensor implements Sensor {
             Collection<RustCheck> checks) {
 
         File file = inputFile.file();
-        SonarQubeRustFile pliFile = SonarQubeRustFile.create(inputFile);
+        SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
         RustVisitorContext visitorContext;
         try {
-            visitorContext = new RustVisitorContext(pliFile, parser.parse(file));
+            visitorContext = new RustVisitorContext(rustFile, parser.parse(file));
 
             saveMetrics(sensorContext, inputFile, visitorContext, metricsVisitor);
             tokensVisitor.scanFile(inputFile, visitorContext);
 
         } catch (RecognitionException e) {
-            visitorContext = new RustVisitorContext(pliFile, e);
+            visitorContext = new RustVisitorContext(rustFile, e);
             logParseError(sensorContext, inputFile, e);
         }
 

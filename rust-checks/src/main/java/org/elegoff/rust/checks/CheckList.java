@@ -31,7 +31,6 @@ public class CheckList {
     }
 
     public static List<Class<? extends RustCheck>> getRustChecks() {
-
         //empty array so far, until a first rule is defined
         return new ArrayList<Class<? extends RustCheck>>();
     }
