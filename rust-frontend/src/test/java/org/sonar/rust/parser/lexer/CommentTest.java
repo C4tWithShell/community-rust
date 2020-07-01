@@ -16,8 +16,8 @@ import static org.junit.Assert.assertThat;
 public class CommentTest {
     @Test
     public void reallife() {
-     //FIXME assertThat(lex("/*foo*/"), hasComment("/*foo*/"));
-     //FIXME assertThat(lex("/*foo \n bar*/"), hasComment("/*foo \n bar*/"));
+        //FIXME assertThat(lex("/*foo*/"), hasComment("/*foo*/"));
+        //FIXME assertThat(lex("/*foo \n bar*/"), hasComment("/*foo \n bar*/"));
     }
 
     private List<Token> lex(String source) {
@@ -29,7 +29,7 @@ public class CommentTest {
     }
 
     @Test
-    public void lineComment(){
+    public void lineComment() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.LINE_COMMENT))
                 .matches("//")
                 .matches("//comment")
@@ -39,11 +39,11 @@ public class CommentTest {
                 .notMatches("///")
                 .notMatches("//!")
                 .notMatches("//comment\ncomment2")
-                ;
+        ;
     }
 
     @Test
-    public void testInnerLineDoc(){
+    public void testInnerLineDoc() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.INNER_LINE_DOC))
                 .matches("//!")
                 .matches("//! - some documentation")
@@ -51,7 +51,7 @@ public class CommentTest {
     }
 
     @Test
-    public void testOuterLineDoc(){
+    public void testOuterLineDoc() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_LINE_DOC))
                 .matches("///")
                 .matches("///- some documentation")
@@ -77,16 +77,17 @@ public class CommentTest {
     }
 
     @Test
-    public void testBlockComment(){
+    public void testBlockComment() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_COMMENT))
                 .matches("/**/")
                 .matches("/***/")
+                .matches("/*  Only a comment */")
                 .matches("/*** comment */")
         ;
     }
 
     @Test
-    public void testBlockCommentOrDoc(){
+    public void testBlockCommentOrDoc() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_COMMENT_OR_DOC))
                 .matches("/**/")
                 .matches("/***/")

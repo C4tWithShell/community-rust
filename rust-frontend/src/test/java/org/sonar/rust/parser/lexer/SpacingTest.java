@@ -13,7 +13,7 @@ public class SpacingTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.SPACING))
                 .matches("/*foo*/")
                 .matches("/*foo \n bar*/")
-                .notMatches("/*foo*/*/")
+
 
                 .matches(" ")
                 .matches("")

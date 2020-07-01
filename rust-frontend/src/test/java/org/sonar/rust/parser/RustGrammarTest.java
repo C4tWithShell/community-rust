@@ -10,7 +10,7 @@ import java.util.Set;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class CompilationUnitTest {
+public class RustGrammarTest {
     @Test
     public void matchingEmpty() {
         LexerlessGrammar g = RustGrammar.create().build();
