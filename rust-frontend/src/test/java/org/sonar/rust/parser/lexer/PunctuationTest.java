@@ -12,7 +12,7 @@ public class PunctuationTest {
 
                 .matches("=").matches("+").matches("-").matches("*").matches("/").matches("%")
                 .matches("^").matches("!").matches("=").matches("=").matches("=").matches("=")
-                .matches("&").matches("||").matches("").matches("||").matches("<<").matches(">>")
+                .matches("&").matches("||").matches("&&").matches("||").matches("<<").matches(">>")
                 .matches("+=").matches("-=").matches("*=").matches("/=").matches("%=")
                 .matches("^=").matches("&=").matches("|=").matches("<<=").matches(">>=")
                 .matches("=").matches("==").matches("!=").matches(">").matches("<")

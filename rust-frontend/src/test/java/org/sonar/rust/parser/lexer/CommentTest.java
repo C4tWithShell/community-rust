@@ -16,8 +16,8 @@ import static org.junit.Assert.assertThat;
 public class CommentTest {
     @Test
     public void reallife() {
-        //FIXME assertThat(lex("/*foo*/"), hasComment("/*foo*/"));
-        //FIXME assertThat(lex("/*foo \n bar*/"), hasComment("/*foo \n bar*/"));
+        assertThat(lex("/*my comment*/"), hasComment("/*my comment*/"));
+        assertThat(lex("/*foo \n bar*/"), hasComment("/*foo \n bar*/"));
     }
 
     private List<Token> lex(String source) {

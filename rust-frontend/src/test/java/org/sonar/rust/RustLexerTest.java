@@ -10,19 +10,20 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class RustLexerTest {
     @Test
-    public void test() {
-        //FIXME
-        //assertThat(lex("")).hasSize(1);
-        //assertThat(lex("   ")).hasSize(1);
-        //assertThat(lex("foo")).hasSize(2);
-        //assertThat(lex("foo?")).hasSize(3);
+    public void testSize() {
+        assertThat(lex("")).hasSize(2);
+        assertThat(lex("   ")).hasSize(2);
+        assertThat(lex("foo")).hasSize(3);
+        assertThat(lex("foo bar")).hasSize(3);
     }
 
     private List<Token> lex(String source) {
-        return RustLexer.create(RustParserConfiguration.builder()
+        List<Token> li = RustLexer.create(RustParserConfiguration.builder()
                 .setCharset(Charsets.UTF_8)
                 .build())
                 .parse(source)
                 .getTokens();
+
+        return li;
     }
 }

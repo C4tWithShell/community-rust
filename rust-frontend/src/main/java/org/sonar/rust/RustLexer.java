@@ -35,19 +35,31 @@ public enum RustLexer implements GrammarRuleKey {
     private static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b =RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPACING, b.zeroOrMore(RustGrammar.ANYTHING), RustGrammar.EOF);
+        b.rule(TOKENS).is(RustGrammar.SPACING, b.optional(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
 
         b.setRootRule(TOKENS);
 
         return b;
     }
 
-    public static ParserAdapter createWithoutPreprocessor(Charset charset) {
-        return new ParserAdapter(charset, create().build());
+
+    private static LexerlessGrammarBuilder create(GrammarRuleKey root) {
+        LexerlessGrammarBuilder b =RustGrammar.create();
+
+        b.rule(TOKENS).is(RustGrammar.SPACING, b.zeroOrMore(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
+
+        b.setRootRule(root);
+
+        return b;
     }
 
     public static ParserAdapter create(RustParserConfiguration conf) {
         return new ParserAdapter(conf.getCharset(), create().build());
+    }
+
+
+    public static ParserAdapter create(RustParserConfiguration conf, GrammarRuleKey root) {
+        return new ParserAdapter(conf.getCharset(), create(root).build());
     }
 
 }

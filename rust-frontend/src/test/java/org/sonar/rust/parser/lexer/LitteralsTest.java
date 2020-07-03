@@ -219,15 +219,15 @@ public class LitteralsTest {
                 .notMatches("0b0102")
                 .notMatches("0o0581")
 
-// integers too big for their type (they overflow)
+// Case not supported integers too big for their type (they overflow)
 
-        //FIXME .notMatches("128_i8")
-        //FIXME .notMatches("256_u8")
+        //example .notMatches("128_i8")
+        //example .notMatches("256_u8")
 
-// bin, hex, and octal literals must have at least one digit
+// Not supported bin, hex, and octal literals must have at least one digit
 
-        //FIXME .notMatches("0b_")
-        //FIXME .notMatches("0b____")
+        //example .notMatches("0b_")
+        //example .notMatches("0b____")
 
 
         ;
@@ -352,6 +352,21 @@ public class LitteralsTest {
                 .matches("[")
                 .matches("]")
         ;
+
+    }
+
+    @Test
+    public void testLiterals(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.LITERALS))
+                .matches("'foo'")
+                .matches("'foo''bar'")
+                .matches("\"b\"")
+                .matches("\"52\"")
+                .matches("r\"foo\"")
+                .matches("b'5'")
+                .matches("+")
+                .matches("{")
+                ;
 
     }
 }

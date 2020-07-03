@@ -1,19 +1,18 @@
 /**
- *
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2020 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -34,11 +33,13 @@ public enum RustGrammar implements GrammarRuleKey {
     ABI,
     ADDITION_EXPRESSION,
     ANDEQ_EXPRESSION,
-    ANYTHING,
+    ANY_TOKEN,
     ARITHMETIC_OR_LOGICAL_EXPRESSION,
     ARRAY_ELEMENTS,
-    ARRAY_ELEMENTS_EXPRESSION1,
-    ARRAY_ELEMENTS_EXPRESSION2,
+
+    ARRAY_ELEMENTS1_TERM,
+
+    ARRAY_ELEMENTS2_TERM,
     ARRAY_EXPRESSION,
     ARRAY_TYPE,
     ASCII,
@@ -109,6 +110,8 @@ public enum RustGrammar implements GrammarRuleKey {
     EXPRESSION,
     EXPRESSION_STATEMENT,
     EXPRESSION_WITHOUT_BLOCK,
+    EXPRESSION_WITHOUT_BLOCK_ES,
+    EXPRESSION_WITHOUT_BLOCK_STS,
     EXPRESSION_WITH_BLOCK,
     EXTERNAL_FUNCTION_ITEM,
     EXTERNAL_ITEM,
@@ -116,6 +119,7 @@ public enum RustGrammar implements GrammarRuleKey {
     EXTERN_BLOCK,
     EXTERN_CRATE,
     FIELD_EXPRESSION,
+    FIELD_EXPRESSION_TERM,
     FLOAT_EXPONENT,
     FLOAT_LITERAL,
     FLOAT_SUFFIX,
@@ -147,6 +151,7 @@ public enum RustGrammar implements GrammarRuleKey {
     IMPL_TRAIT_TYPE,
     IMPL_TRAIT_TYPE_ONE_BOUND,
     INDEX_EXPRESSION,
+    INDEX_EXPRESSION_TERM,
     INFERRED_TYPE,
     INFINITE_LOOP_EXPRESSION,
     INHERENT_IMPL,
@@ -237,9 +242,12 @@ public enum RustGrammar implements GrammarRuleKey {
     QUOTE_ESCAPE,
     RANGE_EXPR,
     RANGE_EXPRESSION,
+    RANGE_EXPR_TERM,
     RANGE_FROM_EXPR,
+    RANGE_FROM_EXPR_TERM,
     RANGE_FULL_EXPR,
     RANGE_INCLUSIVE_EXPR,
+    RANGE_INCLUSIVE_EXPR_TERM,
     RANGE_PATTERN,
     RANGE_PATTERN_BOUND,
     RANGE_TO_EXPR,
@@ -306,6 +314,7 @@ public enum RustGrammar implements GrammarRuleKey {
     TRAIT_OBJECT_TYPE_ONE_BOUND,
     TRAIT_TYPE,
     TUPLE_ELEMENT,
+    TUPLE_ELEMENT_TERM,
     TUPLE_EXPRESSION,
     TUPLE_FIELD,
     TUPLE_FIELDS,
@@ -341,15 +350,15 @@ public enum RustGrammar implements GrammarRuleKey {
     VISIT_ITEM,
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
-    WILDCARD_PATTERN;
+    WILDCARD_PATTERN, TUPLE_INDEXING_EXPRESSION_TERM, TYPE_CAST_EXPRESSION_TERM;
 
     private static final String IDFREGEXP1 = "[a-zA-Z][a-z A-Z 0-9 _]*";
-    private static final String IDFREGEXP2 ="_[a-z A-Z 0-9 _]+";
-    private static final String UNSAFE= "unsafe";
-    private static final String CONST= "const";
-    private static final String EXTERN= "extern";
-    private static final String CRATE= "crate";
-    private static final String SUPER= "super";
+    private static final String IDFREGEXP2 = "_[a-z A-Z 0-9 _]+";
+    private static final String UNSAFE = "unsafe";
+    private static final String CONST = "const";
+    private static final String EXTERN = "extern";
+    private static final String CRATE = "crate";
+    private static final String SUPER = "super";
 
 
     public static LexerlessGrammarBuilder create() {
@@ -381,40 +390,41 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.token(GenericTokenType.COMMENT, b.regexp("(?s)/\\*.*?\\*/")),
                         whitespace(b))).skip();
 
-
-
-        b.rule(EOF).is(b.token(GenericTokenType.EOF, b.endOfInput()));
+        b.rule(EOF).is(b.token(GenericTokenType.EOF, b.endOfInput())).skip();
 
         b.rule(UNKNOWN_CHAR).is(
                 b.token(GenericTokenType.UNKNOWN_CHAR, b.regexp("(?s).")),
                 SPACING).skip();
 
 
-        b.rule(CHAR_LITERAL).is(
+        b.rule(CHAR_LITERAL).is(b.token(RustTokenType.CHARACTER_LITERAL,
                 b.firstOf(b.regexp("^\\'[^\\\\n\\r\\t\\'].*\\'"),
-                        b.sequence("'",UNICODE_ESCAPE,"'"),
-                        b.sequence("'",QUOTE_ESCAPE,"'"),
-                        b.sequence("'",ASCII_ESCAPE,"'")));
+                        b.sequence("'", UNICODE_ESCAPE, "'"),
+                        b.sequence("'", QUOTE_ESCAPE, "'"),
+                        b.sequence("'", ASCII_ESCAPE, "'")))).skip();
 
-        b.rule(RustTokenType.STRING_LITERAL).is(stringLiteral(b), SPACING);
+        // b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL, b.sequence(stringLiteral(b), SPACING)));
+        b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
+                b.sequence(
+                        "\"", b.zeroOrMore(b.firstOf(
+                                b.regexp("[^\" \\ \\r \\n].*"), QUOTE_ESCAPE
+                                , ASCII_ESCAPE
+                                , UNICODE_ESCAPE
+                                , STRING_CONTINUE
+                        ), SPACING))));
 
-
-        b.rule(RustTokenType.IDENTIFIER).is(
-                b.nextNot(KEYWORD),
-                ASCII_FOR_STRING,
-                SPACING);
 
         comments(b);
     }
 
-    private static void comments(LexerlessGrammarBuilder b){
+    private static void comments(LexerlessGrammarBuilder b) {
         b.rule(LINE_COMMENT).is(b.commentTrivia(
                 b.regexp("////[^!/\\n]*|//[^!/\\n]*")
-                ));
+        ));
 
         //b.rule(BLOCK_COMMENT).is(b.commentTrivia(
         //        b.firstOf(
-         //       "/***/",
+        //       "/***/",
         //        "/**/",
         //        b.sequence("/*",
         //                b.firstOf("**", BLOCK_COMMENT_OR_DOC, b.regexp("(?!\\!).*")),
@@ -424,20 +434,20 @@ public enum RustGrammar implements GrammarRuleKey {
         //)));
         b.rule(BLOCK_COMMENT).is(b.commentTrivia(
                 b.firstOf(
-              "/***/",
-                "/**/",
-                b.regexp("^\\/\\*.*\\*\\/")
-                        )
+                        "/***/",
+                        "/**/",
+                        b.regexp("^\\/\\*.*\\*\\/")
+                )
         ));
 
 
         b.rule(INNER_LINE_DOC).is(b.commentTrivia(b.regexp("(?!\\n\\r)//!.*")));
         b.rule(INNER_BLOCK_DOC).is(
-                        b.regexp("^\\/\\*!.*\\*\\/")
+                b.regexp("^\\/\\*!.*\\*\\/")
         );
         b.rule(OUTER_LINE_DOC).is(b.commentTrivia(b.regexp("///[^\\r\\n\\/]*")));
         b.rule(OUTER_BLOCK_DOC).is(b.regexp("^\\/\\*\\*[^\\r\\n\\*].*\\*\\/")
-                );
+        );
         b.rule(BLOCK_COMMENT_OR_DOC).is(b.commentTrivia(
                 b.firstOf(BLOCK_COMMENT, OUTER_BLOCK_DOC, INNER_BLOCK_DOC)
         ));
@@ -811,7 +821,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void modules(LexerlessGrammarBuilder b) {
         b.rule(MODULE).is(b.firstOf(
-                b.sequence("mod", SPACING, IDENTIFIER, b.optional(SPACING),";"),
+                b.sequence("mod", SPACING, IDENTIFIER, b.optional(SPACING), ";"),
                 b.sequence("mod", SPACING, IDENTIFIER, b.optional(SPACING), "{",
                         b.zeroOrMore(INNER_ATTRIBUTE),
                         b.zeroOrMore(ITEM), "}"
@@ -832,12 +842,14 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(MACRO_INVOCATION).is(
                 SIMPLE_PATH, "!", DELIM_TOKEN_TREE
         );
+
         b.rule(DELIM_TOKEN_TREE).is(b.firstOf(
+                b.sequence("(", ")"),
                 b.sequence("(", b.zeroOrMore(TOKEN_TREE), ")"),
                 b.sequence("[", b.zeroOrMore(TOKEN_TREE), "]"),
                 b.sequence("{", b.zeroOrMore(TOKEN_TREE), "}")));
-        b.rule(TOKEN_TREE).is(b.firstOf(
-                TOKEN, // except delimiters
+        b.rule(TOKEN_TREE).is( b.nextNot(DELIMITERS),b.firstOf(
+                IDENTIFIER_OR_KEYWORD, LITERALS, LIFETIMES, PUNCTUATION,
                 DELIM_TOKEN_TREE
         ));
         b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
@@ -1037,23 +1049,27 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(b.sequence("=", EXPRESSION)),
                 ";");
         b.rule(EXPRESSION_STATEMENT).is(b.firstOf(
-                b.sequence(EXPRESSION_WITHOUT_BLOCK, ";"),
+                b.firstOf(LITERALS, EXPRESSION_WITHOUT_BLOCK_ES),
                 b.sequence(EXPRESSION_WITH_BLOCK, b.optional(";"))
         ));
-        b.rule(ANYTHING).is(
+        b.rule(EXPRESSION_WITHOUT_BLOCK_ES).is(RustPunctuator.SEMI, EXPRESSION_WITHOUT_BLOCK_ES);
+
+        b.rule(ANY_TOKEN).is(
                 b.firstOf(
-                        IDENTIFIER,
-                        HEX_DIGIT,
-                        OCT_DIGIT,
-                        DEC_DIGIT,
                         CHAR_LITERAL,
-                        STRING_LITERAL,
+                        BYTE_LITERAL,
+                        BYTE_STRING_LITERAL,
                         INTEGER_LITERAL,
                         FLOAT_LITERAL,
-                        PUNCTUATION,
-                        DELIMITERS,
+                        BOOLEAN_LITERAL,
+                        STRING_LITERAL,
+                        RAW_STRING_LITERAL,
+                        HEX_LITERAL,
+                        OCT_LITERAL,
+                        RAW_BYTE_STRING_LITERAL,
+                        IDENTIFIER,
                         UNKNOWN_CHAR
-                        ));
+                ));
     }
 
     /* https://doc.rust-lang.org/reference/expressions.html */
@@ -1184,13 +1200,20 @@ public enum RustGrammar implements GrammarRuleKey {
                 RANGE_TO_INCLUSIVE_EXPR));
 
 
-        b.rule(RANGE_EXPR).is(EXPRESSION, "..", EXPRESSION);
+        b.rule(RANGE_EXPR).is(b.firstOf(LITERALS, RANGE_EXPR_TERM));
+        b.rule(RANGE_EXPR_TERM).is(RustPunctuator.DOTDOT, EXPRESSION, RANGE_EXPR_TERM);
 
 
-        b.rule(RANGE_FROM_EXPR).is(EXPRESSION, "..");
+        b.rule(RANGE_FROM_EXPR).is(b.firstOf(LITERALS, RANGE_FROM_EXPR_TERM));
+        b.rule(RANGE_FROM_EXPR_TERM).is(RustPunctuator.DOTDOT, RANGE_FROM_EXPR_TERM);
+
+
         b.rule(RANGE_TO_EXPR).is("..", EXPRESSION);
         b.rule(RANGE_FULL_EXPR).is("..");
-        b.rule(RANGE_INCLUSIVE_EXPR).is(EXPRESSION, "..=", EXPRESSION);
+        b.rule(RANGE_INCLUSIVE_EXPR).is(b.firstOf(LITERALS, RANGE_INCLUSIVE_EXPR_TERM));
+        b.rule(RANGE_INCLUSIVE_EXPR_TERM).is(RustPunctuator.DOTDOTDOT, EXPRESSION,RANGE_INCLUSIVE_EXPR_TERM );
+
+
         b.rule(RANGE_TO_INCLUSIVE_EXPR).is("..=", EXPRESSION);
     }
 
@@ -1225,7 +1248,8 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void field(LexerlessGrammarBuilder b) {
-        b.rule(FIELD_EXPRESSION).is(EXPRESSION, ".", IDENTIFIER);
+        b.rule(FIELD_EXPRESSION).is(b.firstOf(LITERALS, FIELD_EXPRESSION_TERM));
+        b.rule(FIELD_EXPRESSION_TERM).is(RustPunctuator.DOT, IDENTIFIER, FIELD_EXPRESSION_TERM);
     }
 
     private static void methodcall(LexerlessGrammarBuilder b) {
@@ -1238,19 +1262,18 @@ public enum RustGrammar implements GrammarRuleKey {
                         "(", b.optional(CALL_PARAMS), ")")));
 
 
-
     }
 
     private static void call(LexerlessGrammarBuilder b) {
         b.rule(CALL_EXPRESSION).is(LITERALS, CALL_EXPRESSION_TERM);
         b.rule(CALL_EXPRESSION_TERM).is(b.firstOf(LITERALS,
                 b.sequence("(", b.optional(CALL_PARAMS), ")", CALL_EXPRESSION_TERM)
-                ));
+        ));
 
-        b.rule(CALL_PARAMS).is(LITERALS, CALL_PARAMS_TERM);
-        b.rule(CALL_PARAMS_TERM).is(b.firstOf(LITERALS,
-                b.sequence(b.zeroOrMore(b.sequence("(", EXPRESSION, ")")), b.optional(","), CALL_PARAMS_TERM)
-                ));
+        b.rule(CALL_PARAMS).is(b.sequence(ANY_TOKEN, CALL_PARAMS_TERM));
+
+        b.rule(CALL_PARAMS_TERM).is
+                (b.zeroOrMore("(", EXPRESSION, ")", CALL_PARAMS_TERM), b.optional(",", CALL_PARAMS_TERM));
 
     }
 
@@ -1286,8 +1309,13 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TUPLE_EXPRESSION).is("(", b.zeroOrMore(INNER_ATTRIBUTE),
                 b.optional(TUPLE_ELEMENT),
                 ")");
-        b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.sequence(EXPRESSION, ",")), b.optional(EXPRESSION));
-        b.rule(TUPLE_INDEXING_EXPRESSION).is(EXPRESSION, ".", TUPLE_INDEX);
+        b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.firstOf(LITERALS, TUPLE_ELEMENT_TERM)), b.optional(EXPRESSION));
+
+        b.rule(TUPLE_ELEMENT_TERM).is(RustPunctuator.COMMA, TUPLE_ELEMENT_TERM);
+
+
+        b.rule(TUPLE_INDEXING_EXPRESSION).is(b.firstOf(LITERALS, TUPLE_INDEXING_EXPRESSION_TERM));
+        b.rule(TUPLE_INDEXING_EXPRESSION_TERM).is(RustPunctuator.DOT, TUPLE_INDEX, TUPLE_INDEXING_EXPRESSION_TERM);
 
 
     }
@@ -1297,19 +1325,25 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(ARRAY_ELEMENTS),
                 "]");
 
-        b.rule(ARRAY_ELEMENTS).is(b.firstOf(
-                b.sequence(LITERALS, ARRAY_ELEMENTS_EXPRESSION1),
-                b.sequence(LITERALS, ARRAY_ELEMENTS_EXPRESSION2)
-        ));
-        b.rule(ARRAY_ELEMENTS_EXPRESSION1).is(b.firstOf(LITERALS,
-                b.sequence( b.zeroOrMore(b.sequence(",", EXPRESSION)), b.optional(","), ARRAY_ELEMENTS_EXPRESSION1)
-                ));
-        b.rule(ARRAY_ELEMENTS_EXPRESSION2).is(b.firstOf(LITERALS,
-                b.sequence( ";", EXPRESSION, ARRAY_ELEMENTS_EXPRESSION1)
-        ));
+        b.rule(ARRAY_ELEMENTS).is(LITERALS, b.firstOf(
+               ARRAY_ELEMENTS1_TERM ,
+               ARRAY_ELEMENTS2_TERM)
+        );
+
+        b.rule(ARRAY_ELEMENTS1_TERM).is(
+                b.sequence( LITERALS,
+                b.zeroOrMore(RustPunctuator.COMMA, EXPRESSION),
+                b.optional(RustPunctuator.COMMA),ARRAY_ELEMENTS1_TERM ));
+
+        b.rule(ARRAY_ELEMENTS2_TERM).is(
+                b.sequence( LITERALS,
+                        b.zeroOrMore(RustPunctuator.COMMA, EXPRESSION),
+                        b.optional(RustPunctuator.COMMA),ARRAY_ELEMENTS2_TERM ));
 
 
-        b.rule(INDEX_EXPRESSION).is(EXPRESSION, "[", EXPRESSION, "]");
+
+        b.rule(INDEX_EXPRESSION).is(b.firstOf(LITERALS,INDEX_EXPRESSION_TERM ));
+        b.rule(INDEX_EXPRESSION_TERM).is("[", EXPRESSION, "]", INDEX_EXPRESSION_TERM);
     }
 
     private static void grouped(LexerlessGrammarBuilder b) {
@@ -1332,15 +1366,12 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
 
-
-
-
         b.rule(BORROW_EXPRESSION).is(b.firstOf(
                 b.sequence(b.firstOf("&", "&&"), EXPRESSION),
                 b.sequence(b.firstOf("&", "&&"), "mut", EXPRESSION)
         ));
         b.rule(DEREFERENCE_EXPRESSION).is("*", EXPRESSION);
-        b.rule(ERROR_PROPAGATION_EXPRESSION).is(LITERALS,ERROR_PROPAGATION_EXPRESSION_TERM );
+        b.rule(ERROR_PROPAGATION_EXPRESSION).is(LITERALS, ERROR_PROPAGATION_EXPRESSION_TERM);
         b.rule(ERROR_PROPAGATION_EXPRESSION_TERM).is(RustPunctuator.QUESTION, ERROR_PROPAGATION_EXPRESSION_TERM);
 
         b.rule(NEGATION_EXPRESSION).is(b.firstOf(
@@ -1383,10 +1414,6 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence(RustPunctuator.SHR, SHR_EXPRESSION), LITERALS));
 
 
-
-
-
-
         b.rule(COMPARISON_EXPRESSION).is(b.firstOf(
                 b.firstOf(LITERALS, EQ_EXPRESSION),
                 b.firstOf(LITERALS, NEQ_EXPRESSION),
@@ -1394,7 +1421,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(LITERALS, LT_EXPRESSION),
                 b.firstOf(LITERALS, GE_EXPRESSION),
                 b.firstOf(LITERALS, LE_EXPRESSION)
-           ));
+        ));
         b.rule(EQ_EXPRESSION).is(b.firstOf(LITERALS,
                 b.sequence(RustPunctuator.EQEQ, EXPRESSION, EQ_EXPRESSION)));
         b.rule(NEQ_EXPRESSION).is(b.firstOf(LITERALS,
@@ -1415,11 +1442,12 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
 
+        b.rule(TYPE_CAST_EXPRESSION).is(LITERALS, TYPE_CAST_EXPRESSION_TERM);
+        b.rule(TYPE_CAST_EXPRESSION_TERM).is(RustKeyword.KW_AS,TYPE_NO_BOUNDS ,TYPE_CAST_EXPRESSION_TERM);
 
-        b.rule(TYPE_CAST_EXPRESSION).is(EXPRESSION, "as", TYPE_NO_BOUNDS);
         b.rule(ASSIGNMENT_EXPRESSION).is(LITERALS, ASSIGNMENT_EXPRESSION_TERM);
         b.rule(ASSIGNMENT_EXPRESSION_TERM).is(b.firstOf(LITERALS,
-                b.sequence(RustPunctuator.EQ, EXPRESSION,ASSIGNMENT_EXPRESSION_TERM )));
+                b.sequence(RustPunctuator.EQ, EXPRESSION, ASSIGNMENT_EXPRESSION_TERM)));
 
 
         b.rule(COMPOUND_ASSIGNMENT_EXPRESSION).is(b.firstOf(
@@ -1456,8 +1484,10 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STATEMENTS).is(b.firstOf(
                 b.oneOrMore(STATEMENT),
                 b.sequence(b.oneOrMore(STATEMENT), EXPRESSION_WITHOUT_BLOCK),
-                EXPRESSION_WITHOUT_BLOCK
+                b.firstOf(LITERALS,EXPRESSION_WITHOUT_BLOCK_STS )
         ));
+        b.rule(EXPRESSION_WITHOUT_BLOCK_STS).is(LITERALS, EXPRESSION_WITHOUT_BLOCK_STS);
+
         b.rule(ASYNC_BLOCK_EXPRESSION).is("async", b.optional("move"), BLOCK_EXPRESSION);
         b.rule(UNSAFE_BLOCK_EXPRESSION).is(UNSAFE, BLOCK_EXPRESSION);
 
@@ -1497,10 +1527,10 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(",", STRUCT_BASE),
                         b.optional(","))
         );
-        b.rule(STRUCT_EXPR_FIELD).is(LITERALS,STRUCT_EXPR_FIELD_TERM );
+        b.rule(STRUCT_EXPR_FIELD).is(LITERALS, STRUCT_EXPR_FIELD_TERM);
 
         b.rule(STRUCT_EXPR_FIELD_TERM).is(b.sequence(b.firstOf(IDENTIFIER, TUPLE_INDEX), ":"
-                , EXPRESSION,STRUCT_EXPR_FIELD_TERM));
+                , EXPRESSION, STRUCT_EXPR_FIELD_TERM));
 
         b.rule(STRUCT_BASE).is("..", EXPRESSION);
         b.rule(STRUCT_EXPR_TUPLE).is(
@@ -1585,7 +1615,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence("(", b.optional("?"), b.optional(FOR_LIFETIMES), TYPE_PATH, ")")
         ));
         b.rule(LIFETIME_BOUNDS).is(
-                b.zeroOrMore(b.sequence(LIFETIME, "+")),
+                b.zeroOrMore(LIFETIME, RustPunctuator.PLUS),
                 b.optional(LIFETIME)
         );
         b.rule(LIFETIME).is(b.firstOf(LIFETIME_OR_LABEL, "'static", "'_"));
@@ -1615,7 +1645,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(b.sequence("::", SIMPLE_PATH_SEGMENT))
         );
         b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
-                SUPER, "self", CRATE, "$crate",IDENTIFIER
+                SUPER, "self", CRATE, "$crate", IDENTIFIER
         ));
 
         b.rule(PATH_IN_EXPRESSION).is(
@@ -1628,7 +1658,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 PATH_IDENT_SEGMENT, b.optional(b.sequence("::", GENERIC_ARGS))
         );
         b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(
-                SUPER, "self", "Self", CRATE, "$crate",IDENTIFIER
+                SUPER, "self", "Self", CRATE, "$crate", IDENTIFIER
         ));
         b.rule(GENERIC_ARGS).is(b.firstOf(
                 b.sequence("<", ">"),
@@ -1674,7 +1704,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 "(",
                 b.optional(TYPE_PATH_FN_INPUTS),
                 ")",
-                b.optional(b.sequence(b.optional(SPACING),"->",b.optional(SPACING), TYPE))
+                b.optional(b.sequence(b.optional(SPACING), "->", b.optional(SPACING), TYPE))
         );
         b.rule(TYPE_PATH_FN_INPUTS).is(
                 TYPE,
@@ -1683,7 +1713,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(TYPE_PATH).is(
                 //b.optional("::"), TYPE_PATH_SEGMENT, b.zeroOrMore(b.sequence("::", TYPE_PATH_SEGMENT))
-                b.optional("::"),TYPE_PATH_SEGMENT,  b.zeroOrMore(b.sequence( b.optional("::"), TYPE_PATH_SEGMENT))
+                b.optional("::"), TYPE_PATH_SEGMENT, b.zeroOrMore(b.sequence(b.optional("::"), TYPE_PATH_SEGMENT))
 
         );
 
@@ -1693,7 +1723,8 @@ public enum RustGrammar implements GrammarRuleKey {
     public static void lexicaltoken(LexerlessGrammarBuilder b) {
 
 
-        b.rule(TOKEN).is(b.firstOf(IDENTIFIER_OR_KEYWORD, LITERALS, LIFETIMES, PUNCTUATION, DELIMITERS));
+        b.rule(TOKEN).is(b.firstOf(IDENTIFIER_OR_KEYWORD,
+                LITERALS, LIFETIMES, PUNCTUATION, DELIMITERS));
 
         b.rule(LIFETIME_OR_LABEL).is("'", NON_KEYWORD_IDENTIFIER);
 
@@ -1705,84 +1736,82 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
         b.rule(LIFETIMES).is(b.firstOf(LIFETIME_TOKEN, LIFETIME_OR_LABEL)); //not explicit in reference
         //LITERALS are  not explicitly listed like below
-        b.rule(LITERALS).is(b.firstOf(CHAR_LITERAL, STRING_LITERAL,
-                RAW_STRING_LITERAL, BYTE_LITERAL, BYTE_STRING_LITERAL,RAW_BYTE_STRING_LITERAL, INTEGER_LITERAL,
-                FLOAT_LITERAL, BOOLEAN_LITERAL, LIFETIME_TOKEN, LIFETIME_OR_LABEL,PUNCTUATION,DELIMITERS
+        b.rule(LITERALS).is(b.firstOf(CHAR_LITERAL, STRING_LITERAL, DELIMITERS,
+                RAW_STRING_LITERAL, BYTE_LITERAL, BYTE_STRING_LITERAL, RAW_BYTE_STRING_LITERAL, INTEGER_LITERAL,
+                FLOAT_LITERAL, BOOLEAN_LITERAL, LIFETIME_TOKEN, LIFETIME_OR_LABEL, PUNCTUATION
         ));
 
 
-        b.rule(DELIMITERS).is(b.firstOf("{","}", "[","]","(",")"));
+        b.rule(DELIMITERS).is(b.firstOf("{", "}", "[", "]", "(", ")"));
 
         characters(b);
         bytes(b);
         integerliteral(b);
         floatliteral(b);
-        b.rule(BOOLEAN_LITERAL).is(b.firstOf("true","false"));
+        b.rule(BOOLEAN_LITERAL).is(b.token(RustTokenType.BOOLEAN_LITERAL, b.firstOf("true", "false")));
 
     }
 
     private static void floatliteral(LexerlessGrammarBuilder b) {
 
-        b.rule(FLOAT_LITERAL).is(b.firstOf(
-
-                b.sequence(DEC_LITERAL,b.optional(b.sequence(".", DEC_LITERAL)), b.optional(FLOAT_EXPONENT), FLOAT_SUFFIX),
-                b.sequence(DEC_LITERAL, ".", DEC_LITERAL, b.optional(FLOAT_EXPONENT)),
-                b.sequence(DEC_LITERAL, FLOAT_EXPONENT),
-
-
-                b.sequence(DEC_LITERAL,".")//(not immediately followed by ., _ or an identifier)
-        ));
+        b.rule(FLOAT_LITERAL).is(b.token(RustTokenType.FLOAT_LITERAL,
+                b.firstOf(
+                        b.sequence(DEC_LITERAL, b.optional(b.sequence(".", DEC_LITERAL)), b.optional(FLOAT_EXPONENT), FLOAT_SUFFIX),
+                        b.sequence(DEC_LITERAL, ".", DEC_LITERAL, b.optional(FLOAT_EXPONENT)),
+                        b.sequence(DEC_LITERAL, FLOAT_EXPONENT),
+                        b.sequence(DEC_LITERAL, ".")//(not immediately followed by ., _ or an identifier)
+                )));
         b.rule(FLOAT_EXPONENT).is(b.regexp("[eE]+[+-]?[0-9][0-9_]*"));
 
-        b.rule(FLOAT_SUFFIX).is(b.firstOf("f64","f32"));
+        b.rule(FLOAT_SUFFIX).is(b.firstOf("f64", "f32"));
     }
 
     private static void bytes(LexerlessGrammarBuilder b) {
 
-        b.rule(BYTE_LITERAL).is(b.firstOf(
-                b.regexp("^b\\'"+"[^\\'\\n\\r\\t\\\\].*"+"\\'"),
-                b.sequence("b'",BYTE_ESCAPE,"'")
-                ));
+        b.rule(BYTE_LITERAL).is(b.token(RustTokenType.BYTE_LITERAL,
+                b.firstOf(
+                        b.regexp("^b\\'" + "[^\\'\\n\\r\\t\\\\].*" + "\\'"),
+                        b.sequence("b'", BYTE_ESCAPE, "'")
+                )));
 
         b.rule(ASCII_FOR_CHAR).is(b.regexp("[^\\'\\n\\r\\t\\\\].*"));
         b.rule(ASCII_FOR_STRING).is(b.regexp("[^\"\\r\\\\].*"));// except ", \ and IsolatedCR (lookahead? (?![m-o])[a-z])
 
-        b.rule(BYTE_STRING_LITERAL).is(b.firstOf(
-                b.regexp("^b\""+"[^\"\\r\\\\].*"+"\""),
-                b.sequence("b\"",BYTE_ESCAPE,"\"")
-        ));
+        b.rule(BYTE_STRING_LITERAL).is(b.token(RustTokenType.BYTE_STRING_LITERAL,
+                b.firstOf(
+                        b.regexp("^b\"" + "[^\"\\r\\\\].*" + "\""),
+                        b.sequence("b\"", BYTE_ESCAPE, "\"")
+                )));
 
 
         b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\", "\\0"));
 
-        b.rule(RAW_BYTE_STRING_LITERAL).is("br",RAW_BYTE_STRING_CONTENT);
+        b.rule(RAW_BYTE_STRING_LITERAL).is(b.token(RustTokenType.RAW_BYTE_STRING_LITERAL, b.sequence("br", RAW_BYTE_STRING_CONTENT)));
         b.rule(RAW_BYTE_STRING_CONTENT).is(b.firstOf(
                 b.regexp("^\"[\\x00-\\x7F]*\""),
-                b.sequence("#",RAW_STRING_CONTENT,"#")
+                b.sequence("#", RAW_STRING_CONTENT, "#")
         ));
         b.rule(ASCII).is(b.regexp("[\\x00-\\x7F]"));
 
 
-
-
-
-
     }
-
 
 
     private static void identifiers(LexerlessGrammarBuilder b) {
-        b.rule(IDENTIFIER_OR_KEYWORD).is(b.firstOf(b.regexp("^"+ IDFREGEXP1), b.regexp("^"+ IDFREGEXP2)));
-        b.rule(RAW_IDENTIFIER).is(b.firstOf(b.regexp("^r#"+ IDFREGEXP1 +"(?<!r#(crate|self|super|Self))"), b.regexp("^r#"+ IDFREGEXP2)));
-        b.rule(NON_KEYWORD_IDENTIFIER).is(b.regexp("^"+ IDFREGEXP1 +exceptKeywords()));//Except a strict or reserved keyword
-        b.rule(IDENTIFIER).is(b.firstOf(RAW_IDENTIFIER,NON_KEYWORD_IDENTIFIER));
+        b.rule(IDENTIFIER_OR_KEYWORD).is(b.firstOf(b.regexp("^" + IDFREGEXP1), b.regexp("^" + IDFREGEXP2)));
+        b.rule(RAW_IDENTIFIER).is(b.firstOf(b.regexp("^r#" + IDFREGEXP1 + "(?<!r#(crate|self|super|Self))"), b.regexp("^r#" + IDFREGEXP2)));
+        b.rule(NON_KEYWORD_IDENTIFIER).is(b.regexp("^" + IDFREGEXP1 + exceptKeywords()));//Except a strict or reserved keyword
+        b.rule(IDENTIFIER).is(b.token(RustTokenType.IDENTIFIER,
+                b.sequence(
+                        b.firstOf(RAW_IDENTIFIER, NON_KEYWORD_IDENTIFIER),
+                        SPACING))).skip();
     }
 
     private static String exceptKeywords() {
-        StringBuilder sb= new StringBuilder("(?<!(");
+        StringBuilder sb = new StringBuilder("(?<!(");
         String[] values = RustKeyword.keywordValues();
         sb.append(values[0]);
-        for(String kw : values){
+        for (String kw : values) {
             sb.append("|");
             sb.append(kw);
         }
@@ -1792,31 +1821,37 @@ public enum RustGrammar implements GrammarRuleKey {
 
     }
 
-    private static void  characters(LexerlessGrammarBuilder b) {
+    private static void characters(LexerlessGrammarBuilder b) {
 
         b.rule(QUOTE_ESCAPE).is(b.firstOf("\\'", "\\\""));
         b.rule(ASCII_ESCAPE).is(b.firstOf(b.sequence("\\x", OCT_DIGIT, HEX_DIGIT),
-                "\\n" , "\\r", "\\t" , "\\","\0"));
-        b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT,b.zeroOrMore("_"))), "}");
+                "\\n", "\\r", "\\t", "\\", "\0"));
+        b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT, b.zeroOrMore("_"))), "}");
+        /*
         b.rule(STRING_LITERAL).is("\"", b.zeroOrMore(b.firstOf(
                 b.regexp("[^\" \\ \\r \\n].*"),QUOTE_ESCAPE
                 , ASCII_ESCAPE
                 , UNICODE_ESCAPE
                 , STRING_CONTINUE)));
+
+         */
         b.rule(STRING_CONTINUE).is("\\\n");
         b.rule(RAW_STRING_LITERAL).is("r", RAW_STRING_CONTENT);
         b.rule(RAW_STRING_CONTENT).is(b.firstOf(
                 b.regexp("^\"[^\\r\\n].*\""),
-                b.sequence("#",RAW_STRING_CONTENT, "#")));
+                b.sequence("#", RAW_STRING_CONTENT, "#")));
 
 
     }
 
     /* https://doc.rust-lang.org/reference/tokens.html#integer-literals */
     private static void integerliteral(LexerlessGrammarBuilder b) {
-        b.rule(INTEGER_LITERAL).is(b.firstOf(HEX_LITERAL, OCT_LITERAL, BIN_LITERAL, DEC_LITERAL), b.optional(INTEGER_SUFFIX),SPACING);
+        b.rule(INTEGER_LITERAL).is(b.token(RustTokenType.INTEGER_LITERAL,
+                b.sequence(
+                        b.firstOf(HEX_LITERAL, OCT_LITERAL, BIN_LITERAL, DEC_LITERAL),
+                        b.optional(INTEGER_SUFFIX), SPACING)));
         b.rule(DEC_LITERAL).is(DEC_DIGIT, b.zeroOrMore(b.firstOf(DEC_DIGIT, "_")));
-        b.rule(TUPLE_INDEX).is(b.firstOf("0", b.sequence(b.zeroOrMore(NON_ZERO_DEC_DIGIT),DEC_DIGIT)));
+        b.rule(TUPLE_INDEX).is(b.firstOf("0", b.sequence(b.zeroOrMore(NON_ZERO_DEC_DIGIT), DEC_DIGIT)));
 
         b.rule(BIN_LITERAL).is("0b", b.zeroOrMore(b.firstOf(BIN_DIGIT, "_")));
         b.rule(OCT_LITERAL).is("0o", b.zeroOrMore(b.firstOf(OCT_DIGIT, "_")));

@@ -20,15 +20,19 @@
  */
 package org.sonar.rust.api;
 
-import org.sonar.sslr.grammar.GrammarRuleKey;
+import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.TokenType;
 
-public enum RustTokenType implements GrammarRuleKey {
+public enum RustTokenType implements TokenType {
     CHARACTER_LITERAL,
+    BYTE_LITERAL,
+    BYTE_STRING_LITERAL,
     INTEGER_LITERAL,
     FLOAT_LITERAL,
-    LONG_LITERAL,
-    DOUBLE_LITERAL,
+    BOOLEAN_LITERAL,
     STRING_LITERAL,
+    RAW_STRING_LITERAL,
+    RAW_BYTE_STRING_LITERAL,
     IDENTIFIER;
 
     public String getName() {
@@ -37,6 +41,11 @@ public enum RustTokenType implements GrammarRuleKey {
 
     public String getValue() {
         return name();
+    }
+
+    @Override
+    public boolean hasToBeSkippedFromAst(AstNode node) {
+        return false;
     }
 
 }

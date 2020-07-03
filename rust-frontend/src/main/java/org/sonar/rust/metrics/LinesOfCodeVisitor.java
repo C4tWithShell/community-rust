@@ -41,7 +41,7 @@ public class LinesOfCodeVisitor extends RustVisitor {
     @Override
     public void visitFile(AstNode node) {
         linesOfCode.clear();
-        for (AstNode token : lexer.parse(getContext().file().content()).getChildren(RustGrammar.ANYTHING)) {
+        for (AstNode token : lexer.parse(getContext().file().content()).getChildren(RustGrammar.ANY_TOKEN)) {
             String[] tokenLines = token.getTokenValue().split("(\r)?\n|\r", -1);
 
             for (int lineOffset = 0; lineOffset < tokenLines.length; lineOffset++) {
