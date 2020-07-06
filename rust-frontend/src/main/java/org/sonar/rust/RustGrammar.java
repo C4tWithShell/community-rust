@@ -350,7 +350,7 @@ public enum RustGrammar implements GrammarRuleKey {
     VISIT_ITEM,
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
-    WILDCARD_PATTERN, TUPLE_INDEXING_EXPRESSION_TERM, TYPE_CAST_EXPRESSION_TERM;
+    WILDCARD_PATTERN, TUPLE_INDEXING_EXPRESSION_TERM, TYPE_CAST_EXPRESSION_TERM, TOKEN_EXCEPT_DELIMITERS, STRING_CONTENT;
 
     private static final String IDFREGEXP1 = "[a-zA-Z][a-z A-Z 0-9 _]*";
     private static final String IDFREGEXP2 = "_[a-z A-Z 0-9 _]+";
@@ -403,15 +403,19 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence("'", QUOTE_ESCAPE, "'"),
                         b.sequence("'", ASCII_ESCAPE, "'")))).skip();
 
-        // b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL, b.sequence(stringLiteral(b), SPACING)));
+        b.rule(STRING_CONTENT).is(b.regexp("[a-zA-Z0-9_\\t]+"));
+
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                 b.sequence(
                         "\"", b.zeroOrMore(b.firstOf(
-                                b.regexp("[^\" \\ \\r \\n].*"), QUOTE_ESCAPE
+                                STRING_CONTENT,
+                                QUOTE_ESCAPE
                                 , ASCII_ESCAPE
                                 , UNICODE_ESCAPE
                                 , STRING_CONTINUE
-                        ), SPACING))));
+                        ), SPACING),
+                        "\""
+                        )));
 
 
         comments(b);
@@ -844,14 +848,18 @@ public enum RustGrammar implements GrammarRuleKey {
         );
 
         b.rule(DELIM_TOKEN_TREE).is(b.firstOf(
-                b.sequence("(", ")"),
                 b.sequence("(", b.zeroOrMore(TOKEN_TREE), ")"),
                 b.sequence("[", b.zeroOrMore(TOKEN_TREE), "]"),
                 b.sequence("{", b.zeroOrMore(TOKEN_TREE), "}")));
-        b.rule(TOKEN_TREE).is( b.nextNot(DELIMITERS),b.firstOf(
-                IDENTIFIER_OR_KEYWORD, LITERALS, LIFETIMES, PUNCTUATION,
-                DELIM_TOKEN_TREE
+
+        b.rule(TOKEN_EXCEPT_DELIMITERS).is(b.firstOf(
+                IDENTIFIER_OR_KEYWORD, LITERALS, LIFETIMES, PUNCTUATION
         ));
+        b.rule(TOKEN_TREE).is(
+                b.firstOf(
+                        TOKEN_EXCEPT_DELIMITERS,
+                        DELIM_TOKEN_TREE
+                ));
         b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
                 b.sequence(SIMPLE_PATH, "!", "(", b.zeroOrMore(TOKEN_TREE), ");"),
                 b.sequence(SIMPLE_PATH, "!", "[", b.zeroOrMore(TOKEN_TREE), "];"),
@@ -1211,7 +1219,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RANGE_TO_EXPR).is("..", EXPRESSION);
         b.rule(RANGE_FULL_EXPR).is("..");
         b.rule(RANGE_INCLUSIVE_EXPR).is(b.firstOf(LITERALS, RANGE_INCLUSIVE_EXPR_TERM));
-        b.rule(RANGE_INCLUSIVE_EXPR_TERM).is(RustPunctuator.DOTDOTDOT, EXPRESSION,RANGE_INCLUSIVE_EXPR_TERM );
+        b.rule(RANGE_INCLUSIVE_EXPR_TERM).is(RustPunctuator.DOTDOTDOT, EXPRESSION, RANGE_INCLUSIVE_EXPR_TERM);
 
 
         b.rule(RANGE_TO_INCLUSIVE_EXPR).is("..=", EXPRESSION);
@@ -1326,23 +1334,22 @@ public enum RustGrammar implements GrammarRuleKey {
                 "]");
 
         b.rule(ARRAY_ELEMENTS).is(LITERALS, b.firstOf(
-               ARRAY_ELEMENTS1_TERM ,
-               ARRAY_ELEMENTS2_TERM)
+                ARRAY_ELEMENTS1_TERM,
+                ARRAY_ELEMENTS2_TERM)
         );
 
         b.rule(ARRAY_ELEMENTS1_TERM).is(
-                b.sequence( LITERALS,
-                b.zeroOrMore(RustPunctuator.COMMA, EXPRESSION),
-                b.optional(RustPunctuator.COMMA),ARRAY_ELEMENTS1_TERM ));
+                b.sequence(LITERALS,
+                        b.zeroOrMore(RustPunctuator.COMMA, EXPRESSION),
+                        b.optional(RustPunctuator.COMMA), ARRAY_ELEMENTS1_TERM));
 
         b.rule(ARRAY_ELEMENTS2_TERM).is(
-                b.sequence( LITERALS,
+                b.sequence(LITERALS,
                         b.zeroOrMore(RustPunctuator.COMMA, EXPRESSION),
-                        b.optional(RustPunctuator.COMMA),ARRAY_ELEMENTS2_TERM ));
+                        b.optional(RustPunctuator.COMMA), ARRAY_ELEMENTS2_TERM));
 
 
-
-        b.rule(INDEX_EXPRESSION).is(b.firstOf(LITERALS,INDEX_EXPRESSION_TERM ));
+        b.rule(INDEX_EXPRESSION).is(b.firstOf(LITERALS, INDEX_EXPRESSION_TERM));
         b.rule(INDEX_EXPRESSION_TERM).is("[", EXPRESSION, "]", INDEX_EXPRESSION_TERM);
     }
 
@@ -1443,7 +1450,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(TYPE_CAST_EXPRESSION).is(LITERALS, TYPE_CAST_EXPRESSION_TERM);
-        b.rule(TYPE_CAST_EXPRESSION_TERM).is(RustKeyword.KW_AS,TYPE_NO_BOUNDS ,TYPE_CAST_EXPRESSION_TERM);
+        b.rule(TYPE_CAST_EXPRESSION_TERM).is(RustKeyword.KW_AS, TYPE_NO_BOUNDS, TYPE_CAST_EXPRESSION_TERM);
 
         b.rule(ASSIGNMENT_EXPRESSION).is(LITERALS, ASSIGNMENT_EXPRESSION_TERM);
         b.rule(ASSIGNMENT_EXPRESSION_TERM).is(b.firstOf(LITERALS,
@@ -1484,7 +1491,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STATEMENTS).is(b.firstOf(
                 b.oneOrMore(STATEMENT),
                 b.sequence(b.oneOrMore(STATEMENT), EXPRESSION_WITHOUT_BLOCK),
-                b.firstOf(LITERALS,EXPRESSION_WITHOUT_BLOCK_STS )
+                b.firstOf(LITERALS, EXPRESSION_WITHOUT_BLOCK_STS)
         ));
         b.rule(EXPRESSION_WITHOUT_BLOCK_STS).is(LITERALS, EXPRESSION_WITHOUT_BLOCK_STS);
 
@@ -1736,9 +1743,9 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
         b.rule(LIFETIMES).is(b.firstOf(LIFETIME_TOKEN, LIFETIME_OR_LABEL)); //not explicit in reference
         //LITERALS are  not explicitly listed like below
-        b.rule(LITERALS).is(b.firstOf(CHAR_LITERAL, STRING_LITERAL, DELIMITERS,
+        b.rule(LITERALS).is(b.firstOf(CHAR_LITERAL, STRING_LITERAL,
                 RAW_STRING_LITERAL, BYTE_LITERAL, BYTE_STRING_LITERAL, RAW_BYTE_STRING_LITERAL, INTEGER_LITERAL,
-                FLOAT_LITERAL, BOOLEAN_LITERAL, LIFETIME_TOKEN, LIFETIME_OR_LABEL, PUNCTUATION
+                FLOAT_LITERAL, BOOLEAN_LITERAL, LIFETIMES
         ));
 
 

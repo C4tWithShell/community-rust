@@ -18,6 +18,9 @@ public class IdentifierTest {
                 .matches("_AbC")
                 .notMatches("_")
                 .notMatches("42")
+                .notMatches("(")
+                .notMatches("\"hello\")")
+
         ;
     }
 

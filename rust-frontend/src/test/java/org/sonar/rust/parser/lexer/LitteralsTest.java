@@ -52,6 +52,18 @@ public class LitteralsTest {
     }
 
     @Test
+    public void testStringContent(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_CONTENT))
+                .matches("abc")
+                .notMatches("\r")
+                .notMatches("\"")
+                .notMatches("hello\"")
+                .notMatches("\"hello")
+                .notMatches("\"hello\"")
+                ;
+    }
+
+    @Test
     public void testStrings() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_LITERAL))
                 .matches("\"a\"")
@@ -63,7 +75,8 @@ public class LitteralsTest {
                 .matches("\"\\x7f\"")
                 .matches("\"\\r\"")
                 .matches("\"\\t\"")
-                .matches("\"\\\"")
+                .notMatches("\"\\\"")
+                .notMatches("\"hello\")")
 
         ;
     }
@@ -364,8 +377,9 @@ public class LitteralsTest {
                 .matches("\"52\"")
                 .matches("r\"foo\"")
                 .matches("b'5'")
-                .matches("+")
-                .matches("{")
+                .notMatches("+")
+                .notMatches("{")
+                .notMatches("\"hello\")")
                 ;
 
     }
