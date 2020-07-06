@@ -597,16 +597,16 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void useItem(LexerlessGrammarBuilder b) {
-        b.rule(USE_DECLARATION).is("use", USE_TREE, ";");
+        b.rule(USE_DECLARATION).is("use", SPACING,USE_TREE, ";");
         b.rule(USE_TREE).is(b.firstOf(
                 b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), "::")),
                         "*"),
                 b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), "::")),
                         "{",
-                        b.optional(USE_TREE, b.zeroOrMore(b.sequence(",", USE_TREE), b.optional(","))),
+                        b.optional(USE_TREE, b.zeroOrMore(b.sequence(",",b.optional(SPACING), USE_TREE), b.optional(","))),
                         "}"
                 ),
-                b.sequence(SIMPLE_PATH, b.optional(b.sequence("as",
+                b.sequence(SIMPLE_PATH, b.optional(b.sequence(SPACING,RustKeyword.KW_AS,SPACING,
                         b.firstOf(IDENTIFIER, "_")
                 )))
         ));
