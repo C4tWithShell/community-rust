@@ -816,10 +816,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void externcrates(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_CRATE).is(
-                EXTERN, CRATE, CRATE_REF, b.optional(AS_CLAUSE)
+                EXTERN, SPACING, CRATE,SPACING ,CRATE_REF, b.optional(SPACING,AS_CLAUSE),RustPunctuator.SEMI
         );
         b.rule(CRATE_REF).is(b.firstOf(IDENTIFIER, "self"));
-        b.rule(AS_CLAUSE).is("as", b.firstOf(IDENTIFIER, "_"));
+        b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPACING, b.firstOf(IDENTIFIER, "_"));
 
     }
 
