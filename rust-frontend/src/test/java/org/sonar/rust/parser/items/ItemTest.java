@@ -44,15 +44,36 @@ MacroItem:
     public void VisItem() {
 
         assertThat(RustGrammar.create().build().rule(RustGrammar.VISIT_ITEM))
-                .matches("")
+        //MODULE,
+
+
+                .matches("extern crate pcre;") //extern  crate
+        /* TODO
+        USE_DECLARATION,
+                FUNCTION,
+                TYPE_ALIAS,
+                STRUCT,
+                ENUMERATION,
+                UNION,
+                CONSTANT_ITEM,
+                STATIC_ITEM,
+                TRAIT,
+                IMPLEMENTATION,
+                EXTERN_BLOCK
+
+         */
         ;
     }
 
     @Test
     public void MacroItem() {
 
+
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_ITEM))
-                .matches("")
+                .matches("j!(AS);")
+                .matches("println!(\"hello\");")
+                .notMatches("")
+        //TODO MacroRulesDefinition
         ;
     }
 

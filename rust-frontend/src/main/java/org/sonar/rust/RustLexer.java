@@ -20,13 +20,9 @@
  */
 package org.sonar.rust;
 
-import com.google.common.collect.ImmutableList;
-import com.sonar.sslr.api.Grammar;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
 import org.sonar.sslr.parser.ParserAdapter;
-
-import java.nio.charset.Charset;
 
 public enum RustLexer implements GrammarRuleKey {
 
@@ -35,7 +31,7 @@ public enum RustLexer implements GrammarRuleKey {
     private static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b =RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPACING, b.optional(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
+        b.rule(TOKENS).is(RustGrammar.SPC, b.optional(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
 
         b.setRootRule(TOKENS);
 
@@ -46,7 +42,7 @@ public enum RustLexer implements GrammarRuleKey {
     private static LexerlessGrammarBuilder create(GrammarRuleKey root) {
         LexerlessGrammarBuilder b =RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPACING, b.zeroOrMore(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
+        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
 
         b.setRootRule(root);
 

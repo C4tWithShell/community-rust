@@ -269,7 +269,7 @@ public enum RustGrammar implements GrammarRuleKey {
     SLASHEQ_EXPRESSION,
     SLICE_PATTERN,
     SLICE_TYPE,
-    SPACING,
+    SPC,
     STAREQ_EXPRESSION,
     STATEMENT,
     STATEMENTS,
@@ -361,7 +361,7 @@ public enum RustGrammar implements GrammarRuleKey {
     public static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
-        b.rule(COMPILATION_UNIT).is(SPACING, b.zeroOrMore(STATEMENT), EOF);
+        b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(STATEMENT), EOF);
 
         punctuators(b);
         keywords(b);
@@ -382,7 +382,7 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void literals(LexerlessGrammarBuilder b) {
-        b.rule(SPACING).is(whitespace(b),
+        b.rule(SPC).is(whitespace(b),
                 b.zeroOrMore(
                         b.token(GenericTokenType.COMMENT, b.regexp("(?s)/\\*.*?\\*/")),
                         whitespace(b))).skip();
@@ -391,7 +391,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(UNKNOWN_CHAR).is(
                 b.token(GenericTokenType.UNKNOWN_CHAR, b.regexp("(?s).")),
-                SPACING).skip();
+                SPC).skip();
 
 
         b.rule(CHAR_LITERAL).is(b.token(RustTokenType.CHARACTER_LITERAL,
@@ -410,7 +410,7 @@ public enum RustGrammar implements GrammarRuleKey {
                                 , ASCII_ESCAPE
                                 , UNICODE_ESCAPE
                                 , STRING_CONTINUE
-                        ), SPACING),
+                        ), SPC),
                         "\""
                 )));
 
@@ -465,7 +465,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void keywords(LexerlessGrammarBuilder b) {
         for (RustKeyword tokenType : RustKeyword.values()) {
-            b.rule(tokenType).is(tokenType.getValue(), SPACING);
+            b.rule(tokenType).is(tokenType.getValue(), SPC);
         }
         String[] keywords = RustKeyword.keywordValues();
         Arrays.sort(keywords);
@@ -484,8 +484,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* recurring grammar pattern */
     private static Object seq(LexerlessGrammarBuilder b, GrammarRuleKey g, RustPunctuator sep) {
-        return b.sequence(g, b.sequence(b.zeroOrMore(sep, b.optional(SPACING), g),
-                b.optional(sep, SPACING)));
+        return b.sequence(g, b.sequence(b.zeroOrMore(sep, b.optional(SPC), g),
+                b.optional(sep, SPC)));
     }
 
     private static void items(LexerlessGrammarBuilder b) {
@@ -528,14 +528,14 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/traits.html */
     private static void traitsItem(LexerlessGrammarBuilder b) {
         b.rule(TRAIT).is(
-                b.optional(UNSAFE, SPACING),
-                RustKeyword.KW_TRAIT, SPACING, IDENTIFIER,SPACING,
-                b.optional(GENERICS,SPACING),
+                b.optional(UNSAFE, SPC),
+                RustKeyword.KW_TRAIT, SPC, IDENTIFIER, SPC,
+                b.optional(GENERICS, SPC),
                 b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)),
-                b.optional(WHERE_CLAUSE), "{", b.zeroOrMore(TRAIT_ITEM, SPACING), "}"
+                b.optional(WHERE_CLAUSE), "{", b.zeroOrMore(TRAIT_ITEM, SPC), "}"
         );
         b.rule(TRAIT_ITEM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE, SPACING), b.optional(VISIBILITY, SPACING),
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC), b.optional(VISIBILITY, SPC),
                 b.firstOf(TRAIT_FUNC, TRAIT_METHOD, TRAIT_CONST, TRAIT_TYPE)
         );
         b.rule(TRAIT_FUNC).is(
@@ -545,33 +545,33 @@ public enum RustGrammar implements GrammarRuleKey {
                 TRAIT_METHOD_DECL, b.firstOf(";", BLOCK_EXPRESSION)
         );
         b.rule(TRAIT_FUNCTION_DECL).is(
-                FUNCTION_QUALIFIERS, SPACING, RustKeyword.KW_FN, SPACING, IDENTIFIER, SPACING, b.optional(GENERICS, SPACING),
-                "(", b.optional(SPACING, TRAIT_FUNCTION_PARAMETERS, SPACING), ")",SPACING,
-                b.optional(FUNCTION_RETURN_TYPE, SPACING), b.optional(WHERE_CLAUSE, SPACING)
+                FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER, SPC, b.optional(GENERICS, SPC),
+                "(", b.optional(SPC, TRAIT_FUNCTION_PARAMETERS, SPC), ")", SPC,
+                b.optional(FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC)
         );
         b.rule(TRAIT_METHOD_DECL).is(
-                FUNCTION_QUALIFIERS, SPACING, RustKeyword.KW_FN, SPACING, IDENTIFIER, SPACING, b.optional(GENERICS, SPACING),
-                "(", SPACING, SELF_PARAM, SPACING, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPACING, TRAIT_FUNCTION_PARAM, SPACING)),
-                b.optional(RustPunctuator.COMMA, SPACING), ")",
-                b.optional(FUNCTION_RETURN_TYPE, SPACING), b.optional(WHERE_CLAUSE, SPACING)
+                FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER, SPC, b.optional(GENERICS, SPC),
+                "(", SPC, SELF_PARAM, SPC, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, TRAIT_FUNCTION_PARAM, SPC)),
+                b.optional(RustPunctuator.COMMA, SPC), ")",
+                b.optional(FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC)
         );
         b.rule(TRAIT_FUNCTION_PARAMETERS).is(seq(b, TRAIT_FUNCTION_PARAM, RustPunctuator.COMMA));
         b.rule(TRAIT_FUNCTION_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE, SPACING), b.optional(PATTERN, SPACING, RustPunctuator.COLON), TYPE
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC), b.optional(PATTERN, SPC, RustPunctuator.COLON), TYPE
         );
         b.rule(TRAIT_CONST).is(
-                RustKeyword.KW_CONST, SPACING, IDENTIFIER, SPACING, RustPunctuator.COLON, SPACING, TYPE, SPACING,
-                b.optional(b.sequence(RustPunctuator.EQ, SPACING, EXPRESSION)), RustPunctuator.SEMI
+                RustKeyword.KW_CONST, SPC, IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE, SPC,
+                b.optional(b.sequence(RustPunctuator.EQ, SPC, EXPRESSION)), RustPunctuator.SEMI
         );
         b.rule(TRAIT_TYPE).is(
-                RustKeyword.KW_TYPE, SPACING, IDENTIFIER, b.optional(SPACING, RustPunctuator.COLON, SPACING, b.optional(TYPE_PARAM_BOUNDS)), RustPunctuator.SEMI
+                RustKeyword.KW_TYPE, SPC, IDENTIFIER, b.optional(SPC, RustPunctuator.COLON, SPC, b.optional(TYPE_PARAM_BOUNDS)), RustPunctuator.SEMI
         );
     }
 
     /* https://doc.rust-lang.org/reference/items/enumerations.html */
     private static void enumerationsItem(LexerlessGrammarBuilder b) {
-        b.rule(ENUMERATION).is(RustKeyword.KW_ENUM, SPACING, IDENTIFIER,
-                b.optional(GENERICS), b.optional(WHERE_CLAUSE), "{", SPACING, ENUM_ITEMS, SPACING, "}");
+        b.rule(ENUMERATION).is(RustKeyword.KW_ENUM, SPC, IDENTIFIER,SPC,
+                b.optional(GENERICS,SPC), b.optional(WHERE_CLAUSE,SPC), "{", SPC, ENUM_ITEMS, SPC, "}");
         b.rule(ENUM_ITEMS).is(seq(b, ENUM_ITEM, RustPunctuator.COMMA));
         b.rule(ENUM_ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE), b.optional(VISIBILITY),
                 IDENTIFIER, b.optional(b.firstOf(ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT, ENUM_ITEM_DISCRIMINANT))
@@ -584,22 +584,22 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/type-aliases.html */
     private static void aliasItem(LexerlessGrammarBuilder b) {
         b.rule(TYPE_ALIAS).is(
-                RustKeyword.KW_TYPE, SPACING, IDENTIFIER, SPACING, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
-                RustPunctuator.EQ, SPACING, TYPE, ";"
+                RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
+                RustPunctuator.EQ, SPC, TYPE, ";"
         );
     }
 
     private static void useItem(LexerlessGrammarBuilder b) {
-        b.rule(USE_DECLARATION).is("use", SPACING, USE_TREE, ";");
+        b.rule(USE_DECLARATION).is("use", SPC, USE_TREE, ";");
         b.rule(USE_TREE).is(b.firstOf(
                 b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP)),
                         RustPunctuator.STAR),
                 b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP)),
                         "{",
-                        b.optional(USE_TREE, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPACING, USE_TREE), b.optional(RustPunctuator.COMMA))),
+                        b.optional(USE_TREE, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, USE_TREE), b.optional(RustPunctuator.COMMA))),
                         "}"
                 ),
-                b.sequence(SIMPLE_PATH, b.optional(b.sequence(SPACING, RustKeyword.KW_AS, SPACING,
+                b.sequence(SIMPLE_PATH, b.optional(b.sequence(SPC, RustKeyword.KW_AS, SPC,
                         b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)
                 )))
         ));
@@ -608,30 +608,30 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void functionsItem(LexerlessGrammarBuilder b) {
         b.rule(FUNCTION).is(
-                FUNCTION_QUALIFIERS, SPACING, RustKeyword.KW_FN, SPACING, IDENTIFIER, b.optional(GENERICS),
+                FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER, b.optional(GENERICS),
                 "(", b.optional(FUNCTION_PARAMETERS), ")",
-                b.optional(SPACING, FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE),
+                b.optional(SPC, FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE),
                 BLOCK_EXPRESSION
         );
         b.rule(FUNCTION_QUALIFIERS).is(
                 b.optional(ASYNC_CONST_QUALIFIERS),
-                SPACING,
+                SPC,
                 b.optional(UNSAFE),
-                SPACING,
-                b.optional(EXTERN, SPACING, b.optional(ABI))
+                SPC,
+                b.optional(EXTERN, SPC, b.optional(ABI))
         );
         b.rule(ASYNC_CONST_QUALIFIERS).is(b.firstOf(CONST, "async"));
         b.rule(ABI).is(b.firstOf(STRING_LITERAL, RAW_STRING_LITERAL));
         // b.rule(FUNCTION_PARAMETERS).is(seq(b, FUNCTION_PARAM, RustPunctuator.COMMA));
         b.rule(FUNCTION_PARAMETERS).is(FUNCTION_PARAM,
-                b.zeroOrMore(SPACING, RustPunctuator.COMMA, SPACING, FUNCTION_PARAM),
-                b.optional(RustPunctuator.COMMA, SPACING));
+                b.zeroOrMore(SPC, RustPunctuator.COMMA, SPC, FUNCTION_PARAM),
+                b.optional(RustPunctuator.COMMA, SPC));
 
 
         b.rule(FUNCTION_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE), PATTERN, SPACING, RustPunctuator.COLON, SPACING, TYPE
+                b.zeroOrMore(OUTER_ATTRIBUTE), PATTERN, SPC, RustPunctuator.COLON, SPC, TYPE
         );
-        b.rule(FUNCTION_RETURN_TYPE).is(RustPunctuator.RARROW, SPACING, TYPE);
+        b.rule(FUNCTION_RETURN_TYPE).is(RustPunctuator.RARROW, SPC, TYPE);
 
     }
 
@@ -639,10 +639,10 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void structsItem(LexerlessGrammarBuilder b) {
         b.rule(STRUCT).is(b.firstOf(STRUCT_STRUCT, TUPLE_STRUCT));
         b.rule(STRUCT_STRUCT).is(
-                RustKeyword.KW_STRUCT, SPACING, IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
-                b.firstOf(b.sequence("{", b.optional(STRUCT_FIELDS), "}"), RustPunctuator.SEMI));
+                RustKeyword.KW_STRUCT, SPC, IDENTIFIER,SPC, b.optional(GENERICS, SPC), b.optional(WHERE_CLAUSE,SPC),
+                b.firstOf(b.sequence("{", SPC, b.optional(STRUCT_FIELDS,SPC), "}"), RustPunctuator.SEMI));
         b.rule(TUPLE_STRUCT).is(
-                RustKeyword.KW_STRUCT, SPACING, IDENTIFIER, b.optional(GENERICS), "(",
+                RustKeyword.KW_STRUCT, SPC, IDENTIFIER, b.optional(GENERICS), "(",
                 b.optional(TUPLE_FIELDS), ")",
                 b.optional(GENERICS), RustPunctuator.SEMI
         );
@@ -650,7 +650,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRUCT_FIELD).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.optional(VISIBILITY),
-                IDENTIFIER, SPACING, RustPunctuator.COLON, SPACING, TYPE
+                IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE
         );
         b.rule(TUPLE_FIELDS).is(seq(b, TUPLE_FIELD, RustPunctuator.COMMA));
         b.rule(TUPLE_FIELD).is(
@@ -663,17 +663,18 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/unions.html */
     private static void unionsItem(LexerlessGrammarBuilder b) {
         b.rule(UNION).is(
-                RustKeyword.KW_UNION, SPACING, IDENTIFIER, b.optional(GENERICS), b.optional(WHERE_CLAUSE),
-                "{", SPACING, STRUCT_FIELDS, SPACING, "}"
+                RustKeyword.KW_UNION, SPC, IDENTIFIER, SPC, b.optional(GENERICS,SPC),
+                b.optional(WHERE_CLAUSE,SPC),
+                "{", SPC, STRUCT_FIELDS, SPC, "}"
         );
     }
 
     /* https://doc.rust-lang.org/reference/items/constant-items.html */
     private static void constantsItem(LexerlessGrammarBuilder b) {
         b.rule(CONSTANT_ITEM).is(
-                RustKeyword.KW_CONST, SPACING, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),
-                RustPunctuator.COLON, SPACING, TYPE,
-                SPACING, RustPunctuator.EQ, SPACING, EXPRESSION, RustPunctuator.SEMI
+                RustKeyword.KW_CONST, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),
+                RustPunctuator.COLON, SPC, TYPE,
+                SPC, RustPunctuator.EQ, SPC, EXPRESSION, RustPunctuator.SEMI
         );
 
     }
@@ -681,8 +682,8 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/static-items.html */
     private static void staticItem(LexerlessGrammarBuilder b) {
         b.rule(STATIC_ITEM).is(
-                RustKeyword.KW_STATIC, SPACING, b.optional(RustKeyword.KW_MUT, SPACING), IDENTIFIER,
-                SPACING, RustPunctuator.COLON, SPACING, TYPE, SPACING, RustPunctuator.EQ, SPACING, EXPRESSION, ";"
+                RustKeyword.KW_STATIC, SPC, b.optional(RustKeyword.KW_MUT, SPC), IDENTIFIER,
+                SPC, RustPunctuator.COLON, SPC, TYPE, SPC, RustPunctuator.EQ, SPC, EXPRESSION, ";"
         );
     }
 
@@ -690,30 +691,30 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void implItem(LexerlessGrammarBuilder b) {
         b.rule(IMPLEMENTATION).is(b.firstOf(INHERENT_IMPL, TRAIT_IMPL));
         b.rule(INHERENT_IMPL).is(
-                RustKeyword.KW_IMPL, SPACING,b.optional(GENERICS,SPACING), TYPE, SPACING,
-                b.optional(WHERE_CLAUSE, SPACING), "{",SPACING,
+                RustKeyword.KW_IMPL, SPC,b.optional(GENERICS, SPC), TYPE, SPC,
+                b.optional(WHERE_CLAUSE, SPC), "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE),
                 b.zeroOrMore(INHERENT_IMPL_ITEM), "}"
         );
         b.rule(INHERENT_IMPL_ITEM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE,SPACING),
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(MACRO_INVOCATION_SEMI,
-                        b.sequence( b.optional(VISIBILITY,SPACING), b.firstOf(
+                        b.sequence( b.optional(VISIBILITY, SPC), b.firstOf(
                                 CONSTANT_ITEM, FUNCTION, METHOD
                         ))));
 
 
 
         b.rule(TRAIT_IMPL).is(
-                b.optional(UNSAFE,SPACING), RustKeyword.KW_IMPL, SPACING, b.optional(GENERICS,SPACING),
-                b.optional(RustPunctuator.NOT), TYPE_PATH, SPACING, RustKeyword.KW_FOR, SPACING, TYPE,
-                b.optional(WHERE_CLAUSE,SPACING), "{",
-                b.zeroOrMore(INNER_ATTRIBUTE,SPACING), b.zeroOrMore(TRAIT_IMPL_ITEM,SPACING), SPACING, "}"
+                b.optional(UNSAFE, SPC), RustKeyword.KW_IMPL, SPC, b.optional(GENERICS, SPC),
+                b.optional(RustPunctuator.NOT), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE,
+                b.optional(WHERE_CLAUSE, SPC), "{",
+                b.zeroOrMore(INNER_ATTRIBUTE, SPC), b.zeroOrMore(TRAIT_IMPL_ITEM, SPC), SPC, "}"
         );
 
 
         b.rule(TRAIT_IMPL_ITEM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE,SPACING),
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(MACRO_INVOCATION_SEMI,
                         b.sequence( b.optional(VISIBILITY), b.firstOf(TYPE_ALIAS, CONSTANT_ITEM, FUNCTION, METHOD))
                 )
@@ -724,9 +725,9 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/external-blocks.html */
     private static void extblocksItem(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_BLOCK).is(
-                EXTERN, b.optional(ABI), "{",
-                b.zeroOrMore(INNER_ATTRIBUTE),
-                b.zeroOrMore(EXTERNAL_ITEM), "}"
+                EXTERN, SPC, b.optional(ABI, SPC), "{", SPC,
+                b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+                b.zeroOrMore(EXTERNAL_ITEM, SPC), "}"
         );
         b.rule(EXTERNAL_ITEM).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE), "(",
@@ -745,9 +746,9 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(NAMED_FUNCTION_PARAMETERS).is(seq(b, NAMED_FUNCTION_PARAM, RustPunctuator.COMMA));
         b.rule(NAMED_FUNCTION_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
-                b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),
-                RustPunctuator.COLON, TYPE
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
+                b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC,
+                RustPunctuator.COLON, SPC, TYPE
         );
         b.rule(NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS).is(
                 b.zeroOrMore(b.sequence(NAMED_FUNCTION_PARAM, RustPunctuator.COMMA)),
@@ -768,16 +769,16 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(LIFETIME_PARAMS).is(
-                b.zeroOrMore(LIFETIME_PARAM,RustPunctuator.COMMA,SPACING), b.optional(LIFETIME_PARAM,SPACING)
+                b.zeroOrMore(LIFETIME_PARAM,RustPunctuator.COMMA, SPC), b.optional(LIFETIME_PARAM, SPC)
         );
         b.rule(LIFETIME_PARAM).is(
-                b.optional(OUTER_ATTRIBUTE, SPACING), LIFETIME_OR_LABEL,SPACING, b.optional(RustPunctuator.COLON, LIFETIME_BOUNDS, SPACING)
+                b.optional(OUTER_ATTRIBUTE, SPC), LIFETIME_OR_LABEL, SPC, b.optional(RustPunctuator.COLON, LIFETIME_BOUNDS, SPC)
         );
         b.rule(TYPE_PARAMS).is(
-                b.zeroOrMore(TYPE_PARAM, RustPunctuator.COMMA, SPACING), b.optional(TYPE_PARAM,SPACING)
+                b.zeroOrMore(TYPE_PARAM, RustPunctuator.COMMA, SPC), b.optional(TYPE_PARAM, SPC)
         );
         b.rule(TYPE_PARAM).is(
-                b.optional(OUTER_ATTRIBUTE, SPACING), IDENTIFIER,SPACING,
+                b.optional(OUTER_ATTRIBUTE, SPC), IDENTIFIER, SPC,
                 b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS),
                         b.optional(RustPunctuator.EQ, TYPE))
         );
@@ -787,12 +788,12 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(WHERE_CLAUSE_ITEM).is(b.firstOf(
                 LIFETIME_WHERE_CLAUSE_ITEM
                 , TYPE_BOUND_CLAUSE_ITEM));
-        b.rule(LIFETIME_WHERE_CLAUSE_ITEM).is(LIFETIME, SPACING, RustPunctuator.COLON,SPACING, LIFETIME_BOUNDS);
+        b.rule(LIFETIME_WHERE_CLAUSE_ITEM).is(LIFETIME, SPC, RustPunctuator.COLON, SPC, LIFETIME_BOUNDS);
         b.rule(TYPE_BOUND_CLAUSE_ITEM).is(
                 b.optional(FOR_LIFETIMES), TYPE, RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)
         );
 
-        b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPACING, RustPunctuator.LT, LIFETIME_PARAMS,RustPunctuator.GT);
+        b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPC, RustPunctuator.LT, LIFETIME_PARAMS,RustPunctuator.GT);
 
 
 
@@ -802,35 +803,35 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void assocItem(LexerlessGrammarBuilder b) {
         b.rule(METHOD).is(
-                FUNCTION_QUALIFIERS, SPACING, RustKeyword.KW_FN, SPACING, IDENTIFIER,
-                b.optional(GENERICS),
+                FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER,
+                b.optional(GENERICS,SPC),
                 "(", SELF_PARAM, b.optional(b.sequence(RustPunctuator.COMMA, FUNCTION_PARAM)),
-                b.optional(RustPunctuator.COMMA), ")", SPACING,
-                b.optional(FUNCTION_RETURN_TYPE, SPACING), b.optional(WHERE_CLAUSE, SPACING),
+                b.optional(RustPunctuator.COMMA), ")", SPC,
+                b.optional(FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC),
                 BLOCK_EXPRESSION
         );
 
-        b.rule(SELF_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPACING), b.firstOf(
+        b.rule(SELF_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), b.firstOf(
                 TYPED_SELF, SHORTHAND_SELF
         ));
 
 
         b.rule(SHORTHAND_SELF).is(
-                b.optional(b.firstOf(b.sequence(RustPunctuator.AND, LIFETIME, SPACING), RustPunctuator.AND)),
-                b.optional(RustKeyword.KW_MUT, SPACING), RustKeyword.KW_SELFVALUE
+                b.optional(b.firstOf(b.sequence(RustPunctuator.AND, LIFETIME, SPC), RustPunctuator.AND)),
+                b.optional(RustKeyword.KW_MUT, SPC), RustKeyword.KW_SELFVALUE
         );
 
 
-        b.rule(TYPED_SELF).is(b.optional(RustKeyword.KW_MUT, SPACING), RustKeyword.KW_SELFVALUE, SPACING, RustPunctuator.COLON, SPACING, TYPE);
+        b.rule(TYPED_SELF).is(b.optional(RustKeyword.KW_MUT, SPC), RustKeyword.KW_SELFVALUE, SPC, RustPunctuator.COLON, SPC, TYPE);
 
     }
 
     private static void visibilityItem(LexerlessGrammarBuilder b) {
         b.rule(VISIBILITY).is(b.firstOf(
-                b.sequence(RustKeyword.KW_PUB, SPACING, "(", SPACING, RustKeyword.KW_CRATE, SPACING, ")"),
-                b.sequence(RustKeyword.KW_PUB, SPACING, "(", SPACING, RustKeyword.KW_SELFVALUE, SPACING, ")"),
-                b.sequence(RustKeyword.KW_PUB, SPACING, "(", SPACING, RustKeyword.KW_SUPER, SPACING, ")"),
-                b.sequence(RustKeyword.KW_PUB, SPACING, "(", SPACING, RustKeyword.KW_IN, SIMPLE_PATH, SPACING, ")"),
+                b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_CRATE, SPC, ")"),
+                b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_SELFVALUE, SPC, ")"),
+                b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_SUPER, SPC, ")"),
+                b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_IN, SIMPLE_PATH, SPC, ")"),
                 RustKeyword.KW_PUB
 
         ));
@@ -839,19 +840,19 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void externcrates(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_CRATE).is(
-                EXTERN, SPACING, "crate", SPACING, CRATE_REF, b.optional(SPACING, AS_CLAUSE), RustPunctuator.SEMI
+                EXTERN, SPC, "crate", SPC, CRATE_REF, b.optional(SPC, AS_CLAUSE), RustPunctuator.SEMI
         );
         b.rule(CRATE_REF).is(b.firstOf(RustKeyword.KW_SELFVALUE, IDENTIFIER));
-        b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPACING, b.firstOf(RustPunctuator.UNDERSCORE, IDENTIFIER));
+        b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPC, b.firstOf(RustPunctuator.UNDERSCORE, IDENTIFIER));
 
     }
 
     private static void modules(LexerlessGrammarBuilder b) {
         b.rule(MODULE).is(b.firstOf(
-                b.sequence("mod", SPACING, IDENTIFIER, SPACING, ";"),
-                b.sequence("mod", SPACING, IDENTIFIER, SPACING, "{",
-                        b.zeroOrMore(INNER_ATTRIBUTE),
-                        b.zeroOrMore(ITEM), "}"
+                b.sequence("mod", SPC, IDENTIFIER, SPC, ";"),
+                b.sequence("mod", SPC, IDENTIFIER, SPC, "{",SPC,
+                        b.zeroOrMore(INNER_ATTRIBUTE,SPC),
+                        b.zeroOrMore(ITEM,SPC), "}"
                 )));
 
     }
@@ -1074,10 +1075,10 @@ public enum RustGrammar implements GrammarRuleKey {
                 MACRO_INVOCATION_SEMI
         ));
         b.rule(LET_STATEMENT).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE, SPACING),
-                RustKeyword.KW_LET, SPACING, PATTERN,
-                b.optional(RustPunctuator.COLON, TYPE),
-                b.optional(RustPunctuator.EQ, EXPRESSION),
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
+                RustKeyword.KW_LET, SPC, PATTERN, SPC,
+                b.optional(RustPunctuator.COLON, SPC,TYPE, SPC),
+                b.optional(RustPunctuator.EQ, SPC, EXPRESSION, SPC),
                 RustPunctuator.SEMI);
         b.rule(EXPRESSION_STATEMENT).is(b.firstOf(
                 b.firstOf(LITERALS, EXPRESSION_WITHOUT_BLOCK_ES),
@@ -1358,8 +1359,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 "]");
 
         b.rule(ARRAY_ELEMENTS).is(b.firstOf(
-                b.sequence(SPACING, EXPRESSION, SPACING, b.zeroOrMore(RustPunctuator.COMMA, SPACING, EXPRESSION), b.optional(RustPunctuator.COMMA, SPACING)),
-                b.sequence(SPACING, EXPRESSION, ";", SPACING, EXPRESSION)
+                b.sequence(SPC, EXPRESSION, SPC, b.zeroOrMore(RustPunctuator.COMMA, SPC, EXPRESSION), b.optional(RustPunctuator.COMMA, SPC)),
+                b.sequence(SPC, EXPRESSION, ";", SPC, EXPRESSION)
 
         ));
 
@@ -1415,25 +1416,25 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
         b.rule(ADDITION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.PLUS, SPACING, EXPRESSION, b.zeroOrMore(ADDITION_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.PLUS, SPC, EXPRESSION, b.zeroOrMore(ADDITION_EXPRESSION, SPC)), LITERALS));
         b.rule(SUBTRACTION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.MINUS, SPACING, EXPRESSION, b.zeroOrMore(SUBTRACTION_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.MINUS, SPC, EXPRESSION, b.zeroOrMore(SUBTRACTION_EXPRESSION, SPC)), LITERALS));
         b.rule(MULTIPLICATION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.STAR, SPACING, EXPRESSION, b.zeroOrMore(MULTIPLICATION_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.STAR, SPC, EXPRESSION, b.zeroOrMore(MULTIPLICATION_EXPRESSION, SPC)), LITERALS));
         b.rule(DIVISION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.SLASH, SPACING, EXPRESSION, b.zeroOrMore(DIVISION_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.SLASH, SPC, EXPRESSION, b.zeroOrMore(DIVISION_EXPRESSION, SPC)), LITERALS));
         b.rule(REMAINDER_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.PERCENT, SPACING, EXPRESSION, b.zeroOrMore(REMAINDER_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.PERCENT, SPC, EXPRESSION, b.zeroOrMore(REMAINDER_EXPRESSION, SPC)), LITERALS));
         b.rule(BITAND_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.AND, SPACING, EXPRESSION, b.zeroOrMore(BITAND_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.AND, SPC, EXPRESSION, b.zeroOrMore(BITAND_EXPRESSION, SPC)), LITERALS));
         b.rule(BITOR_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.OR, SPACING, EXPRESSION, b.zeroOrMore(BITOR_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.OR, SPC, EXPRESSION, b.zeroOrMore(BITOR_EXPRESSION, SPC)), LITERALS));
         b.rule(BITXOR_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.CARET, SPACING, EXPRESSION, b.zeroOrMore(BITXOR_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.CARET, SPC, EXPRESSION, b.zeroOrMore(BITXOR_EXPRESSION, SPC)), LITERALS));
         b.rule(SHL_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.SHL, SPACING, EXPRESSION, b.zeroOrMore(SHL_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.SHL, SPC, EXPRESSION, b.zeroOrMore(SHL_EXPRESSION, SPC)), LITERALS));
         b.rule(SHR_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.SHR, SPACING, EXPRESSION, b.zeroOrMore(SHR_EXPRESSION, SPACING)), LITERALS));
+                b.sequence(RustPunctuator.SHR, SPC, EXPRESSION, b.zeroOrMore(SHR_EXPRESSION, SPC)), LITERALS));
 
 
         b.rule(COMPARISON_EXPRESSION).is(b.firstOf(
@@ -1500,8 +1501,8 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void block(LexerlessGrammarBuilder b) {
-        b.rule(BLOCK_EXPRESSION).is("{", SPACING, b.zeroOrMore(INNER_ATTRIBUTE),
-                SPACING, b.optional(STATEMENTS), SPACING, "}"
+        b.rule(BLOCK_EXPRESSION).is("{", SPC, b.zeroOrMore(INNER_ATTRIBUTE),
+                SPC, b.optional(STATEMENTS), SPC, "}"
         );
         b.rule(STATEMENTS).is(b.firstOf(
                 b.oneOrMore(STATEMENT),
@@ -1574,9 +1575,9 @@ public enum RustGrammar implements GrammarRuleKey {
     public static void attributes(LexerlessGrammarBuilder b) {
         b.rule(INNER_ATTRIBUTE).is("#![", ATTR, "]");
         b.rule(OUTER_ATTRIBUTE).is("#[", ATTR, "]");
-        b.rule(ATTR).is(SIMPLE_PATH, b.optional(ATTR_INPUT));
+        b.rule(ATTR).is(SIMPLE_PATH, SPC, b.optional(ATTR_INPUT, SPC));
         b.rule(ATTR_INPUT).is(b.firstOf(DELIM_TOKEN_TREE,
-                b.sequence(RustPunctuator.EQ, SPACING,
+                b.sequence(RustPunctuator.EQ, SPC,
                         LITTERAL_EXPRESSION)));
     }
 
@@ -1620,7 +1621,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RAW_POINTER_TYPE).is(RustPunctuator.STAR, b.firstOf(RustKeyword.KW_MUT, CONST), TYPE_NO_BOUNDS);
         b.rule(INFERRED_TYPE).is(RustPunctuator.UNDERSCORE);
         b.rule(SLICE_TYPE).is("[", TYPE, "]");
-        b.rule(ARRAY_TYPE).is("[", SPACING, TYPE, SPACING, ";", SPACING, EXPRESSION, SPACING, "]");
+        b.rule(ARRAY_TYPE).is("[", SPC, TYPE, SPC, ";", SPC, EXPRESSION, SPC, "]");
         b.rule(IMPL_TRAIT_TYPE).is(RustKeyword.KW_IMPL, TYPE_PARAM_BOUNDS);
         b.rule(IMPL_TRAIT_TYPE_ONE_BOUND).is(RustKeyword.KW_IMPL, TRAIT_BOUND);
         b.rule(NEVER_TYPE).is(RustPunctuator.NOT);
@@ -1629,19 +1630,19 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* https://doc.rust-lang.org/reference/trait-bounds.html */
     public static void trait(LexerlessGrammarBuilder b) {
-        b.rule(TYPE_PARAM_BOUNDS).is(SPACING, TYPE_PARAM_BOUND, SPACING,
-                b.zeroOrMore(b.sequence(RustPunctuator.PLUS, SPACING, TYPE_PARAM_BOUND, SPACING)),
-                b.optional(SPACING, RustPunctuator.PLUS, SPACING)
+        b.rule(TYPE_PARAM_BOUNDS).is(SPC, TYPE_PARAM_BOUND, SPC,
+                b.zeroOrMore(b.sequence(RustPunctuator.PLUS, SPC, TYPE_PARAM_BOUND, SPC)),
+                b.optional(SPC, RustPunctuator.PLUS, SPC)
         );
         b.rule(TYPE_PARAM_BOUND).is(b.firstOf(LIFETIME, TRAIT_BOUND));
         b.rule(TRAIT_BOUND).is(b.firstOf(
-                b.sequence(b.optional("?", SPACING), b.optional(FOR_LIFETIMES,SPACING), TYPE_PATH, SPACING),
-                b.sequence("(",SPACING, b.optional("?",SPACING),
-                        b.optional(FOR_LIFETIMES,SPACING), TYPE_PATH,SPACING, ")")
+                b.sequence(b.optional("?", SPC), b.optional(FOR_LIFETIMES, SPC), TYPE_PATH, SPC),
+                b.sequence("(", SPC, b.optional("?", SPC),
+                        b.optional(FOR_LIFETIMES, SPC), TYPE_PATH, SPC, ")")
         ));
         b.rule(LIFETIME_BOUNDS).is(
-                b.zeroOrMore(LIFETIME, SPACING, RustPunctuator.PLUS, SPACING),
-                b.optional(LIFETIME, SPACING)
+                b.zeroOrMore(LIFETIME, SPC, RustPunctuator.PLUS, SPC),
+                b.optional(LIFETIME, SPC)
         );
         b.rule(LIFETIME).is(b.firstOf("'static", "'_", LIFETIME_OR_LABEL));
     }
@@ -1650,7 +1651,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(TUPLE_TYPE).is(b.firstOf(
                 b.sequence("(", ")"),
-                b.sequence("(", SPACING, b.oneOrMore(b.sequence(TYPE, RustPunctuator.COMMA, SPACING)), b.optional(TYPE), ")")
+                b.sequence("(", SPC, b.oneOrMore(b.sequence(TYPE, RustPunctuator.COMMA, SPC)), b.optional(TYPE), ")")
         ));
 
 
@@ -1659,7 +1660,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/types/pointer.html */
     public static void pointer(LexerlessGrammarBuilder b) {
         b.rule(REFERENCE_TYPE).is(RustPunctuator.AND, b.optional(LIFETIME),
-                b.optional(SPACING, RustKeyword.KW_MUT, SPACING), TYPE_PARAM_BOUNDS);
+                b.optional(SPC, RustKeyword.KW_MUT, SPC), TYPE_PARAM_BOUNDS);
     }
 
     /* https://doc.rust-lang.org/reference/paths.html */
@@ -1712,7 +1713,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 QUALIFIED_PATH_TYPE, b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)));
 
         b.rule(QUALIFIED_PATH_TYPE).is(
-                RustPunctuator.LT, TYPE, b.optional(RustKeyword.KW_AS, SPACING, TYPE_PATH), RustPunctuator.GT
+                RustPunctuator.LT, TYPE, b.optional(RustKeyword.KW_AS, SPC, TYPE_PATH), RustPunctuator.GT
         );
 
         b.rule(QUALIFIED_PATH_IN_TYPE).is(QUALIFIED_PATH_TYPE, b.oneOrMore(
@@ -1729,7 +1730,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 "(",
                 b.optional(TYPE_PATH_FN_INPUTS),
                 ")",
-                b.optional(b.sequence(SPACING, "->", SPACING, TYPE))
+                b.optional(b.sequence(SPC, "->", SPC, TYPE))
         );
         b.rule(TYPE_PATH_FN_INPUTS).is(
                 TYPE,
@@ -1831,9 +1832,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RAW_IDENTIFIER).is(b.firstOf(b.regexp("^r#" + IDFREGEXP1 + "(?<!r#(crate|self|super|Self))"), b.regexp("^r#" + IDFREGEXP2)));
         b.rule(NON_KEYWORD_IDENTIFIER).is(b.regexp("^" + IDFREGEXP1 + exceptKeywords()));//Except a strict or reserved keyword
         b.rule(IDENTIFIER).is(b.token(RustTokenType.IDENTIFIER,
-                b.sequence(
-                        b.firstOf(RAW_IDENTIFIER, NON_KEYWORD_IDENTIFIER),
-                        SPACING))).skip();
+                        b.firstOf(RAW_IDENTIFIER, NON_KEYWORD_IDENTIFIER))).skip();
     }
 
     private static String exceptKeywords() {
@@ -1878,7 +1877,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INTEGER_LITERAL).is(b.token(RustTokenType.INTEGER_LITERAL,
                 b.sequence(
                         b.firstOf(HEX_LITERAL, OCT_LITERAL, BIN_LITERAL, DEC_LITERAL),
-                        b.optional(INTEGER_SUFFIX), SPACING)));
+                        b.optional(INTEGER_SUFFIX), SPC)));
         b.rule(DEC_LITERAL).is(DEC_DIGIT, b.zeroOrMore(b.firstOf(DEC_DIGIT, RustPunctuator.UNDERSCORE)));
         b.rule(TUPLE_INDEX).is(b.firstOf("0", b.sequence(b.zeroOrMore(NON_ZERO_DEC_DIGIT), DEC_DIGIT)));
 

@@ -10,7 +10,7 @@ public class SpacingTest {
 
     @Test
     public void reallife() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.SPACING))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.SPC))
                 .matches("/*foo*/")
                 .matches("/*foo \n bar*/")
 
