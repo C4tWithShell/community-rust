@@ -6,6 +6,24 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class ExternCrateTest {
+
+    @Test
+    public void testCrateRef(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CRATE_REF))
+                .matches("abc")
+                .matches("self")
+                ;
+    }
+
+    @Test
+    public void testAsClause(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.AS_CLAUSE))
+                .matches("as foo")
+                .matches("as _")
+        ;
+    }
+
+
     @Test
     public void testExternCrates() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXTERN_CRATE))

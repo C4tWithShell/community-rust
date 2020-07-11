@@ -12,7 +12,8 @@ public class ModuleTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MODULE))
                 .matches("mod foo ;")
                 .matches("mod bar {}")
-                //TODO more needed for mod foo { item }
+                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
+                        "}")
 
                 ;
 

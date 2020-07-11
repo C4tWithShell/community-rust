@@ -78,8 +78,8 @@ public enum RustKeyword implements GrammarRuleKey {
     KW_VIRTUAL("virtual"),
     KW_YIELD("yield"),
     /*Weak keywords*/
-   // KW_UNION ("union"),
-    //KW_STATICLIFETIME("'static")
+    KW_UNION ("union"),
+    KW_STATICLIFETIME("'static")
     ;
 
     private final String value;

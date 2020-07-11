@@ -273,7 +273,7 @@ public class LitteralsTest {
                 .matches("123.0f64")       // type f64
                 .matches("0.1f64")          // type f64
                 .matches("0.1f32")         // type f32
-
+                .matches("3.1415927")
                 .matches("2.")
         ;
     }

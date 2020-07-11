@@ -14,7 +14,6 @@ public class RustLexerTest {
         assertThat(lex("")).hasSize(2);
         assertThat(lex("   ")).hasSize(2);
         assertThat(lex("foo")).hasSize(3);
-        assertThat(lex("foo bar")).hasSize(3);
     }
 
     private List<Token> lex(String source) {

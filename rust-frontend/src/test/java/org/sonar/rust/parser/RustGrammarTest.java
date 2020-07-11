@@ -16,7 +16,6 @@ public class RustGrammarTest {
         LexerlessGrammar g = RustGrammar.create().build();
         RustGrammar[] rustGrammars = RustGrammar.values();
 
-
         Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
                 RustGrammar.CALL_PARAMS_TERM,
                 RustGrammar.COMPILATION_UNIT,
@@ -28,8 +27,6 @@ public class RustGrammarTest {
                 RustGrammar.SPACING,
                 RustGrammar.TUPLE_STRUCT_ITEMS,
                 RustGrammar.TYPE_PARAMS
-
-
         ));
 
         for (RustGrammar r : rustGrammars) {
@@ -37,7 +34,6 @@ public class RustGrammarTest {
                     assertThat(RustGrammar.create().build().rule(r))
                             .matches("");
                 } else {
-
                     assertThat(RustGrammar.create().build().rule(r))
                             .notMatches("");
                 }

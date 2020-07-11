@@ -10,8 +10,8 @@ public class CompilationUnitTest {
     public void reallife() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
                 .matches("")
-                //FIXME .matches("println!(\"hello\");")
-                //FIXME .matches("let n=42;")
+                .matches("println!(\"hello\");")
+                .matches("let n=42;")
 
 
                 ;

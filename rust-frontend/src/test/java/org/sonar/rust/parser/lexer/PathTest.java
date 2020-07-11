@@ -16,6 +16,7 @@ public class PathTest {
                 .matches("abc")
                 .matches("r#a")
                 .matches("U213")
+                .matches("crate_type")
         ;
     }
 
@@ -24,6 +25,8 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.SIMPLE_PATH))
                 .matches("std::io::Write")
                 .matches("std::io::super")
+                .matches("Write")
+                .matches("crate_type")
         ;
     }
 
@@ -32,6 +35,15 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_IN_EXPRESSION))
                 .matches("Vec::<u8>::with_capacity")
                 .matches("collect::<Vec<_>>")
+        ;
+    }
+
+    @Test
+    public void testQualifiedPathType() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_TYPE))
+                .matches("<T1>")
+                .matches("<T1 as T>")
+
         ;
     }
 
@@ -84,14 +96,19 @@ public class PathTest {
                 .matches("U213")
                 .matches("abc::(isize) -> isize")
                 .matches("abc::<>")
+                .matches("abc::")
+                .matches("abc::(isize) -> isize")
+                .notMatches("abc::abc for")
         ;
     }
 
     @Test
     public void testTypePath() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PATH))
-                .matches("std::boxed::Box<dyn std::ops::FnOnce(isize) -> isize>")
-                .matches("abc::abc")
+                .matches("abc::(isize) -> isize")
+                .matches("abc::")
+                .notMatches("abc::abc for")
+                .matches("T")
 
         ;
     }
