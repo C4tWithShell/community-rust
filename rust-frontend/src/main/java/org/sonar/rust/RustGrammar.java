@@ -734,19 +734,20 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(EXTERNAL_ITEM, SPC), "}"
         );
         b.rule(EXTERNAL_ITEM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE), "(",
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),SPC,
                 b.firstOf(MACRO_INVOCATION_SEMI,
                         b.sequence(
-                                b.optional(VISIBILITY),
+                                b.optional(VISIBILITY,SPC),
                                 b.firstOf(EXTERNAL_STATIC_ITEM, EXTERNAL_FUNCTION_ITEM)
                         )));
         b.rule(EXTERNAL_STATIC_ITEM).is(
-                RustKeyword.KW_STATIC, b.optional(RustKeyword.KW_MUT), IDENTIFIER, RustPunctuator.COLON, TYPE, ";"
+                RustKeyword.KW_STATIC, SPC,b.optional(RustKeyword.KW_MUT,SPC),
+                IDENTIFIER, SPC ,RustPunctuator.COLON,SPC, TYPE, RustPunctuator.SEMI
         );
         b.rule(EXTERNAL_FUNCTION_ITEM).is(
-                RustKeyword.KW_FN, IDENTIFIER, b.optional(GENERICS), "(",
-                b.optional(b.firstOf(NAMED_FUNCTION_PARAMETERS, NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS)),
-                ")", b.optional(FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE), ";"
+                RustKeyword.KW_FN, SPC,IDENTIFIER,SPC, b.optional(GENERICS,SPC), "(",SPC,
+                b.optional(b.firstOf( NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS,NAMED_FUNCTION_PARAMETERS)),
+                ")", SPC,b.optional(FUNCTION_RETURN_TYPE,SPC), b.optional(WHERE_CLAUSE,SPC), SPC,RustPunctuator.SEMI
         );
         b.rule(NAMED_FUNCTION_PARAMETERS).is(seq(b, NAMED_FUNCTION_PARAM, RustPunctuator.COMMA));
         b.rule(NAMED_FUNCTION_PARAM).is(
@@ -855,7 +856,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void modules(LexerlessGrammarBuilder b) {
         b.rule(MODULE).is(b.firstOf(
-                b.sequence("mod", SPC, IDENTIFIER, SPC, ";"),
+                b.sequence("mod", SPC, IDENTIFIER, SPC, RustPunctuator.SEMI),
                 b.sequence("mod", SPC, IDENTIFIER, SPC, "{",SPC,
                         b.zeroOrMore(INNER_ATTRIBUTE,SPC),
                         b.zeroOrMore(ITEM,SPC), "}"
@@ -904,8 +905,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 "macro_rule", RustPunctuator.NOT, IDENTIFIER, MACRO_RULES_DEF
         );
         b.rule(MACRO_RULES_DEF).is(b.firstOf(
-                b.sequence("(", MACRO_RULES, ")", ";"),
-                b.sequence("[", MACRO_RULES, "]", ";"),
+                b.sequence("(", MACRO_RULES, ")", RustPunctuator.SEMI),
+                b.sequence("[", MACRO_RULES, "]", RustPunctuator.SEMI),
                 b.sequence("{", MACRO_RULES, "}")
         ));
         b.rule(MACRO_RULES).is(
@@ -1074,7 +1075,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     public static void statement(LexerlessGrammarBuilder b) {
         b.rule(STATEMENT).is(b.firstOf(
-                ";",
+                RustPunctuator.SEMI,
                 ITEM,
                 LET_STATEMENT,
                 EXPRESSION_STATEMENT,
@@ -1366,7 +1367,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(ARRAY_ELEMENTS).is(b.firstOf(
                 b.sequence(SPC, EXPRESSION, SPC, b.zeroOrMore(RustPunctuator.COMMA, SPC, EXPRESSION), b.optional(RustPunctuator.COMMA, SPC)),
-                b.sequence(SPC, EXPRESSION, ";", SPC, EXPRESSION)
+                b.sequence(SPC, EXPRESSION, RustPunctuator.SEMI, SPC, EXPRESSION)
 
         ));
 
@@ -1627,7 +1628,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RAW_POINTER_TYPE).is(RustPunctuator.STAR, b.firstOf(RustKeyword.KW_MUT, CONST), TYPE_NO_BOUNDS);
         b.rule(INFERRED_TYPE).is(RustPunctuator.UNDERSCORE);
         b.rule(SLICE_TYPE).is("[", TYPE, "]");
-        b.rule(ARRAY_TYPE).is("[", SPC, TYPE, SPC, ";", SPC, EXPRESSION, SPC, "]");
+        b.rule(ARRAY_TYPE).is("[", SPC, TYPE, SPC, RustPunctuator.SEMI, SPC, EXPRESSION, SPC, "]");
         b.rule(IMPL_TRAIT_TYPE).is(RustKeyword.KW_IMPL, TYPE_PARAM_BOUNDS);
         b.rule(IMPL_TRAIT_TYPE_ONE_BOUND).is(RustKeyword.KW_IMPL, TRAIT_BOUND);
         b.rule(NEVER_TYPE).is(RustPunctuator.NOT);

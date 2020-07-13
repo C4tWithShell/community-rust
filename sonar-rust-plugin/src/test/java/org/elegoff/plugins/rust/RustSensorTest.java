@@ -105,7 +105,6 @@ public class RustSensorTest {
         //FIXME
 /*
         assertEquals((Integer) 5, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-
         assertEquals((Integer) 4, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
         assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
         assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());

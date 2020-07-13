@@ -5,12 +5,12 @@
 
 
     <groupId>org.elegoff</groupId>
-    <artifactId>rust</artifactId>
+    <artifactId>rust-report</artifactId>
     <version>0.0.2</version>
 
     <packaging>pom</packaging>
 
-    <name>Rust</name>
+    <name>Rust Report</name>
     <inceptionYear>2020</inceptionYear>
     <organization>
         <name>Eric Le Goff</name>

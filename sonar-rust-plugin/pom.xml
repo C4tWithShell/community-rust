@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>org.elegoff</groupId>
-        <artifactId>rust</artifactId>
+        <artifactId>rust-report</artifactId>
         <version>0.0.2</version>
     </parent>
 

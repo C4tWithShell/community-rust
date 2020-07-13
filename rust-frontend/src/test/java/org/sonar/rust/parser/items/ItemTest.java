@@ -106,6 +106,12 @@ MacroItem:
                             "}") //trait
                     //implementation
                     .matches("impl <U> Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
+                    //extern block
+                    .matches("extern {\n" +
+                            "    pub fn draw()->Circle;\n" +
+                            "    #[outer] pub fn draw()->Circle;\n" +
+                            "    static fdf : f64;\n" +
+                            "    }")
             ;
         }
 
