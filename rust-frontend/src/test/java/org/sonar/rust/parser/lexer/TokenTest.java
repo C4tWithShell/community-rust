@@ -19,6 +19,7 @@ public class TokenTest {
                 .matches("break")
                 .matches("const")
                 .matches("continue")
+                .matches("\"hello,world!\"")
                 ;
     }
 }

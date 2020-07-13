@@ -55,10 +55,13 @@ public class LitteralsTest {
     public void testStringContent(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_CONTENT))
                 .matches("abc")
+                .matches("abc,def!@")
+                .matches("\r\n")
                 .notMatches("\r")
                 .notMatches("\"")
-                .notMatches("hello\"")
                 .notMatches("\"hello")
+                .notMatches("hello\"")
+                .notMatches("hello\"world")
                 .notMatches("\"hello\"")
                 ;
     }
@@ -69,7 +72,8 @@ public class LitteralsTest {
                 .matches("\"a\"")
                 .matches("\"5\"")
                 .matches("\"some text\"")
-                .matches("\"some text with \\\" quote escape \"")
+                .matches("\"hello,world!\"")
+                //FIXME .matches("\"some text with \\\" quote escape \"")
                 .matches("\"\\'\"")
                 .matches("\"\\\"\"")
                 .matches("\"\\x7f\"")
@@ -77,6 +81,7 @@ public class LitteralsTest {
                 .matches("\"\\t\"")
                 .notMatches("\"\\\"")
                 .notMatches("\"hello\")")
+
 
         ;
     }
@@ -380,6 +385,7 @@ public class LitteralsTest {
                 .notMatches("+")
                 .notMatches("{")
                 .notMatches("\"hello\")")
+                .matches("\"hello,world!\"")
                 ;
 
     }

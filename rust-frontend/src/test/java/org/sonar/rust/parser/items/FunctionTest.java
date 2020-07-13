@@ -85,6 +85,9 @@ public class FunctionTest {
                 .matches("fn answer_to_life_the_universe_and_everything() -> i32 {\n" +
                         "    let y=42;\n" +
                         "}")
+                .matches("fn main() {\n" +
+                        "    println!(\"Hello, world!\");\n" +
+                        "}")
 
 
         ;

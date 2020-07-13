@@ -54,6 +54,7 @@ public class MacroTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_INVOCATION_SEMI))
                 .matches("j!(AS);")
                 .matches("println!(\"hello\");")
+                .matches("println!(\"hello,world!\");")
                 .notMatches("")
         ;
     }

@@ -400,16 +400,19 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence("'", QUOTE_ESCAPE, "'"),
                         b.sequence("'", ASCII_ESCAPE, "'")))).skip();
 
-        b.rule(STRING_CONTENT).is(b.regexp("[a-zA-Z0-9_\\t]+"));
+        //    ~[" \ IsolatedCR]
+        //b.rule(STRING_CONTENT).is(b.regexp("[a-zA-Z0-9_\\t]+"));
+        b.rule(STRING_CONTENT).is(b.regexp("(\\r\\n)+|[^\"\\r]+"));
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                 b.sequence(
                         "\"", b.zeroOrMore(b.firstOf(
-                                STRING_CONTENT,
+
                                 QUOTE_ESCAPE
                                 , ASCII_ESCAPE
                                 , UNICODE_ESCAPE
                                 , STRING_CONTINUE
+                                , STRING_CONTENT
                         ), SPC),
                         "\""
                 )));
@@ -608,9 +611,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void functionsItem(LexerlessGrammarBuilder b) {
         b.rule(FUNCTION).is(
-                FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER, b.optional(GENERICS),
-                "(", b.optional(FUNCTION_PARAMETERS), ")",
-                b.optional(SPC, FUNCTION_RETURN_TYPE), b.optional(WHERE_CLAUSE),
+                FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER,
+                b.optional(GENERICS,SPC), SPC,
+                "(", b.optional(FUNCTION_PARAMETERS,SPC), ")",
+                b.optional(SPC, FUNCTION_RETURN_TYPE,SPC), b.optional(WHERE_CLAUSE,SPC),SPC,
                 BLOCK_EXPRESSION
         );
         b.rule(FUNCTION_QUALIFIERS).is(
@@ -750,9 +754,11 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC,
                 RustPunctuator.COLON, SPC, TYPE
         );
+
         b.rule(NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS).is(
-                b.zeroOrMore(b.sequence(NAMED_FUNCTION_PARAM, RustPunctuator.COMMA)),
-                NAMED_FUNCTION_PARAM, RustPunctuator.COMMA, b.zeroOrMore(OUTER_ATTRIBUTE), "..."
+                b.oneOrMore(NAMED_FUNCTION_PARAM, SPC, RustPunctuator.COMMA,SPC),
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
+                RustPunctuator.DOTDOTDOT
         );
     }
 
@@ -1751,8 +1757,8 @@ public enum RustGrammar implements GrammarRuleKey {
     public static void lexicaltoken(LexerlessGrammarBuilder b) {
 
 
-        b.rule(TOKEN).is(b.firstOf(IDENTIFIER_OR_KEYWORD,
-                LITERALS, LIFETIMES, PUNCTUATION, DELIMITERS));
+        b.rule(TOKEN).is(b.firstOf(LITERALS,IDENTIFIER_OR_KEYWORD,
+                LIFETIMES, PUNCTUATION, DELIMITERS));
 
         b.rule(LIFETIME_OR_LABEL).is("'", NON_KEYWORD_IDENTIFIER);
 
