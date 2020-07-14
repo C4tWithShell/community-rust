@@ -22,8 +22,10 @@ package org.sonar.rust.metrics;
 
 import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.Grammar;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustVisitor;
+import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
 import java.util.HashSet;
@@ -31,7 +33,7 @@ import java.util.Set;
 
 public class LinesOfCodeVisitor extends RustVisitor {
 
-    private final ParserAdapter lexer;
+    private final ParserAdapter<LexerlessGrammar> lexer;
     private final Set<Integer> linesOfCode = new HashSet<>();
 
     public LinesOfCodeVisitor(ParserAdapter lexer) {

@@ -22,6 +22,7 @@ package org.sonar.rust;
 
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
+import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
 public enum RustLexer implements GrammarRuleKey {
@@ -49,12 +50,12 @@ public enum RustLexer implements GrammarRuleKey {
         return b;
     }
 
-    public static ParserAdapter create(RustParserConfiguration conf) {
+    public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf) {
         return new ParserAdapter(conf.getCharset(), create().build());
     }
 
 
-    public static ParserAdapter create(RustParserConfiguration conf, GrammarRuleKey root) {
+    public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf, GrammarRuleKey root) {
         return new ParserAdapter(conf.getCharset(), create(root).build());
     }
 

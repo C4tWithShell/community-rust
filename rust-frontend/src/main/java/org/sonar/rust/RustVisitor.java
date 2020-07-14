@@ -37,18 +37,23 @@ public class RustVisitor {
     }
 
     public void visitFile(AstNode node) {
+        // Do nothing
     }
 
     public void leaveFile(AstNode node) {
+        // Do nothing
     }
 
     public void visitNode(AstNode node) {
+        // Do nothing
     }
 
     public void visitToken(Token token) {
+        // Do nothing
     }
 
     public void leaveNode(AstNode node) {
+        // Do nothing
     }
 
     public RustVisitorContext getContext() {
