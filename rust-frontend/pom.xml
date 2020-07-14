@@ -4,8 +4,8 @@
 
     <parent>
         <groupId>org.elegoff</groupId>
-        <artifactId>rust</artifactId>
-        <version>0.0.2</version>
+        <artifactId>rust-report</artifactId>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>rust-frontend</artifactId>
@@ -32,6 +32,12 @@
             <artifactId>assertj-core</artifactId>
             <version>${assertj-core.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- packaged with the plugin -->
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

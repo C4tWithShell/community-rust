@@ -6,7 +6,7 @@
 
     <groupId>org.elegoff</groupId>
     <artifactId>rust-report</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -68,6 +68,7 @@
         <sonar.branch.name>grammar-dev</sonar.branch.name>
         <sonar.branch.target>master</sonar.branch.target>
         <commons.io.version>2.5</commons.io.version>
+        <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.10</junit.version>
         <sonar-analyzer-commons.version>1.11.0.541</sonar-analyzer-commons.version>
     </properties>
