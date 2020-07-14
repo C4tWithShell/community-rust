@@ -112,12 +112,11 @@ public class RustSensorTest {
         assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 5, 13));
 
         assertEquals(0, tester.allIssues().size());
-/*
+
         verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 3, 1);
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 9, 1);
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 10, 1);
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 11, 1);
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 12, 1);
+        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 5, 1);
+        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 6, 1);
+
 
         verify(fileLinesContext).save();
 
@@ -125,7 +124,7 @@ public class RustSensorTest {
 
         Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
 
- */
+
     }
 
 
