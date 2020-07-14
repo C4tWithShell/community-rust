@@ -101,25 +101,16 @@ public class RustSensorTest {
     @Test
     public void analyse() throws IOException {
         DefaultInputFile inputFile = executeSensorOnSingleFile(FILE1);
-
-        //FIXME
-/*
-        assertEquals((Integer) 5, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-        assertEquals((Integer) 4, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
-        assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
+        assertEquals((Integer) 3, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
+        assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
+        assertEquals((Integer) 0, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
+        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
         assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
-
-
-
-        assertEquals(5, tester.cpdTokens(inputFile.key()).size());
-
-
-
+        assertEquals(3, tester.cpdTokens(inputFile.key()).size());
         assertEquals(Collections.singletonList(TypeOfText.COMMENT), tester.highlightingTypeAt(inputFile.key(), 1, 1));
         assertEquals(Collections.singletonList(TypeOfText.KEYWORD), tester.highlightingTypeAt(inputFile.key(), 3, 1));
-        assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 10, 12));
- */
+        assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 5, 13));
+
         assertEquals(0, tester.allIssues().size());
 /*
         verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 3, 1);
@@ -152,8 +143,8 @@ public class RustSensorTest {
         DefaultInputFile file1 = addInputFile(FILE1);
         DefaultInputFile file2 = addInputFile(FILE2);
         sensor.execute(tester);
-        //FIXME Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNotNull();
-        //FIXME Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
+        Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNotNull();
+        Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
     }
 
     @Test
@@ -162,8 +153,8 @@ public class RustSensorTest {
         DefaultInputFile file2 = addInputFile(FILE2);
         tester.setCancelled(true);
         sensor.execute(tester);
-        //FIXME Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNotNull();
-        Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNull();
+        Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
+        Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNull();
     }
 
     private DefaultInputFile addInputFile(String fileName) throws IOException {

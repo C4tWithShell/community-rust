@@ -56,7 +56,7 @@ public class RustTokensVisitor{
             if (token.getType().equals(RustTokenType.CHARACTER_LITERAL)) {
                 return RustTokenType.CHARACTER_LITERAL.getValue();
             }
-            return token.getValue().toUpperCase(Locale.ENGLISH);
+            return token.getValue().toLowerCase(Locale.ENGLISH);
         }
 
         private static void highlight(NewHighlighting highlighting, TokenLocation tokenLocation, TypeOfText typeOfText) {

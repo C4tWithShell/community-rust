@@ -382,12 +382,20 @@ public enum RustGrammar implements GrammarRuleKey {
         b.setRootRule(COMPILATION_UNIT);
         return b;
     }
+    private static Object inlineComment(LexerlessGrammarBuilder b) {
+        return b.regexp("//[^\\n\\r]*+");
+    }
 
+    private static Object multilineComment(LexerlessGrammarBuilder b) {
+        return b.regexp("/\\*[\\s\\S]*?\\*\\/");
+    }
     private static void literals(LexerlessGrammarBuilder b) {
-        b.rule(SPC).is(whitespace(b),
+     b.rule(SPC).is(
+                b.skippedTrivia(whitespace(b)),
                 b.zeroOrMore(
-                        b.token(GenericTokenType.COMMENT, b.regexp("(?s)/\\*.*?\\*/")),
-                        whitespace(b))).skip();
+                        b.commentTrivia(b.firstOf(inlineComment(b), multilineComment(b))),
+                        b.skippedTrivia(whitespace(b))));
+
 
         b.rule(EOF).is(b.token(GenericTokenType.EOF, b.endOfInput())).skip();
 
@@ -514,7 +522,8 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static Object whitespace(LexerlessGrammarBuilder b) {
-        return b.regexp("\\s*+");
+        //return b.regexp("\\s*+");
+        return b.skippedTrivia(b.regexp("[ \t\n\r]*+"));
     }
 
 
@@ -1134,6 +1143,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(ANY_TOKEN).is(
                 b.firstOf(
+                        DELIMITERS,
                         CHAR_LITERAL,
                         BYTE_LITERAL,
                         BYTE_STRING_LITERAL,
@@ -1145,8 +1155,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         HEX_LITERAL,
                         OCT_LITERAL,
                         RAW_BYTE_STRING_LITERAL,
-                        IDENTIFIER,
+                        IDENTIFIER_OR_KEYWORD,
                         UNKNOWN_CHAR
+
                 ));
     }
 
@@ -1910,7 +1921,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
          */
         b.rule(STRING_CONTINUE).is("\\\n");
-        b.rule(RAW_STRING_LITERAL).is("r", RAW_STRING_CONTENT);
+        b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
+                b.sequence("r", RAW_STRING_CONTENT)));
         b.rule(RAW_STRING_CONTENT).is(b.firstOf(
                 b.regexp("^\"[^\\r\\n].*\""),
                 b.sequence(RustPunctuator.POUND, RAW_STRING_CONTENT, RustPunctuator.POUND)));

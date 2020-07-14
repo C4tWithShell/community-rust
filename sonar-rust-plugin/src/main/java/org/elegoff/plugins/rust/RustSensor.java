@@ -21,6 +21,7 @@
 package org.elegoff.plugins.rust;
 
 
+import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.api.RecognitionException;
 import com.sonar.sslr.impl.Parser;
@@ -122,7 +123,8 @@ public class RustSensor implements Sensor {
         SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
         RustVisitorContext visitorContext;
         try {
-            visitorContext = new RustVisitorContext(rustFile, parser.parse(file));
+            AstNode tree = parser.parse(file);
+            visitorContext = new RustVisitorContext(rustFile, tree);
 
             saveMetrics(sensorContext, inputFile, visitorContext, metricsVisitor);
             tokensVisitor.scanFile(inputFile, visitorContext);

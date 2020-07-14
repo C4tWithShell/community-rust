@@ -28,10 +28,10 @@ public enum RustLexer implements GrammarRuleKey {
 
     TOKENS;
 
-    private static LexerlessGrammarBuilder create() {
+    public static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b =RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPC, b.optional(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
+        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN,RustGrammar.SPC), RustGrammar.EOF);
 
         b.setRootRule(TOKENS);
 
