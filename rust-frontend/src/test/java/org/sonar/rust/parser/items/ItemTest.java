@@ -67,13 +67,13 @@ MacroItem:
 
     @Test
     public void MacroItem() {
-
-
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_ITEM))
                 .matches("j!(AS);")
                 .matches("println!(\"hello\");")
                 .notMatches("")
-        //TODO MacroRulesDefinition
+                .matches("macro_rules! foo {\n" +
+                        "    ($l:tt) => { bar!($l); }\n" +
+                        "}") //macro rules definition
         ;
     }
 
@@ -112,6 +112,12 @@ MacroItem:
                             "    #[outer] pub fn draw()->Circle;\n" +
                             "    static fdf : f64;\n" +
                             "    }")
+                    .matches("j!(AS);")
+                    .matches("println!(\"hello\");")
+                    .notMatches("")
+                    .matches("macro_rules! foo {\n" +
+                            "    ($l:tt) => { bar!($l); }\n" +
+                            "}") //macro rules definition
             ;
         }
 

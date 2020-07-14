@@ -67,4 +67,77 @@ public class MacroTest {
         ;
     }
 
+
+    @Test
+    public void testMacroFragSpec() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_FRAG_SPEC))
+                .matches("block")
+                .matches("expr") .matches("ident") .matches("item") .matches("lifetime")
+                .matches("literal")
+                 .matches("meta") .matches("pat").matches("path") .matches("stmt")
+                .matches("tt") .matches("ty").matches("vis")
+
+        ;
+    }
+
+    @Test
+    public void testRepOp() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_REP_OP))
+                .matches("+")
+                .matches("*")
+                .matches("?")
+                .notMatches("a+")
+                .notMatches("+a")
+                .notMatches("+a+")
+
+
+
+        ;
+    }
+
+    @Test
+    public void testMacroMatch() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_MATCH))
+                .matches("token")
+                .matches("$(token token)*")
+                .matches("$i:ident")
+                .matches("(token)")
+                .matches("[token]")
+                .matches("{token}")
+                .matches("($(token)*)")
+                .matches("[$i:ident]")
+                .matches("[($i:ident)]")
+                .matches("($($i:ident)*)");
+    }
+
+    @Test
+    public void testMacroMatcher() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_MATCHER))
+                .matches("(token)")
+                .matches("($(token token)*)")
+                .matches("[$(token)*]")
+                .matches("{$i:ident}")
+                .matches("((token))")
+                .matches("[[token]]")
+                .matches("{{token}}")
+                .matches("(($(token)*))")
+                .matches("[[$i:ident]]")
+                .matches("{[($i:ident)]}")
+                .matches("(($($i:ident)*))")
+                .matches("($l:tt)")
+                ;
+    }
+
+    @Test
+    public void testMacroRulesDefinition() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEFINITION))
+                .matches("macro_rules! foo {\n" +
+                        "    ($l:tt) => { bar!($l); }\n" +
+                        "}")
+
+        ;
+    }
+
+
+
 }

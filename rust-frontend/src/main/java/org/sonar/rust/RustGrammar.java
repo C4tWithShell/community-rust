@@ -27,7 +27,9 @@ import org.sonar.rust.api.RustTokenType;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public enum RustGrammar implements GrammarRuleKey {
     ABI,
@@ -347,7 +349,7 @@ public enum RustGrammar implements GrammarRuleKey {
     VISIT_ITEM,
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
-    WILDCARD_PATTERN, TUPLE_INDEXING_EXPRESSION_TERM, TYPE_CAST_EXPRESSION_TERM, TOKEN_EXCEPT_DELIMITERS, STRING_CONTENT;
+    WILDCARD_PATTERN, TUPLE_INDEXING_EXPRESSION_TERM, TYPE_CAST_EXPRESSION_TERM, TOKEN_EXCEPT_DELIMITERS, STRING_CONTENT, PUNCTUATION_EXCEPT_DOLLAR, TOKEN_MACRO;
 
     private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
     private static final String IDFREGEXP2 = "_[a-zA-Z0-9_]+";
@@ -452,11 +454,35 @@ public enum RustGrammar implements GrammarRuleKey {
         return b.sequence(b.next("\""), b.regexp("\"([^\"\\\\]*+(\\\\[\\s\\S])?+)*+\""));
     }
 
+    private static String[] getPunctuatorsExcept(String[] arr, String toRemove){
+        int newLength = arr.length;
+        for(int i = 0; i < arr.length; i++)
+        {
+            if(arr[i].contains(toRemove))
+            {
+                newLength--;
+            }
+        }
+        String[] result = new String[newLength];
+        int count = 0;
+        for(int i = 0; i < arr.length; i++)
+        {
+            if(!arr[i].contains(toRemove)) {
+                result[count] = arr[i];
+                count++;
+            }
+        }
+        return result;
+    }
+
     private static void punctuators(LexerlessGrammarBuilder b) {
         for (RustPunctuator tokenType : RustPunctuator.values()) {
             b.rule(tokenType).is(tokenType.getValue());
         }
         String[] punctuators = RustPunctuator.punctuatorValues();
+
+        String[] punctuatorsExceptDollar = RustGrammar.getPunctuatorsExcept(punctuators,"$");
+
         Arrays.sort(punctuators);
         ArrayUtils.reverse(punctuators);
         b.rule(PUNCTUATION).is(
@@ -464,6 +490,13 @@ public enum RustGrammar implements GrammarRuleKey {
                         punctuators[0],
                         punctuators[1],
                         ArrayUtils.subarray(punctuators, 2, punctuators.length)));
+        Arrays.sort(punctuatorsExceptDollar);
+        ArrayUtils.reverse(punctuatorsExceptDollar);
+        b.rule(PUNCTUATION_EXCEPT_DOLLAR).is(
+                b.firstOf(
+                        punctuatorsExceptDollar[0],
+                        punctuatorsExceptDollar[1],
+                        ArrayUtils.subarray(punctuators, 2, punctuatorsExceptDollar.length)));
     }
 
     private static void keywords(LexerlessGrammarBuilder b) {
@@ -879,9 +912,9 @@ public enum RustGrammar implements GrammarRuleKey {
         );
 
         b.rule(DELIM_TOKEN_TREE).is(b.firstOf(
-                b.sequence("(", b.zeroOrMore(TOKEN_TREE), ")"),
-                b.sequence("[", b.zeroOrMore(TOKEN_TREE), "]"),
-                b.sequence("{", b.zeroOrMore(TOKEN_TREE), "}")));
+                b.sequence("(",SPC, b.zeroOrMore(TOKEN_TREE),SPC, ")"),
+                b.sequence("[",SPC, b.zeroOrMore(TOKEN_TREE),SPC, "]"),
+                b.sequence("{",SPC, b.zeroOrMore(TOKEN_TREE),SPC, "}")));
 
         b.rule(TOKEN_EXCEPT_DELIMITERS).is(b.firstOf(
                 IDENTIFIER_OR_KEYWORD, LITERALS, LIFETIMES, PUNCTUATION
@@ -902,35 +935,41 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/macros-by-example.html */
     private static void macrosByExample(LexerlessGrammarBuilder b) {
         b.rule(MACRO_RULES_DEFINITION).is(
-                "macro_rule", RustPunctuator.NOT, IDENTIFIER, MACRO_RULES_DEF
+                "macro_rules!", SPC,IDENTIFIER, SPC, MACRO_RULES_DEF
         );
         b.rule(MACRO_RULES_DEF).is(b.firstOf(
-                b.sequence("(", MACRO_RULES, ")", RustPunctuator.SEMI),
-                b.sequence("[", MACRO_RULES, "]", RustPunctuator.SEMI),
-                b.sequence("{", MACRO_RULES, "}")
+                b.sequence("(", SPC, MACRO_RULES, SPC,")", RustPunctuator.SEMI),
+                b.sequence("[", SPC, MACRO_RULES, SPC, "]", RustPunctuator.SEMI),
+                b.sequence("{", SPC, MACRO_RULES, SPC, "}")
         ));
         b.rule(MACRO_RULES).is(
                 MACRO_RULE, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, MACRO_RULE)), b.optional(RustPunctuator.COMMA)
         );
-        b.rule(MACRO_RULE).is(MACRO_MATCHER, "=>", MACRO_TRANSCRIBER);
+        b.rule(MACRO_RULE).is(MACRO_MATCHER, SPC,"=>", SPC,MACRO_TRANSCRIBER);
         b.rule(MACRO_MATCHER).is(b.firstOf(
-                b.sequence("(", MACRO_MATCH, ")"),
-                b.sequence("[", MACRO_MATCH, "]"),
-                b.sequence("{", MACRO_MATCH, "}")
+                b.sequence("(",SPC,  MACRO_MATCH, SPC, ")"),
+                b.sequence("[", SPC,  MACRO_MATCH, SPC, "]"),
+                b.sequence("{", SPC,  MACRO_MATCH, SPC, "}")
         ));
+
+
         b.rule(MACRO_MATCH).is(b.firstOf(
-                TOKEN, //except $ and delimiters
-                MACRO_MATCHER,
-                b.sequence("$", IDENTIFIER, RustPunctuator.COLON, MACRO_FRAG_SPEC),
-                b.sequence("$", "(", b.oneOrMore(MACRO_MATCH), ")"
-                        , b.optional(MACRO_REP_SEP), MACRO_REP_OP)
-        ));
+
+                b.sequence("$", IDENTIFIER,SPC,  RustPunctuator.COLON,SPC,  MACRO_FRAG_SPEC),
+
+                b.sequence("$(",  b.oneOrMore(MACRO_MATCH, SPC), b.firstOf(")+",")*",")?") ),
+                TOKEN_MACRO,
+                MACRO_MATCHER
+                ));
+
+        b.rule(TOKEN_MACRO).is(b.firstOf(LITERALS,IDENTIFIER_OR_KEYWORD,
+                LIFETIMES,PUNCTUATION_EXCEPT_DOLLAR));
         b.rule(MACRO_FRAG_SPEC).is(b.firstOf(
                 "block", "expr", "ident", "item", "lifetime", "literal"
-                , "meta", "pat", "path", "stmt", "tt", "ty", "vis"
+                , "meta", "path", "pat", "stmt", "tt", "ty", "vis"
         ));
         b.rule(MACRO_REP_SEP).is(TOKEN); //except $ and delimiters
-        b.rule(MACRO_REP_OP).is(b.firstOf(RustPunctuator.STAR, RustPunctuator.PLUS, "?"));
+        b.rule(MACRO_REP_OP).is(b.firstOf(RustPunctuator.STAR, RustPunctuator.PLUS, RustPunctuator.QUESTION));
         b.rule(MACRO_TRANSCRIBER).is(DELIM_TOKEN_TREE);
 
 
