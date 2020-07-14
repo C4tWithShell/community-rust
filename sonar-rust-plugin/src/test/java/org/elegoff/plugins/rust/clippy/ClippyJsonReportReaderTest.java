@@ -52,7 +52,7 @@ public class ClippyJsonReportReaderTest {
 
     @Test
     public void emptyReport() {
-        File empty = this.getFileFromResources("org/elegoff/plugins/rust/clippy/empty-report.txt");
+        File empty = this.getFileFromResources("clippy/empty-report.txt");
         InputStream in = null;
         try {
             in = ClippyJsonReportReader.toJSON(empty);
@@ -67,7 +67,7 @@ public class ClippyJsonReportReaderTest {
 
     @Test
     public void validReport() {
-        File report = this.getFileFromResources("org/elegoff/plugins/rust/clippy/myreport.txt");
+        File report = this.getFileFromResources("clippy/myreport.txt");
         InputStream in = null;
         try {
             in = ClippyJsonReportReader.toJSON(report);

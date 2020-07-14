@@ -18,22 +18,25 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust.parser.expressions;
 
+import org.junit.Test;
+import org.sonar.rust.RustGrammar;
 
-package org.elegoff.rust.checks;
+import static org.sonar.sslr.tests.Assertions.assertThat;
 
-import java.util.*;
+public class ExpressionTest {
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+    @Test
+    public void testExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+                .matches("{let y=42;}")
+                .matches("{;}")
+                .matches("0")
+                .matches("3+2")
+                .matches("1 << 1")
+                .matches("foo")
 
-    private CheckList() {
+        ;
     }
-
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
-    }
-
-
 }

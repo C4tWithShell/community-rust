@@ -18,22 +18,20 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust;
 
 
-package org.elegoff.rust.checks;
+import com.sonar.sslr.api.Grammar;
+import com.sonar.sslr.impl.Parser;
+import org.sonar.sslr.parser.ParserAdapter;
 
-import java.util.*;
+public final class RustParser {
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
-
-    private CheckList() {
+    private RustParser() {
     }
 
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
+    public static Parser<Grammar> create(RustParserConfiguration conf) {
+        return new ParserAdapter(conf.getCharset(), RustGrammar.create().build());
     }
-
 
 }

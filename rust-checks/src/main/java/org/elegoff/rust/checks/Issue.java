@@ -18,22 +18,40 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
-
 package org.elegoff.rust.checks;
 
-import java.util.*;
+import javax.annotation.CheckForNull;
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+public class Issue {
 
-    private CheckList() {
+    private final RustCheck check;
+    private final Integer line;
+    private final String message;
+
+    private Issue(RustCheck check, Integer line, String message) {
+        this.check = check;
+        this.line = line;
+        this.message = message;
     }
 
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
+    public static Issue fileIssue(RustCheck check, String message) {
+        return new Issue(check, null, message);
     }
 
+    public static Issue lineIssue(RustCheck check, int line, String message) {
+        return new Issue(check, line, message);
+    }
 
+    public RustCheck check() {
+        return check;
+    }
+
+    @CheckForNull
+    public Integer line() {
+        return line;
+    }
+
+    public String message() {
+        return message;
+    }
 }

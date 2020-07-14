@@ -18,22 +18,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.elegoff.plugins.rust;
 
+import org.elegoff.plugins.rust.language.RustLanguage;
+import org.elegoff.plugins.rust.settings.RustLanguageSettings;
+import org.junit.Test;
+import org.sonar.api.config.internal.MapSettings;
 
-package org.elegoff.rust.checks;
+import java.nio.charset.Charset;
 
-import java.util.*;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+public class RustPluginConfigurationTest {
+    @Test
+    public void getParserConfigurationCharset() {
+        RustPluginConfiguration pluginConf = new RustPluginConfiguration(getDefaultSettings().asConfig());
 
-    private CheckList() {
+        Charset charset = mock(Charset.class);
+        assertThat(pluginConf.getParserConfiguration(charset).getCharset()).isEqualTo(charset);
     }
 
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
+    static MapSettings getDefaultSettings() {
+        return new MapSettings()
+                .setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, ".foo");
+
     }
-
-
 }

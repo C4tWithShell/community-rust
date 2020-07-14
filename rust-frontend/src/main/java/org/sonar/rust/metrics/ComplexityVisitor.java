@@ -1,51 +1,63 @@
 /**
- *
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2020 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust.api;
+package org.sonar.rust.metrics;
 
+import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.TokenType;
+import com.sonar.sslr.api.AstNodeType;
+import org.sonar.rust.RustGrammar;
+import org.sonar.rust.RustVisitor;
 
-public enum RustTokenType implements TokenType {
-    CHARACTER_LITERAL,
-    BYTE_LITERAL,
-    BYTE_STRING_LITERAL,
-    INTEGER_LITERAL,
-    FLOAT_LITERAL,
-    BOOLEAN_LITERAL,
-    STRING_LITERAL,
-    RAW_STRING_LITERAL,
-    RAW_BYTE_STRING_LITERAL,
-    IDENTIFIER;
+import java.util.Set;
 
-    public String getName() {
-        return name();
+public class ComplexityVisitor extends RustVisitor {
+
+    private int complexity;
+
+    private static boolean isSomethingComplex(AstNode node) {
+        //placeholder for ideas may have ideas later
+        return false;
     }
 
-    public String getValue() {
-        return name();
+    public int complexity() {
+        return complexity;
     }
 
     @Override
-    public boolean hasToBeSkippedFromAst(AstNode node) {
-        return false;
+    public Set<AstNodeType> subscribedKinds() {
+        return ImmutableSet.<AstNodeType>builder()
+                .add(RustGrammar.EXPRESSION)
+                .build();
     }
+
+    @Override
+    public void visitFile(AstNode astNode) {
+        complexity = 0;
+    }
+
+    @Override
+    public void visitNode(AstNode astNode) {
+        if (!isSomethingComplex(astNode)) {
+            complexity++;
+        }
+    }
+
 
 }

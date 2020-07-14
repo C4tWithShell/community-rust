@@ -21,10 +21,14 @@
 package org.elegoff.plugins.rust;
 
 
-import com.google.common.collect.ImmutableList;
+import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.Grammar;
+import com.sonar.sslr.api.RecognitionException;
+import com.sonar.sslr.impl.Parser;
 import org.elegoff.plugins.rust.language.RustLanguage;
-import org.elegoff.plugins.rust.lines.LineCounter;
 import org.elegoff.rust.checks.CheckList;
+import org.elegoff.rust.checks.Issue;
+import org.elegoff.rust.checks.RustCheck;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
@@ -33,117 +37,157 @@ import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.batch.sensor.issue.NewIssue;
+import org.sonar.api.batch.sensor.issue.NewIssueLocation;
+import org.sonar.api.measures.CoreMetrics;
+import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.rust.api.RustCheck;
-import org.sonar.plugins.rust.api.RustFile;
-import org.sonarsource.analyzer.commons.ProgressReport;
+import org.sonar.rust.RustLexer;
+import org.sonar.rust.RustParser;
+import org.sonar.rust.RustParserConfiguration;
+import org.sonar.rust.RustVisitorContext;
+import org.sonar.rust.metrics.MetricsVisitor;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class RustSensor implements Sensor {
 
     private static final Logger LOG = Loggers.get(RustSensor.class);
 
-    private final Checks<Object> checks;
-    private final FileSystem fileSystem;
-    private final FilePredicate mainFilesPredicate;
     private final FileLinesContextFactory fileLinesContextFactory;
+    private final Checks<RustCheck> checks;
 
-
-    public RustSensor(FileSystem fileSystem, CheckFactory checkFactory, FileLinesContextFactory fileLinesContextFactory) {
+    public RustSensor(CheckFactory checkFactory, FileLinesContextFactory fileLinesContextFactory) {
+        this.checks = checkFactory
+                .<RustCheck>create(CheckList.REPOSITORY_KEY)
+                .addAnnotatedChecks((Iterable) CheckList.getRustChecks());
         this.fileLinesContextFactory = fileLinesContextFactory;
-        List<Class<? extends RustCheck>> checks = ImmutableList.<Class<? extends RustCheck>>builder()
-                .addAll(CheckList.getRustChecks())
-                .build();
-        this.checks = checkFactory.create(CheckList.REPOSITORY_KEY).addAnnotatedChecks((Iterable<?>) checks);
-        this.fileSystem = fileSystem;
-        this.mainFilesPredicate = fileSystem.predicates().and(
-                fileSystem.predicates().hasType(InputFile.Type.MAIN),
-                fileSystem.predicates().hasLanguage(RustLanguage.KEY));
+    }
+
+    private static void logParseError(SensorContext sensorContext, InputFile inputFile, RecognitionException e) {
+        LOG.error("Unable to parse file: " + inputFile);
+        LOG.error(e.getMessage());
+
+        sensorContext.newAnalysisError()
+                .onFile(inputFile)
+                .message(e.getMessage())
+                // we can't easily report the precise line when %INCLUDE is used
+                // and reporting an incorrect line can cause a failure (SONARPLI-198)
+                .save();
     }
 
     @Override
     public void describe(SensorDescriptor descriptor) {
-        descriptor.onlyOnLanguage(RustLanguage.KEY).name("RustSensor");
+        descriptor
+                .name("RustSensor")
+                .onlyOnLanguage(RustLanguage.KEY)
+                .onlyOnFileType(InputFile.Type.MAIN);
     }
 
     @Override
     public void execute(SensorContext context) {
-        List<InputFile> inputFiles = new ArrayList<>();
-        fileSystem.inputFiles(mainFilesPredicate).forEach(inputFiles::add);
+        final FileSystem fileSystem = context.fileSystem();
+        final FilePredicate mainFilePredicates = fileSystem.predicates().and(
+                fileSystem.predicates().hasLanguage(RustLanguage.KEY),
+                fileSystem.predicates().hasType(InputFile.Type.MAIN));
 
-        if (inputFiles.isEmpty()) {
-            return;
-        }
+        RustParserConfiguration parserConfiguration = new RustPluginConfiguration(context.config()).getParserConfiguration(fileSystem.encoding());
+        Parser<Grammar> parser = RustParser.create(parserConfiguration);
+        MetricsVisitor metricsVisitor = new MetricsVisitor(parserConfiguration);
+        RustTokensVisitor tokensVisitor = new RustTokensVisitor(context, RustLexer.create(parserConfiguration));
 
+        Collection<RustCheck> rustChecks = checks.all();
 
-        ProgressReport progressReport = new ProgressReport("Report about progress of Rust analyzer", TimeUnit.SECONDS.toMillis(10));
-        progressReport.start(inputFiles.stream().map(InputFile::toString).collect(Collectors.toList()));
-
-        boolean cancelled = false;
-        try {
-            for (InputFile inputFile : inputFiles) {
-                if (context.isCancelled()) {
-                    cancelled = true;
-                    break;
-                }
-                scanFile(context, inputFile);
-                progressReport.nextFile();
-            }
-        } finally {
-            if (!cancelled) {
-                progressReport.stop();
-            } else {
-                progressReport.cancel();
+        for (InputFile file : fileSystem.inputFiles(mainFilePredicates)) {
+            scanFile(context, file, metricsVisitor, tokensVisitor, parser,rustChecks );
+            if (context.isCancelled()) {
+                return;
             }
         }
     }
 
-    private void scanFile(SensorContext context, InputFile inputFile) {
+    private void scanFile(
+            SensorContext sensorContext,
+            InputFile inputFile,
+            MetricsVisitor metricsVisitor,
+            RustTokensVisitor tokensVisitor,
+            Parser<Grammar> parser,
+            Collection<RustCheck> checks) {
+
+        File file = inputFile.file();
+        SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
+        RustVisitorContext visitorContext;
         try {
-            RustFile rustFile = RustFile.create(inputFile);
-            LineCounter.analyse(context, fileLinesContextFactory, rustFile);
+            AstNode tree = parser.parse(file);
+            visitorContext = new RustVisitorContext(rustFile, tree);
 
+            saveMetrics(sensorContext, inputFile, visitorContext, metricsVisitor);
+            tokensVisitor.scanFile(inputFile, visitorContext);
 
-        } catch (Exception e) {
-            processParseException(e, context, inputFile);
+        } catch (RecognitionException e) {
+            visitorContext = new RustVisitorContext(rustFile, e);
+            logParseError(sensorContext, inputFile, e);
+        }
+
+        for (RustCheck check : checks) {
+            saveIssues(sensorContext, inputFile, check, check.scanFileForIssues(visitorContext));
         }
     }
 
-    private Iterable<InputFile> getSourceFiles() {
-        return rustFiles(InputFile.Type.MAIN);
-    }
-
-
-    private Iterable<InputFile> rustFiles(InputFile.Type type) {
-        return fileSystem.inputFiles(fileSystem.predicates().and(fileSystem.predicates().hasLanguage(RustLanguage.KEY), fileSystem.predicates().hasType(type)));
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName();
-    }
-
-
-    private void processParseException(Exception e, SensorContext context, InputFile inputFile) {
-        reportAnalysisError(e, context, inputFile);
-
-        LOG.warn(String.format("Unable to analyse file %s;", inputFile.uri()));
-        LOG.debug("Cause: {}", e.getMessage());
-
-
-    }
-
-    private static void reportAnalysisError(Exception e, SensorContext context, InputFile inputFile) {
-        context.newAnalysisError()
-                .onFile(inputFile)
-                .message(e.getMessage())
+    private void saveMetrics(SensorContext context, InputFile inputFile, RustVisitorContext visitorContext, MetricsVisitor metricsVisitor) {
+        metricsVisitor.scanFile(visitorContext);
+        context.<Integer>newMeasure()
+                .on(inputFile)
+                .forMetric(CoreMetrics.NCLOC)
+                .withValue(metricsVisitor.linesOfCode().size())
                 .save();
+        context.<Integer>newMeasure()
+                .on(inputFile)
+                .forMetric(CoreMetrics.STATEMENTS)
+                .withValue(metricsVisitor.numberOfStatements())
+                .save();
+        context.<Integer>newMeasure()
+                .on(inputFile)
+                .forMetric(CoreMetrics.COMPLEXITY)
+                .withValue(metricsVisitor.complexity())
+                .save();
+        context.<Integer>newMeasure()
+                .on(inputFile)
+                .forMetric(CoreMetrics.COMMENT_LINES)
+                .withValue(metricsVisitor.commentLines().size())
+                .save();
+        context.<Integer>newMeasure()
+                .on(inputFile)
+                .forMetric(CoreMetrics.FUNCTIONS)
+                .withValue(metricsVisitor.numberOfFunctions())
+                .save();
+
+        FileLinesContext fileLinesContext = fileLinesContextFactory.createFor(inputFile);
+        for (Integer line : metricsVisitor.linesOfCode()) {
+            fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line, 1);
+        }
+        fileLinesContext.save();
+    }
+
+    private void saveIssues(SensorContext context, InputFile inputFile, RustCheck check, List<Issue> issues) {
+        RuleKey ruleKey = checks.ruleKey(check);
+        for (Issue rustIssue : issues) {
+            NewIssue issue = context.newIssue();
+            NewIssueLocation location = issue.newLocation()
+                    .on(inputFile)
+                    .message(rustIssue.message());
+            if (rustIssue.line() != null) {
+                location.at(inputFile.selectLine(rustIssue.line()));
+            }
+            issue.at(location)
+                    .forRule(ruleKey)
+                    .save();
+        }
     }
 
 }

@@ -18,22 +18,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust.parser.lexer;
 
+import org.junit.Test;
+import org.sonar.rust.RustGrammar;
 
-package org.elegoff.rust.checks;
+import static org.sonar.sslr.tests.Assertions.assertThat;
 
-import java.util.*;
+public class UnknownCharacterTest {
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
-
-    private CheckList() {
+    @Test
+    public void reallife() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.UNKNOWN_CHAR))
+                .matches("?");
     }
-
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
-    }
-
-
 }

@@ -18,22 +18,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust.parser.items;
+
+import org.junit.Test;
+import org.sonar.rust.RustGrammar;
+
+import static org.sonar.sslr.tests.Assertions.assertThat;
+
+public class UseTest {
 
 
-package org.elegoff.rust.checks;
+    @Test
+    public void testUseDeclaration() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.USE_DECLARATION))
+                .matches("use std::option::Option::{Some, None};")
+                .matches("use std::collections::hash_map::{self, HashMap};")
 
-import java.util.*;
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+        ;
 
-    private CheckList() {
     }
-
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
-    }
-
-
 }

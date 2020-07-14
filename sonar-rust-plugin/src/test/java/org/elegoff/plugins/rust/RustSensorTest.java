@@ -20,9 +20,12 @@
  */
 package org.elegoff.plugins.rust;
 
+import com.google.common.collect.ImmutableList;
 import org.assertj.core.api.Condition;
 import org.elegoff.plugins.rust.language.RustLanguage;
 import org.elegoff.rust.checks.CheckList;
+import org.fest.assertions.Assertions;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -34,10 +37,12 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
+import org.sonar.api.batch.rule.internal.DefaultActiveRules;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.api.measures.CoreMetrics;
@@ -55,218 +60,114 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 public class RustSensorTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private FileLinesContext fileLinesContext;
+    private SensorContextTester tester;
+    private RustSensor sensor;
+    private File dir = new File("src/test/resources/");
+    private static String FILE1 = "sensor/main.rs";
+    private static String FILE2 = "sensor/main2.rs";
 
-    @Rule
+    @org.junit.Rule
     public LogTester logTester = new LogTester();
 
-    private DefaultFileSystem fs;
-    private RustSensor sensor;
-    private SensorContextTester context;
+    @Before
+    public void init() {
+        tester = SensorContextTester.create(dir);
 
-    private static String FILE1="org/elegoff/plugins/rust/sensor/file1.rs";
-    private static String WRONG="org/elegoff/plugins/rust/sensor/wrong.rs";
-
-
-
-    @Test(timeout = 600000)
-    public void testPerformance() throws Exception {
-        initFileSystemWithFile(createRustFile(20000, "smallFile.rs"));
-        long timeSmallFile = measureTimeToAnalyzeFile();
-
-        initFileSystemWithFile(createRustFile(40000, "bigFile.rs"));
-        long timeBigFile = measureTimeToAnalyzeFile();
-        assertThat(timeBigFile < (2.5 * timeSmallFile)).isTrue();
-    }
-
-    @Test
-    public void test_analysis_cancellation() throws Exception {
-        init();
-        fs.add(createInputFile(FILE1));
-
-        context.setCancelled(true);
-        sensor.execute(context);
-
-        assertThat(context.allIssues()).isEmpty();
-    }
-
-    @Test
-    public void test_nothing_is_executed_if_no_file() throws Exception {
-        init();
-
-        sensor.execute(context);
-
-        assertThat(context.allIssues()).isEmpty();
-    }
-
-    @Test
-    public void test_descriptor() throws Exception {
-        init();
-        DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
-        sensor.describe(sensorDescriptor);
-        assertThat(sensorDescriptor.name()).isEqualTo("RustSensor");
-        assertThat(sensorDescriptor.languages()).containsOnly(RustLanguage.KEY);
-    }
-
-    /**
-     * Expect issue for rule: NewlineCheck
-     */
-    @Test
-    public void test_sensor() throws Exception {
-        init();
-        DefaultInputFile inputFile = createInputFile(FILE1);
-        fs.add(inputFile);
-
-        sensor.execute(context);
-
-
-
-        // other measures
-        assertThat(context.measure(inputFile.key(), CoreMetrics.NCLOC).value()).isEqualTo(173);
-
-    }
-
-
-
-
-
-    @Test
-    public void should_not_execute_test_on_corrupted_file_and_should_not_raise_parsing_issue() throws Exception {
-        init();
-        fs.add(createInputFile(WRONG));
-
-        sensor.execute(context);
-
-        assertThat(context.allIssues()).isEmpty();
-
-        assertLog("1 source files to be analyzed", false);
-    }
-
-    private void init() throws Exception {
-        File moduleBaseDir = new File("src/test/resources");
-        context = SensorContextTester.create(moduleBaseDir);
-
-        fs = new DefaultFileSystem(moduleBaseDir);
-        fs.setWorkDir(temporaryFolder.newFolder("temp").toPath());
-
-        ActiveRulesBuilder activeRuleBuilder = new ActiveRulesBuilder();
-
-
-
-
-        CheckFactory checkFactory = new CheckFactory(activeRuleBuilder.build());
+        MapSettings settings = RustPluginConfigurationTest.getDefaultSettings();
+        tester.setSettings(settings);
 
         FileLinesContextFactory fileLinesContextFactory = mock(FileLinesContextFactory.class);
-        when(fileLinesContextFactory.createFor(any(InputFile.class))).thenReturn(mock(FileLinesContext.class));
-
-        sensor = new RustSensor(fs, checkFactory, fileLinesContextFactory);
+        fileLinesContext = mock(FileLinesContext.class);
+        when(fileLinesContextFactory.createFor(any(InputFile.class))).thenReturn(fileLinesContext);
+        ActiveRulesBuilder activeRuleBuilder = new ActiveRulesBuilder();
+        CheckFactory checkFactory = new CheckFactory(activeRuleBuilder.build());
+        sensor = new RustSensor(checkFactory, fileLinesContextFactory);
     }
 
-    private DefaultInputFile createInputFile(String name) throws FileNotFoundException {
-        DefaultInputFile inputFile = TestInputFileBuilder.create("modulekey", name)
-                .setModuleBaseDir(Paths.get("src/test/resources"))
-                .setType(InputFile.Type.MAIN)
-                .setLanguage(RustLanguage.KEY)
-                .setCharset(StandardCharsets.UTF_8)
-                .build();
+    @Test
+    public void analyse() throws IOException {
+        DefaultInputFile inputFile = executeSensorOnSingleFile(FILE1);
+        assertEquals((Integer) 3, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
+        assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
+        assertEquals((Integer) 0, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
+        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
+        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
+        assertEquals(3, tester.cpdTokens(inputFile.key()).size());
+        assertEquals(Collections.singletonList(TypeOfText.COMMENT), tester.highlightingTypeAt(inputFile.key(), 1, 1));
+        assertEquals(Collections.singletonList(TypeOfText.KEYWORD), tester.highlightingTypeAt(inputFile.key(), 3, 1));
+        assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 5, 13));
 
-        inputFile.setMetadata(new FileMetadata().readMetadata(new FileInputStream(inputFile.file()), StandardCharsets.UTF_8, inputFile.absolutePath()));
+        assertEquals(0, tester.allIssues().size());
+
+        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 3, 1);
+        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 5, 1);
+        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 6, 1);
+
+
+        verify(fileLinesContext).save();
+
+
+
+        Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
+
+
+    }
+
+
+
+
+
+    private DefaultInputFile executeSensorOnSingleFile(String fileName) throws IOException {
+        DefaultInputFile inputFile = addInputFile(fileName);
+        sensor.execute(tester);
         return inputFile;
     }
 
     @Test
-    public void should_analyze_file_with_its_own_encoding() throws IOException {
-        Charset fileSystemCharset = StandardCharsets.UTF_8;
-        Charset fileCharset = StandardCharsets.UTF_16;
-
-        Path moduleBaseDir = temporaryFolder.newFolder().toPath();
-        SensorContextTester context = SensorContextTester.create(moduleBaseDir);
-
-        DefaultFileSystem fileSystem = new DefaultFileSystem(moduleBaseDir);
-        fileSystem.setEncoding(fileSystemCharset);
-        context.setFileSystem(fileSystem);
-        String filename = "utf16.xml";
-        try (BufferedWriter writer = Files.newBufferedWriter(moduleBaseDir.resolve(filename), fileCharset)) {
-            writer.write("fn main() {\n" +
-                    "    println!(\"Hello, world!\");\n" +
-                    "}");
-        }
-
-        String modulekey = "modulekey";
-        DefaultInputFile defaultInputFile = TestInputFileBuilder.create(modulekey, filename)
-                .setModuleBaseDir(moduleBaseDir)
-                .setType(InputFile.Type.MAIN)
-                .setLanguage(RustLanguage.KEY)
-                .setCharset(fileCharset)
-                .build();
-        fileSystem.add(defaultInputFile);
-
-        defaultInputFile.setMetadata(new FileMetadata().readMetadata(new FileInputStream(defaultInputFile.file()), StandardCharsets.UTF_8, defaultInputFile.absolutePath()));
-
-        ActiveRules activeRules = new ActiveRulesBuilder().build();
-        CheckFactory checkFactory = new CheckFactory(activeRules);
-
-        FileLinesContextFactory fileLinesContextFactory = mock(FileLinesContextFactory.class);
-        when(fileLinesContextFactory.createFor(any(InputFile.class))).thenReturn(mock(FileLinesContext.class));
-        sensor = new RustSensor(fileSystem, checkFactory, fileLinesContextFactory);
-        sensor.execute(context);
-
-        String componentKey = modulekey + ":" + filename;
-        assertThat(context.measure(componentKey, CoreMetrics.NCLOC).value()).isEqualTo(3);
+    public void two_files_without_cancellation() throws Exception {
+        DefaultInputFile file1 = addInputFile(FILE1);
+        DefaultInputFile file2 = addInputFile(FILE2);
+        sensor.execute(tester);
+        Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNotNull();
+        Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
     }
 
-    private void assertLog(String expected, boolean isRegexp) {
-        if (isRegexp) {
-            Condition<String> regexpMatches = new Condition<String>(log -> Pattern.compile(expected).matcher(log).matches(), "");
-            assertThat(logTester.logs())
-                    .filteredOn(regexpMatches)
-                    .as("None of the lines in " + logTester.logs() + " matches regexp [" + expected + "], but one line was expected to match")
-                    .isNotEmpty();
-        } else {
-            assertThat(logTester.logs()).contains(expected);
-        }
+    @Test
+    public void two_files_with_cancellation() throws Exception {
+        DefaultInputFile file1 = addInputFile(FILE1);
+        DefaultInputFile file2 = addInputFile(FILE2);
+        tester.setCancelled(true);
+        sensor.execute(tester);
+        Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
+        Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNull();
     }
 
-    private void initFileSystemWithFile(File file) throws Exception {
-        init();
-
-        DefaultInputFile inputFile = TestInputFileBuilder.create("modulekey", file.getName())
-                .setModuleBaseDir(Paths.get(file.getParent()))
+    private DefaultInputFile addInputFile(String fileName) throws IOException {
+        String content = new String(Files.readAllBytes(new File(dir, fileName).toPath()));
+        Assertions.assertThat(content).isNotEmpty();
+        DefaultInputFile inputFile = new TestInputFileBuilder(tester.module().key(), fileName)
+                .setModuleBaseDir(tester.fileSystem().baseDirPath())
                 .setType(InputFile.Type.MAIN)
                 .setLanguage(RustLanguage.KEY)
                 .setCharset(StandardCharsets.UTF_8)
+                .initMetadata(content)
                 .build();
-
-        inputFile.setMetadata(new FileMetadata().readMetadata(new FileInputStream(inputFile.file()), StandardCharsets.UTF_8, inputFile.absolutePath()));
-
-        fs.add(inputFile);
-    }
-
-    private File createRustFile(int nb, String fileName) throws IOException {
-        File file = temporaryFolder.newFile(fileName);
-        StringBuilder str = new StringBuilder("fn main() {");
-        IntStream.range(0, nb).forEach(iteration -> str.append("println!(\"Hello, world! ").append(nb).append(");"));
-        str.append("}");
-        FileUtils.write(file, str.toString());
-        return file;
-    }
-
-    private long measureTimeToAnalyzeFile() {
-        long t1 = System.currentTimeMillis();
-        sensor.execute(context);
-        return System.currentTimeMillis() - t1;
+        tester.fileSystem().add(inputFile);
+        return inputFile;
     }
 
 }

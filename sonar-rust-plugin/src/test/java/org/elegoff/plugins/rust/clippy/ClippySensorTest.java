@@ -52,12 +52,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ClippySensorTest{
-    private static final String CLIPPY_FILE = "rust-project:clippy/main.rs";
+    private static final String CLIPPY_FILE = "resources-project:clippy/main.rs";
     private static final String CLIPPY_AEC="external_clippy:clippy::absurd_extreme_comparisons";
     private static final String CLIPPY_REPORT_TXT = "myreport.txt";
     private static final String UNKNOWN_KEY_REPORT = "synreport.txt";
 
-    private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "org", "elegoff", "plugins", "rust", "clippy");
+    private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "clippy");
 
     private static ClippySensor clippySensor = new ClippySensor();
 

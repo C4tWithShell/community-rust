@@ -18,22 +18,39 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust.parser.attributes;
+
+import org.junit.Test;
+import org.sonar.rust.RustGrammar;
+
+import static org.sonar.sslr.tests.Assertions.assertThat;
+
+public class AttributeTest {
 
 
-package org.elegoff.rust.checks;
+    @Test
+    public void testAttribute() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ATTR))
+                .matches("foo")
+                .matches("foo_bar")
+                .matches("foo_type")
+                .matches("crate_type")
 
-import java.util.*;
-
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
-
-    private CheckList() {
+        ;
     }
 
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
+
+    @Test
+    public void testInnerAttribute() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.INNER_ATTRIBUTE))
+                .matches("#![crate_type = \"lib\"]")
+                ;
     }
 
-
+    @Test
+    public void testOuterAttribute() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_ATTRIBUTE))
+                .matches("#[test]")
+        ;
+    }
 }

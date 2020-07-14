@@ -18,34 +18,42 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust.api;
+package org.sonar.rust;
 
 import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.TokenType;
+import com.sonar.sslr.api.RecognitionException;
 
-public enum RustTokenType implements TokenType {
-    CHARACTER_LITERAL,
-    BYTE_LITERAL,
-    BYTE_STRING_LITERAL,
-    INTEGER_LITERAL,
-    FLOAT_LITERAL,
-    BOOLEAN_LITERAL,
-    STRING_LITERAL,
-    RAW_STRING_LITERAL,
-    RAW_BYTE_STRING_LITERAL,
-    IDENTIFIER;
 
-    public String getName() {
-        return name();
+public class RustVisitorContext {
+
+    private final RustFile file;
+    private final AstNode rootTree;
+    private final RecognitionException parsingException;
+
+    public RustVisitorContext(RustFile file, AstNode tree) {
+        this(file, tree, null);
     }
 
-    public String getValue() {
-        return name();
+    public RustVisitorContext(RustFile file, RecognitionException parsingException) {
+        this(file, null, parsingException);
     }
 
-    @Override
-    public boolean hasToBeSkippedFromAst(AstNode node) {
-        return false;
+    private RustVisitorContext(RustFile file, AstNode rootTree, RecognitionException parsingException) {
+        this.file = file;
+        this.rootTree = rootTree;
+        this.parsingException = parsingException;
+    }
+
+    public AstNode rootTree() {
+        return rootTree;
+    }
+
+    public RustFile file() {
+        return file;
+    }
+
+    public RecognitionException parsingException() {
+        return parsingException;
     }
 
 }

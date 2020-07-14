@@ -18,22 +18,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.rust.parser.items;
 
+import org.junit.Test;
+import org.sonar.rust.RustGrammar;
 
-package org.elegoff.rust.checks;
+import static org.sonar.sslr.tests.Assertions.assertThat;
 
-import java.util.*;
+public class ConstantTest {
 
-public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+    @Test
+    public void testConstant() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CONSTANT_ITEM))
+                .matches("const BIT1: u32 = 1 << 0;")
+                .matches("const BIT2: u32 = 1 << 1;")
+                .matches("const BITS: [u32; 2] = [BIT1, BIT2];")
+                .matches("const STRING: &'static str = \"bitstring\";")
+                //FIXME.matches("const WHITE: Color = Color(255, 255, 255);")
+        ;
 
-    private CheckList() {
     }
-
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<Class<? extends RustCheck>>();
-    }
-
-
 }
