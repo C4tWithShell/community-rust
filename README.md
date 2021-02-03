@@ -30,5 +30,5 @@ Just [download the latest plugin JAR file](https://github.com/elegoff/sonar-rust
 
 Add SonarQube analysis parameter `sonar.rust.clippy.reportPaths=<clippy report file>`
 
-NB: `sonar.rust.clippy.reportPaths` supports passing of multiple clippy report files by comma separting them.
+NB: `sonar.rust.clippy.reportPaths` supports passing of multiple clippy report files by comma separating them.
 
