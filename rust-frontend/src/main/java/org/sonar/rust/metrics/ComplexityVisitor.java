@@ -43,7 +43,7 @@ public class ComplexityVisitor extends RustVisitor {
     @Override
     public Set<AstNodeType> subscribedKinds() {
         return ImmutableSet.<AstNodeType>builder()
-                .add(RustGrammar.EXPRESSION)
+                .add(RustGrammar.STATEMENT)
                 .build();
     }
 
