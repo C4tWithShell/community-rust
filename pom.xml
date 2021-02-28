@@ -6,12 +6,12 @@
 
     <groupId>org.elegoff</groupId>
     <artifactId>rust-report</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2</version>
 
     <packaging>pom</packaging>
 
     <name>Rust Report</name>
-    <inceptionYear>2020</inceptionYear>
+    <inceptionYear>2021</inceptionYear>
     <organization>
         <name>Eric Le Goff</name>
     </organization>
@@ -65,8 +65,6 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <sonar.branch.name>loc20210226</sonar.branch.name>
-        <sonar.branch.target>master</sonar.branch.target>
         <commons.io.version>2.5</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.13.1</junit.version>
