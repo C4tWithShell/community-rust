@@ -46,7 +46,6 @@ public class RustGrammarTest {
                 assertThat(RustGrammar.create().build().rule(r))
                         .matches("");
             } else {
-                System.out.println(r);
                 assertThat(RustGrammar.create().build().rule(r))
                         .notMatches("");
             }

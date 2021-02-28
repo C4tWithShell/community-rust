@@ -50,6 +50,7 @@ public class CommentsVisitor extends RustVisitor {
         seenFirstToken = false;
     }
 
+
     @Override
     public void visitToken(Token token) {
         if (seenFirstToken) {
@@ -73,6 +74,8 @@ public class CommentsVisitor extends RustVisitor {
         seenFirstToken = true;
     }
 
+
+
     public boolean isBlank(String line) {
         for (int i = 0; i < line.length(); i++) {
             if (Character.isLetterOrDigit(line.charAt(i))) {
@@ -84,8 +87,16 @@ public class CommentsVisitor extends RustVisitor {
     }
 
     public String getContents(String comment) {
-        return comment.substring(2, comment.length() - 2);
+        int l = comment.length();
+
+        String res ="";
+        if (l>3) {
+            res = comment.substring(2, l - 2);
+        }
+        return res;
     }
+
+
 
 
 }
