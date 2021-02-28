@@ -19,7 +19,6 @@
  */
 package org.sonar.rust.metrics;
 
-import com.google.common.collect.ImmutableSet;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustLexer;
 import org.sonar.rust.RustParserConfiguration;
