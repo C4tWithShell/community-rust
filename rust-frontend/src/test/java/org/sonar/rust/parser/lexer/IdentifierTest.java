@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -25,27 +24,7 @@ import org.sonar.rust.RustGrammar;
 import org.sonar.sslr.tests.Assertions;
 
 public class IdentifierTest {
-    @Test
-    public void checkidentifierOrKeyword() {
-        Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_OR_KEYWORD))
-                .matches("a")
-                .matches("abc")
-                .matches("A")
-                .matches("AbCD")
-                .matches("U123")
-                .matches("_a")
-                .matches("_56")
-                .matches("_AbC")
-                .notMatches("_")
-                .notMatches("42")
-                .notMatches("(")
-                .notMatches("a b")
-                .notMatches("a self")
-                .notMatches("\"hello\")")
-                .matches("crate_type")
 
-        ;
-    }
 
     @Test
     public void checkRawIdentifier() {

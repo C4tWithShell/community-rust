@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +19,6 @@
  */
 package org.sonar.rust.metrics;
 
-import com.google.common.collect.ImmutableSet;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustLexer;
 import org.sonar.rust.RustParserConfiguration;
@@ -47,15 +45,10 @@ public class MetricsVisitor {
         commentsVisitor.scanFile(context);
         complexityVisitor.scanFile(context);
         numberOfStatements = context.rootTree().getDescendants(RustGrammar.STATEMENT).size();
-        numberOfFunctions = context.rootTree().getDescendants(RustGrammar.FUNCTION).size();
     }
 
     public Set<Integer> linesOfCode() {
         return linesOfCodeVisitor.linesOfCode();
-    }
-
-    public Set<Integer> noSonarTagLines() {
-        return ImmutableSet.of();
     }
 
     public Set<Integer> commentLines() {

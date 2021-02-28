@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -131,16 +130,6 @@ public class LitteralsTest {
         ;
     }
 
-    @Test
-    public void testAsciiChar() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ASCII_FOR_CHAR))
-                .matches("a")
-                .matches("5")
-                .notMatches("'")
-
-        ;
-    }
-
 
     @Test
     public void testByteLiteral() {
@@ -157,13 +146,6 @@ public class LitteralsTest {
 
     }
 
-    @Test
-    public void testAsciiString() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ASCII_FOR_STRING))
-                .matches("a")
-                .matches("abc string")
-        ;
-    }
 
 
     @Test
@@ -310,25 +292,7 @@ public class LitteralsTest {
                 .matches("false");
     }
 
-    @Test
-    public void testLifetimeToken() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_TOKEN))
-                .matches("'_")
-                .matches("'abc")
-                .matches("'U123")
-                .matches("'_42")
-        ;
-    }
 
-    @Test
-    public void testLifetimeOrLabel() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_OR_LABEL))
-                .matches("'a")
-                .matches("'ABC")
-                .notMatches("'as") //as is a keyword
-        ;
-
-    }
 
     @Test
     public void testPunctuation() {
@@ -393,20 +357,5 @@ public class LitteralsTest {
 
     }
 
-    @Test
-    public void testLiterals(){
-        assertThat(RustGrammar.create().build().rule(RustGrammar.LITERALS))
-                .matches("'foo'")
-                .matches("'foo''bar'")
-                .matches("\"b\"")
-                .matches("\"52\"")
-                .matches("r\"foo\"")
-                .matches("b'5'")
-                .notMatches("+")
-                .notMatches("{")
-                .notMatches("\"hello\")")
-                .matches("\"hello,world!\"")
-                ;
 
-    }
 }

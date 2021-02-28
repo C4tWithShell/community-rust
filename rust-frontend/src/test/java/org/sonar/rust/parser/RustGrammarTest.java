@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -37,31 +36,43 @@ public class RustGrammarTest {
         RustGrammar[] rustGrammars = RustGrammar.values();
 
         Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
-                RustGrammar.CALL_PARAMS_TERM,
                 RustGrammar.COMPILATION_UNIT,
                 RustGrammar.EOF,
-                RustGrammar.FUNCTION_QUALIFIERS,
-                RustGrammar.GENERIC_PARAMS,
-                RustGrammar.LIFETIME_BOUNDS,
-                RustGrammar.LIFETIME_PARAMS,
-                RustGrammar.SPC,
-                RustGrammar.TUPLE_STRUCT_ITEMS,
-                RustGrammar.TYPE_PARAMS
+                RustGrammar.SPC
         ));
 
         for (RustGrammar r : rustGrammars) {
-                if (couldMatch.contains(r)) {
-                    assertThat(RustGrammar.create().build().rule(r))
-                            .matches("");
-                } else {
-                    assertThat(RustGrammar.create().build().rule(r))
-                            .notMatches("");
-                }
-
+            if (couldMatch.contains(r)) {
+                assertThat(RustGrammar.create().build().rule(r))
+                        .matches("");
+            } else {
+                assertThat(RustGrammar.create().build().rule(r))
+                        .notMatches("");
+            }
 
 
         }
 
+    }
+
+    @Test
+    public void minimal() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.DELIMITERS)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_STRING_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.INTEGER_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.HEX_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.OCT_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_BYTE_STRING_LITERAL)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches("");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).notMatches("");
     }
 
 
