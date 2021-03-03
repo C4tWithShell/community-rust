@@ -35,6 +35,8 @@ public class StatementTest {
                 .matches("extern crate pcre;")
                 .matches("let y=42;")
                 .matches("let x;")
+                .matches("use std::error::Error;")
+
 
         ;
     }
