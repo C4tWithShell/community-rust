@@ -352,6 +352,8 @@ public enum RustGrammar implements GrammarRuleKey {
     VISIT_ITEM,
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
+    CU_STATEMENT,
+    CU_OTHER,
     WILDCARD_PATTERN;
 
     private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
@@ -364,11 +366,20 @@ public enum RustGrammar implements GrammarRuleKey {
     public static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
+        /*
         b.rule(COMPILATION_UNIT).is(SPC,
                 b.firstOf(b.zeroOrMore(STATEMENT, SPC),
-                        b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC))
+                          b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC))
+                ,SPC, EOF);
 
-                        ,SPC, EOF);
+         */
+
+        b.rule(CU_STATEMENT).is(b.zeroOrMore(STATEMENT, SPC));
+        b.rule(CU_OTHER).is(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN, STATEMENT),SPC));
+
+        b.rule(COMPILATION_UNIT).is(SPC,
+                b.firstOf(CU_OTHER,CU_STATEMENT)
+                ,SPC, EOF);
 
         punctuators(b);
         keywords(b);

@@ -39,6 +39,29 @@ public class CompilationUnitTest {
     }
 
     @Test
+    public void testCU_STATEMENT() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CU_STATEMENT))
+                .matches("use std::fmt;")
+                .notMatches("fn main() {\n" +
+                        "    println!(\"Hello, world!\");\n" +
+                        "}")
+        ;
+    }
+
+    @Test
+    public void testCU_OTHER() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CU_OTHER))
+                .matches("use std::fmt;")
+                .matches("fn main() {\n" +
+                        "    println!(\"Hello, world!\");\n" +
+                        "}")
+                .matches("fn main() {println!(\"Hello, world!\");}")
+                .matches("use std::fmt; \n" +
+                        "use std::hash;")
+        ;
+    }
+
+    @Test
     public void testCompilationUnit() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
                 .matches("use std::fmt;")
