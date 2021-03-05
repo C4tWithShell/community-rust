@@ -19,6 +19,7 @@
  */
 package org.sonar.rust;
 
+import org.sonar.rust.api.RustPunctuator;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
 import org.sonar.sslr.parser.LexerlessGrammar;
@@ -31,7 +32,7 @@ public enum RustLexer implements GrammarRuleKey {
     public static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b =RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN,RustGrammar.SPC), RustGrammar.EOF);
+        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN,b.optional(RustPunctuator.SEMI),RustGrammar.SPC), RustGrammar.EOF);
 
         b.setRootRule(TOKENS);
 

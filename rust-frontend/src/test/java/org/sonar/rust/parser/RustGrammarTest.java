@@ -36,9 +36,16 @@ public class RustGrammarTest {
         RustGrammar[] rustGrammars = RustGrammar.values();
 
         Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
+                // RustGrammar.CALL_PARAMS_TERM,
                 RustGrammar.COMPILATION_UNIT,
                 RustGrammar.EOF,
-                RustGrammar.SPC
+                RustGrammar.FUNCTION_QUALIFIERS,
+                RustGrammar.GENERIC_PARAMS,
+                RustGrammar.LIFETIME_BOUNDS,
+                RustGrammar.LIFETIME_PARAMS,
+                RustGrammar.SPC,
+                RustGrammar.TUPLE_STRUCT_ITEMS,
+                RustGrammar.TYPE_PARAMS
         ));
 
         for (RustGrammar r : rustGrammars) {
@@ -88,7 +95,10 @@ public class RustGrammarTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_BYTE_STRING_LITERAL)).notMatches(";");
         assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER)).notMatches(";");
         assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).matches(";");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION)).matches(";");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION_EXCEPT_DOLLAR)).notMatches("$");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION_EXCEPT_SEMI)).notMatches(";");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches(";");
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).matches(";");
     }
 

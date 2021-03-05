@@ -27,8 +27,25 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class CompilationUnitTest {
 
     @Test
+    public void testAnyTokens() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN))
+                .matches("u")
+                .matches("us")
+                .notMatches("fn")
+                .notMatches("use")
+                .matches("foo")
+                .matches("fnac")
+                ;
+    }
+
+    @Test
     public void testCompilationUnit() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
+                .matches("use std::fmt;")
+                .matches("use std::hash;")
+                .matches("use std::fmt; \n" +
+                        "use std::hash;")
+                .matches("fn main() {println!(\"Hello, world!\");}")
                 .matches("fn main() {\n" +
                         "    println!(\"Hello, world!\");\n" +
                         "}")
@@ -43,8 +60,6 @@ public class CompilationUnitTest {
                         " // line comment \n" +
                         "    println!(\"Hello, world!\");\n" +
                         "}")
-
-
-        ;
+      ;
     }
 }
