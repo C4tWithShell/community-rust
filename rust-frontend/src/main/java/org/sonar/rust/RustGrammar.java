@@ -366,13 +366,6 @@ public enum RustGrammar implements GrammarRuleKey {
     public static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
-        /*
-        b.rule(COMPILATION_UNIT).is(SPC,
-                b.firstOf(b.zeroOrMore(STATEMENT, SPC),
-                          b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC))
-                ,SPC, EOF);
-
-         */
 
         b.rule(CU_STATEMENT).is(b.zeroOrMore(STATEMENT, SPC));
         b.rule(CU_OTHER).is(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN, STATEMENT),SPC));
@@ -428,7 +421,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence("'", ASCII_ESCAPE, "'")))).skip();
 
         //    ~[" \ IsolatedCR]
-        b.rule(STRING_CONTENT).is(b.regexp("(\\r\\n)+|[^\"\\r]+"));
+        //b.rule(STRING_CONTENT).is(b.regexp("(\\r\\n)+|[^\"\\r]+"));
+        b.rule(STRING_CONTENT).is(b.regexp("(\\\\.|[^\\\\\"])+"));
+
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                 b.sequence(
@@ -442,6 +437,8 @@ public enum RustGrammar implements GrammarRuleKey {
                         ), SPC),
                         "\""
                 )));
+
+
 
 
         comments(b);
@@ -1173,7 +1170,8 @@ public enum RustGrammar implements GrammarRuleKey {
                         OCT_LITERAL,
                         RAW_BYTE_STRING_LITERAL,
                         IDENTIFIER,
-                        PUNCTUATION_EXCEPT_SEMI
+                        PUNCTUATION_EXCEPT_SEMI,
+                        LIFETIME_TOKEN
                 ));
     }
 

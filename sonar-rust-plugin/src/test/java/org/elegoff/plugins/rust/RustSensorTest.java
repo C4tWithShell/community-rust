@@ -102,8 +102,8 @@ public class RustSensorTest {
         DefaultInputFile inputFile = executeSensorOnSingleFile(FILE1);
 
         assertEquals((Integer) 715, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
+        assertEquals((Integer) 164, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
+        assertEquals((Integer) 164, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
         assertEquals((Integer) 53, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
         //assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
         assertEquals(715, tester.cpdTokens(inputFile.key()).size());
@@ -129,8 +129,8 @@ public class RustSensorTest {
         DefaultInputFile inputFile = executeSensorOnSingleFile(FILE2);
 
         assertEquals((Integer) 6, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
+        assertEquals((Integer) 4, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
+        assertEquals((Integer) 4, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
         assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
         //assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
         assertEquals(6, tester.cpdTokens(inputFile.key()).size());
