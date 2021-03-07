@@ -36,9 +36,18 @@ public class RustGrammarTest {
         RustGrammar[] rustGrammars = RustGrammar.values();
 
         Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
+                // RustGrammar.CALL_PARAMS_TERM,
                 RustGrammar.COMPILATION_UNIT,
+                RustGrammar.CU_STATEMENT,
+                RustGrammar.CU_OTHER,
                 RustGrammar.EOF,
-                RustGrammar.SPC
+                RustGrammar.FUNCTION_QUALIFIERS,
+                RustGrammar.GENERIC_PARAMS,
+                RustGrammar.LIFETIME_BOUNDS,
+                RustGrammar.LIFETIME_PARAMS,
+                RustGrammar.SPC,
+                RustGrammar.TUPLE_STRUCT_ITEMS,
+                RustGrammar.TYPE_PARAMS
         ));
 
         for (RustGrammar r : rustGrammars) {
@@ -73,6 +82,9 @@ public class RustGrammarTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches("");
         assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches("");
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).notMatches("");
+        //semi colon
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches(";");
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).matches(";");
     }
 
 
