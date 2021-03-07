@@ -1,18 +1,18 @@
 /**
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- * <p>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -420,10 +420,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence("'", QUOTE_ESCAPE, "'"),
                         b.sequence("'", ASCII_ESCAPE, "'")))).skip();
 
-        //    ~[" \ IsolatedCR]
-        //b.rule(STRING_CONTENT).is(b.regexp("(\\r\\n)+|[^\"\\r]+"));
         b.rule(STRING_CONTENT).is(b.regexp("(\\\\.|[^\\\\\"])+"));
-
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                 b.sequence(
@@ -1129,16 +1126,6 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     public static void statement(LexerlessGrammarBuilder b) {
-/*
-        b.rule(STATEMENT).is(b.firstOf(
-                RustPunctuator.SEMI,
-                ITEM,
-                LET_STATEMENT,
-                EXPRESSION_STATEMENT,
-                MACRO_INVOCATION_SEMI
-        ));
-
- */
         b.rule(STATEMENT).is(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC), RustPunctuator.SEMI,SPC );
         b.rule(LET_STATEMENT).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
@@ -1307,13 +1294,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         ));
 
-
-        // b.rule(RANGE_EXPR).is(LITERALS, RANGE_EXPR_TERM);
         b.rule(RANGE_EXPR).is(b.firstOf(DEC_LITERAL, IDENTIFIER),RANGE_EXPR_TERM);
-
         b.rule(RANGE_EXPR_TERM).is(b.sequence(RustPunctuator.DOTDOT, EXPRESSION, b.zeroOrMore(RANGE_EXPR_TERM)));
-
-
         b.rule(RANGE_FROM_EXPR).is(b.firstOf(DEC_LITERAL, IDENTIFIER), RANGE_FROM_EXPR_TERM);
         b.rule(RANGE_FROM_EXPR_TERM).is(RustPunctuator.DOTDOT, b.zeroOrMore(RANGE_FROM_EXPR_TERM));
 

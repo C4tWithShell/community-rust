@@ -82,24 +82,7 @@ public class RustGrammarTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches("");
         assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches("");
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).notMatches("");
-
-        assertThat(RustGrammar.create().build().rule(RustGrammar.DELIMITERS)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_STRING_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.INTEGER_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.HEX_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.OCT_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_BYTE_STRING_LITERAL)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION)).matches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION_EXCEPT_DOLLAR)).notMatches("$");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION_EXCEPT_SEMI)).notMatches(";");
+        //semi colon
         assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches(";");
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).matches(";");
     }
