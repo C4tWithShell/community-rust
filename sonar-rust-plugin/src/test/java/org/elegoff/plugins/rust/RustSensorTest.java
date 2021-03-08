@@ -59,6 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -78,6 +79,7 @@ public class RustSensorTest {
     private File dir = new File("src/test/resources/");
     private static String FILE1 = "sensor/main.rs";
     private static String FILE2 = "sensor/main2.rs";
+    private static String FILE3 = "sensor/parser.rs";
 
     @org.junit.Rule
     public LogTester logTester = new LogTester();
@@ -151,6 +153,29 @@ public class RustSensorTest {
 
     }
 
+
+    @Test
+    public void canParse(){
+        List<String> filesToParse = new ArrayList<>();
+        filesToParse.add(FILE1);
+        filesToParse.add(FILE2);
+        filesToParse.add(FILE3);
+
+        for (String fileName : filesToParse){
+
+            try {
+                DefaultInputFile f = addInputFile(fileName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        sensor.execute(tester);
+        Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
+
+
+    }
 
 
     private DefaultInputFile executeSensorOnSingleFile(String fileName) throws IOException {

@@ -53,7 +53,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.version>7.9</sonar.version>
         <java.version>8</java.version>
-        <sslr.version>1.23</sslr.version>
+        <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.6.1</sslr-squid-bridge.version>
         <mockito.version>2.21.0</mockito.version>
         <assertj-core.version>3.15.0</assertj-core.version>
@@ -65,7 +65,7 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <sonar.branch.name>statements</sonar.branch.name>
+        <sonar.branch.name>count-functions</sonar.branch.name>
         <sonar.branch.target>master</sonar.branch.target>
         <commons.io.version>2.5</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>

@@ -36,6 +36,7 @@ public class StatementTest {
                 .matches("let y=42;")
                 .matches("let x;")
                 .matches("use std::error::Error;")
+                .matches("(1, 0) => dest.write_char('n');")
 
 
 

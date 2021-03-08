@@ -415,7 +415,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(CHAR_LITERAL).is(b.token(RustTokenType.CHARACTER_LITERAL,
-                b.firstOf(b.regexp("^\\'[^\\\\n\\r\\t\\'].*\\'"),
+                b.firstOf(b.regexp("^\\'[^\\\r\\n\\t\\'].*\\'"),
                         b.sequence("'", UNICODE_ESCAPE, "'"),
                         b.sequence("'", QUOTE_ESCAPE, "'"),
                         b.sequence("'", ASCII_ESCAPE, "'")))).skip();
@@ -1143,19 +1143,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(ANY_TOKEN).is(
                 b.firstOf(
-
                         DELIMITERS,
-                        CHAR_LITERAL,
-                        BYTE_LITERAL,
-                        BYTE_STRING_LITERAL,
-                        INTEGER_LITERAL,
-                        FLOAT_LITERAL,
-                        BOOLEAN_LITERAL,
-                        STRING_LITERAL,
-                        RAW_STRING_LITERAL,
-                        HEX_LITERAL,
-                        OCT_LITERAL,
-                        RAW_BYTE_STRING_LITERAL,
+                        LITERAL_EXPRESSION,
                         IDENTIFIER,
                         PUNCTUATION_EXCEPT_SEMI,
                         LIFETIME_TOKEN

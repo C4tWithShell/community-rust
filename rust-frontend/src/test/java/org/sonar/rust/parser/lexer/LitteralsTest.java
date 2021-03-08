@@ -66,6 +66,12 @@ public class LitteralsTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL))
                 .matches("'a'")
                 .matches("'5'")
+                .matches("'t'")
+                .matches("'n'")
+                .matches("'r'")
+                .notMatches("'\r'")
+                .notMatches("'\n'")
+                .notMatches("'\t'")
                 .matches("'\\u{0027}'")
         ;
     }
