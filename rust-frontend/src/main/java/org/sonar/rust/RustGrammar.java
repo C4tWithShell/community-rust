@@ -420,7 +420,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence("'", QUOTE_ESCAPE, "'"),
                         b.sequence("'", ASCII_ESCAPE, "'")))).skip();
 
-        b.rule(STRING_CONTENT).is(b.regexp("(\\\\.|[^\\\\\"])+"));
+
+
+        b.rule(STRING_CONTENT).is(b.regexp("(\\\\.|[^\\\\\"])++"));
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                 b.sequence(

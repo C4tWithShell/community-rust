@@ -37,6 +37,7 @@ import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
 import org.sonar.api.batch.rule.internal.DefaultActiveRules;
+import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
@@ -60,6 +61,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -80,6 +82,7 @@ public class RustSensorTest {
     private static String FILE1 = "sensor/main.rs";
     private static String FILE2 = "sensor/main2.rs";
     private static String FILE3 = "sensor/parser.rs";
+    private static String FILE4 = "sensor/tarpaulin.rs";
 
     @org.junit.Rule
     public LogTester logTester = new LogTester();
@@ -160,6 +163,7 @@ public class RustSensorTest {
         filesToParse.add(FILE1);
         filesToParse.add(FILE2);
         filesToParse.add(FILE3);
+        filesToParse.add(FILE4);
 
         for (String fileName : filesToParse){
 
@@ -172,7 +176,16 @@ public class RustSensorTest {
 
         }
         sensor.execute(tester);
+
+        //FIXME : for debugging only
+        Collection<AnalysisError> errors = tester.allAnalysisErrors();
+        for (AnalysisError e : errors){
+            String m = e.message();
+        }
+
+
         Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
+
 
 
     }
