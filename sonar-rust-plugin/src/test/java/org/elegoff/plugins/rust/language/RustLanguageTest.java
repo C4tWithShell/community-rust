@@ -32,7 +32,7 @@ public class RustLanguageTest {
         RustLanguage language = new RustLanguage(new ConfigurationBridge(new MapSettings()));
         assertThat(language.getKey()).isEqualTo("rust");
         assertThat(language.getName()).isEqualTo("Rust");
-        assertThat(language.getFileSuffixes()).hasSize(2).contains(".rs");
+        assertThat(language.getFileSuffixes()).hasSize(1).contains(".rs");
     }
 
     @Test
