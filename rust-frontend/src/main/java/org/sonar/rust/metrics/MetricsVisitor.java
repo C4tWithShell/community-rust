@@ -45,6 +45,7 @@ public class MetricsVisitor {
         commentsVisitor.scanFile(context);
         complexityVisitor.scanFile(context);
         numberOfStatements = context.rootTree().getDescendants(RustGrammar.STATEMENT).size();
+        numberOfFunctions = context.rootTree().getDescendants(RustGrammar.FUNCTION).size();
     }
 
     public Set<Integer> linesOfCode() {
