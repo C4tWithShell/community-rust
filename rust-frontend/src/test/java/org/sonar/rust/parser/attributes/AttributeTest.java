@@ -1,6 +1,7 @@
 /**
+ *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2021 Eric Le Goff
+ * Copyright (C) 2020 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -17,31 +18,39 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.rust.parser.statements;
+package org.sonar.rust.parser.attributes;
 
 import org.junit.Test;
 import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class StatementTest {
-
+public class AttributeTest {
 
 
     @Test
-    public void testStatement() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT))
-                .matches(";")
-                .matches("extern crate pcre;")
-                .matches("let y=42;")
-                .matches("let x;")
-                .matches("use std::error::Error;")
-                .matches("(1, 0) => dest.write_char('n');")
-                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
-                        "}")
+    public void testAttribute() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ATTR))
+                .matches("foo")
+                .matches("foo_bar")
+                .matches("foo_type")
+                .matches("crate_type")
+
+        ;
+    }
 
 
+    @Test
+    public void testInnerAttribute() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.INNER_ATTRIBUTE))
+                .matches("#![crate_type = \"lib\"]")
+        ;
+    }
 
+    @Test
+    public void testOuterAttribute() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_ATTRIBUTE))
+                .matches("#[test]")
         ;
     }
 }

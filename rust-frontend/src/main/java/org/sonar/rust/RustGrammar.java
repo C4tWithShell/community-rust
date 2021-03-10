@@ -368,10 +368,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(CU_STATEMENT).is(b.zeroOrMore(STATEMENT, SPC));
-        b.rule(CU_OTHER).is(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN, STATEMENT),SPC));
+        b.rule(CU_OTHER).is(b.zeroOrMore(b.firstOf(ANY_TOKEN, STATEMENT),SPC));
 
         b.rule(COMPILATION_UNIT).is(SPC,
-                b.firstOf(CU_OTHER,CU_STATEMENT)
+                b.firstOf(CU_STATEMENT,CU_OTHER)
                 ,SPC, EOF);
 
         punctuators(b);
@@ -1128,7 +1128,9 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     public static void statement(LexerlessGrammarBuilder b) {
-        b.rule(STATEMENT).is(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC), RustPunctuator.SEMI,SPC );
+        b.rule(STATEMENT).is(
+                b.firstOf(ITEM,
+                b.sequence(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC), RustPunctuator.SEMI,SPC )));
         b.rule(LET_STATEMENT).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 RustKeyword.KW_LET, SPC, PATTERN, SPC,

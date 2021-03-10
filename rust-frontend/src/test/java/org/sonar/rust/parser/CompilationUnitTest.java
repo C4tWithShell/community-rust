@@ -42,8 +42,10 @@ public class CompilationUnitTest {
     public void testCU_STATEMENT() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CU_STATEMENT))
                 .matches("use std::fmt;")
-                .notMatches("fn main() {\n" +
+                .matches("fn main() {\n" +
                         "    println!(\"Hello, world!\");\n" +
+                        "}")
+                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
                         "}")
         ;
     }
@@ -82,6 +84,8 @@ public class CompilationUnitTest {
                 .matches(" fn main() {\n" +
                         " // line comment \n" +
                         "    println!(\"Hello, world!\");\n" +
+                        "}")
+                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
                         "}")
       ;
     }
