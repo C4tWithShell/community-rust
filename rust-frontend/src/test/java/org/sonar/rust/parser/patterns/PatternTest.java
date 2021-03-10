@@ -1,0 +1,179 @@
+/**
+ *
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2021 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+package org.sonar.rust.parser.patterns;
+
+import org.junit.Test;
+import org.sonar.rust.RustGrammar;
+
+import static org.sonar.sslr.tests.Assertions.assertThat;
+
+public class PatternTest {
+
+    @Test
+    public void testLitteralPattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.LITERAL_PATTERN))
+                .matches("42")
+
+        ;
+    }
+
+
+    @Test
+    public void testIdentifierPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_PATTERN))
+                .matches("e @ 1..=5")
+                .matches("f @ 'a'..='z'")
+                .matches("None")
+        //FIXME.matches("Some(x)")
+
+        ;
+
+    }
+    @Test
+    public void testWildcardPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.WILDCARD_PATTERN))
+                .matches("_")
+
+        ;
+
+    }
+
+    @Test
+    public void testRangePatternBound(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN_BOUND))
+                .matches("1")
+                .matches("'a'")
+                .matches("'z'")
+
+        ;
+
+    }
+
+    @Test
+    public void testRangePattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN))
+                .matches("1..=9")
+                .matches("1...9")
+        //FIXME.matches("'A'..='Z'")
+
+        ;
+
+    }
+    @Test
+    public void testReferencePattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.REFERENCE_PATTERN))
+                .matches("&42")
+                .matches("&&42")
+                .matches("&mut 42")
+
+        ;
+
+    }
+
+    @Test
+    public void testStructPatternElements(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_ELEMENTS))
+                .matches("..")
+
+
+        ;
+
+    }
+
+    @Test
+    public void testStructPatternField(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_FIELD))
+                .matches("1:42")
+
+
+        ;
+
+    }
+
+    @Test
+    public void testStructPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN))
+                .matches("Point{}")
+                .matches("Point{..}")
+
+        ;
+
+    }
+    @Test
+    public void testTupleStructPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
+                .matches("42")
+
+        ;
+
+    }
+    @Test
+    public void testTuplePattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN))
+                .matches("42")
+
+        ;
+
+    }
+
+    @Test
+    public void testGroupedPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GROUPED_PATTERN))
+                .matches("42")
+
+        ;
+
+    }
+
+    @Test
+    public void testSlicePattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.SLICE_PATTERN))
+                .matches("42")
+
+        ;
+
+    }
+
+    @Test
+    public void testPathPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_PATTERN))
+                .matches("42")
+
+        ;
+
+    }
+
+
+
+    @Test
+    public void testPattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN))
+                //literal
+                .matches("42")
+                //macro invocation
+                .matches("std::io::Write!()")
+                .matches("panic!()")
+                .matches("println!(\"{}, {}\", word, j)")
+                .notMatches("")
+
+        ;
+    }
+}

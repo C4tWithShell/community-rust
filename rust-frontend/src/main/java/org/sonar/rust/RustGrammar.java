@@ -1259,19 +1259,17 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void ifExpr(LexerlessGrammarBuilder b) {
         b.rule(IF_EXPRESSION).is(
-                "if", EXPRESSION, //except struct expressions !!
-                b.optional(b.sequence(
-                        //else
-                        "else", b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
-                ))
+                RustKeyword.KW_IF, SPC, EXPRESSION,SPC, BLOCK_EXPRESSION,SPC,
+                b.optional(
+
+                        RustKeyword.KW_ELSE, SPC, b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
+                )
         );
         b.rule(IF_LET_EXPRESSION).is(
-                "if", "let", MATCH_ARM_PATTERNS, RustPunctuator.EQ, EXPRESSION, //except struct or lazy boolean operator expression
-                BLOCK_EXPRESSION,
-                b.optional(b.sequence(
-                        //else
-                        "else", b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
-                ))
+                RustKeyword.KW_IF,SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC , RustPunctuator.EQ, SPC, EXPRESSION, //except struct or lazy boolean operator expression
+                BLOCK_EXPRESSION, SPC,
+                b.optional(RustKeyword.KW_ELSE, SPC, b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
+                )
         );
     }
 
