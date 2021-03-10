@@ -1129,7 +1129,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     public static void statement(LexerlessGrammarBuilder b) {
         b.rule(STATEMENT).is(
-                b.firstOf(ITEM,
+                b.firstOf(ITEM,LET_STATEMENT,EXPRESSION_STATEMENT,
                 b.sequence(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC), RustPunctuator.SEMI,SPC )));
         b.rule(LET_STATEMENT).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),

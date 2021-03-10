@@ -160,10 +160,10 @@ public class RustSensorTest {
     @Test
     public void canParse(){
         List<String> filesToParse = new ArrayList<>();
-        //filesToParse.add(FILE1);
-        //filesToParse.add(FILE2);
+        filesToParse.add(FILE1);
+        filesToParse.add(FILE2);
         filesToParse.add(FILE3);
-        //filesToParse.add(FILE4);
+        filesToParse.add(FILE4);
 
         for (String fileName : filesToParse){
 
