@@ -213,6 +213,7 @@ public enum RustGrammar implements GrammarRuleKey {
     NEVER_TYPE,
     NON_KEYWORD_IDENTIFIER,
     NON_ZERO_DEC_DIGIT,
+    OBSOLETE_RANGE_PATTERN,
     OCT_DIGIT,
     OCT_LITERAL,
     OPERATOR_EXPRESSION,
@@ -259,6 +260,7 @@ public enum RustGrammar implements GrammarRuleKey {
     REFERENCE_PATTERN,
     REFERENCE_TYPE,
     REMAINDER_EXPRESSION,
+    REST_PATTERN,
     RETURN_EXPRESSION,
     SELF_PARAM,
     SHLEQ_EXPRESSION,
@@ -995,7 +997,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 MACRO_INVOCATION,
                 IDENTIFIER_PATTERN,
                 WILDCARD_PATTERN,
-
+                REST_PATTERN,
+                OBSOLETE_RANGE_PATTERN,
                 REFERENCE_PATTERN,
                 STRUCT_PATTERN,
                 TUPLE_STRUCT_PATTERN,
@@ -1024,10 +1027,10 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(b.sequence("@",SPC, PATTERN))
         );
         b.rule(WILDCARD_PATTERN).is(RustPunctuator.UNDERSCORE);
-        b.rule(RANGE_PATTERN).is(b.firstOf(
-                b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTEQ, RANGE_PATTERN_BOUND),
-                b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTDOT, RANGE_PATTERN_BOUND)
-        ));
+        b.rule(REST_PATTERN).is(RustPunctuator.DOTDOT);
+
+        b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTDOT, RANGE_PATTERN_BOUND));
+        b.rule(RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTEQ, RANGE_PATTERN_BOUND));
         b.rule(RANGE_PATTERN_BOUND).is(b.firstOf(
                 CHAR_LITERAL, BYTE_LITERAL, b.sequence(b.optional("-"), INTEGER_LITERAL),
                 b.sequence(b.optional("-"), FLOAT_LITERAL),
@@ -1058,8 +1061,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(
                         b.sequence(TUPLE_INDEX, RustPunctuator.COLON, PATTERN),
                         b.sequence(IDENTIFIER, RustPunctuator.COLON, PATTERN),
-                        b.sequence(b.optional("ref"), b.optional(RustKeyword.KW_MUT), IDENTIFIER)
-                ));
+                        b.sequence(b.optional(RustKeyword.KW_REF), SPC, b.optional(RustKeyword.KW_MUT),SPC,  IDENTIFIER)
+                ), ")");
         b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE), "..");
 
         b.rule(TUPLE_STRUCT_PATTERN).is(
@@ -1072,16 +1075,20 @@ public enum RustGrammar implements GrammarRuleKey {
                                 b.optional(RustPunctuator.COMMA)
                         )))));
         b.rule(TUPLE_PATTERN).is("(", b.optional(TUPLE_PATTERN_ITEMS), ")");
+
+
         b.rule(TUPLE_PATTERN_ITEMS).is(b.firstOf(
-                b.sequence(PATTERN, RustPunctuator.COMMA),
-                b.sequence(PATTERN, b.oneOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)), b.optional(RustPunctuator.COMMA)),
+                b.sequence(PATTERN, SPC, RustPunctuator.COMMA),
+                b.sequence(PATTERN, SPC, b.oneOrMore(b.sequence(RustPunctuator.COMMA,SPC,  PATTERN)),
+                        b.optional(RustPunctuator.COMMA)),
                 b.sequence(b.zeroOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)), "..",
                         b.optional(b.sequence(
                                 b.oneOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)),
                                 b.optional(RustPunctuator.COMMA))))));
-        b.rule(GROUPED_PATTERN).is("(", PATTERN, ")");
-        b.rule(SLICE_PATTERN).is("[", PATTERN,
-                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)), b.optional(RustPunctuator.COMMA), "]"
+
+        b.rule(GROUPED_PATTERN).is("(", SPC,PATTERN,SPC,  ")");
+        b.rule(SLICE_PATTERN).is("[", SPC,PATTERN,SPC,
+                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, PATTERN)), b.optional(RustPunctuator.COMMA), SPC, "]"
         );
         b.rule(PATH_PATTERN).is(b.firstOf(PATH_IN_EXPRESSION, QUALIFIED_PATH_IN_EXPRESSION));
     }

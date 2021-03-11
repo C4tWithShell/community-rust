@@ -57,6 +57,15 @@ public class PatternTest {
     }
 
     @Test
+    public void testRestPattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.REST_PATTERN))
+                .matches("..")
+
+        ;
+
+    }
+
+    @Test
     public void testRangePatternBound(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN_BOUND))
                 .matches("1")
@@ -71,12 +80,24 @@ public class PatternTest {
     public void testRangePattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN))
                 .matches("1..=9")
-                .matches("1...9")
-        //FIXME.matches("'A'..='Z'")
+
+
 
         ;
 
     }
+
+    @Test
+    public void testObsoleteRangePattern(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.OBSOLETE_RANGE_PATTERN))
+                .matches("1...9")
+
+
+
+        ;
+
+    }
+
     @Test
     public void testReferencePattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.REFERENCE_PATTERN))
@@ -101,7 +122,11 @@ public class PatternTest {
     @Test
     public void testStructPatternField(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_FIELD))
-                .matches("1:42")
+                .matches("(1:42)")
+                .matches("#[outer](1:42)")
+                .matches("(foo:42)")
+                .matches("(bar)")
+                .matches("(ref mut bar)")
 
 
         ;
@@ -120,15 +145,33 @@ public class PatternTest {
     @Test
     public void testTupleStructPattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
-                .matches("42")
+                .matches("local_var()")
 
         ;
 
     }
+
+    @Test
+    public void testTuplePatternItems(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN_ITEMS))
+                .matches("42,")
+                .matches("..")
+                .matches("\"bacon\" ,")
+
+
+        ;
+
+    }
+
+
+
     @Test
     public void testTuplePattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN))
-                .matches("42")
+                .matches("()")
+                .matches("(42,)")
+                .matches("(..)")
+                .matches("(\"bacon\" ,)")
 
         ;
 
@@ -137,7 +180,8 @@ public class PatternTest {
     @Test
     public void testGroupedPattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.GROUPED_PATTERN))
-                .matches("42")
+                .matches("(42)")
+                .matches("( foo )")
 
         ;
 
@@ -146,7 +190,9 @@ public class PatternTest {
     @Test
     public void testSlicePattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.SLICE_PATTERN))
-                .matches("42")
+                .matches("[42]")
+                .matches("[42,foo, bar]")
+                .matches("[42,foo, bar,]")
 
         ;
 
@@ -155,7 +201,8 @@ public class PatternTest {
     @Test
     public void testPathPattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_PATTERN))
-                .matches("42")
+                .matches("Vec::<u8>::with_capacity")
+                .matches("<S as T1>::f")
 
         ;
 
@@ -166,13 +213,23 @@ public class PatternTest {
     @Test
     public void testPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN))
+                //range patterns
+                .matches("1..=9")
+                .matches("1...9") // obsolete
                 //literal
                 .matches("42")
+                .matches("foo")
                 //macro invocation
                 .matches("std::io::Write!()")
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
                 .notMatches("")
+                //identifier pattern
+                .matches("f @ 'a'..='z'")
+                .matches("_") //wildcard
+                .matches("..") //rest
+
+
 
         ;
     }
