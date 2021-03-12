@@ -32,6 +32,7 @@ import java.util.Arrays;
 public enum RustGrammar implements GrammarRuleKey {
     ABI,
     ADDITION_EXPRESSION,
+    ADDITION_EXPRESSION_TERM,
     ANDEQ_EXPRESSION,
     ANY_TOKEN,
     ARITHMETIC_OR_LOGICAL_EXPRESSION,
@@ -56,8 +57,11 @@ public enum RustGrammar implements GrammarRuleKey {
     BIN_DIGIT,
     BIN_LITERAL,
     BITAND_EXPRESSION,
+    BITAND_EXPRESSION_TERM,
     BITOR_EXPRESSION,
+    BITOR_EXPRESSION_TERM,
     BITXOR_EXPRESSION,
+    BITXOR_EXPRESSION_TERM,
     BLOCK_COMMENT,
     BLOCK_COMMENT_OR_DOC,
     BLOCK_EXPRESSION,
@@ -87,6 +91,7 @@ public enum RustGrammar implements GrammarRuleKey {
     DELIM_TOKEN_TREE,
     DEREFERENCE_EXPRESSION,
     DIVISION_EXPRESSION,
+    DIVISION_EXPRESSION_TERM,
     ENUMERATION,
     ENUMERATION_VARIANT_EXPRESSION,
     ENUM_EXPR_FIELD,
@@ -205,6 +210,7 @@ public enum RustGrammar implements GrammarRuleKey {
     MINUSEQ_EXPRESSION,
     MODULE,
     MULTIPLICATION_EXPRESSION,
+    MULTIPLICATION_EXPRESSION_TERM,
     NAMED_FUNCTION_PARAM,
     NAMED_FUNCTION_PARAMETERS,
     NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS,
@@ -260,14 +266,17 @@ public enum RustGrammar implements GrammarRuleKey {
     REFERENCE_PATTERN,
     REFERENCE_TYPE,
     REMAINDER_EXPRESSION,
+    REMAINDER_EXPRESSION_TERM,
     REST_PATTERN,
     RETURN_EXPRESSION,
     SELF_PARAM,
     SHLEQ_EXPRESSION,
     SHL_EXPRESSION,
+    SHL_EXPRESSION_TERM,
     SHORTHAND_SELF,
     SHREQ_EXPRESSION,
     SHR_EXPRESSION,
+    SHR_EXPRESSION_TERM,
     SIMPLE_PATH,
     SIMPLE_PATH_SEGMENT,
     SLASHEQ_EXPRESSION,
@@ -297,6 +306,7 @@ public enum RustGrammar implements GrammarRuleKey {
     STRUCT_PATTERN_FIELDS,
     STRUCT_STRUCT,
     SUBTRACTION_EXPRESSION,
+    SUBTRACTION_EXPRESSION_TERM,
     TOKEN,
     TOKEN_EXCEPT_DELIMITERS,
     TOKEN_MACRO,
@@ -354,8 +364,6 @@ public enum RustGrammar implements GrammarRuleKey {
     VISIT_ITEM,
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
-    CU_STATEMENT,
-    CU_OTHER,
     WILDCARD_PATTERN;
 
     private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
@@ -369,12 +377,9 @@ public enum RustGrammar implements GrammarRuleKey {
         LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
 
-        b.rule(CU_STATEMENT).is(b.zeroOrMore(STATEMENT, SPC));
-        b.rule(CU_OTHER).is(b.zeroOrMore(b.firstOf(ANY_TOKEN, STATEMENT),SPC));
 
-        b.rule(COMPILATION_UNIT).is(SPC,
-                b.firstOf(CU_STATEMENT,CU_OTHER)
-                ,SPC, EOF);
+
+        b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(STATEMENT,SPC), EOF);
 
         punctuators(b);
         keywords(b);
@@ -1129,9 +1134,13 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     public static void statement(LexerlessGrammarBuilder b) {
-        b.rule(STATEMENT).is(
-                b.firstOf(ITEM,LET_STATEMENT,EXPRESSION_STATEMENT,
-                b.sequence(b.zeroOrMore(b.firstOf(KEYWORD,ANY_TOKEN),SPC), RustPunctuator.SEMI,SPC )));
+        b.rule(STATEMENT).is(b.firstOf(
+                RustPunctuator.SEMI,
+                ITEM,
+                LET_STATEMENT,
+                EXPRESSION_STATEMENT,
+                MACRO_INVOCATION_SEMI
+        ));
         b.rule(LET_STATEMENT).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 RustKeyword.KW_LET, SPC, PATTERN, SPC,
@@ -1511,39 +1520,55 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
         b.rule(ARITHMETIC_OR_LOGICAL_EXPRESSION).is(b.firstOf(
-                b.sequence(LITERALS, SHL_EXPRESSION),
-                b.sequence(LITERALS, ADDITION_EXPRESSION),
-                b.sequence(LITERALS, SUBTRACTION_EXPRESSION),
-                b.sequence(LITERALS, MULTIPLICATION_EXPRESSION),
-                b.sequence(LITERALS, DIVISION_EXPRESSION),
-                b.sequence(LITERALS, REMAINDER_EXPRESSION),
-                b.sequence(LITERALS, BITAND_EXPRESSION),
-                b.sequence(LITERALS, BITOR_EXPRESSION),
-                b.sequence(LITERALS, BITXOR_EXPRESSION),
-                b.sequence(LITERALS, SHR_EXPRESSION)
+                 SHL_EXPRESSION,
+                 ADDITION_EXPRESSION,
+                 SUBTRACTION_EXPRESSION,
+                 MULTIPLICATION_EXPRESSION,
+                 DIVISION_EXPRESSION,
+                 REMAINDER_EXPRESSION,
+                 BITAND_EXPRESSION,
+                 BITOR_EXPRESSION,
+                 BITXOR_EXPRESSION,
+                 SHR_EXPRESSION));
 
-        ));
 
-        b.rule(ADDITION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.PLUS, SPC, EXPRESSION, b.zeroOrMore(ADDITION_EXPRESSION, SPC)), LITERALS));
-        b.rule(SUBTRACTION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.MINUS, SPC, EXPRESSION, b.zeroOrMore(SUBTRACTION_EXPRESSION, SPC)), LITERALS));
-        b.rule(MULTIPLICATION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.STAR, SPC, EXPRESSION, b.zeroOrMore(MULTIPLICATION_EXPRESSION, SPC)), LITERALS));
-        b.rule(DIVISION_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.SLASH, SPC, EXPRESSION, b.zeroOrMore(DIVISION_EXPRESSION, SPC)), LITERALS));
-        b.rule(REMAINDER_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.PERCENT, SPC, EXPRESSION, b.zeroOrMore(REMAINDER_EXPRESSION, SPC)), LITERALS));
-        b.rule(BITAND_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.AND, SPC, EXPRESSION, b.zeroOrMore(BITAND_EXPRESSION, SPC)), LITERALS));
-        b.rule(BITOR_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.OR, SPC, EXPRESSION, b.zeroOrMore(BITOR_EXPRESSION, SPC)), LITERALS));
-        b.rule(BITXOR_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.CARET, SPC, EXPRESSION, b.zeroOrMore(BITXOR_EXPRESSION, SPC)), LITERALS));
-        b.rule(SHL_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.SHL, SPC, EXPRESSION, b.zeroOrMore(SHL_EXPRESSION, SPC)), LITERALS));
-        b.rule(SHR_EXPRESSION).is(b.firstOf(
-                b.sequence(RustPunctuator.SHR, SPC, EXPRESSION, b.zeroOrMore(SHR_EXPRESSION, SPC)), LITERALS));
+        b.rule(ADDITION_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, ADDITION_EXPRESSION_TERM);
+        b.rule(ADDITION_EXPRESSION_TERM).is(
+                RustPunctuator.PLUS, SPC, EXPRESSION, SPC, b.zeroOrMore(ADDITION_EXPRESSION_TERM, SPC));
+
+
+        b.rule(SUBTRACTION_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, SUBTRACTION_EXPRESSION_TERM);
+        b.rule(SUBTRACTION_EXPRESSION_TERM).is(
+                RustPunctuator.MINUS, SPC, EXPRESSION, SPC, b.zeroOrMore(SUBTRACTION_EXPRESSION_TERM, SPC));
+
+
+
+        b.rule(MULTIPLICATION_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,MULTIPLICATION_EXPRESSION_TERM);
+        b.rule(MULTIPLICATION_EXPRESSION_TERM).is(RustPunctuator.STAR, SPC, EXPRESSION, SPC, b.zeroOrMore(MULTIPLICATION_EXPRESSION_TERM, SPC));
+
+
+
+        b.rule(DIVISION_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,DIVISION_EXPRESSION_TERM);
+        b.rule(DIVISION_EXPRESSION_TERM).is(RustPunctuator.SLASH,SPC, EXPRESSION, SPC, b.zeroOrMore(DIVISION_EXPRESSION_TERM, SPC));
+
+        b.rule(REMAINDER_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,REMAINDER_EXPRESSION_TERM);
+        b.rule(REMAINDER_EXPRESSION_TERM).is(RustPunctuator.PERCENT,SPC, EXPRESSION, SPC, b.zeroOrMore(REMAINDER_EXPRESSION_TERM, SPC));
+
+        b.rule(BITAND_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITAND_EXPRESSION_TERM);
+        b.rule(BITAND_EXPRESSION_TERM).is(RustPunctuator.AND,SPC, EXPRESSION, SPC, b.zeroOrMore(BITAND_EXPRESSION_TERM, SPC));
+
+        b.rule(BITOR_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITOR_EXPRESSION_TERM);
+        b.rule(BITOR_EXPRESSION_TERM).is(RustPunctuator.OR,SPC, EXPRESSION, SPC, b.zeroOrMore(BITOR_EXPRESSION_TERM, SPC));
+
+
+        b.rule(BITXOR_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITXOR_EXPRESSION_TERM);
+        b.rule(BITXOR_EXPRESSION_TERM).is(RustPunctuator.CARET,SPC, EXPRESSION, SPC, b.zeroOrMore(BITXOR_EXPRESSION_TERM, SPC));
+
+        b.rule(SHL_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,SHL_EXPRESSION_TERM);
+        b.rule(SHL_EXPRESSION_TERM).is(RustPunctuator.SHL,SPC, EXPRESSION, SPC, b.zeroOrMore(SHL_EXPRESSION_TERM, SPC));
+
+        b.rule(SHR_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,SHR_EXPRESSION_TERM);
+        b.rule(SHR_EXPRESSION_TERM).is(RustPunctuator.SHR,SPC, EXPRESSION, SPC, b.zeroOrMore(SHR_EXPRESSION_TERM, SPC));
 
 
         b.rule(COMPARISON_EXPRESSION).is(b.firstOf(

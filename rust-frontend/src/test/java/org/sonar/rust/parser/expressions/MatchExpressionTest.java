@@ -54,8 +54,9 @@ public class MatchExpressionTest {
                 .matches("1")
                 .matches("a|b")
                 .matches("a|b|c")
-                .matches("1 | _ if { i.set(i.get() + 1); false }")
                 .matches("_")
+                .matches("1 | _ if { i.set(i.get() + 1); false }")
+
         ;
     }
 

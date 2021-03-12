@@ -48,6 +48,9 @@ public class ExpressionTest {
                 .matches("callme()")
                 .matches("println!(\"{}, {}\", word, j)")
                 .matches("{}")
+                .matches("i.get()")
+                .matches("i.get() + 1")
+
 
         ;
     }

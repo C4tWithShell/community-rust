@@ -97,6 +97,8 @@ public class ExpressionWithoutBlockTest {
         //TODO MacroInvocation
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
+                .matches("j.set(i.get() + 1)")
+
 
         ;
     }

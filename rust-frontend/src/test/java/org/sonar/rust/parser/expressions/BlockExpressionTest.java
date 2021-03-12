@@ -41,6 +41,17 @@ Statements :
 
 
     @Test
+    public void testStatements() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENTS))
+                .matches("println!(\"hi there\");")
+                .matches("println!(\"hi there\");\n" +
+                        "println!(\"how are you today ?\");")
+                .matches("j.set(i.get()); false")
+                .matches("j.set(i.get() + 1); false")
+                ;
+    }
+
+    @Test
     public void testBlockExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_EXPRESSION))
                 .matches("{}")
@@ -60,6 +71,8 @@ Statements :
                         "}")
                 .matches("{println!(\"hello,{}\",k)}")
                 .matches("{ println!(\"hello, {}\", j); }")
+                .matches("{ i.set(i.get()); false }")
+                .matches("{ i.set(i.get() + 1); false }")
         ;
     }
 }
