@@ -1215,12 +1215,12 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void await(LexerlessGrammarBuilder b) {
-        b.rule(AWAIT_EXPRESSION).is(LITERALS, AWAIT_EXPRESSION_TERM);
-        b.rule(AWAIT_EXPRESSION_TERM).is(RustPunctuator.DOT, "await", AWAIT_EXPRESSION_TERM);
+        b.rule(AWAIT_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER ), AWAIT_EXPRESSION_TERM);
+        b.rule(AWAIT_EXPRESSION_TERM).is(RustPunctuator.DOT, "await", b.zeroOrMore(AWAIT_EXPRESSION_TERM));
     }
 
     private static void returnExpr(LexerlessGrammarBuilder b) {
-        b.rule(RETURN_EXPRESSION).is("return", b.optional(EXPRESSION));
+        b.rule(RETURN_EXPRESSION).is("return", SPC, b.optional(EXPRESSION));
     }
 
     //https://doc.rust-lang.org/reference/expressions/match-expr.html
@@ -1233,17 +1233,6 @@ public enum RustGrammar implements GrammarRuleKey {
                 "}"
         );
 
-        /*
-        b.rule(MATCH_ARMS).is(
-                b.zeroOrMore(MATCH_ARM,SPC, RustPunctuator.FATARROW,SPC,
-                        b.firstOf(b.sequence(EXPRESSION_WITHOUT_BLOCK,SPC, RustPunctuator.COMMA, SPC ),
-                                b.sequence(EXPRESSION_WITH_BLOCK,SPC, b.optional(RustPunctuator.COMMA,SPC ))
-                        )),
-                MATCH_ARM,SPC, RustPunctuator.FATARROW, SPC, EXPRESSION,
-                SPC, b.optional(RustPunctuator.COMMA,SPC))
-        ;
-
-         */
 
         b.rule(MATCH_ARMS).is(
                 b.oneOrMore(MATCH_ARM,SPC, RustPunctuator.FATARROW,SPC,
