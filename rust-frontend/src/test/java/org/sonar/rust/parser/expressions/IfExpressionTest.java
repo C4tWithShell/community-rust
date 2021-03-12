@@ -17,6 +17,10 @@ public class IfExpressionTest {
                         "} else {\n" +
                         "    println!(\"x is something else\");\n" +
                         "}")
+                .matches("if run_coverage {\n" +
+                        "        println!(\"Coverage is running\");" +
+                        " } ")
+
 
         ;
     }
@@ -30,6 +34,7 @@ public class IfExpressionTest {
                         "    // This block is evaluated instead.\n" +
                         "    println!(\"No bacon will be served\");\n" +
                         "}")
+
 
         ;
     }

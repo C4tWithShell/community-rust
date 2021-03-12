@@ -81,8 +81,7 @@ public class RustSensorTest {
     private File dir = new File("src/test/resources/");
     private static String FILE1 = "sensor/main.rs";
     private static String FILE2 = "sensor/main2.rs";
-    private static String FILE3 = "sensor/parser.rs";
-    private static String FILE4 = "sensor/tarpaulin.rs";
+
 
     @org.junit.Rule
     public LogTester logTester = new LogTester();
@@ -110,7 +109,7 @@ public class RustSensorTest {
         assertEquals((Integer) 166, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
         assertEquals((Integer) 166, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
         assertEquals((Integer) 53, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
-        assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
+        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
         assertEquals(715, tester.cpdTokens(inputFile.key()).size());
         assertEquals(Collections.singletonList(TypeOfText.COMMENT), tester.highlightingTypeAt(inputFile.key(), 1, 1));
         assertEquals(Collections.singletonList(TypeOfText.KEYWORD), tester.highlightingTypeAt(inputFile.key(), 14, 1));
@@ -162,8 +161,6 @@ public class RustSensorTest {
         List<String> filesToParse = new ArrayList<>();
         filesToParse.add(FILE1);
         filesToParse.add(FILE2);
-        filesToParse.add(FILE3);
-        filesToParse.add(FILE4);
 
         for (String fileName : filesToParse){
 

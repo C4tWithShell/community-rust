@@ -1307,23 +1307,24 @@ public enum RustGrammar implements GrammarRuleKey {
                         ITERATOR_LOOP_EXPRESSION)
         );
         b.rule(INFINITE_LOOP_EXPRESSION).is(
-                "loop", BLOCK_EXPRESSION);
+                RustKeyword.KW_LOOP, SPC, BLOCK_EXPRESSION);
         b.rule(PREDICATE_LOOP_EXPRESSION).is(
-                "while", EXPRESSION, //except struct expression
+                RustKeyword.KW_WHILE, SPC, EXPRESSION, //except struct expression
                 BLOCK_EXPRESSION
         );
         b.rule(PREDICATE_PATTERN_LOOP_EXPRESSION).is(
-                "while", "let", MATCH_ARM_PATTERNS, RustPunctuator.EQ, EXPRESSION, //except struct expression
-                BLOCK_EXPRESSION
+                RustKeyword.KW_WHILE, SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC, RustPunctuator.EQ,
+                SPC, EXPRESSION, //except struct expression
+                SPC, BLOCK_EXPRESSION
         );
         b.rule(ITERATOR_LOOP_EXPRESSION).is(
-                "for", PATTERN, "IN", EXPRESSION, //except struct expression
-                BLOCK_EXPRESSION
+                RustKeyword.KW_FOR, SPC, PATTERN,SPC,  RustKeyword.KW_IN, SPC, EXPRESSION, //except struct expression
+                SPC, BLOCK_EXPRESSION
         );
-        b.rule(LOOP_LABEL).is(LIFETIME_OR_LABEL, RustPunctuator.COLON);
-        b.rule(BREAK_EXPRESSION).is("break", b.optional(LIFETIME_OR_LABEL), b.optional(EXPRESSION));
+        b.rule(LOOP_LABEL).is(LIFETIME_OR_LABEL, SPC, RustPunctuator.COLON);
+        b.rule(BREAK_EXPRESSION).is(RustKeyword.KW_BREAK, SPC, b.optional(LIFETIME_OR_LABEL, SPC), b.optional(EXPRESSION, SPC));
         b.rule(CONTINUE_EXPRESSION).is(
-                "continue", b.optional(LIFETIME_OR_LABEL));
+                RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL));
 
 
     }
