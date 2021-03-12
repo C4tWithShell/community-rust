@@ -19,53 +19,31 @@
  */
 package org.elegoff.plugins.rust;
 
-import com.google.common.collect.ImmutableList;
-import org.assertj.core.api.Condition;
 import org.elegoff.plugins.rust.language.RustLanguage;
-import org.elegoff.rust.checks.CheckList;
 import org.fest.assertions.Assertions;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
-import org.sonar.api.batch.fs.internal.FileMetadata;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
-import org.sonar.api.batch.rule.internal.DefaultActiveRules;
 import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
-import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.config.internal.MapSettings;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
-import org.sonar.api.rule.RuleKey;
-import org.sonar.api.utils.Version;
-import org.sonar.api.utils.log.LogAndArguments;
 import org.sonar.api.utils.log.LogTester;
-import org.sonar.api.utils.log.LoggerLevel;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -79,8 +57,8 @@ public class RustSensorTest {
     private SensorContextTester tester;
     private RustSensor sensor;
     private File dir = new File("src/test/resources/");
-    private static String FILE1 = "sensor/main.rs";
-    private static String FILE2 = "sensor/main2.rs";
+    private static String SEMVEREFILE = "sensor/semver.rs" ;
+    private static String SIMPLE = "sensor/simple.rs" ;
 
 
     @org.junit.Rule
@@ -102,8 +80,8 @@ public class RustSensorTest {
     }
 
     @Test
-    public void analyse() throws IOException {
-        DefaultInputFile inputFile = executeSensorOnSingleFile(FILE1);
+    public void analyseSemver() throws IOException {
+        DefaultInputFile inputFile = executeSensorOnSingleFile(SEMVEREFILE);
 
         assertEquals((Integer) 715, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
         assertEquals((Integer) 166, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
@@ -129,15 +107,15 @@ public class RustSensorTest {
     }
 
     @Test
-    public void analyse2() throws IOException {
-        DefaultInputFile inputFile = executeSensorOnSingleFile(FILE2);
+    public void analyseSimple() throws IOException {
+        DefaultInputFile inputFile = executeSensorOnSingleFile(SIMPLE);
 
-        assertEquals((Integer) 6, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-        assertEquals((Integer) 5, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
-        assertEquals((Integer) 5, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
+        assertEquals((Integer) 10, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
+        assertEquals((Integer) 7, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
+        assertEquals((Integer) 7, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
+        assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
         assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
-        assertEquals(6, tester.cpdTokens(inputFile.key()).size());
+        assertEquals(10, tester.cpdTokens(inputFile.key()).size());
         assertEquals(Collections.singletonList(TypeOfText.KEYWORD), tester.highlightingTypeAt(inputFile.key(), 1, 1));
         assertEquals(Collections.singletonList(TypeOfText.COMMENT), tester.highlightingTypeAt(inputFile.key(), 6, 1));
         assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 7, 13));
@@ -159,8 +137,8 @@ public class RustSensorTest {
     @Test
     public void canParse(){
         List<String> filesToParse = new ArrayList<>();
-        filesToParse.add(FILE1);
-        filesToParse.add(FILE2);
+        filesToParse.add(SEMVEREFILE);
+        filesToParse.add(SIMPLE);
 
         for (String fileName : filesToParse){
 
@@ -196,8 +174,8 @@ public class RustSensorTest {
 
     @Test
     public void two_files_without_cancellation() throws Exception {
-        DefaultInputFile file1 = addInputFile(FILE1);
-        DefaultInputFile file2 = addInputFile(FILE2);
+        DefaultInputFile file1 = addInputFile(SEMVEREFILE);
+        DefaultInputFile file2 = addInputFile(SIMPLE);
         sensor.execute(tester);
         Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNotNull();
         Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
@@ -205,8 +183,8 @@ public class RustSensorTest {
 
     @Test
     public void two_files_with_cancellation() throws Exception {
-        DefaultInputFile file1 = addInputFile(FILE1);
-        DefaultInputFile file2 = addInputFile(FILE2);
+        DefaultInputFile file1 = addInputFile(SEMVEREFILE);
+        DefaultInputFile file2 = addInputFile(SIMPLE);
         tester.setCancelled(true);
         sensor.execute(tester);
         Assertions.assertThat(tester.measure(file2.key(), CoreMetrics.NCLOC)).isNotNull();
