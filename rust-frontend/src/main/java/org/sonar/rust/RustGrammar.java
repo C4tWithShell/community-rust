@@ -1275,7 +1275,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(IF_LET_EXPRESSION).is(
                 RustKeyword.KW_IF,SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC , RustPunctuator.EQ, SPC, EXPRESSION, //except struct or lazy boolean operator expression
-                BLOCK_EXPRESSION, SPC,
+                SPC, BLOCK_EXPRESSION, SPC,
                 b.optional(RustKeyword.KW_ELSE, SPC, b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
                 )
         );
