@@ -38,6 +38,12 @@ public class CallExpressionTest {
                 .matches("3+2")
                 .matches("1 << 1")
                 .matches("foo")
+                .matches("foo + 1")
+                .matches("get()")
+                .matches("get(i)")
+                .matches("get(i) + 1")
+                .matches("m.get(i) + 1")
+
 
 
 
@@ -51,6 +57,7 @@ public class CallExpressionTest {
                 .matches("abc()")
                 .matches("add(1i32,2i32)")
                 .matches("add(1i32, 2i32)")
+                .matches("calc(get(i) + 1)")
 
 
 

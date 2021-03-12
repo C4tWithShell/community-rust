@@ -49,7 +49,7 @@ public class ExpressionTest {
                 .matches("println!(\"{}, {}\", word, j)")
                 .matches("{}")
                 .matches("i.get()")
-                .matches("i.get() + 1")
+                .matches("m.get(i) + 1")
 
 
         ;

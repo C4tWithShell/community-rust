@@ -185,7 +185,8 @@ public class OperatorExpressionTest {
                 .matches("2^4")
                 .matches("1-3")
                 .matches("1-3-2")
-                .matches("22%7")
+                .matches("22 % 7")
+                .matches("m.get(i) + 1")
                 //comparisons
                 .matches("a == b")
                 .matches("small < big")
@@ -197,6 +198,7 @@ public class OperatorExpressionTest {
                 .matches("value = 42")
                 //compound assignment
                 .matches("counter += 1")
+
 
 
         ;

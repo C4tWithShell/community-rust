@@ -62,7 +62,8 @@ public class ExpressionWithoutBlockTest {
                 .matches("2^4")
                 .matches("1-3")
                 .matches("1-3-2")
-                .matches("22%7")
+                .matches("22 % 7")
+                .matches("m.get(i) + 1")
                 //comparisons
                 .matches("a == b")
                 .matches("small < big")
@@ -97,7 +98,9 @@ public class ExpressionWithoutBlockTest {
         //TODO MacroInvocation
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
-                .matches("j.set(i.get() + 1)")
+                .matches("calc(get(i) + 1)")
+
+
 
 
         ;

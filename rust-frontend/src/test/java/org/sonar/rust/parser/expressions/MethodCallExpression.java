@@ -15,6 +15,8 @@ public class MethodCallExpression {
                 .matches("a.b()")
                 .matches("a.b().c()")
                 .matches("pi.unwrap_or(1.0).log(2.72)")
+                .matches("j.set(i.get())")
+                .matches("j.set(1)")
                 ;
 
     }

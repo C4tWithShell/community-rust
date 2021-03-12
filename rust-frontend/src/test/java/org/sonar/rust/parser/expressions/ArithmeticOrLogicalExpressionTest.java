@@ -51,6 +51,7 @@ public class ArithmeticOrLogicalExpressionTest {
                 .matches("a + b + c")
                 .matches("1+2+3+a+b + 56 + foo")
                 .matches("calc() + 12")
+                .matches("m.get(i) + 1")
                 ;
     }
 
@@ -107,6 +108,7 @@ public class ArithmeticOrLogicalExpressionTest {
                 .matches("1+2+3+4*7-3/10")
                 .matches("calc()+2")
                 .notMatches("== b")
+                .matches("m.get(i) + 1")
         ;
     }
 }
