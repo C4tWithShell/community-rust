@@ -46,7 +46,6 @@ public class RustGrammarTest {
                 RustGrammar.LIFETIME_BOUNDS,
                 RustGrammar.LIFETIME_PARAMS,
                 RustGrammar.SPC,
-                RustGrammar.TUPLE_STRUCT_ITEMS,
                 RustGrammar.TYPE_PARAMS
         ));
 

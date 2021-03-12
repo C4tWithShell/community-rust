@@ -994,14 +994,14 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void patterns(LexerlessGrammarBuilder b) {
         b.rule(PATTERN).is(b.firstOf(
                 RANGE_PATTERN,
+                TUPLE_STRUCT_PATTERN,
+                STRUCT_PATTERN,
                 MACRO_INVOCATION,
                 IDENTIFIER_PATTERN,
                 WILDCARD_PATTERN,
                 REST_PATTERN,
                 OBSOLETE_RANGE_PATTERN,
                 REFERENCE_PATTERN,
-                STRUCT_PATTERN,
-                TUPLE_STRUCT_PATTERN,
                 TUPLE_PATTERN,
                 GROUPED_PATTERN,
                 SLICE_PATTERN,
@@ -1068,12 +1068,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TUPLE_STRUCT_PATTERN).is(
                 PATH_IN_EXPRESSION, "(", b.optional(TUPLE_STRUCT_ITEMS), ")"
         );
-        b.rule(TUPLE_STRUCT_ITEMS).is(b.firstOf(
-                PATTERN, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, PATTERN), b.optional("'")),
-                b.sequence(b.zeroOrMore(b.sequence(PATTERN, RustPunctuator.COMMA)), "..",
-                        b.optional(b.sequence(b.zeroOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)),
-                                b.optional(RustPunctuator.COMMA)
-                        )))));
+        b.rule(TUPLE_STRUCT_ITEMS).is(seq(b, PATTERN, RustPunctuator.COMMA));
+
         b.rule(TUPLE_PATTERN).is("(", b.optional(TUPLE_PATTERN_ITEMS), ")");
 
 
@@ -1238,18 +1234,25 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(MATCH_ARMS,SPC),
                 "}"
         );
+
+        /*
         b.rule(MATCH_ARMS).is(
+                b.zeroOrMore(MATCH_ARM,SPC, RustPunctuator.FATARROW,SPC,
+                        b.firstOf(b.sequence(EXPRESSION_WITHOUT_BLOCK,SPC, RustPunctuator.COMMA, SPC ),
+                                b.sequence(EXPRESSION_WITH_BLOCK,SPC, b.optional(RustPunctuator.COMMA,SPC ))
+                        )),
+                MATCH_ARM,SPC, RustPunctuator.FATARROW, SPC, EXPRESSION,
+                SPC, b.optional(RustPunctuator.COMMA,SPC))
+        ;
 
-                b.zeroOrMore(b.sequence(
-                        MATCH_ARM,SPC, RustPunctuator.FATARROW,SPC,
-                        b.firstOf(
-                                b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.COMMA,SPC),
-                                b.sequence(EXPRESSION_WITH_BLOCK,SPC,  b.optional(RustPunctuator.COMMA,SPC))
-                        )
-                )),
+         */
 
-                b.sequence(MATCH_ARM,SPC, RustPunctuator.FATARROW, SPC, EXPRESSION,
-                        SPC, b.optional(RustPunctuator.COMMA,SPC)));
+        b.rule(MATCH_ARMS).is(
+                b.oneOrMore(MATCH_ARM,SPC, RustPunctuator.FATARROW,SPC,
+                        EXPRESSION,SPC, b.optional(RustPunctuator.COMMA,SPC )))
+        ;
+
+
         b.rule(MATCH_ARM).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
                 MATCH_ARM_PATTERNS,

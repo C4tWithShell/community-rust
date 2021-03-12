@@ -55,6 +55,7 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_IN_EXPRESSION))
                 .matches("Vec::<u8>::with_capacity")
                 .matches("collect::<Vec<_>>")
+                .matches("S")
         ;
     }
 

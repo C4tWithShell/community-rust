@@ -47,6 +47,7 @@ public class ExpressionTest {
                 .matches("pi.unwrap_or(1.0).log(2.72)")
                 .matches("callme()")
                 .matches("println!(\"{}, {}\", word, j)")
+                .matches("{}")
 
         ;
     }

@@ -146,6 +146,8 @@ public class PatternTest {
     public void testTupleStructPattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
                 .matches("local_var()")
+                .matches("S(z @ 1, _)")
+
 
         ;
 
@@ -228,6 +230,14 @@ public class PatternTest {
                 .matches("f @ 'a'..='z'")
                 .matches("_") //wildcard
                 .matches("..") //rest
+                //FIXME.matches("S(z @ 1, _)")
+                //reference
+                .matches("&mut 42")
+                //struct
+                .matches("Point{..}")
+                //tuple struct
+                .matches("local_var()")
+                .matches("S(z @ 1, _)")
 
 
 

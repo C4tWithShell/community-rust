@@ -41,7 +41,8 @@ public class MatchExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_ARM_PATTERNS))
                 .matches("42")
                 .matches("foo")
-                .matches("(\"Bacon\",b)")
+                .matches("S(z @ 1, _)")
+
 
         ;
     }
@@ -52,6 +53,8 @@ public class MatchExpressionTest {
                 .matches("1")
                 .matches("a|b")
                 .matches("a|b|c")
+                .matches("1 | _ if { i.set(i.get() + 1); false }")
+                .matches("_")
         ;
     }
 
@@ -59,19 +62,31 @@ public class MatchExpressionTest {
     @Test
     public void tesMatchArms() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_ARMS))
-                .matches(
-                        "1 => println!(\"one\")")
-                .matches(
-                        "1 => println!(\"one\"),\n" +
-                                "2 => println!(\"two\"),\n" +
-                                "3 => println!(\"three\"),\n" +
-                                "4 => println!(\"four\"),\n" +
-                                "5 => println!(\"five\"),\n" +
-                                "_ => println!(\"something else\")"
-                )
+                .matches("1 => println!(\"one\")")
+                .matches("_ => println!(\"anything else\")")
+                .matches("1 => println!(\"one\")," +
+                         "7 => println!(\"seven\")")
+                .matches("1 => println!(\"one\")," +
+                         "_ => println!(\"other\")")
+                .matches("1 => println!(\"one\")," +
+                        "2 => println!(\"two\")," +
+                        "_ => println!(\"other\")")
+                .matches("1 => println!(\"one\")," +
+                        "2 => println!(\"two\"),\n" +
+                        "3 => println!(\"three\"),\n" +
+                        "4 => println!(\"four\"),\n" +
+                        "_ => println!(\"other\")")
+                .matches("S(z @ 1, _) => assert_eq!(z, 1)")
+                .matches("S(z @ 1, _) | S(_, z @ 2) => assert_eq!(z, 1)")
+                .matches("_ => {}")
+                .matches("1 | _ if { i.set(i.get() + 1); false } => {}" )
+                .matches("1 | _ if { i.set(i.get() + 1); false } => {}\n" +
+                        "_ => {}")
+
+                ;
 
 
-        ;
+
     }
 
     @Test
@@ -89,9 +104,9 @@ public class MatchExpressionTest {
                         "    S(z @ 1, _) | S(_, z @ 2) => assert_eq!(z, 1),\n" +
                         "    _ => panic!()" +
                         "}")
-                .matches("match 1 {\n" +
+                .matches("match foo {\n" +
                         "    1 | _ if { i.set(i.get() + 1); false } => {}\n" +
-                        "    _ => {}\n" +
+                        "    \n" +
                         "}")
 
         ;
