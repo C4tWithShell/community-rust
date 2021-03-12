@@ -158,7 +158,10 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN_ITEMS))
                 .matches("42,")
                 .matches("..")
-                .matches("\"bacon\" ,")
+                .matches("\"bacon\",")
+                .matches("\"bacon\",42")
+                .matches("\"bacon\", foo")
+                .matches("\"bacon\" , foo")
 
 
         ;
@@ -174,6 +177,7 @@ public class PatternTest {
                 .matches("(42,)")
                 .matches("(..)")
                 .matches("(\"bacon\" ,)")
+                .matches("(\"bacon\",42)")
 
         ;
 
@@ -230,7 +234,6 @@ public class PatternTest {
                 .matches("f @ 'a'..='z'")
                 .matches("_") //wildcard
                 .matches("..") //rest
-                //FIXME.matches("S(z @ 1, _)")
                 //reference
                 .matches("&mut 42")
                 //struct
@@ -238,6 +241,7 @@ public class PatternTest {
                 //tuple struct
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
+                .matches("(\"Bacon\", b)")
 
 
 

@@ -42,6 +42,7 @@ public class MatchExpressionTest {
                 .matches("42")
                 .matches("foo")
                 .matches("S(z @ 1, _)")
+                .matches("(\"Bacon\", b)")
 
 
         ;

@@ -543,8 +543,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* recurring grammar pattern */
     private static Object seq(LexerlessGrammarBuilder b, GrammarRuleKey g, RustPunctuator sep) {
-        return b.sequence(g, b.sequence(b.zeroOrMore(sep, b.optional(SPC), g),
-                b.optional(sep, SPC)));
+        return b.sequence(g, b.sequence(b.zeroOrMore(SPC, sep, SPC, g),
+                b.optional(SPC, sep, SPC)));
     }
 
     private static void items(LexerlessGrammarBuilder b) {
@@ -1074,13 +1074,11 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(TUPLE_PATTERN_ITEMS).is(b.firstOf(
-                b.sequence(PATTERN, SPC, RustPunctuator.COMMA),
-                b.sequence(PATTERN, SPC, b.oneOrMore(b.sequence(RustPunctuator.COMMA,SPC,  PATTERN)),
-                        b.optional(RustPunctuator.COMMA)),
-                b.sequence(b.zeroOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)), "..",
-                        b.optional(b.sequence(
-                                b.oneOrMore(b.sequence(RustPunctuator.COMMA, PATTERN)),
-                                b.optional(RustPunctuator.COMMA))))));
+                seq(b, PATTERN, RustPunctuator.COMMA),
+                b.sequence(PATTERN, SPC, RustPunctuator.COMMA, SPC),
+                REST_PATTERN
+
+        ));
 
         b.rule(GROUPED_PATTERN).is("(", SPC,PATTERN,SPC,  ")");
         b.rule(SLICE_PATTERN).is("[", SPC,PATTERN,SPC,
