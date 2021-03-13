@@ -553,7 +553,7 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void items(LexerlessGrammarBuilder b) {
-        b.rule(ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE),
+        b.rule(ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(VISIT_ITEM, MACRO_ITEM));
         b.rule(VISIT_ITEM).is(b.optional(VISIBILITY), b.firstOf(
                 MODULE,
