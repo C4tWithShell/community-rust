@@ -38,9 +38,9 @@ public class StatementTest {
                 .matches("let z = 40 + 2;")
                 .matches("use std::error::Error;")
                 .matches("j.set(i.get() + 1);")
-                .matches("(1, 0) => dest.write_char('n');")
                 .matches("mod foobar{#![crate_type = \"lib\"]\n" +
                         "}")
+                .matches("dest.write_char('n');")
 
 
 

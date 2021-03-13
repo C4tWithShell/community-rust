@@ -37,28 +37,10 @@ public class ModuleTest {
                         "}")
                 .matches("mod tests {\n" +
                         "    use super::Identifier;\n" +
-                        "    use super::SemVerError;\n" +
+                        "    use super::MyError;\n" +
                         "    use super::Version;\n" +
                         "    use std::result;\n" +
                         "}")
-
-                .matches("mod tests {\n" +
-                        "    use super::Identifier;\n" +
-                        "    use super::SemVerError;\n" +
-                        "    use super::Version;\n" +
-                        "    use std::result;\n" +
-                        "    #[test]\n" +
-                        "    fn test_parse() {\n" +
-                        "        fn parse_error(e: &str) -> result::Result<Version, SemVerError> {\n" +
-                        "            return Err(SemVerError::ParseError(e.to_string()));\n" +
-                        "        }\n" +
-                        "\n" +
-                        "        assert_eq!(Version::parse(\"  \"), parse_error(\"expected more input\"));\n" +
-                        "        assert_eq!(Version::parse(\"  \"), parse_error(\"expected more input\"));\n" +
-                        "}}")
-
-
-
 
         ;
 

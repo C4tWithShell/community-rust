@@ -33,6 +33,7 @@ public class UseTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.USE_DECLARATION))
                 .matches("use std::option::Option::{Some, None};")
                 .matches("use std::collections::hash_map::{self, HashMap};")
+                .matches("use serde::de::{self, Deserialize, Deserializer, Visitor};")
 
 
         ;

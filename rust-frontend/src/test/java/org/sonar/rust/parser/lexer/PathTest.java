@@ -56,6 +56,10 @@ public class PathTest {
                 .matches("Vec::<u8>::with_capacity")
                 .matches("collect::<Vec<_>>")
                 .matches("S")
+                .matches("S::T")
+                .matches("result::Result")
+
+
         ;
     }
 

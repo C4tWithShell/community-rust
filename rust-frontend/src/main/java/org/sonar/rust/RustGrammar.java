@@ -655,6 +655,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void useItem(LexerlessGrammarBuilder b) {
         b.rule(USE_DECLARATION).is("use", SPC, USE_TREE, ";");
+        /*
         b.rule(USE_TREE).is(b.firstOf(
                 b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP)),
                         RustPunctuator.STAR),
@@ -666,6 +667,17 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence(SIMPLE_PATH, b.optional(b.sequence(SPC, RustKeyword.KW_AS, SPC,
                         b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)
                 )))
+        ));
+
+         */
+        b.rule(USE_TREE).is(b.firstOf(
+            b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP), RustPunctuator.STAR),
+                b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP),
+                "{", b.optional(seq(b, USE_TREE, RustPunctuator.COMMA )), "}"
+                        )  ,
+                b.sequence(SIMPLE_PATH, b.optional(
+                        RustKeyword.KW_AS, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)
+                ))
         ));
 
     }
@@ -1149,8 +1161,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 RustPunctuator.SEMI);
 
         b.rule(EXPRESSION_STATEMENT).is(b.firstOf(
-                b.sequence(EXPRESSION_WITHOUT_BLOCK, RustPunctuator.SEMI),
-                b.sequence(EXPRESSION_WITH_BLOCK, b.optional(RustPunctuator.SEMI))
+                b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI),
+                b.sequence(EXPRESSION_WITH_BLOCK, b.optional(SPC, RustPunctuator.SEMI))
 
         ));
 
