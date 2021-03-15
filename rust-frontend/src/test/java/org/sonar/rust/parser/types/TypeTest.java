@@ -27,6 +27,39 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class TypeTest {
 
+
+
+    @Test
+    public void testTypeNoBounds() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_NO_BOUNDS))
+                .matches("i32")
+                .matches("(i32, u8)")
+                .matches("Circle")
+                .notMatches("Circle{")
+
+
+        ;
+    }
+
+    @Test
+    public void testimplTraitType() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.IMPL_TRAIT_TYPE))
+        //TODO
+
+
+        ;
+    }
+
+    @Test
+    public void testTraitObjectType() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_OBJECT_TYPE))
+        //TODO
+
+
+        ;
+    }
+
+
     @Test
     public void testType() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE))
@@ -34,6 +67,9 @@ public class TypeTest {
                 .matches("(i32, u8)")
                 .matches("Circle")
                 .notMatches("Circle{")
+                .matches("semver_parser::version")
+                .matches("semver_parser::version::Identifier")
+                .matches("From<semver_parser::version::Identifier>")
 
         ;
     }

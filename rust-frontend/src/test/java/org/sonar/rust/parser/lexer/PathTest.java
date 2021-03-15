@@ -64,6 +64,51 @@ public class PathTest {
     }
 
     @Test
+    public void testGenericArgsTypes() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS_TYPES))
+                .matches("f64")
+                .matches("Circle")
+
+        ;
+    }
+
+    @Test
+    public void testGenericArgsBinding() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS_BINDING))
+                .matches("V=f64")
+                .matches("U=Circle")
+        ;
+    }
+
+    @Test
+    public void testGenericArgsBindings() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS_BINDINGS))
+                .matches("V=f64")
+                .matches("U=Cirle")
+                .matches("U=Cirle,V=f64,W=i32")
+
+        ;
+    }
+
+
+    @Test
+    public void testGenericArgs() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS))
+                .matches("<>")
+                .matches("<T>")
+                .matches("<i32>")
+                .matches("<u8>")
+                .matches("<Circle>")
+                .matches("<Circle, f64, u8>")
+                .matches("<U=i32>")
+                .matches("<V=f64>")
+                //FIXME.matches("<T,U,V=f64>")
+
+
+        ;
+    }
+
+    @Test
     public void testQualifiedPathType() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_TYPE))
                 .matches("<T1>")
@@ -121,7 +166,6 @@ public class PathTest {
                 .matches("U213")
                 .matches("abc::(isize) -> isize")
                 .matches("abc::<>")
-                .matches("abc::")
                 .matches("abc::(isize) -> isize")
                 .notMatches("abc::abc for")
         ;
@@ -131,9 +175,9 @@ public class PathTest {
     public void testTypePath() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PATH))
                 .matches("abc::(isize) -> isize")
-                .matches("abc::")
                 .notMatches("abc::abc for")
                 .matches("T")
+                .matches("abc::def")
 
         ;
     }

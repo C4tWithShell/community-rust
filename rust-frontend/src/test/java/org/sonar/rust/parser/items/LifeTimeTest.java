@@ -111,14 +111,13 @@ public class LifeTimeTest {
     @Test
     public void testTraitBound(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_BOUND))
-                .matches("abc::")
-                .matches("? abc::")
-                .matches("for <'a> abc::")
-                .matches("? for <'a> abc::")
-                .matches("(abc::)")
-                .matches("(? abc::)")
-                .matches("( for <'a> abc:: )")
-                .matches("(? for <'a> abc::)")
+                .matches("? abc::def")
+                .matches("for <'a> abc::def")
+                .matches("? for <'a> abc::def<T>")
+                .matches("(abc::def::ghi)")
+                .matches("(? abc::def)")
+                .matches("( for <'a> abc::def )")
+                .matches("(? for <'a> abc::def)")
 
         ;
 
@@ -135,14 +134,14 @@ public class LifeTimeTest {
                 .matches("'_")
                 .notMatches("'a self")
                 //trait bound
-                .matches("abc::")
-                .matches("? abc::")
-                .matches("for <'a> abc::")
-                .matches("? for <'a> abc::")
-                .matches("(abc::)")
-                .matches("(? abc::)")
-                .matches("( for <'a> abc:: )")
-                .matches("(? for <'a> abc::)")
+                .matches("abc::def::foo<T>")
+                .matches("? abc::def")
+                .matches("for <'a> abc::def")
+                .matches("? for <'a> abc::def<T>")
+                .matches("(abc::def)")
+                .matches("(? abc::def)")
+                .matches("( for <'a> abc::def::ghi )")
+                .matches("(? for <'a> abc::foo)")
         ;
 
     }
@@ -161,10 +160,7 @@ public class LifeTimeTest {
                 .matches("'_+'a")
                 .matches("'_+'a+'ABC")
                 .notMatches("'a self")
-                .matches("abc::")
-                .matches("abc::+def::")
-                .matches("(abc::)+(def::)")
-                .matches("(? for <'a> abc::)+'a+abc::")
+                .matches("(? for <'a> abc::def)+'a+abc::def")
         ;
 
     }
