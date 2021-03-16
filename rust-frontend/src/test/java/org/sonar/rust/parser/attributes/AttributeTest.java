@@ -52,6 +52,7 @@ public class AttributeTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_ATTRIBUTE))
                 .matches("#[test]")
                 .matches("#[cfg(feature = \"serde\")]")
+                .matches("#[inline]")
         ;
     }
 }

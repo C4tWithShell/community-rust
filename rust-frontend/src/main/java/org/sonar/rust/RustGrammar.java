@@ -783,7 +783,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TRAIT_IMPL).is(
                 b.optional(UNSAFE, SPC), RustKeyword.KW_IMPL, SPC, b.optional(GENERICS, SPC),
                 b.optional(RustPunctuator.NOT), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE,
-                b.optional(WHERE_CLAUSE, SPC), "{",
+                b.optional(WHERE_CLAUSE, SPC), "{",SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC), b.zeroOrMore(TRAIT_IMPL_ITEM, SPC), SPC, "}"
         );
 
@@ -878,9 +878,9 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(METHOD).is(
                 FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER,
                 b.optional(GENERICS, SPC),
-                "(", SELF_PARAM, b.optional(b.sequence(RustPunctuator.COMMA, FUNCTION_PARAM)),
-                b.optional(RustPunctuator.COMMA), ")", SPC,
-                b.optional(FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC),
+                "(", SELF_PARAM, SPC, b.optional(b.sequence(SPC, RustPunctuator.COMMA, SPC, FUNCTION_PARAM)),
+                b.optional(SPC, RustPunctuator.COMMA), ")", SPC,
+                b.optional(FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC),SPC,
                 BLOCK_EXPRESSION
         );
 

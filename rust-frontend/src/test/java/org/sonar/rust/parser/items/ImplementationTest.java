@@ -37,6 +37,23 @@ public class ImplementationTest {
                         "    let y=42;\n" +
                         "}") //function
                 .matches("fn by_ref(self: &Self) {}") //method
+                .matches("#[inline]\n" +
+                        "    fn fanswer_to_life_the_universe_and_everything() -> i32 {\n" +
+                        "    let y=42;\n" +
+                        "    }")
+                .matches("#[inline] fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {\n" +
+                        "        match *self {\n" +
+                        "            Identifier::Numeric(ref n) => fmt::Display::fmt(n, f),\n" +
+                        "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
+                        "        }\n" +
+                        "    }")
+                .matches("#[inline] \n" +
+                        "fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {\n" +
+                        "        match *self {\n" +
+                        "            Identifier::Numeric(ref n) => fmt::Display::fmt(n, f),\n" +
+                        "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
+                        "        }\n" +
+                        "    }")
                 .matches("pub const BIT2: u32 = 1 << 1;") //constant
 
 
@@ -74,6 +91,21 @@ public class ImplementationTest {
                 .matches("unsafe impl abc::(isize) -> isize for Circle {}")
                 .matches("impl <T>abc::(isize) -> isize for Circle {}")
                 .matches("impl !abc::(isize) -> isize for Circle {}")
+                .matches("impl abc::(isize) -> isize for Circle {#[outer]fn answer_to_life_the_universe_and_everything() -> i32 {\n}" +
+                        "    }")
+                .matches("impl abc::(isize) -> isize for Circle {" +
+                        "#[outer]" +
+                        "fn answer_to_life_the_universe_and_everything() -> i32 {\n}" +
+                        "    }")
+                .matches("impl fmt::Display for Identifier {\n" +
+                        "    #[inline]\n" +
+                        "    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {\n" +
+                        "        match *self {\n" +
+                        "            Identifier::Numeric(ref n) => fmt::Display::fmt(n, f),\n" +
+                        "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
+                        "        }\n" +
+                        "    }\n" +
+                        "}")
 
 
         ;
@@ -93,6 +125,13 @@ public class ImplementationTest {
                         "    let y=42;\n" +
                         "}") //function
                 .matches("fn by_ref(self: &Self) {}") //method
+                .matches("#[inline]\n" +
+                        "    fn fmt(&self,f: &mut fmt::Formatter) -> fmt::Result {\n" +
+                        "        match *self {\n" +
+                        "            Identifier::Numeric(ref n) => fmt::Display::fmt(n, f),\n" +
+                        "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
+                        "        }\n" +
+                        "    }")
 
         ;
 
@@ -119,6 +158,7 @@ public class ImplementationTest {
                 .matches("impl Color {#![inner] fn by_ref(self: &Self) {}}")
                 .matches("impl Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
                 .matches("impl <U> Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
+
 
 
 

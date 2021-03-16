@@ -145,6 +145,11 @@ MacroItem:
                 .matches("macro_rules! foo {\n" +
                         "    ($l:tt) => { bar!($l); }\n" +
                         "}") //macro rules definition
+                .matches("#[inline]\n" +
+                        "    fn todo() -> String {\n" +
+                        "        \"result\"\n" +
+                        "    }")
+
         ;
     }
 

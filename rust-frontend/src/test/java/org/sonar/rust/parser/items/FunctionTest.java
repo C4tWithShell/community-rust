@@ -80,6 +80,8 @@ public class FunctionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_PARAM))
                 .matches("x : i32")
                 .matches("y:i64")
+                .matches("f: &mut fmt::Formatter")
+
 
 
         ;
