@@ -90,6 +90,7 @@ public class ExpressionWithoutBlockTest {
                 //MethodCallExpression
                 .matches("\"123\".parse()")
                 //TODO   FieldExpression
+                .matches("other.major")
                 //TODO ClosureExpression
                 //TODO ContinueExpression
                 //TODO BreakExpression
@@ -102,6 +103,7 @@ public class ExpressionWithoutBlockTest {
                 .matches("Numeric(n)")
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
+
 
 
 

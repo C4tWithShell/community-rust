@@ -10,6 +10,7 @@ public class FieldExpressionTest {
     public void testFieldExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.FIELD_EXPRESSION))
                 .matches("mystruct.myfield")
+                .matches("other.major")
                 //FIXME.matches("foo().x")
                 //FIXME.matches("(Struct {a: 10, b: 20}).a")
 

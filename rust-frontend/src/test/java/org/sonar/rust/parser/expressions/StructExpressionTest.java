@@ -78,6 +78,8 @@ public class StructExpressionTest {
                 .matches("score:100_000")
                 .matches("score : 100_000")
                 .matches("0: 10.0")
+                .matches("name: user.getName()")
+                .matches("name: user.name")
         ;
 
 
@@ -95,6 +97,14 @@ public class StructExpressionTest {
                 .matches("TuplePoint { 0: 10.0, 1: 20.0 }")
                 .matches("game::User {name: \"Joe\", age: 35, score: 100_000}")
                 .matches("some_fn::<Cookie>(Cookie)")
+                .matches("Version {\n" +
+                        "            name:  user.firstName,\n" +
+                        "            major: other.major,\n" +
+                        "            minor: other.minor,\n" +
+                        "            patch: other.patch,\n" +
+                        "            pre: other.pre.into_iter().map(From::from).collect(),\n" +
+                        "            build: other.build.into_iter().map(From::from).collect(),\n" +
+                        "        }")
 
 
         ;

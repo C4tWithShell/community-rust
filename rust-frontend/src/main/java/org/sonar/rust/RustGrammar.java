@@ -839,21 +839,12 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void genericItem(LexerlessGrammarBuilder b) {
         b.rule(GENERICS).is("<", GENERIC_PARAMS, ">");
 
-/*
-        b.rule(GENERIC_PARAMS).is(b.firstOf(
-                b.sequence(b.zeroOrMore(LIFETIME_PARAM, SPC, RustPunctuator.COMMA,SPC), TYPE_PARAMS),
-                LIFETIME_PARAMS
-                ));
-
- */
 
         b.rule(GENERIC_PARAMS).is(b.firstOf(
-                b.sequence(b.zeroOrMore(LIFETIME_PARAM, RustPunctuator.COMMA, SPC), LIFETIME_PARAM, SPC),
+                b.sequence(b.zeroOrMore(LIFETIME_PARAM, SPC, RustPunctuator.COMMA, SPC), LIFETIME_PARAM, SPC),
                 b.sequence(b.zeroOrMore(LIFETIME_PARAM, SPC, RustPunctuator.COMMA,SPC), TYPE_PARAMS)
 
         ));
-
-
 
 
         b.rule(LIFETIME_PARAMS).is(
@@ -1213,11 +1204,13 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION).is(b.firstOf(EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
+
                         RANGE_EXPRESSION,
                         OPERATOR_EXPRESSION,
                         METHOD_CALL_EXPRESSION,
                         CALL_EXPRESSION,
                         MACRO_INVOCATION,
+                        FIELD_EXPRESSION,
                         LITERAL_EXPRESSION,
                         PATH_EXPRESSION,
                         GROUPED_EXPRESSION,
@@ -1228,7 +1221,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         TUPLE_INDEXING_EXPRESSION,
                         STRUCT_EXPRESSION,
                         ENUMERATION_VARIANT_EXPRESSION,
-                        FIELD_EXPRESSION,
                         CLOSURE_EXPRESSION,
                         CONTINUE_EXPRESSION,
                         BREAK_EXPRESSION,
