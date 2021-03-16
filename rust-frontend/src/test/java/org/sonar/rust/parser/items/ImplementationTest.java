@@ -106,6 +106,39 @@ public class ImplementationTest {
                         "        }\n" +
                         "    }\n" +
                         "}")
+                .matches("impl<'de> Deserialize<'de> for Identifier {\n" +
+                        "    fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>\n" +
+                        "    where\n" +
+                        "        D: Deserializer<'de>,\n" +
+                        "    {\n" +
+                        "        struct IdentifierVisitor;\n" +
+                        "\n" +
+                        "        // Deserialize Identifier from a number or string.\n" +
+                        "        impl<'de> Visitor<'de> for IdentifierVisitor {\n" +
+                        "            type Value = Identifier;\n" +
+                        "\n" +
+                        "            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {\n" +
+                        "                formatter.write_str(\"a SemVer pre-release or build identifier\")\n" +
+                        "            }\n" +
+                        "\n" +
+                        "            fn visit_u64<E>(self, numeric: u64) -> result::Result<Self::Value, E>\n" +
+                        "            where\n" +
+                        "                E: de::Error,\n" +
+                        "            {\n" +
+                        "                Ok(Identifier::Numeric(numeric))\n" +
+                        "            }\n" +
+                        "\n" +
+                        "            fn visit_str<E>(self, alphanumeric: &str) -> result::Result<Self::Value, E>\n" +
+                        "            where\n" +
+                        "                E: de::Error,\n" +
+                        "            {\n" +
+                        "                Ok(Identifier::AlphaNumeric(alphanumeric.to_owned()))\n" +
+                        "            }\n" +
+                        "        }\n" +
+                        "\n" +
+                        "        deserializer.deserialize_any(IdentifierVisitor)\n" +
+                        "    }\n" +
+                        "}")
 
 
         ;

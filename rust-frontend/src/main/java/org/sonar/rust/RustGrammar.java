@@ -839,9 +839,21 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void genericItem(LexerlessGrammarBuilder b) {
         b.rule(GENERICS).is("<", GENERIC_PARAMS, ">");
 
+/*
+        b.rule(GENERIC_PARAMS).is(b.firstOf(
+                b.sequence(b.zeroOrMore(LIFETIME_PARAM, SPC, RustPunctuator.COMMA,SPC), TYPE_PARAMS),
+                LIFETIME_PARAMS
+                ));
 
-        b.rule(GENERIC_PARAMS).is(b.firstOf(b.sequence(b.zeroOrMore(LIFETIME_PARAM, ","), TYPE_PARAMS),
-                LIFETIME_PARAMS));
+ */
+
+        b.rule(GENERIC_PARAMS).is(b.firstOf(
+                b.sequence(b.zeroOrMore(LIFETIME_PARAM, RustPunctuator.COMMA, SPC), LIFETIME_PARAM, SPC),
+                b.sequence(b.zeroOrMore(LIFETIME_PARAM, SPC, RustPunctuator.COMMA,SPC), TYPE_PARAMS)
+
+        ));
+
+
 
 
         b.rule(LIFETIME_PARAMS).is(

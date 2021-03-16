@@ -192,6 +192,7 @@ public class LifeTimeTest {
     public void testLifetimeParam(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_PARAM))
                 .matches("'a")
+                .matches("'de")
                 .matches("'ABC")
                 .notMatches("'trait")
                 .notMatches("'as")
@@ -208,6 +209,7 @@ public class LifeTimeTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_PARAMS))
                 .matches("'a")
                 .matches("'a,'b")
+                .matches("'de")
                 .matches("'ABC")
                 .matches("'ABC , 'DEF")
                 .notMatches("'trait")
@@ -236,6 +238,7 @@ public class LifeTimeTest {
                 .matches("T")
                 .matches("'ABC,U")
                 .matches("'a,T")
+                .matches("'de")
                 .notMatches("'trait")
                 .notMatches("'trait>")
                 .matches("#[outer]'ABC,V")
@@ -249,7 +252,8 @@ public class LifeTimeTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GENERICS))
                 .matches("<T>")
                 .matches("<'a,T>")
-                //FIXME.matches("<'a>")
+                .matches("<'a>")
+                .matches("<'de>")
 
 
 
