@@ -58,6 +58,8 @@ public class CallExpressionTest {
                 .matches("add(1i32,2i32)")
                 .matches("add(1i32, 2i32)")
                 .matches("calc(get(i) + 1)")
+                .matches("Vec::new()")
+                .matches("Identifier::Numeric(n)")
 
 
 

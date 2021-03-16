@@ -15,6 +15,8 @@ public class PathExpressionTest {
                 .matches("Some::<i32>")
                 .matches("Vec::<i32>::push")
                 .matches("<[i32]>::reverse")
+                .matches("Identifier::Numeric")
+                .matches("Vec::new")
         ;
     }
 }

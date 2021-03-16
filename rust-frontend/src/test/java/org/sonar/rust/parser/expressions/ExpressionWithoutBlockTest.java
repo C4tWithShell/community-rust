@@ -99,6 +99,10 @@ public class ExpressionWithoutBlockTest {
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
                 .matches("calc(get(i) + 1)")
+                .matches("Numeric(n)")
+                .matches("Vec::new")
+                .matches("Identifier::Numeric")
+
 
 
 

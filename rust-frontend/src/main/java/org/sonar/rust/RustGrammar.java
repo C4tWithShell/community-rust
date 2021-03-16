@@ -1407,11 +1407,11 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void call(LexerlessGrammarBuilder b) {
 
-        b.rule(CALL_EXPRESSION).is(IDENTIFIER, CALL_EXPRESSION_TERM);
+        b.rule(CALL_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK, PATH_EXPRESSION, IDENTIFIER), CALL_EXPRESSION_TERM);
 
-        b.rule(CALL_EXPRESSION_TERM).is(b.firstOf(
-                b.sequence("(", b.optional(CALL_PARAMS), ")", b.zeroOrMore(CALL_EXPRESSION_TERM)), IDENTIFIER
-        ));
+        b.rule(CALL_EXPRESSION_TERM).is(
+                "(", b.optional(CALL_PARAMS), ")", b.zeroOrMore(CALL_EXPRESSION_TERM)
+        );
 
 
         b.rule(CALL_PARAMS).is(seq(b, EXPRESSION, RustPunctuator.COMMA));

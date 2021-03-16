@@ -51,6 +51,8 @@ public class ExpressionTest {
                 .matches("i.get()")
                 .matches("m.get(i) + 1")
                 .matches("dest.write_char('n')")
+                .matches("Identifier::Numeric")
+                .matches("Vec::new")
 
 
 

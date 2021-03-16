@@ -81,10 +81,16 @@ public class MatchExpressionTest {
                 .matches("S(z @ 1, _) => assert_eq!(z, 1)")
                 .matches("S(z @ 1, _) | S(_, z @ 2) => assert_eq!(z, 1)")
                 .matches("_ => {}")
+                .matches("_ => {},")
                 .matches("1 | _ if { i.set(i.get() + 1); false } => {}" )
                 .matches("1 | _ if { i.set(i.get() + 1); false } => {}\n" +
                         "_ => {}")
                 .matches("(1, 0) => dest.write_char('n')")
+                .matches("(1, 0) => dest.write_char('n'),")
+                .matches("semver_parser::version::Identifier::Numeric(n) => dest.write_char('n'),")
+                .matches("semver_parser::version::Identifier::Numeric(n) => Identifier.Numeric('n'),")
+                .matches("semver_parser::version::Identifier::Numeric(n) => Identifier::Numeric('n'),")
+                .matches("semver_parser::version::Identifier::Numeric(n) => Identifier::Numeric(n),")
 
                 ;
 

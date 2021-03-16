@@ -26,7 +26,22 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class StatementTest {
 
+    @Test
+    public void testLetStatement() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.LET_STATEMENT))
+                .matches("let y=42;")
+                .matches("let x;")
+                .matches("let z = 40 + 2;")
+                .matches("let res=calc(42);")
+                .matches("let mut account=0.0;")
+                .matches("let mut vec = Vec::new();")
+                .matches("let three: i32 = add(1i32, 2i32);")
+                //FIXME.matches("let name: &'static str = (|| \"Rust\")();")
 
+
+
+        ;
+    }
 
     @Test
     public void testStatement() {
