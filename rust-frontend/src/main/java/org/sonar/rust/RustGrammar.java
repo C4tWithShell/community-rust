@@ -1357,28 +1357,9 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void field(LexerlessGrammarBuilder b) {
 
         b.rule(FIELD_EXPRESSION).is(
-                b.firstOf(IDENTIFIER,LITERALS,EXPRESSION_WITH_BLOCK,
+                b.firstOf(IDENTIFIER,LITERALS,EXPRESSION_WITH_BLOCK
                         //other expressions without block
-                        METHOD_CALL_EXPRESSION,
-                        //OPERATOR_EXPRESSION,
-                        CALL_EXPRESSION,
-                        MACRO_INVOCATION,
-                        LITERAL_EXPRESSION,
-                        PATH_EXPRESSION,
-                        GROUPED_EXPRESSION,
-                        ARRAY_EXPRESSION,
-                        AWAIT_EXPRESSION,
-                        INDEX_EXPRESSION,
-                        TUPLE_EXPRESSION,
-                        TUPLE_INDEXING_EXPRESSION,
-                        STRUCT_EXPRESSION,
-                        ENUMERATION_VARIANT_EXPRESSION,
-                        //FIELD_EXPRESSION,
-                        CLOSURE_EXPRESSION,
-                        CONTINUE_EXPRESSION,
-                        BREAK_EXPRESSION,
-                        RANGE_EXPRESSION,
-                        RETURN_EXPRESSION
+
                 ), FIELD_EXPRESSION_TERM
         );
 
@@ -1397,21 +1378,19 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void methodcall(LexerlessGrammarBuilder b) {
 
         b.rule(METHOD_CALL_EXPRESSION).is(
-                b.firstOf(IDENTIFIER,LITERALS), METHOD_CALL_EXPRESSION_TERM
+                b.firstOf(LITERALS,  IDENTIFIER), METHOD_CALL_EXPRESSION_TERM
         );
-        b.rule(METHOD_CALL_EXPRESSION_TERM).is(b.firstOf(
-                b.sequence(SPC,RustPunctuator.DOT,SPC, PATH_EXPR_SEGMENT,SPC,
+        b.rule(METHOD_CALL_EXPRESSION_TERM).is(
+                RustPunctuator.DOT,SPC, PATH_EXPR_SEGMENT,SPC,
                         "(", SPC,b.optional(CALL_PARAMS,SPC), ")", b.zeroOrMore(METHOD_CALL_EXPRESSION_TERM))
-                ,b.firstOf(IDENTIFIER,LITERALS)
-
-        ));
+        ;
 
 
     }
 
     private static void call(LexerlessGrammarBuilder b) {
 
-        b.rule(CALL_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK, PATH_EXPRESSION, IDENTIFIER), CALL_EXPRESSION_TERM);
+        b.rule(CALL_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK, FIELD_EXPRESSION, PATH_EXPRESSION, IDENTIFIER), CALL_EXPRESSION_TERM);
 
         b.rule(CALL_EXPRESSION_TERM).is(
                 "(", b.optional(CALL_PARAMS), ")", b.zeroOrMore(CALL_EXPRESSION_TERM)

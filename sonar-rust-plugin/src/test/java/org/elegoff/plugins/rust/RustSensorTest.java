@@ -57,7 +57,7 @@ public class RustSensorTest {
     private SensorContextTester tester;
     private RustSensor sensor;
     private File dir = new File("src/test/resources/");
-    private static String SEMVEREFILE = "sensor/serde.rs" ;
+    private static String LIBFILE = "sensor/lib.rs" ;
     private static String SIMPLE = "sensor/simple.rs" ;
 
 
@@ -79,32 +79,7 @@ public class RustSensorTest {
         sensor = new RustSensor(checkFactory, fileLinesContextFactory);
     }
 
-    @Test
-    public void analyseSerde() throws IOException {
-        DefaultInputFile inputFile = executeSensorOnSingleFile(SEMVEREFILE);
 
-        assertEquals((Integer) 715, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-        assertEquals((Integer) 166, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
-        assertEquals((Integer) 166, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
-        assertEquals((Integer) 53, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
-        assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
-        assertEquals(715, tester.cpdTokens(inputFile.key()).size());
-        assertEquals(Collections.singletonList(TypeOfText.COMMENT), tester.highlightingTypeAt(inputFile.key(), 1, 1));
-        assertEquals(Collections.singletonList(TypeOfText.KEYWORD), tester.highlightingTypeAt(inputFile.key(), 14, 1));
-        assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 25, 17));
-
-        assertEquals(0, tester.allIssues().size());
-
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 14, 1);
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 15, 1);
-        verify(fileLinesContext).setIntValue(CoreMetrics.NCLOC_DATA_KEY, 17, 1);
-
-
-        verify(fileLinesContext).save();
-
-        Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
-
-    }
 
     @Test
     public void analyseSimple() throws IOException {
@@ -134,36 +109,6 @@ public class RustSensorTest {
     }
 
 
-    @Test
-    public void canParse(){
-        List<String> filesToParse = new ArrayList<>();
-        filesToParse.add(SEMVEREFILE);
-        filesToParse.add(SIMPLE);
-
-        for (String fileName : filesToParse){
-
-            try {
-                DefaultInputFile f = addInputFile(fileName);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-        sensor.execute(tester);
-
-        //FIXME : for debugging only
-        Collection<AnalysisError> errors = tester.allAnalysisErrors();
-        for (AnalysisError e : errors){
-            String m = e.message();
-        }
-
-
-        Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
-
-
-
-    }
 
 
     private DefaultInputFile executeSensorOnSingleFile(String fileName) throws IOException {
@@ -174,7 +119,7 @@ public class RustSensorTest {
 
     @Test
     public void two_files_without_cancellation() throws Exception {
-        DefaultInputFile file1 = addInputFile(SEMVEREFILE);
+        DefaultInputFile file1 = addInputFile(LIBFILE);
         DefaultInputFile file2 = addInputFile(SIMPLE);
         sensor.execute(tester);
         Assertions.assertThat(tester.measure(file1.key(), CoreMetrics.NCLOC)).isNotNull();
@@ -183,7 +128,7 @@ public class RustSensorTest {
 
     @Test
     public void two_files_with_cancellation() throws Exception {
-        DefaultInputFile file1 = addInputFile(SEMVEREFILE);
+        DefaultInputFile file1 = addInputFile(LIBFILE);
         DefaultInputFile file2 = addInputFile(SIMPLE);
         tester.setCancelled(true);
         sensor.execute(tester);

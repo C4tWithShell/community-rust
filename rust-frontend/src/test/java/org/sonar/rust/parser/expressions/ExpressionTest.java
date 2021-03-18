@@ -45,6 +45,8 @@ public class ExpressionTest {
                 .matches("42")
                 .matches("0.0")
                 .matches("pi.unwrap_or(1.0).log(2.72)")
+                .matches("pi.into_iter(1.0).log(2.72)")
+                .matches("other.unwrap_or(1.0).map(From::from).collect()")
                 .matches("callme()")
                 .matches("println!(\"{}, {}\", word, j)")
                 .matches("{}")

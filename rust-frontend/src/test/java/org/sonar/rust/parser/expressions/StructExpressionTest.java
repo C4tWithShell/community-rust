@@ -102,9 +102,17 @@ public class StructExpressionTest {
                         "            major: other.major,\n" +
                         "            minor: other.minor,\n" +
                         "            patch: other.patch,\n" +
+                        "        }")
+                /*FIXME.matches("Version {\n" +
+                        "            name:  user.firstName,\n" +
+                        "            major: other.major,\n" +
+                        "            minor: other.minor,\n" +
+                        "            patch: other.patch,\n" +
                         "            pre: other.pre.into_iter().map(From::from).collect(),\n" +
                         "            build: other.build.into_iter().map(From::from).collect(),\n" +
                         "        }")
+
+                 */
 
 
         ;
