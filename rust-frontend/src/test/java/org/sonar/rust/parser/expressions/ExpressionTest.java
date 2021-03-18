@@ -55,6 +55,10 @@ public class ExpressionTest {
                 .matches("dest.write_char('n')")
                 .matches("Identifier::Numeric")
                 .matches("Vec::new")
+                .matches("MediaElementAudioSourceNode {\n" +
+                "            node,\n" +
+                "            media_element,\n" +
+                "        }")
 
 
 

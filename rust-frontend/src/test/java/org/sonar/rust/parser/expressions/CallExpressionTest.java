@@ -43,6 +43,10 @@ public class CallExpressionTest {
                 .matches("get(i)")
                 .matches("get(i) + 1")
                 .matches("m.get(i) + 1")
+                .matches("MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        }")
 
 
 
@@ -60,6 +64,10 @@ public class CallExpressionTest {
                 .matches("calc(get(i) + 1)")
                 .matches("Vec::new()")
                 .matches("Identifier::Numeric(n)")
+                .matches("Ok(MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        })")
 
 
 

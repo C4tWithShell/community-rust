@@ -121,6 +121,29 @@ public class FunctionTest {
                         "    println!(\"Hello, world!\");\n" +
                         "    abc()\n" +
                         "}")
+                .matches("fn new_inherited(\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<MediaElementAudioSourceNode> {\n" +
+                        "        let node = AudioNode::new_inherited(\n" +
+                        "            AudioNodeInit::MediaElementSourceNode,\n" +
+                        "            &*context.base(),\n" +
+                        "            Default::default(),\n" +
+                        "            0,\n" +
+                        "            1,\n" +
+                        "        )?;\n" +
+                        "        let (sender, receiver) = mpsc::channel();\n" +
+                        "        node.message(AudioNodeMessage::MediaElementSourceNode(\n" +
+                        "            MediaElementSourceNodeMessage::GetAudioRenderer(sender),\n" +
+                        "        ));\n" +
+                        "        let audio_renderer = receiver.recv().unwrap();\n" +
+                        "        media_element.set_audio_renderer(audio_renderer);\n" +
+                        "        let media_element = Dom::from_ref(media_element);\n" +
+                        "        Ok(MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        })\n" +
+                        "    }")
 
 
         ;

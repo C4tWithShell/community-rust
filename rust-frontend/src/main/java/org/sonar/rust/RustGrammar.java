@@ -673,7 +673,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(USE_TREE).is(b.firstOf(
             b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP), RustPunctuator.STAR),
                 b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP),
-                "{", b.optional(seq(b, USE_TREE, RustPunctuator.COMMA )), "}"
+                "{", SPC, b.optional(seq(b, USE_TREE, RustPunctuator.COMMA )),SPC,  "}"
                         )  ,
                 b.sequence(SIMPLE_PATH, b.optional(
                         RustKeyword.KW_AS, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)
@@ -686,7 +686,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(FUNCTION).is(
                 FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER,
                 b.optional(GENERICS, SPC), SPC,
-                "(", b.optional(FUNCTION_PARAMETERS, SPC), ")",
+                "(", SPC, b.optional(FUNCTION_PARAMETERS, SPC), SPC, ")",
                 b.optional(SPC, FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC), SPC,
                 BLOCK_EXPRESSION
         );
@@ -770,7 +770,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 RustKeyword.KW_IMPL, SPC, b.optional(GENERICS, SPC), TYPE, SPC,
                 b.optional(WHERE_CLAUSE, SPC), "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE),
-                b.zeroOrMore(INHERENT_IMPL_ITEM), "}"
+                b.zeroOrMore(INHERENT_IMPL_ITEM),SPC,  "}"
         );
         b.rule(INHERENT_IMPL_ITEM).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
@@ -1063,7 +1063,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 PATTERN
         );
         b.rule(STRUCT_PATTERN).is(
-                PATH_IN_EXPRESSION, "{", b.optional(STRUCT_PATTERN_ELEMENTS), "}"
+                PATH_IN_EXPRESSION, "{", SPC, b.optional(STRUCT_PATTERN_ELEMENTS),SPC,  "}"
         );
         b.rule(STRUCT_PATTERN_ELEMENTS).is(b.firstOf(
                 b.sequence(STRUCT_PATTERN_FIELDS,
@@ -1204,7 +1204,6 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION).is(b.firstOf(EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
-
                         RANGE_EXPRESSION,
                         OPERATOR_EXPRESSION,
                         METHOD_CALL_EXPRESSION,
@@ -1212,6 +1211,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         MACRO_INVOCATION,
                         FIELD_EXPRESSION,
                         LITERAL_EXPRESSION,
+                        STRUCT_EXPRESSION,
                         PATH_EXPRESSION,
                         GROUPED_EXPRESSION,
                         ARRAY_EXPRESSION,
@@ -1219,13 +1219,11 @@ public enum RustGrammar implements GrammarRuleKey {
                         INDEX_EXPRESSION,
                         TUPLE_EXPRESSION,
                         TUPLE_INDEXING_EXPRESSION,
-                        STRUCT_EXPRESSION,
                         ENUMERATION_VARIANT_EXPRESSION,
                         CLOSURE_EXPRESSION,
                         CONTINUE_EXPRESSION,
                         BREAK_EXPRESSION,
                         RETURN_EXPRESSION
-
                 ));
         b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
@@ -1393,7 +1391,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(CALL_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK, FIELD_EXPRESSION, PATH_EXPRESSION, IDENTIFIER), CALL_EXPRESSION_TERM);
 
         b.rule(CALL_EXPRESSION_TERM).is(
-                "(", b.optional(CALL_PARAMS), ")", b.zeroOrMore(CALL_EXPRESSION_TERM)
+                "(", SPC,b.optional(CALL_PARAMS), SPC, ")", b.zeroOrMore(SPC, CALL_EXPRESSION_TERM)
         );
 
 
