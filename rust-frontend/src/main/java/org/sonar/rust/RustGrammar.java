@@ -773,11 +773,12 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(INHERENT_IMPL_ITEM),SPC,  "}"
         );
         b.rule(INHERENT_IMPL_ITEM).is(
+                SPC,
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(MACRO_INVOCATION_SEMI,
                         b.sequence(b.optional(VISIBILITY, SPC), b.firstOf(
                                 CONSTANT_ITEM, FUNCTION, METHOD
-                        ))));
+                        ))), SPC);
 
 
         b.rule(TRAIT_IMPL).is(

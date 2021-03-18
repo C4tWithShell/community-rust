@@ -54,7 +54,29 @@ public class ImplementationTest {
                         "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
                         "        }\n" +
                         "    }")
+                .matches("#[allow(unrooted_must_root)]\n" +
+                        "    pub fn new(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
+                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
+                        "    }")
+
+                .matches("\n" +
+                        "    #[allow(unrooted_must_root)]\n" +
+                        "    pub fn new(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
+                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
+                        "    }\n" +
+                        "\n")
                 .matches("pub const BIT2: u32 = 1 << 1;") //constant
+
 
 
 
@@ -73,6 +95,52 @@ public class ImplementationTest {
                 .matches("impl Color {#![inner] fn by_ref(self: &Self) {}}")
                 .matches("impl Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
                 .matches("impl <U> Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
+                .matches("impl MediaElementAudioSourceNode {\n" +
+                        "    #[allow(unrooted_must_root)]\n" +
+                        "    fn new_inherited(\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<MediaElementAudioSourceNode> {\n" +
+                        "        let node = AudioNode::new_inherited(\n" +
+                        "            AudioNodeInit::MediaElementSourceNode,\n" +
+                        "            &*context.base(),\n" +
+                        "            Default::default(),\n" +
+                        "            0,\n" +
+                        "            1,\n" +
+                        "        )?;\n" +
+                        "        let (sender, receiver) = mpsc::channel();\n" +
+                        "        node.message(AudioNodeMessage::MediaElementSourceNode(\n" +
+                        "            MediaElementSourceNodeMessage::GetAudioRenderer(sender),\n" +
+                        "        ));\n" +
+                        "        let audio_renderer = receiver.recv().unwrap();\n" +
+                        "        media_element.set_audio_renderer(audio_renderer);\n" +
+                        "        let media_element = Dom::from_ref(media_element);\n" +
+                        "        Ok(MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        })\n" +
+                        "    }\n" +
+                        " \n" +
+
+                        "    #[allow(unrooted_must_root)]\n" +
+                        "    pub fn new(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
+                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    #[allow(non_snake_case)]\n" +
+                        "    pub fn Constructor(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        options: &MediaElementAudioSourceOptions,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        MediaElementAudioSourceNode::new(window, context, &*options.mediaElement)\n" +
+                        "    }\n" +
+                        "}")
 
         ;
 
@@ -191,6 +259,51 @@ public class ImplementationTest {
                 .matches("impl Color {#![inner] fn by_ref(self: &Self) {}}")
                 .matches("impl Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
                 .matches("impl <U> Color where 'a : 'b +'c +'d {#![inner] fn by_ref(self: &Self) {}}")
+                .matches("impl MediaElementAudioSourceNode {\n" +
+                        "    #[allow(unrooted_must_root)]\n" +
+                        "    fn new_inherited(\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<MediaElementAudioSourceNode> {\n" +
+                        "        let node = AudioNode::new_inherited(\n" +
+                        "            AudioNodeInit::MediaElementSourceNode,\n" +
+                        "            &*context.base(),\n" +
+                        "            Default::default(),\n" +
+                        "            0,\n" +
+                        "            1,\n" +
+                        "        )?;\n" +
+                        "        let (sender, receiver) = mpsc::channel();\n" +
+                        "        node.message(AudioNodeMessage::MediaElementSourceNode(\n" +
+                        "            MediaElementSourceNodeMessage::GetAudioRenderer(sender),\n" +
+                        "        ));\n" +
+                        "        let audio_renderer = receiver.recv().unwrap();\n" +
+                        "        media_element.set_audio_renderer(audio_renderer);\n" +
+                        "        let media_element = Dom::from_ref(media_element);\n" +
+                        "        Ok(MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        })\n" +
+                        "    }\n" +
+
+                        "    #[allow(unrooted_must_root)]\n" +
+                        "    pub fn new(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
+                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    #[allow(non_snake_case)]\n" +
+                        "    pub fn Constructor(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        options: &MediaElementAudioSourceOptions,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        MediaElementAudioSourceNode::new(window, context, &*options.mediaElement)\n" +
+                        "    }\n" +
+                        "}")
 
 
 

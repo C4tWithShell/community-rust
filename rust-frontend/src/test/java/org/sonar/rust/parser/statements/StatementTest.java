@@ -56,6 +56,15 @@ public class StatementTest {
                 .matches("mod foobar{#![crate_type = \"lib\"]\n" +
                         "}")
                 .matches("dest.write_char('n');")
+                .matches("#[allow(unrooted_must_root)]\n" +
+                        "    pub fn new(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
+                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
+                        "    }")
 
 
 

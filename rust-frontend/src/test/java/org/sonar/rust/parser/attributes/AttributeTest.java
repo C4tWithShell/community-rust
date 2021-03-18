@@ -53,6 +53,7 @@ public class AttributeTest {
                 .matches("#[test]")
                 .matches("#[cfg(feature = \"serde\")]")
                 .matches("#[inline]")
+                .matches("#[allow(unrooted_must_root)]")
         ;
     }
 }
