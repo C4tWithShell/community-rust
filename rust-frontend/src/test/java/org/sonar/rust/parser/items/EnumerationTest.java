@@ -27,12 +27,63 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class EnumerationTest {
 
+
+    @Test
+    public void testEnumerationItem() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ENUM_ITEM))
+                .matches("Dog")
+                .matches("#[allow(missing_docs)]\n" +
+                        "    CubicBezier {\n" +
+                        "        x1: Number,\n" +
+                        "        y1: Number,\n" +
+                        "        x2: Number,\n" +
+                        "        y2: Number,\n" +
+                        "    }")
+                .matches("#[allow(missing_docs)]#[css(comma, function)]\n" +
+                        "    CubicBezier {\n" +
+                        "        x1: Number,\n" +
+                        "        y1: Number,\n" +
+                        "        x2: Number,\n" +
+                        "        y2: Number,\n" +
+                        "    }")
+                .matches("#[allow(missing_docs)]\n" +
+                        "    #[css(comma, function)]\n" +
+                        "    CubicBezier {\n" +
+                        "        x1: Number,\n" +
+                        "        y1: Number,\n" +
+                        "        x2: Number,\n" +
+                        "        y2: Number,\n" +
+                        "    }")
+
+
+        ;
+
+    }
+
     @Test
     public void testEnumeration() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.ENUMERATION))
                 .matches("enum Animal {\n" +
                         "    Dog,\n" +
                         "    Cat,\n" +
+                        "}")
+                .matches("enum TimingFunction<Integer, Number> {\n" +
+                        "    /// `linear | ease | ease-in | ease-out | ease-in-out`\n" +
+                        "    Keyword(TimingKeyword),\n" +
+                        "    /// `cubic-bezier(<number>, <number>, <number>, <number>)`\n" +
+                        "    #[allow(missing_docs)]\n" +
+                        "    #[css(comma, function)]\n" +
+                        "    CubicBezier {\n" +
+                        "        x1: Number,\n" +
+                        "        y1: Number,\n" +
+                        "        x2: Number,\n" +
+                        "        y2: Number,\n" +
+                        "    },\n" +
+                        "    /// `step-start | step-end | steps(<integer>, [ <step-position> ]?)`\n" +
+                        "    /// `<step-position> = jump-start | jump-end | jump-none | jump-both | start | end`\n" +
+                        "    #[css(comma, function)]\n" +
+                        "    #[value_info(other_values = \"step-start,step-end\")]\n" +
+                        "    Steps(Integer, #[css(skip_if = \"is_end\")] StepPosition),\n" +
                         "}")
 
 

@@ -637,12 +637,12 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(ENUMERATION).is(RustKeyword.KW_ENUM, SPC, IDENTIFIER, SPC,
                 b.optional(GENERICS, SPC), b.optional(WHERE_CLAUSE, SPC), "{", SPC, ENUM_ITEMS, SPC, "}");
         b.rule(ENUM_ITEMS).is(seq(b, ENUM_ITEM, RustPunctuator.COMMA));
-        b.rule(ENUM_ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE), b.optional(VISIBILITY),
-                IDENTIFIER, b.optional(b.firstOf(ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT, ENUM_ITEM_DISCRIMINANT))
+        b.rule(ENUM_ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE,SPC), b.optional(VISIBILITY,SPC),
+                IDENTIFIER, SPC, b.optional(b.firstOf(ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT, ENUM_ITEM_DISCRIMINANT))
         );
-        b.rule(ENUM_ITEM_TUPLE).is("(", b.optional(TUPLE_FIELDS), ")");
-        b.rule(ENUM_ITEM_STRUCT).is("{", b.optional(STRUCT_FIELDS), "}");
-        b.rule(ENUM_ITEM_DISCRIMINANT).is(RustPunctuator.EQ, EXPRESSION);
+        b.rule(ENUM_ITEM_TUPLE).is("(", SPC, b.optional(TUPLE_FIELDS), SPC, ")");
+        b.rule(ENUM_ITEM_STRUCT).is("{", SPC, b.optional(STRUCT_FIELDS),SPC,  "}");
+        b.rule(ENUM_ITEM_DISCRIMINANT).is(RustPunctuator.EQ,EXPRESSION);
     }
 
     /* https://doc.rust-lang.org/reference/items/type-aliases.html */
