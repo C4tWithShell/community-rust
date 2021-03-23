@@ -1991,7 +1991,14 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(RAW_IDENTIFIER).is(b.firstOf(b.regexp("^r#" + IDFREGEXP1 + "(?<!r#(crate|self|super|Self))"), b.regexp("^r#" + IDFREGEXP2)));
-        b.rule(NON_KEYWORD_IDENTIFIER).is(b.regexp("^" + IDFREGEXP1 + exceptKeywords()));//Except a strict or reserved keyword
+
+
+        b.rule(NON_KEYWORD_IDENTIFIER).is(b.firstOf(
+                b.regexp("^" + IDFREGEXP1 + exceptKeywords()),
+                b.regexp("^" + IDFREGEXP2 + exceptKeywords())
+
+        ));//Except a strict or reserved keyword
+
         b.rule(IDENTIFIER).is(b.token(RustTokenType.IDENTIFIER,
                 b.firstOf(RAW_IDENTIFIER, NON_KEYWORD_IDENTIFIER))).skip();
     }
