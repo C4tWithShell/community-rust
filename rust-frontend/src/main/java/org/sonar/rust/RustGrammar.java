@@ -643,6 +643,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(ENUM_ITEM_TUPLE).is("(", SPC, b.optional(TUPLE_FIELDS), SPC, ")");
         b.rule(ENUM_ITEM_STRUCT).is("{", SPC, b.optional(STRUCT_FIELDS),SPC,  "}");
         b.rule(ENUM_ITEM_DISCRIMINANT).is(RustPunctuator.EQ,EXPRESSION);
+
     }
 
     /* https://doc.rust-lang.org/reference/items/type-aliases.html */
@@ -655,21 +656,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void useItem(LexerlessGrammarBuilder b) {
         b.rule(USE_DECLARATION).is("use", SPC, USE_TREE, ";");
-        /*
-        b.rule(USE_TREE).is(b.firstOf(
-                b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP)),
-                        RustPunctuator.STAR),
-                b.sequence(b.optional(b.sequence(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP)),
-                        "{",
-                        b.optional(USE_TREE, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, USE_TREE), b.optional(RustPunctuator.COMMA))),
-                        "}"
-                ),
-                b.sequence(SIMPLE_PATH, b.optional(b.sequence(SPC, RustKeyword.KW_AS, SPC,
-                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)
-                )))
-        ));
 
-         */
         b.rule(USE_TREE).is(b.firstOf(
             b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP), RustPunctuator.STAR),
                 b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP),
