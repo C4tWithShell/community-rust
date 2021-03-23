@@ -17,6 +17,8 @@ public class PathExpressionTest {
                 .matches("<[i32]>::reverse")
                 .matches("Identifier::Numeric")
                 .matches("Vec::new")
+                .matches("StepPosition::JumpEnd")
+
         ;
     }
 }

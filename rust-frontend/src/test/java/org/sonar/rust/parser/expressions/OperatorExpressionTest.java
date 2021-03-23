@@ -49,6 +49,7 @@ public class OperatorExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.DEREFERENCE_EXPRESSION))
                 .matches("*x")
                 .notMatches("== b")
+                .matches("*position")
         ;
     }
 
@@ -59,7 +60,7 @@ public class OperatorExpressionTest {
                 .matches("None?")
                 .matches("Some(42)?")
                 .notMatches("== b")
-                //FIXME.matches("\"123\".parse()?")
+
 
         ;
     }
@@ -97,6 +98,9 @@ public class OperatorExpressionTest {
                 .matches("a>=b")
                 .matches("a >= b")
                 .notMatches("a > == b")
+                .matches("position == 42")
+                .matches("*position == 42")
+                .matches("*position == StepPosition::JumpEnd")
 
 
 
@@ -109,6 +113,7 @@ public class OperatorExpressionTest {
                 .matches("false || true")
                 .matches("false && panic!()")
                 .notMatches("== b")
+                .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
 
         ;
     }

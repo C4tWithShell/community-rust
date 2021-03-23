@@ -59,6 +59,8 @@ public class ExpressionTest {
                 "            node,\n" +
                 "            media_element,\n" +
                 "        }")
+                .matches("StepPosition::JumpEnd")
+                .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
 
 
 

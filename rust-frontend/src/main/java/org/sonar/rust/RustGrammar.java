@@ -106,6 +106,7 @@ public enum RustGrammar implements GrammarRuleKey {
     ENUM_ITEM_TUPLE,
     EOF,
     EQ_EXPRESSION,
+    EQ_EXPRESSION_TERM,
     ERROR_PROPAGATION_EXPRESSION,
     ERROR_PROPAGATION_EXPRESSION_TERM,
     EXPRESSION,
@@ -129,6 +130,8 @@ public enum RustGrammar implements GrammarRuleKey {
     FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC,
     FUNCTION_QUALIFIERS,
     FUNCTION_RETURN_TYPE,
+    GE_EXPRESSION,
+    GE_EXPRESSION_TERM,
     GENERICS,
     GENERIC_ARGS,
     GENERIC_ARGS_BINDING,
@@ -139,6 +142,7 @@ public enum RustGrammar implements GrammarRuleKey {
     GROUPED_EXPRESSION,
     GROUPED_PATTERN,
     GT_EXPRESSION,
+    GT_EXPRESSION_TERM,
     HEX_DIGIT,
     HEX_LITERAL,
     IDENTIFIER,
@@ -164,10 +168,13 @@ public enum RustGrammar implements GrammarRuleKey {
     ITERATOR_LOOP_EXPRESSION,
     KEYWORD,
     LAZY_AND,
+    LAZY_AND_TERM,
     LAZY_BOOLEAN_EXPRESSION,
     LAZY_OR,
+    LAZY_OR_TERM,
     LET_STATEMENT,
     LE_EXPRESSION,
+    LE_EXPRESSION_TERM,
     LIFETIME,
     LIFETIMES,
     LIFETIME_BOUNDS,
@@ -182,7 +189,8 @@ public enum RustGrammar implements GrammarRuleKey {
     LITERAL_EXPRESSION,
     LOOP_EXPRESSION,
     LOOP_LABEL,
-    LT_EXPRESSION, GE_EXPRESSION,
+    LT_EXPRESSION,
+    LT_EXPRESSION_TERM,
     MACRO_FRAG_SPEC,
     MACRO_INVOCATION,
     MACRO_INVOCATION_SEMI,
@@ -216,6 +224,7 @@ public enum RustGrammar implements GrammarRuleKey {
     NAMED_FUNCTION_PARAMETERS_WITH_VARIADICS,
     NEGATION_EXPRESSION,
     NEQ_EXPRESSION,
+    NEQ_EXPRESSION_TERM,
     NEVER_TYPE,
     NON_KEYWORD_IDENTIFIER,
     NON_ZERO_DEC_DIGIT,
@@ -1456,12 +1465,12 @@ public enum RustGrammar implements GrammarRuleKey {
         // https://doc.rust-lang.org/reference/expressions/operator-expr.html
         b.rule(OPERATOR_EXPRESSION).is(b.firstOf(
                 BORROW_EXPRESSION,
+                LAZY_BOOLEAN_EXPRESSION,
+                COMPARISON_EXPRESSION,
                 DEREFERENCE_EXPRESSION,
                 ERROR_PROPAGATION_EXPRESSION,
                 NEGATION_EXPRESSION,
                 ARITHMETIC_OR_LOGICAL_EXPRESSION,
-                COMPARISON_EXPRESSION,
-                LAZY_BOOLEAN_EXPRESSION,
                 TYPE_CAST_EXPRESSION,
                 ASSIGNMENT_EXPRESSION,
                 COMPOUND_ASSIGNMENT_EXPRESSION
@@ -1472,7 +1481,29 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence(b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND), SPC, RustKeyword.KW_MUT, SPC, EXPRESSION),
                 b.sequence(b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND), SPC, EXPRESSION)
         ));
-        b.rule(DEREFERENCE_EXPRESSION).is(RustPunctuator.STAR, EXPRESSION);
+        b.rule(DEREFERENCE_EXPRESSION).is(RustPunctuator.STAR, b.firstOf(b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.firstOf(
+                        RANGE_EXPRESSION,
+                        //OPERATOR_EXPRESSION,
+                        METHOD_CALL_EXPRESSION,
+                        CALL_EXPRESSION,
+                        MACRO_INVOCATION,
+                        FIELD_EXPRESSION,
+                        LITERAL_EXPRESSION,
+                        STRUCT_EXPRESSION,
+                        PATH_EXPRESSION,
+                        GROUPED_EXPRESSION,
+                        ARRAY_EXPRESSION,
+                        AWAIT_EXPRESSION,
+                        INDEX_EXPRESSION,
+                        TUPLE_EXPRESSION,
+                        TUPLE_INDEXING_EXPRESSION,
+                        ENUMERATION_VARIANT_EXPRESSION,
+                        CLOSURE_EXPRESSION
+                        //,CONTINUE_EXPRESSION,
+                        //BREAK_EXPRESSION,
+                        //RETURN_EXPRESSION
+                )), EXPRESSION_WITH_BLOCK));
         b.rule(ERROR_PROPAGATION_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK,
                 CALL_EXPRESSION,
                 LITERAL_EXPRESSION,
@@ -1513,75 +1544,99 @@ public enum RustGrammar implements GrammarRuleKey {
                  SHR_EXPRESSION));
 
 
-        b.rule(ADDITION_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, ADDITION_EXPRESSION_TERM);
+        b.rule(ADDITION_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, ADDITION_EXPRESSION_TERM);
         b.rule(ADDITION_EXPRESSION_TERM).is(
                 RustPunctuator.PLUS, SPC, EXPRESSION, SPC, b.zeroOrMore(ADDITION_EXPRESSION_TERM, SPC));
 
 
-        b.rule(SUBTRACTION_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, SUBTRACTION_EXPRESSION_TERM);
+        b.rule(SUBTRACTION_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, SUBTRACTION_EXPRESSION_TERM);
         b.rule(SUBTRACTION_EXPRESSION_TERM).is(
                 RustPunctuator.MINUS, SPC, EXPRESSION, SPC, b.zeroOrMore(SUBTRACTION_EXPRESSION_TERM, SPC));
 
 
 
-        b.rule(MULTIPLICATION_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,MULTIPLICATION_EXPRESSION_TERM);
+        b.rule(MULTIPLICATION_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,MULTIPLICATION_EXPRESSION_TERM);
         b.rule(MULTIPLICATION_EXPRESSION_TERM).is(RustPunctuator.STAR, SPC, EXPRESSION, SPC, b.zeroOrMore(MULTIPLICATION_EXPRESSION_TERM, SPC));
 
 
 
-        b.rule(DIVISION_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,DIVISION_EXPRESSION_TERM);
+        b.rule(DIVISION_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,DIVISION_EXPRESSION_TERM);
         b.rule(DIVISION_EXPRESSION_TERM).is(RustPunctuator.SLASH,SPC, EXPRESSION, SPC, b.zeroOrMore(DIVISION_EXPRESSION_TERM, SPC));
 
-        b.rule(REMAINDER_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,REMAINDER_EXPRESSION_TERM);
+        b.rule(REMAINDER_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,REMAINDER_EXPRESSION_TERM);
         b.rule(REMAINDER_EXPRESSION_TERM).is(RustPunctuator.PERCENT,SPC, EXPRESSION, SPC, b.zeroOrMore(REMAINDER_EXPRESSION_TERM, SPC));
 
-        b.rule(BITAND_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITAND_EXPRESSION_TERM);
+        b.rule(BITAND_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITAND_EXPRESSION_TERM);
         b.rule(BITAND_EXPRESSION_TERM).is(RustPunctuator.AND,SPC, EXPRESSION, SPC, b.zeroOrMore(BITAND_EXPRESSION_TERM, SPC));
 
-        b.rule(BITOR_EXPRESSION).is(b.firstOf(METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITOR_EXPRESSION_TERM);
+        b.rule(BITOR_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITOR_EXPRESSION_TERM);
         b.rule(BITOR_EXPRESSION_TERM).is(RustPunctuator.OR,SPC, EXPRESSION, SPC, b.zeroOrMore(BITOR_EXPRESSION_TERM, SPC));
 
 
-        b.rule(BITXOR_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITXOR_EXPRESSION_TERM);
+        b.rule(BITXOR_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,BITXOR_EXPRESSION_TERM);
         b.rule(BITXOR_EXPRESSION_TERM).is(RustPunctuator.CARET,SPC, EXPRESSION, SPC, b.zeroOrMore(BITXOR_EXPRESSION_TERM, SPC));
 
-        b.rule(SHL_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,SHL_EXPRESSION_TERM);
+        b.rule(SHL_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,SHL_EXPRESSION_TERM);
         b.rule(SHL_EXPRESSION_TERM).is(RustPunctuator.SHL,SPC, EXPRESSION, SPC, b.zeroOrMore(SHL_EXPRESSION_TERM, SPC));
 
-        b.rule(SHR_EXPRESSION).is(b.firstOf(CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,SHR_EXPRESSION_TERM);
+        b.rule(SHR_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC,SHR_EXPRESSION_TERM);
         b.rule(SHR_EXPRESSION_TERM).is(RustPunctuator.SHR,SPC, EXPRESSION, SPC, b.zeroOrMore(SHR_EXPRESSION_TERM, SPC));
 
 
         b.rule(COMPARISON_EXPRESSION).is(b.firstOf(
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), EQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), NEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), GT_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), LT_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), GE_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), LE_EXPRESSION)
+                 EQ_EXPRESSION,
+                NEQ_EXPRESSION,
+                 GT_EXPRESSION,
+               LT_EXPRESSION,
+                 GE_EXPRESSION,
+                 LE_EXPRESSION
         ));
-        b.rule(EQ_EXPRESSION).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.EQEQ, SPC, EXPRESSION, SPC, b.optional(EQ_EXPRESSION))));
-        b.rule(NEQ_EXPRESSION).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.NE, SPC, EXPRESSION, SPC, b.optional(NEQ_EXPRESSION))));
-        b.rule(GT_EXPRESSION).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.GT, SPC, EXPRESSION, SPC, b.optional(GT_EXPRESSION))));
-        b.rule(LT_EXPRESSION).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.LT, SPC, EXPRESSION, SPC, b.optional(LT_EXPRESSION))));
-        b.rule(GE_EXPRESSION).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.GE, SPC, EXPRESSION, SPC, b.optional(GE_EXPRESSION))));
-        b.rule(LE_EXPRESSION).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.LE, SPC, EXPRESSION, SPC, b.optional(LE_EXPRESSION))));
+
+        b.rule(EQ_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, PATH_EXPRESSION, CALL_EXPRESSION,   IDENTIFIER,  LITERALS), SPC, EQ_EXPRESSION_TERM);
+        b.rule(EQ_EXPRESSION_TERM).is(
+                RustPunctuator.EQEQ, SPC, EXPRESSION, SPC, b.zeroOrMore(EQ_EXPRESSION_TERM, SPC));
+
+        b.rule(NEQ_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, NEQ_EXPRESSION_TERM);
+        b.rule(NEQ_EXPRESSION_TERM).is(
+                RustPunctuator.NE, SPC, EXPRESSION, SPC, b.zeroOrMore(NEQ_EXPRESSION_TERM, SPC));
+
+        b.rule(GT_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, GT_EXPRESSION_TERM);
+        b.rule(GT_EXPRESSION_TERM).is(
+                RustPunctuator.GT, SPC, EXPRESSION, SPC, b.zeroOrMore(GT_EXPRESSION_TERM, SPC));
+
+        b.rule(LT_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, LT_EXPRESSION_TERM);
+        b.rule(LT_EXPRESSION_TERM).is(
+                RustPunctuator.LT, SPC, EXPRESSION, SPC, b.zeroOrMore(LT_EXPRESSION_TERM, SPC));
+
+        b.rule(GE_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, GE_EXPRESSION_TERM);
+        b.rule(GE_EXPRESSION_TERM).is(
+                RustPunctuator.GE, SPC, EXPRESSION, SPC, b.zeroOrMore(GE_EXPRESSION_TERM, SPC));
+
+        b.rule(LE_EXPRESSION).is(b.firstOf(DEREFERENCE_EXPRESSION,METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, LE_EXPRESSION_TERM);
+        b.rule(LE_EXPRESSION_TERM).is(
+                RustPunctuator.LE, SPC, EXPRESSION, SPC, b.zeroOrMore(LE_EXPRESSION_TERM, SPC));
+
 
 
         b.rule(LAZY_BOOLEAN_EXPRESSION).is(b.firstOf(
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), LAZY_OR),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), LAZY_AND)
-        ));
+                LAZY_OR,
+                LAZY_AND));
+
+        /*
         b.rule(LAZY_OR).is(b.firstOf(LITERALS,
                 b.sequence(SPC, RustPunctuator.OROR, SPC, EXPRESSION, SPC, b.optional(LAZY_OR))));
         b.rule(LAZY_AND).is(b.firstOf(LITERALS,
                 b.sequence(SPC, RustPunctuator.ANDAND, SPC, EXPRESSION, SPC, b.optional(LAZY_AND))));
+
+         */
+
+        b.rule(LAZY_AND).is(b.firstOf(COMPARISON_EXPRESSION,DEREFERENCE_EXPRESSION, METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, LAZY_AND_TERM);
+        b.rule(LAZY_AND_TERM).is(
+                RustPunctuator.ANDAND, SPC, EXPRESSION, SPC, b.zeroOrMore(LAZY_AND_TERM, SPC));
+
+        b.rule(LAZY_OR).is(b.firstOf(COMPARISON_EXPRESSION,DEREFERENCE_EXPRESSION, METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, LAZY_OR_TERM);
+        b.rule(LAZY_OR_TERM).is(
+                RustPunctuator.OROR, SPC, EXPRESSION, SPC, b.zeroOrMore(LAZY_OR_TERM, SPC));
 
 
         b.rule(TYPE_CAST_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK,
