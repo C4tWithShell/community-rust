@@ -109,8 +109,6 @@ public class RustSensorTest {
     }
 
 
-
-
     private DefaultInputFile executeSensorOnSingleFile(String fileName) throws IOException {
         DefaultInputFile inputFile = addInputFile(fileName);
         sensor.execute(tester);

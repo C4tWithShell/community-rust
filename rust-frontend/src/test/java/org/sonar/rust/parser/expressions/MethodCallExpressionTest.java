@@ -5,7 +5,7 @@ import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class MethodCallExpression {
+public class MethodCallExpressionTest {
 
     @Test
     public void testMethodCallExpression() {
@@ -17,7 +17,7 @@ public class MethodCallExpression {
                 .matches("pi.unwrap_or(1.0).log(2.72)")
                 .matches("j.set(i.get())")
                 .matches("j.set(1)")
-                .matches("other.pre.into_iter().map(From::from).collect()")
+
 
                 ;
 
