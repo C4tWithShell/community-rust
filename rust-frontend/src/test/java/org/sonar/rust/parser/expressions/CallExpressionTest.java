@@ -68,24 +68,16 @@ public class CallExpressionTest {
                         "            node,\n" +
                         "            media_element,\n" +
                         "        })")
+                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())")
 
 
 
 
 
-
-        ;
-    }
-
-    @Test
-    public void testMethodCallExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.METHOD_CALL_EXPRESSION))
-                .matches("a.foo()")
-                .matches("b.abc()")
-                .matches("obj.add(1i32,2i32)")
-                .matches("\"3.14\".parse()")
 
 
         ;
     }
+
+
 }

@@ -48,6 +48,8 @@ Statements :
                         "println!(\"how are you today ?\");")
                 .matches("j.set(i.get()); false")
                 .matches("j.set(i.get() + 1); false")
+                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())")
+                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()")
                 ;
     }
 
@@ -73,6 +75,10 @@ Statements :
                 .matches("{ println!(\"hello, {}\", j); }")
                 .matches("{ i.set(i.get()); false }")
                 .matches("{ i.set(i.get() + 1); false }")
+                .matches("{deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())}")
+                .matches("{deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()}")
+
+
         ;
     }
 }

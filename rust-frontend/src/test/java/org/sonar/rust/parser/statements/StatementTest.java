@@ -65,6 +65,8 @@ public class StatementTest {
                         "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
                         "        Ok(reflect_dom_object(Box::new(node), window))\n" +
                         "    }")
+                .matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())});")
+                //.matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()});")
 
 
 

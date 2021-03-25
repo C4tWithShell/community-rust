@@ -75,6 +75,8 @@ public class ExpressionWithoutBlockTest {
                 .matches("value = 42")
                 //compound assignment
                 .matches("counter += 1")
+
+
                 //TODO grouped expression
                 //TODO   ArrayExpression
                 //TODO   AwaitExpression
@@ -84,25 +86,31 @@ public class ExpressionWithoutBlockTest {
                 //TODO   StructExpression
                 //TODO   EnumerationVariantExpression
                 //  CallExpression
+
+
                 .matches("foo()")
                 .matches("abc()")
                 .matches("add(1i32,2i32)")
                 //MethodCallExpression
                 .matches("\"123\".parse()")
-                //TODO   FieldExpression
+                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()")
+                //FieldExpression
                 .matches("other.major")
                 //TODO ClosureExpression
                 //TODO ContinueExpression
                 //TODO BreakExpression
                 //TODO RangeExpression
                 //TODO ReturnExpression
-        //TODO MacroInvocation
+                //MacroInvocation
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
+
+
                 .matches("calc(get(i) + 1)")
                 .matches("Numeric(n)")
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
+
 
 
 
