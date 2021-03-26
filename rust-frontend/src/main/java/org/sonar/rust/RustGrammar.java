@@ -1377,6 +1377,7 @@ public enum RustGrammar implements GrammarRuleKey {
                             b.sequence(LITERAL_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(PATH_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(INDEX_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
+                        b.sequence(TUPLE_INDEXING_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(IDENTIFIER, METHOD_CALL_EXPRESSION_TERM)
                 ));
 
@@ -1439,8 +1440,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.sequence(EXPRESSION, SPC, RustPunctuator.COMMA, SPC)), b.optional(EXPRESSION,SPC));
 
-        b.rule(TUPLE_INDEXING_EXPRESSION).is(b.firstOf(LITERALS, TUPLE_INDEXING_EXPRESSION_TERM));
-        b.rule(TUPLE_INDEXING_EXPRESSION_TERM).is(RustPunctuator.DOT, TUPLE_INDEX, TUPLE_INDEXING_EXPRESSION_TERM);
+        b.rule(TUPLE_INDEXING_EXPRESSION).is(b.firstOf(LITERALS, IDENTIFIER), TUPLE_INDEXING_EXPRESSION_TERM);
+        b.rule(TUPLE_INDEXING_EXPRESSION_TERM).is(RustPunctuator.DOT, TUPLE_INDEX, b.zeroOrMore(SPC, TUPLE_INDEXING_EXPRESSION_TERM));
 
 
     }
