@@ -66,7 +66,8 @@ public class StatementTest {
                         "        Ok(reflect_dom_object(Box::new(node), window))\n" +
                         "    }")
                 .matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())});")
-                //.matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()});")
+                .matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()});")
+
 
 
 

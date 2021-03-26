@@ -28,6 +28,8 @@ public class MethodCallExpressionTest {
                 .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()")
                 .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())\n" +
                         "        .unwrap()")
+                .matches("pair[0].to_lowercase()")
+                //FIXME.matches("self.0.iter()")
 
 
                 ;

@@ -121,6 +121,7 @@ public class RustSensor implements Sensor {
         File file = inputFile.file();
         SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
         RustVisitorContext visitorContext;
+        LOG.debug("Rust parsing " +  file.getPath());
         try {
             AstNode tree = parser.parse(file);
             visitorContext = new RustVisitorContext(rustFile, tree);

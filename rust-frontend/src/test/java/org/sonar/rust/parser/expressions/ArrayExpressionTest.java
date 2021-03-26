@@ -43,4 +43,12 @@ public class ArrayExpressionTest {
                 .matches("[[1, 0, 0], [0, 1, 0], [0, 0, 1]]") // 2D array
      ;
     }
+
+    @Test
+    public void testIndexExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.INDEX_EXPRESSION))
+                .matches("arr[42]")
+                .matches("pair[0]")
+        ;
+    }
 }

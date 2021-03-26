@@ -1376,6 +1376,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(  b.sequence(CALL_EXPRESSION,SPC, METHOD_CALL_EXPRESSION_TERM),
                             b.sequence(LITERAL_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(PATH_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
+                        b.sequence(INDEX_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(IDENTIFIER, METHOD_CALL_EXPRESSION_TERM)
                 ));
 
@@ -1457,8 +1458,11 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
 
-        b.rule(INDEX_EXPRESSION).is(b.firstOf(LITERALS, INDEX_EXPRESSION_TERM));
-        b.rule(INDEX_EXPRESSION_TERM).is("[", EXPRESSION, "]", INDEX_EXPRESSION_TERM);
+        b.rule(INDEX_EXPRESSION).is(b.firstOf(
+                b.sequence(IDENTIFIER, INDEX_EXPRESSION_TERM),
+                b.sequence(EXPRESSION_WITH_BLOCK, INDEX_EXPRESSION_TERM)));
+
+        b.rule(INDEX_EXPRESSION_TERM).is("[", EXPRESSION, "]", b.zeroOrMore(SPC, INDEX_EXPRESSION_TERM));
     }
 
     private static void grouped(LexerlessGrammarBuilder b) {
@@ -1625,14 +1629,6 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(LAZY_BOOLEAN_EXPRESSION).is(b.firstOf(
                 LAZY_OR,
                 LAZY_AND));
-
-        /*
-        b.rule(LAZY_OR).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.OROR, SPC, EXPRESSION, SPC, b.optional(LAZY_OR))));
-        b.rule(LAZY_AND).is(b.firstOf(LITERALS,
-                b.sequence(SPC, RustPunctuator.ANDAND, SPC, EXPRESSION, SPC, b.optional(LAZY_AND))));
-
-         */
 
         b.rule(LAZY_AND).is(b.firstOf(COMPARISON_EXPRESSION,DEREFERENCE_EXPRESSION, METHOD_CALL_EXPRESSION, CALL_EXPRESSION, IDENTIFIER, LITERALS), SPC, LAZY_AND_TERM);
         b.rule(LAZY_AND_TERM).is(
