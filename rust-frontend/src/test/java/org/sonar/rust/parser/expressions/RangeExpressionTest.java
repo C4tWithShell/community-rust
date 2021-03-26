@@ -66,6 +66,7 @@ public class RangeExpressionTest {
                 .matches("..")// std::ops::RangeFull
                 .matches("5..=6")// std::ops::RangeInclusive
                 .matches("..=7")// std::ops::RangeToInclusive
+                .matches("0..(4 - (len & 3)) & 3")
         ;
     }
 }

@@ -36,6 +36,7 @@ public class TypeTest {
                 .matches("(i32, u8)")
                 .matches("Circle")
                 .notMatches("Circle{")
+                .matches("[u8]")
 
 
         ;
@@ -70,6 +71,9 @@ public class TypeTest {
                 .matches("semver_parser::version")
                 .matches("semver_parser::version::Identifier")
                 .matches("From<semver_parser::version::Identifier>")
+                .matches("&hhh")
+                .matches("&u8")
+                .matches("&[u8]")
 
         ;
     }

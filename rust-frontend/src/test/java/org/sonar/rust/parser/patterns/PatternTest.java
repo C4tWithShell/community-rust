@@ -104,6 +104,7 @@ public class PatternTest {
                 .matches("&42")
                 .matches("&&42")
                 .matches("&mut 42")
+                .matches("&[u8]")
 
         ;
 
@@ -200,6 +201,7 @@ public class PatternTest {
                 .matches("[42,foo, bar]")
                 .matches("[42,foo, bar,]")
 
+
         ;
 
     }
@@ -236,6 +238,7 @@ public class PatternTest {
                 .matches("..") //rest
                 //reference
                 .matches("&mut 42")
+                .matches("&[u8]")
                 //struct
                 .matches("Point{..}")
                 //tuple struct

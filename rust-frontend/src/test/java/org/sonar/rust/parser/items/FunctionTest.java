@@ -81,6 +81,8 @@ public class FunctionTest {
                 .matches("x : i32")
                 .matches("y:i64")
                 .matches("f: &mut fmt::Formatter")
+                .matches("bytes : u8")
+                .matches("bytes: &[u8]")
 
 
 
@@ -104,6 +106,7 @@ public class FunctionTest {
     public void testFunction() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION))
                 .matches("fn same(x : i32)->i32 {;}")
+                .matches("fn same(x : i32) -> i32 {;}")
                 .matches("fn answer_to_life_the_universe_and_everything() -> i32 {\n" +
                         "    let y=42;\n" +
                         "}")
@@ -142,6 +145,23 @@ public class FunctionTest {
                         "        Ok(MediaElementAudioSourceNode {\n" +
                         "            node,\n" +
                         "            media_element,\n" +
+                        "        })\n" +
+                        "    }")
+                .matches("fn from_raw(bytes: &[u8]) -> Option<Self> {\n" +
+                        "\n" +
+                        "        Some(Self {\n" +
+                        "            request_id: u64::from_le_bytes(bytes[0..8].try_into().unwrap()),\n" +
+                        "            argument: u32::from_le_bytes(bytes[8..12].try_into().unwrap()),\n" +
+                        "        })\n" +
+                        "    }")
+                .matches("fn from_raw(bytes: &[u8]) -> Option<Self> {\n" +
+                        "        if bytes.len() < 3 * 4 {\n" +
+                        "            return None;\n" +
+                        "        }\n" +
+                        "\n" +
+                        "        Some(Self {\n" +
+                        "            request_id: u64::from_le_bytes(bytes[0..8].try_into().unwrap()),\n" +
+                        "            argument: u32::from_le_bytes(bytes[8..12].try_into().unwrap()),\n" +
                         "        })\n" +
                         "    }")
 

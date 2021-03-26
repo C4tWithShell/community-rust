@@ -110,6 +110,7 @@ public class ExpressionWithoutBlockTest {
                 .matches("Numeric(n)")
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
+                .matches("return None")
 
 
 

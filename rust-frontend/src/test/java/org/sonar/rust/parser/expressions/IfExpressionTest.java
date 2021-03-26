@@ -20,6 +20,12 @@ public class IfExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+                .matches("if bytes.len() < 3 * 4 {\n" +
+                        "        println!(\"Too short\");" +
+                        "        }")
+                .matches("if bytes.len() < 3 * 4 {\n" +
+                        "            return None;\n" +
+                        "        }")
 
 
         ;

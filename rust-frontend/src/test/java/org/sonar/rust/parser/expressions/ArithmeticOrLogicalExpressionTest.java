@@ -52,6 +52,7 @@ public class ArithmeticOrLogicalExpressionTest {
                 .matches("1+2+3+a+b + 56 + foo")
                 .matches("calc() + 12")
                 .matches("m.get(i) + 1")
+                .matches("(40+1)+1")
                 ;
     }
 
@@ -82,6 +83,20 @@ public class ArithmeticOrLogicalExpressionTest {
     }
 
     @Test
+    public void testBitAnd() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BITAND_EXPRESSION))
+                .matches("0&0")
+                .matches("0 & 0")
+                .matches("40 & 2")
+                .matches("a& 2")
+                .matches("2 & b")
+                .matches("a& b& c")
+                .matches("1&2&3&a&b & 56 & foo")
+        ;
+    }
+
+
+    @Test
     public void testDivision() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.DIVISION_EXPRESSION))
                 .matches("0/0")
@@ -93,7 +108,6 @@ public class ArithmeticOrLogicalExpressionTest {
                 .matches("1/2/3/a/b / 56 / foo")
         ;
     }
-
 
 
 

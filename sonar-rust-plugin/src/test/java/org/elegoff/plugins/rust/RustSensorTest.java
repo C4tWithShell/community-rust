@@ -28,7 +28,6 @@ import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
-import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
@@ -40,10 +39,7 @@ import org.sonar.api.utils.log.LogTester;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -109,7 +105,12 @@ public class RustSensorTest {
     }
 
 
-
+    @Test
+    public void canParse() throws IOException {
+        DefaultInputFile inputFile = executeSensorOnSingleFile("sensor/checkme.rs");
+        verify(fileLinesContext).save();
+        Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
+    }
 
     private DefaultInputFile executeSensorOnSingleFile(String fileName) throws IOException {
         DefaultInputFile inputFile = addInputFile(fileName);

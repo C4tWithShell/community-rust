@@ -44,6 +44,13 @@ public class StatementTest {
     }
 
     @Test
+    public void testExpressionStatement() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_STATEMENT))
+                .matches("return None;")
+        ;
+    }
+
+    @Test
     public void testStatement() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT))
                 .matches(";")
@@ -65,8 +72,9 @@ public class StatementTest {
                         "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
                         "        Ok(reflect_dom_object(Box::new(node), window))\n" +
                         "    }")
-                .matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())});")
-                .matches("state.put::<reqwest::Client>({deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()});")
+                .matches("state.put::<req::Client>({node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()});")
+                .matches("return;")
+                .matches("return None;")
 
 
 
