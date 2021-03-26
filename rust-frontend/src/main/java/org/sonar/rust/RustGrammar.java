@@ -1373,13 +1373,13 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void methodcall(LexerlessGrammarBuilder b) {
 
         b.rule(METHOD_CALL_EXPRESSION).is(
-                b.firstOf(  b.sequence(CALL_EXPRESSION,  METHOD_CALL_EXPRESSION_TERM),
+                b.firstOf(  b.sequence(CALL_EXPRESSION,SPC, METHOD_CALL_EXPRESSION_TERM),
                             b.sequence(LITERAL_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(PATH_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(IDENTIFIER, METHOD_CALL_EXPRESSION_TERM)
                 ));
 
-        b.rule(METHOD_CALL_EXPRESSION_TERM).is(
+        b.rule(METHOD_CALL_EXPRESSION_TERM).is(b.zeroOrMore(STRING_CONTINUE),
                 RustPunctuator.DOT,SPC, PATH_EXPR_SEGMENT,SPC,
                         "(", SPC,b.optional(CALL_PARAMS,SPC), ")", b.zeroOrMore(METHOD_CALL_EXPRESSION_TERM))
         ;

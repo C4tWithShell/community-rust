@@ -77,6 +77,10 @@ Statements :
                 .matches("{ i.set(i.get() + 1); false }")
                 .matches("{deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())}")
                 .matches("{deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()}")
+                .matches("{\n" +
+                        "      deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())\n" +
+                        "          .unwrap()\n" +
+                        "    }")
 
 
         ;

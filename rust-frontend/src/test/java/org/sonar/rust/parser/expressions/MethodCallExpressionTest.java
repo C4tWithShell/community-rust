@@ -22,8 +22,12 @@ public class MethodCallExpressionTest {
                 .matches("b.abc()")
                 .matches("obj.add(1i32,2i32)")
                 .matches("callme().now()")
+                .matches("callme()\n" +
+                        ".now()")
                 .matches("d::mycall(a.clone(), b.clone()).unwrap()")
                 .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()")
+                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())\n" +
+                        "        .unwrap()")
 
 
                 ;
