@@ -12,10 +12,7 @@ public class ExpressionWithBlockTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITH_BLOCK))
                 .matches("{}")
                 .notMatches("== b")
-                .matches("{deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())}")
-                .matches("{deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()}")
-
-
+                .matches("{node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()}")
         ;
     }
 }

@@ -93,7 +93,7 @@ public class ExpressionWithoutBlockTest {
                 .matches("add(1i32,2i32)")
                 //MethodCallExpression
                 .matches("\"123\".parse()")
-                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone()).unwrap()")
+                .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
                 //FieldExpression
                 .matches("other.major")
                 //TODO ClosureExpression

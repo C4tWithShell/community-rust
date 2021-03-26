@@ -68,7 +68,7 @@ public class CallExpressionTest {
                         "            node,\n" +
                         "            media_element,\n" +
                         "        })")
-                .matches("deno_fetch::create_http_client(user_agent.clone(), ca_data.clone())")
+                .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone())")
 
 
 
