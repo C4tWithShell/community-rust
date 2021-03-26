@@ -54,6 +54,7 @@ public class IdentifierTest {
                 .matches("foo_bar")
                 .notMatches("a b")
                 .notMatches("a self")
+                .matches("_context")
         ;
     }
 

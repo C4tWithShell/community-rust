@@ -38,15 +38,12 @@ public class RustGrammarTest {
         Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
                 // RustGrammar.CALL_PARAMS_TERM,
                 RustGrammar.COMPILATION_UNIT,
-                RustGrammar.CU_STATEMENT,
-                RustGrammar.CU_OTHER,
                 RustGrammar.EOF,
                 RustGrammar.FUNCTION_QUALIFIERS,
                 RustGrammar.GENERIC_PARAMS,
                 RustGrammar.LIFETIME_BOUNDS,
                 RustGrammar.LIFETIME_PARAMS,
                 RustGrammar.SPC,
-                RustGrammar.TUPLE_STRUCT_ITEMS,
                 RustGrammar.TYPE_PARAMS
         ));
 

@@ -26,7 +26,29 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class StatementTest {
 
+    @Test
+    public void testLetStatement() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.LET_STATEMENT))
+                .matches("let y=42;")
+                .matches("let x;")
+                .matches("let z = 40 + 2;")
+                .matches("let res=calc(42);")
+                .matches("let mut account=0.0;")
+                .matches("let mut vec = Vec::new();")
+                .matches("let three: i32 = add(1i32, 2i32);")
+                //FIXME.matches("let name: &'static str = (|| \"Rust\")();")
 
+
+
+        ;
+    }
+
+    @Test
+    public void testExpressionStatement() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_STATEMENT))
+                .matches("return None;")
+        ;
+    }
 
     @Test
     public void testStatement() {
@@ -35,7 +57,27 @@ public class StatementTest {
                 .matches("extern crate pcre;")
                 .matches("let y=42;")
                 .matches("let x;")
+                .matches("let z = 40 + 2;")
                 .matches("use std::error::Error;")
+                .matches("j.set(i.get() + 1);")
+                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
+                        "}")
+                .matches("dest.write_char('n');")
+                .matches("#[allow(unrooted_must_root)]\n" +
+                        "    pub fn new(\n" +
+                        "        window: &Window,\n" +
+                        "        context: &AudioContext,\n" +
+                        "        media_element: &HTMLMediaElement,\n" +
+                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
+                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
+                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
+                        "    }")
+                .matches("state.put::<req::Client>({node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()});")
+                .matches("return;")
+                .matches("return None;")
+
+
+
 
 
 

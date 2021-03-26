@@ -33,7 +33,7 @@ import static java.util.Arrays.asList;
 public class RustLanguageSettings {
     public static final String FILE_SUFFIXES_KEY = "sonar.rust.file.suffixes";
     public static final String FILTER_UTF8_LB_KEY = "sonar.rust.filter.utf8_lb";
-    public static final String FILE_SUFFIXES_DEFAULT_VALUE = ".rs,.toml";
+    public static final String FILE_SUFFIXES_DEFAULT_VALUE = ".rs";
 
 
     /**
