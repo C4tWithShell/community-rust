@@ -38,7 +38,7 @@ public class OperatorExpressionTest {
                 .matches("&&&& mut 10")
                 .matches("&& && mut 10")
                 .matches("& & & & mut 10")
-                .notMatches("== b")
+                .matches("&[b' ', b' ', b' ']")
 
 
         ;

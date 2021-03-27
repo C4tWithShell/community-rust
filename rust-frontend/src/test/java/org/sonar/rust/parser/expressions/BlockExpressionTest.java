@@ -84,6 +84,9 @@ Statements :
                 .matches("{\n" +
                         "        self.len() as u32\n" +
                         "    }")
+                .matches("{\n" +
+                        "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
+                        "}")
 
 
         ;
