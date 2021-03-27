@@ -75,6 +75,8 @@ public class LifeTimeTest {
                 .matches("'a:'b+'c+'d")
                 .matches("'a : 'b+'c+'d")
                 .matches("'ABC : 'b+ 'c+ 'd")
+                .matches(" R: ValueOrVector")
+                .matches("F: Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
         ;
     }
 
@@ -90,6 +92,11 @@ public class LifeTimeTest {
                 .matches("where 'a : 'b +'c +'d")
                 .matches("where 'ABC : 'a+ 'b+ 'c, 'DEF : 'd + 'e + 'f")
                 .notMatches("where 'a : 'b +'c +'d {}")
+                .matches("where\n" +
+                        "        R: ValueOrVector,")
+                .matches("where\n" +
+                        "        F: Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static,\n" +
+                        "        R: ValueOrVector,")
         ;
     }
 
@@ -118,6 +125,7 @@ public class LifeTimeTest {
                 .matches("(? abc::def)")
                 .matches("( for <'a> abc::def )")
                 .matches("(? for <'a> abc::def)")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
         ;
 
@@ -161,6 +169,8 @@ public class LifeTimeTest {
                 .matches("'_+'a+'ABC")
                 .notMatches("'a self")
                 .matches("(? for <'a> abc::def)+'a+abc::def")
+                .matches("ValueOrVector")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
         ;
 
     }
