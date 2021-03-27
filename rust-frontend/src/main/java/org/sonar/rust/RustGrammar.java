@@ -1953,7 +1953,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(TYPE_PATH_FN_INPUTS).is(
                 TYPE,
-                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, TYPE)),
+                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, TYPE)),
                 b.optional(RustPunctuator.COMMA)
         );
         b.rule(TYPE_PATH).is(

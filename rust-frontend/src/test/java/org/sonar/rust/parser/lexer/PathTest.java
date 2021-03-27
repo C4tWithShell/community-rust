@@ -146,6 +146,7 @@ public class PathTest {
     public void testTypePathFnInputs() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PATH_FN_INPUTS))
                 .matches("isize")
+                .matches("&mut OpState, u32, &mut [ZeroCopyBuf]")
 
         ;
     }
@@ -154,6 +155,7 @@ public class PathTest {
     public void testTypePathFn() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PATH_FN))
                 .matches("(isize) -> isize")
+                .matches("(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
         ;
     }
@@ -169,6 +171,7 @@ public class PathTest {
                 .matches("abc::<>")
                 .matches("abc::(isize) -> isize")
                 .notMatches("abc::abc for")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
         ;
     }
 
@@ -179,6 +182,7 @@ public class PathTest {
                 .notMatches("abc::abc for")
                 .matches("T")
                 .matches("abc::def")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
         ;
     }
