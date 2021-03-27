@@ -164,6 +164,9 @@ public class FunctionTest {
                         "            argument: u32::from_le_bytes(bytes[8..12].try_into().unwrap()),\n" +
                         "        })\n" +
                         "    }")
+                .matches("fn gen_padding_32bit(len: usize) -> &'static [u8] {\n" +
+                        "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
+                        "}")
 
 
         ;

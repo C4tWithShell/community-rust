@@ -47,6 +47,7 @@ public class StatementTest {
     public void testExpressionStatement() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_STATEMENT))
                 .matches("return None;")
+
         ;
     }
 
@@ -75,6 +76,7 @@ public class StatementTest {
                 .matches("state.put::<req::Client>({node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()});")
                 .matches("return;")
                 .matches("return None;")
+
 
 
 
