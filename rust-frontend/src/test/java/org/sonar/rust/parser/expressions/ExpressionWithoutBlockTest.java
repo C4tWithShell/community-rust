@@ -111,6 +111,7 @@ public class ExpressionWithoutBlockTest {
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
                 .matches("return None")
+                .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
 
 
 

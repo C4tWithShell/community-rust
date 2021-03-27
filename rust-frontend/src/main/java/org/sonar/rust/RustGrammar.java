@@ -1202,8 +1202,10 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
                         RANGE_EXPRESSION,
+
                         OPERATOR_EXPRESSION,
                         METHOD_CALL_EXPRESSION,
+                        INDEX_EXPRESSION,
                         CALL_EXPRESSION,
                         MACRO_INVOCATION,
                         FIELD_EXPRESSION,
@@ -1214,7 +1216,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         GROUPED_EXPRESSION,
                         ARRAY_EXPRESSION,
                         AWAIT_EXPRESSION,
-                        INDEX_EXPRESSION,
+
                         TUPLE_EXPRESSION,
                         TUPLE_INDEXING_EXPRESSION,
                         ENUMERATION_VARIANT_EXPRESSION,
@@ -1462,6 +1464,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(INDEX_EXPRESSION).is(b.firstOf(
                 b.sequence(IDENTIFIER, INDEX_EXPRESSION_TERM),
+                b.sequence(ARRAY_EXPRESSION, INDEX_EXPRESSION_TERM),
+                b.sequence(BORROW_EXPRESSION, INDEX_EXPRESSION_TERM),
                 b.sequence(EXPRESSION_WITH_BLOCK, INDEX_EXPRESSION_TERM)));
 
         b.rule(INDEX_EXPRESSION_TERM).is("[", EXPRESSION, "]", b.zeroOrMore(SPC, INDEX_EXPRESSION_TERM));
