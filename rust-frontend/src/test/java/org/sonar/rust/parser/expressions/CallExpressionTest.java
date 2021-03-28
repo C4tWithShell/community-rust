@@ -63,12 +63,17 @@ public class CallExpressionTest {
                 .matches("add(1i32, 2i32)")
                 .matches("calc(get(i) + 1)")
                 .matches("Vec::new()")
+                .matches("Box::new(42)")
+                .matches("Box::new(|j: i32| -> () { println!(\"hello, {}\", j); })")
                 .matches("Identifier::Numeric(n)")
                 .matches("Ok(MediaElementAudioSourceNode {\n" +
                         "            node,\n" +
                         "            media_element,\n" +
                         "        })")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone())")
+                .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    })")
 
 
 
