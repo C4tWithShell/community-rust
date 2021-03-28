@@ -167,6 +167,12 @@ public class FunctionTest {
                 .matches("fn gen_padding_32bit(len: usize) -> &'static [u8] {\n" +
                         "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
                         "}")
+                .matches("fn foo() -> u8\n" +
+                        "{\n" +
+                        "    Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    })\n" +
+                        "}")
 
 
         ;

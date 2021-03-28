@@ -61,6 +61,9 @@ public class ExpressionTest {
                 "        }")
                 .matches("StepPosition::JumpEnd")
                 .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
+                .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    }")
 
 
 

@@ -63,18 +63,6 @@ public class ImplementationTest {
                         "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
                         "        Ok(reflect_dom_object(Box::new(node), window))\n" +
                         "    }")
-
-                .matches("\n" +
-                        "    #[allow(unrooted_must_root)]\n" +
-                        "    pub fn new(\n" +
-                        "        window: &Window,\n" +
-                        "        context: &AudioContext,\n" +
-                        "        media_element: &HTMLMediaElement,\n" +
-                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
-                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
-                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
-                        "    }\n" +
-                        "\n")
                 .matches("pub const BIT2: u32 = 1 << 1;") //constant
 
 
@@ -165,15 +153,6 @@ public class ImplementationTest {
                         "#[outer]" +
                         "fn answer_to_life_the_universe_and_everything() -> i32 {\n}" +
                         "    }")
-                .matches("impl fmt::Display for Identifier {\n" +
-                        "    #[inline]\n" +
-                        "    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {\n" +
-                        "        match *self {\n" +
-                        "            Identifier::Numeric(ref n) => fmt::Display::fmt(n, f),\n" +
-                        "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
-                        "        }\n" +
-                        "    }\n" +
-                        "}")
                 .matches("impl<'de> Deserialize<'de> for Identifier {\n" +
                         "    fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>\n" +
                         "    where\n" +
@@ -311,4 +290,6 @@ public class ImplementationTest {
         ;
 
     }
+
+
 }

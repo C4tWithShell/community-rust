@@ -24,6 +24,8 @@ public class MethodCallExpressionTest {
                 .matches("callme().now()")
                 .matches("callme()\n" +
                         ".now()")
+                .matches("idf\n" +
+                        ".fun()")
                 .matches("d::mycall(a.clone(), b.clone()).unwrap()")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone())\n" +

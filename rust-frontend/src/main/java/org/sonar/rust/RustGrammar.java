@@ -1201,8 +1201,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION).is(b.firstOf(EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
+                        CLOSURE_EXPRESSION,
                         RANGE_EXPRESSION,
-
                         OPERATOR_EXPRESSION,
                         METHOD_CALL_EXPRESSION,
                         INDEX_EXPRESSION,
@@ -1216,14 +1216,11 @@ public enum RustGrammar implements GrammarRuleKey {
                         GROUPED_EXPRESSION,
                         ARRAY_EXPRESSION,
                         AWAIT_EXPRESSION,
-
                         TUPLE_EXPRESSION,
                         TUPLE_INDEXING_EXPRESSION,
                         ENUMERATION_VARIANT_EXPRESSION,
-                        CLOSURE_EXPRESSION,
                         CONTINUE_EXPRESSION,
                         BREAK_EXPRESSION
-
                 ));
         b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
@@ -1376,17 +1373,17 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void methodcall(LexerlessGrammarBuilder b) {
 
         b.rule(METHOD_CALL_EXPRESSION).is(
-                b.firstOf(  b.sequence(CALL_EXPRESSION,SPC, METHOD_CALL_EXPRESSION_TERM),
+                b.firstOf(  b.sequence(CALL_EXPRESSION, SPC,METHOD_CALL_EXPRESSION_TERM),
                             b.sequence(LITERAL_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(PATH_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(INDEX_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(TUPLE_INDEXING_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
-                        b.sequence(IDENTIFIER, METHOD_CALL_EXPRESSION_TERM)
+                        b.sequence(IDENTIFIER,SPC, METHOD_CALL_EXPRESSION_TERM)
                 ));
 
-        b.rule(METHOD_CALL_EXPRESSION_TERM).is(b.zeroOrMore(STRING_CONTINUE),
-                RustPunctuator.DOT,SPC, PATH_EXPR_SEGMENT,SPC,
-                        "(", SPC,b.optional(CALL_PARAMS,SPC), ")", b.zeroOrMore(METHOD_CALL_EXPRESSION_TERM))
+        b.rule(METHOD_CALL_EXPRESSION_TERM).is(
+                 RustPunctuator.DOT,SPC, PATH_EXPR_SEGMENT,SPC,
+                        "(", SPC,b.optional(CALL_PARAMS,SPC), ")", b.zeroOrMore(SPC, METHOD_CALL_EXPRESSION_TERM))
         ;
 
 
@@ -1794,7 +1791,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/expressions/closure-expr.html*/
     public static void closure(LexerlessGrammarBuilder b) {
         b.rule(CLOSURE_EXPRESSION).is(
-                b.optional(RustKeyword.KW_MOVE),
+                b.optional(RustKeyword.KW_MOVE,SPC),
                 b.firstOf("||", b.sequence("|", b.optional(CLOSURE_PARAMETERS), "|",SPC)),
                 b.firstOf(EXPRESSION,  b.sequence(SPC, RustPunctuator.RARROW, SPC, TYPE_NO_BOUNDS, SPC,BLOCK_EXPRESSION))
         );
