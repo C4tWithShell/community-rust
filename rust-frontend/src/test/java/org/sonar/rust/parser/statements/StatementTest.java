@@ -76,6 +76,9 @@ public class StatementTest {
                 .matches("state.put::<req::Client>({node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()});")
                 .matches("return;")
                 .matches("return None;")
+                .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    });")
 
 
 
