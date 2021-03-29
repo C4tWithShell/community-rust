@@ -113,6 +113,7 @@ public enum RustGrammar implements GrammarRuleKey {
     EXPRESSION_STATEMENT,
     EXPRESSION_WITHOUT_BLOCK,
     EXPRESSION_WITH_BLOCK,
+    EXPRESSION_WITH_BLOCK_SMALL,
     EXTERNAL_FUNCTION_ITEM,
     EXTERNAL_ITEM,
     EXTERNAL_STATIC_ITEM,
@@ -1198,17 +1199,27 @@ public enum RustGrammar implements GrammarRuleKey {
         match(b);
         returnExpr(b);
         await(b);
-        b.rule(EXPRESSION).is(b.firstOf(EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
+
+        b.rule(EXPRESSION).is(b.firstOf(
+                b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),MATCH_EXPRESSION),
+                EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK_SMALL));
+
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
                         CLOSURE_EXPRESSION,
                         RANGE_EXPRESSION,
                         OPERATOR_EXPRESSION,
+
                         METHOD_CALL_EXPRESSION,
+                        FIELD_EXPRESSION,
+
+
+
                         INDEX_EXPRESSION,
+
                         CALL_EXPRESSION,
                         MACRO_INVOCATION,
-                        FIELD_EXPRESSION,
+
                         RETURN_EXPRESSION,
                         LITERAL_EXPRESSION,
                         STRUCT_EXPRESSION,
@@ -1222,16 +1233,20 @@ public enum RustGrammar implements GrammarRuleKey {
                         CONTINUE_EXPRESSION,
                         BREAK_EXPRESSION
                 ));
-        b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
+        b.rule(EXPRESSION_WITH_BLOCK_SMALL).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
                         BLOCK_EXPRESSION,
                         ASYNC_BLOCK_EXPRESSION,
                         UNSAFE_BLOCK_EXPRESSION,
                         LOOP_EXPRESSION,
                         IF_EXPRESSION,
-                        IF_LET_EXPRESSION,
-                        MATCH_EXPRESSION
+                        IF_LET_EXPRESSION
                 ));
+        b.rule(EXPRESSION_WITH_BLOCK).is(b.firstOf(
+                b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),MATCH_EXPRESSION),
+
+                EXPRESSION_WITH_BLOCK_SMALL
+        ));
     }
 
     private static void await(LexerlessGrammarBuilder b) {
@@ -1352,11 +1367,14 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void field(LexerlessGrammarBuilder b) {
 
         b.rule(FIELD_EXPRESSION).is(
-                b.firstOf(IDENTIFIER,LITERALS,EXPRESSION_WITH_BLOCK
-                        //other expressions without block
+                b.firstOf(
+                        b.sequence(CALL_EXPRESSION,FIELD_EXPRESSION_TERM),
+                        b.sequence(METHOD_CALL_EXPRESSION,FIELD_EXPRESSION_TERM),
+                        b.sequence(IDENTIFIER,FIELD_EXPRESSION_TERM),
+                        b.sequence(LITERALS,FIELD_EXPRESSION_TERM),
+                        b.sequence(EXPRESSION_WITH_BLOCK,FIELD_EXPRESSION_TERM)
 
-                ), FIELD_EXPRESSION_TERM
-        );
+                ));
 
 
 
@@ -1373,7 +1391,7 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void methodcall(LexerlessGrammarBuilder b) {
 
         b.rule(METHOD_CALL_EXPRESSION).is(
-                b.firstOf(  b.sequence(CALL_EXPRESSION, SPC,METHOD_CALL_EXPRESSION_TERM),
+                b.firstOf( b.sequence(CALL_EXPRESSION, SPC,METHOD_CALL_EXPRESSION_TERM),
                             b.sequence(LITERAL_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(PATH_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
                         b.sequence(INDEX_EXPRESSION, METHOD_CALL_EXPRESSION_TERM),
@@ -1391,7 +1409,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void call(LexerlessGrammarBuilder b) {
 
-        b.rule(CALL_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK, FIELD_EXPRESSION, PATH_EXPRESSION, IDENTIFIER), CALL_EXPRESSION_TERM);
+        b.rule(CALL_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK, GROUPED_EXPRESSION,  PATH_EXPRESSION, IDENTIFIER), CALL_EXPRESSION_TERM);
 
         b.rule(CALL_EXPRESSION_TERM).is(
                 "(", SPC,b.optional(CALL_PARAMS), SPC, ")", b.zeroOrMore(SPC, CALL_EXPRESSION_TERM)
@@ -1469,7 +1487,10 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void grouped(LexerlessGrammarBuilder b) {
-        b.rule(GROUPED_EXPRESSION).is("(", SPC,b.zeroOrMore(INNER_ATTRIBUTE, SPC), EXPRESSION, SPC, ")");
+        b.rule(GROUPED_EXPRESSION).is("(", SPC,b.zeroOrMore(INNER_ATTRIBUTE, SPC), b.firstOf(
+                FIELD_EXPRESSION, EXPRESSION
+
+        ), SPC, ")");
     }
 
     private static void operator(LexerlessGrammarBuilder b) {

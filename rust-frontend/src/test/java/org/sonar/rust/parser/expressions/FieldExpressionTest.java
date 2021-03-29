@@ -11,8 +11,11 @@ public class FieldExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.FIELD_EXPRESSION))
                 .matches("mystruct.myfield")
                 .matches("other.major")
-                //FIXME.matches("foo().x")
+                .matches("foo().x")
                 //FIXME.matches("(Struct {a: 10, b: 20}).a")
+                .matches("t.get_error_class")
+                .matches("state.borrow().get_error_class_fn")
+
 
 
 

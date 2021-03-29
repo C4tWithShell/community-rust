@@ -15,6 +15,8 @@ public class GroupedExpressionTest {
                 .matches("(foo)")
                 .matches("(1 +(2+3))")
                 .matches("( #![crate_type = \"lib\"] 40+2 )")
+                .matches("(state.get_error_class_fn)")
+                .matches("(state.borrow().get_error_class_fn)")
 
         ;
     }
