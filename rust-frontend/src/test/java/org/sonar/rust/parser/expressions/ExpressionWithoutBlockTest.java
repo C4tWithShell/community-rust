@@ -92,6 +92,9 @@ public class ExpressionWithoutBlockTest {
                 .matches("abc()")
                 .matches("add(1i32,2i32)")
                 //MethodCallExpression
+                //
+                //
+
                 .matches("\"123\".parse()")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
                 //FieldExpression
@@ -112,6 +115,8 @@ public class ExpressionWithoutBlockTest {
                 .matches("Identifier::Numeric")
                 .matches("return None")
                 .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
+
+
 
 
 

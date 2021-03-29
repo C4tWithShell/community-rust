@@ -74,6 +74,8 @@ public class CallExpressionTest {
                 .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
                         "    })")
+                .matches("(state.get_error_class_fn)(1)")
+                .matches("(state.borrow().get_error_class_fn)(&error)")
 
 
 
