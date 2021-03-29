@@ -32,6 +32,7 @@ public class MethodCallExpressionTest {
                         "        .unwrap()")
                 .matches("couple[0].to_lowercase()")
                 .matches("self.0.iter()")
+                .matches("(state.borrow().get_error_class_fn)(&error).as_bytes()")
 
 
                 ;
