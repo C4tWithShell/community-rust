@@ -29,7 +29,7 @@ public class ImplementationTest {
 
     @Test
     public void testInherentImplItem() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.INHERENT_IMPL_ITEM))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASSOCIATED_ITEM))
                 .matches("println!(\"hello\");") //macro invocation semi
                 .matches("#[outer] println!(\"hello\");") //macro invocation semi
                 .matches("const BIT2: u32 = 1 << 1;") //constant
@@ -195,7 +195,7 @@ public class ImplementationTest {
 
     @Test
     public void testTraitImplItem() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_IMPL_ITEM))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASSOCIATED_ITEM))
                 .matches("println!(\"hello\");") //macro invocation semi
                 .matches("#[outer] println!(\"hello\");") //macro invocation semi
                 .matches("type Point = (u8, u8);") //type alias
