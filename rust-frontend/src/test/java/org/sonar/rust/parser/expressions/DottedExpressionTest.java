@@ -5,11 +5,11 @@ import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class MethodCallExpressionTest {
+public class DottedExpressionTest {
 
     @Test
     public void testMethodCallExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.METHOD_CALL_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.DOTTED_EXPRESSION))
                 .matches("\"Some string\".to_string()")
                 .matches("\"3.14\".parse()")
                 .matches("a.b()")
@@ -34,6 +34,12 @@ public class MethodCallExpressionTest {
                 .matches("self.0.iter()")
                 .matches("(state.borrow().get_error_class_fn)(&error).as_bytes()")
                 .matches("resp_header[0..8].foo()")
+                .matches("mystruct.myfield")
+                .matches("other.major")
+                .matches("foo().x")
+                //FIXME.matches("(Struct {a: 10, b: 20}).a")
+                .matches("t.get_error_class")
+                .matches("state.borrow().get_error_class_fn")
 
 
 
