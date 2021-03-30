@@ -41,17 +41,6 @@ public class FunctionTest {
 
     }
 
-    @Test
-    public void testAsyncConst() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_CONST_QUALIFIERS))
-                .matches("const")
-                .matches("async")
-                .notMatches("constitution")
-                .notMatches("prefixasync")
-                .notMatches("constasync")
-        ;
-
-    }
 
 
     @Test

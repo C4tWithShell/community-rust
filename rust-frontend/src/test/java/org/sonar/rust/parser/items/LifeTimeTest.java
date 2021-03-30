@@ -259,7 +259,9 @@ public class LifeTimeTest {
 
     @Test
     public void testGenerics() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERICS))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAMS))
+                .matches("<>")
+                .matches("< >")
                 .matches("<T>")
                 .matches("<'a,T>")
                 .matches("<'a>")
