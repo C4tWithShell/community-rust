@@ -125,6 +125,7 @@ public class OperatorExpressionTest {
                 .matches("value as f64")
                 .matches("{} as i32")
                 .matches("'test' as i32")
+                .matches("self.len() as u32")
                 //FIXME.matches("abc() as i32")
                 //FIXME.matches("len(vals) as f64")
         ;
