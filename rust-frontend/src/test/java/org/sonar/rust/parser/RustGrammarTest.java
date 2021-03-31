@@ -40,7 +40,6 @@ public class RustGrammarTest {
                 RustGrammar.COMPILATION_UNIT,
                 RustGrammar.EOF,
                 RustGrammar.FUNCTION_QUALIFIERS,
-                RustGrammar.GENERIC_PARAMS,
                 RustGrammar.LIFETIME_BOUNDS,
                 RustGrammar.LIFETIME_PARAMS,
                 RustGrammar.SPC,

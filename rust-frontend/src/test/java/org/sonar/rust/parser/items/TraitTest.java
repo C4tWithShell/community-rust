@@ -34,7 +34,7 @@ public class TraitTest {
                 .matches("trait Seq<T> {\n" +
                         "    fn len(&self) -> u32;\n" +
                         "    fn elt_at(&self, n: u32) -> T;\n" +
-                        "    fn iter<F>(&self, f: F) where F: Fn(T);\n" +
+                        "    fn iter<F>(&self, f:F) where F: Fn(T);\n" +
                         "}")
 
 

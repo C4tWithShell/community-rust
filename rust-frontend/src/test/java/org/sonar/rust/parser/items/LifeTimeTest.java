@@ -186,6 +186,14 @@ public class LifeTimeTest {
     }
 
     @Test
+    public void testConstParam(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CONST_PARAM))
+                .matches("const AAA : i32")
+
+        ;
+    }
+
+    @Test
     public void testTypeParams(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PARAMS))
                 .matches("")
@@ -243,15 +251,15 @@ public class LifeTimeTest {
 
     @Test
     public void testGenericParams(){
-        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAMS))
-
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAM))
                 .matches("T")
-                .matches("'ABC,U")
-                .matches("'a,T")
                 .matches("'de")
                 .notMatches("'trait")
                 .notMatches("'trait>")
-                .matches("#[outer]'ABC,V")
+                .matches("#[outer] 'ABC")
+                .matches("#[outer] id = f64")
+                .matches("#[outer] const AAA : i32")
+
 
         ;
     }

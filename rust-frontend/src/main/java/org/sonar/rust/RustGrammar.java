@@ -613,7 +613,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TYPE_ALIAS).is(
                 RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS),
                 b.optional(WHERE_CLAUSE),
-                "(",RustPunctuator.EQ, SPC, TYPE, SPC, ");"
+                RustPunctuator.EQ, SPC, TYPE, SPC, ";"
         );
     }
 
@@ -636,7 +636,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(FUNCTION).is(
                 FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN, SPC, IDENTIFIER,
                 b.optional(GENERIC_PARAMS, SPC), SPC,
-                "(", SPC, b.optional(FUNCTION_PARAMETERS, SPC), SPC, ")",
+                "(", SPC, b.optional(FUNCTION_PARAMETERS, SPC), SPC, ")",SPC,
                 b.optional(SPC, FUNCTION_RETURN_TYPE, SPC), b.optional(WHERE_CLAUSE, SPC), SPC,
                 b.firstOf(BLOCK_EXPRESSION, RustPunctuator.SEMI)
         );
@@ -651,10 +651,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(ABI).is(b.firstOf(STRING_LITERAL, RAW_STRING_LITERAL));
         b.rule(FUNCTION_PARAMETERS).is(
-                b.firstOf(b.sequence(SELF_PARAM, b.optional(RustPunctuator.COMMA)),
-                        b.sequence(b.optional(SELF_PARAM, RustPunctuator.COMMA),
-                                seq(b,FUNCTION_PARAM, RustPunctuator.COMMA)
-                                )));
+                b.firstOf(b.sequence(SELF_PARAM, b.optional(RustPunctuator.COMMA), SPC, b.optional(seq(b,FUNCTION_PARAM, RustPunctuator.COMMA))),
+                        seq(b,FUNCTION_PARAM, RustPunctuator.COMMA)
+
+                                ));
 
 
         b.rule(FUNCTION_PARAM).is(
@@ -729,8 +729,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INHERENT_IMPL).is(
                 RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC), TYPE, SPC,
                 b.optional(WHERE_CLAUSE, SPC), "{", SPC,
-                b.zeroOrMore(INNER_ATTRIBUTE),
-                b.zeroOrMore(ASSOCIATED_ITEM),SPC,  "}"
+                b.zeroOrMore(b.firstOf(INNER_ATTRIBUTE, OUTER_ATTRIBUTE), SPC),
+                b.zeroOrMore(ASSOCIATED_ITEM,SPC),  "}"
         );
 
 
@@ -739,7 +739,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC),
                 b.optional(RustPunctuator.NOT), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE,
                 b.optional(WHERE_CLAUSE, SPC),  "{", SPC,
-                b.zeroOrMore(INNER_ATTRIBUTE),
+                b.zeroOrMore(b.firstOf(INNER_ATTRIBUTE, OUTER_ATTRIBUTE), SPC),
                 b.zeroOrMore(ASSOCIATED_ITEM),SPC,  "}"
         );
 
@@ -773,7 +773,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         ));
 
-        b.rule(GENERIC_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE), b.firstOf(LIFETIME_PARAM, TYPE_PARAM, CONST_PARAM)
+        b.rule(GENERIC_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), b.firstOf(LIFETIME_PARAM, CONST_PARAM, TYPE_PARAM)
                 );
 
 
@@ -787,12 +787,12 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(TYPE_PARAM, RustPunctuator.COMMA, SPC), b.optional(TYPE_PARAM, SPC)
         );
         b.rule(TYPE_PARAM).is(
-                b.optional(OUTER_ATTRIBUTE, SPC), IDENTIFIER, SPC,
-                b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS),
-                        b.optional(RustPunctuator.EQ, TYPE))
+                b.optional(OUTER_ATTRIBUTE, SPC), NON_KEYWORD_IDENTIFIER, SPC,
+                b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS), SPC),
+                        b.optional(RustPunctuator.EQ, SPC, TYPE)
         );
 
-        b.rule(CONST_PARAM).is(RustKeyword.KW_CONST, SPC, IDENTIFIER, RustPunctuator.COLON, TYPE);
+        b.rule(CONST_PARAM).is(RustKeyword.KW_CONST, SPC, IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE);
         b.rule(WHERE_CLAUSE).is(
                 RustKeyword.KW_WHERE, b.zeroOrMore(b.sequence(WHERE_CLAUSE_ITEM, RustPunctuator.COMMA)), b.optional(WHERE_CLAUSE_ITEM)
         );
