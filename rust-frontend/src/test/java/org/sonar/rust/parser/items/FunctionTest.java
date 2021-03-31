@@ -85,6 +85,7 @@ public class FunctionTest {
                 .matches("y:i64")
                 .matches("x : i32")
                 .matches("x : i32, y:i64")
+                .matches("&self, n:u32")
 
         ;
 
