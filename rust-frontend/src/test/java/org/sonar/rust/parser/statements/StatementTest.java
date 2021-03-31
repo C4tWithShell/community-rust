@@ -37,6 +37,13 @@ public class StatementTest {
                 .matches("let mut vec = Vec::new();")
                 .matches("let three: i32 = add(1i32, 2i32);")
                 //FIXME.matches("let name: &'static str = (|| \"Rust\")();")
+                /* FIXME.matches("let p = if mycondition {\n" +
+                        "             42\n" +
+                        "         } else {\n" +
+                        "             43\n" +
+                        "         };")
+
+                 */
 
 
 

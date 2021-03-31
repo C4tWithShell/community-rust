@@ -26,6 +26,12 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class ExpressionTest {
+/*
+    Expression :
+    ExpressionWithoutBlock
+   | ExpressionWithBlock
+
+ */
 
     @Test
     public void testExpression() {
@@ -64,6 +70,13 @@ public class ExpressionTest {
                 .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
                         "    }")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
+                /*FIXME.matches("if run_coverage {\n" +
+                        "        println!(\"Coverage is running\");" +
+                        " } ")*/
 
 
 

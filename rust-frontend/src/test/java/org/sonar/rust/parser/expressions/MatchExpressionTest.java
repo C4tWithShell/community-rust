@@ -162,52 +162,11 @@ public class MatchExpressionTest {
                         "                return 43;\n" +
                         "            }\n" +
                         "        }")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
 
-                /*
-                .matches("match op_fn(&mut state.borrow_mut(), req_header.argument, &mut zero_copy) {\n" +
-                        "            Ok(possibly_vector) => {\n" +
-                        "                let resp_header = ResponseHeader {\n" +
-                        "                    request_id: req_header.request_id,\n" +
-                        "                    status: 0,\n" +
-                        "                    result: possibly_vector.value(),\n" +
-                        "                };\n" +
-                        "                let resp_encoded_header = Into::<[u8; 16]>::into(resp_header);\n" +
-                        "\n" +
-                        "                let resp_vector = match possibly_vector.vector() {\n" +
-                        "                    Some(mut vector) => {\n" +
-                        "                        let padding = gen_padding_32bit(vector.len());\n" +
-                        "                        vector.extend(padding);\n" +
-                        "                        vector.extend(&resp_encoded_header);\n" +
-                        "                        vector\n" +
-                        "                    }\n" +
-                        "                    None => resp_encoded_header.to_vec(),\n" +
-                        "                };\n" +
-                        "                Op::Sync(resp_vector.into_boxed_slice())\n" +
-                        "            }\n" +
-                        "            Err(error) => {\n" +
-                        "                let error_class =\n" +
-                        "                    (state.borrow().get_error_class_fn)(&error).as_bytes();\n" +
-                        "                let error_message = error.to_string().as_bytes().to_owned();\n" +
-                        "                let len = error_class.len() + error_message.len();\n" +
-                        "                let padding = gen_padding_32bit(len);\n" +
-                        "                let resp_header = ResponseHeader {\n" +
-                        "                    request_id: req_header.request_id,\n" +
-                        "                    status: 1,\n" +
-                        "                    result: error_class.len() as u32,\n" +
-                        "                };\n" +
-                        "                return Op::Sync(\n" +
-                        "                    error_class\n" +
-                        "                        .iter()\n" +
-                        "                        .chain(error_message.iter())\n" +
-                        "                        .chain(padding)\n" +
-                        "                        .chain(&Into::<[u8; 16]>::into(resp_header))\n" +
-                        "                        .cloned()\n" +
-                        "                        .collect(),\n" +
-                        "                );\n" +
-                        "            }\n" +
-                        "        }")
-
-                 */
 
         ;
     }

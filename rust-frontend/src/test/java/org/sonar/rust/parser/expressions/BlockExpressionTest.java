@@ -91,6 +91,11 @@ Statements :
                         "        let mut b = 42;\n" +
                         "    })\n" +
                         "}")
+                .matches("{\n" +
+                        "            PathBuf::from(\"/demo_dir/\")\n" +
+                        "        }")
+                .matches("{PathBuf::from(r\"C:\\demo_dir\\\")}")
+
 
 
         ;
