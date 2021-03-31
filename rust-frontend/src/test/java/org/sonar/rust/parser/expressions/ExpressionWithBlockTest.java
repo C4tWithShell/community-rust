@@ -13,6 +13,10 @@ public class ExpressionWithBlockTest {
                 .matches("{}")
                 .notMatches("== b")
                 .matches("{node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()}")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
         ;
     }
 }

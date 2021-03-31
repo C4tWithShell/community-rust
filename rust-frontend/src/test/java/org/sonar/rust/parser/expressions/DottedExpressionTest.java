@@ -8,7 +8,7 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class DottedExpressionTest {
 
     @Test
-    public void testMethodCallExpression() {
+    public void testDottedExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.DOTTED_EXPRESSION))
                 .matches("\"Some string\".to_string()")
                 .matches("\"3.14\".parse()")
@@ -40,6 +40,8 @@ public class DottedExpressionTest {
                 //FIXME.matches("(Struct {a: 10, b: 20}).a")
                 .matches("t.get_error_class")
                 .matches("state.borrow().get_error_class_fn")
+                .matches("self.get_cache_filename(url)")
+                .matches("(disk_byte as char).to_string()")
 
 
 

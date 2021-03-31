@@ -115,7 +115,6 @@ public enum RustGrammar implements GrammarRuleKey {
     EXPRESSION_WITHOUT_BLOCK,
     EXPRESSION_WITHOUT_BLOCK_TERM,
     EXPRESSION_WITH_BLOCK,
-    EXPRESSION_WITH_BLOCK_SMALL,
     EXTERNAL_ITEM,
     EXTERN_BLOCK,
     EXTERN_CRATE,
@@ -1134,7 +1133,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(EXPRESSION).is(b.firstOf(
                 b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),MATCH_EXPRESSION),
-                EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK_SMALL));
+                EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
 
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
@@ -1164,7 +1163,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 TUPLE_INDEXING_EXPRESSION,
                 CALL_EXPRESSION,
                 PATH_EXPRESSION,
-
+                GROUPED_EXPRESSION,
                 LITERALS,
                 IDENTIFIER
         ),EXPRESSION_WITHOUT_BLOCK_TERM);
@@ -1177,20 +1176,17 @@ public enum RustGrammar implements GrammarRuleKey {
                 ) ,
                b.zeroOrMore(EXPRESSION_WITHOUT_BLOCK_TERM));
 
-        b.rule(EXPRESSION_WITH_BLOCK_SMALL).is(b.zeroOrMore(OUTER_ATTRIBUTE),
+        b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
                         BLOCK_EXPRESSION,
+                        MATCH_EXPRESSION,
                         ASYNC_BLOCK_EXPRESSION,
                         UNSAFE_BLOCK_EXPRESSION,
                         LOOP_EXPRESSION,
                         IF_EXPRESSION,
                         IF_LET_EXPRESSION
                 ));
-        b.rule(EXPRESSION_WITH_BLOCK).is(b.firstOf(
-                b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),MATCH_EXPRESSION),
 
-                EXPRESSION_WITH_BLOCK_SMALL
-        ));
     }
 
     private static void await(LexerlessGrammarBuilder b) {
@@ -1444,25 +1440,35 @@ public enum RustGrammar implements GrammarRuleKey {
                         //BREAK_EXPRESSION,
                         //RETURN_EXPRESSION
                 )), EXPRESSION_WITH_BLOCK));
-        b.rule(ERROR_PROPAGATION_EXPRESSION).is(b.firstOf(EXPRESSION_WITH_BLOCK,
+        b.rule(ERROR_PROPAGATION_EXPRESSION)
+                .is(b.firstOf(
+
                 CALL_EXPRESSION,
-                LITERAL_EXPRESSION,
-                PATH_EXPRESSION,
+                DOTTED_EXPRESSION, EXPRESSION_WITH_BLOCK,PATH_EXPRESSION,
+
                 GROUPED_EXPRESSION,
                 ARRAY_EXPRESSION,
                 AWAIT_EXPRESSION,
+
                 INDEX_EXPRESSION,
                 TUPLE_EXPRESSION,
                 TUPLE_INDEXING_EXPRESSION,
                 STRUCT_EXPRESSION,
                 ENUMERATION_VARIANT_EXPRESSION,
-                DOTTED_EXPRESSION,
+
                 CLOSURE_EXPRESSION,
                 CONTINUE_EXPRESSION,
                 BREAK_EXPRESSION,
                 RANGE_EXPRESSION,
                 RETURN_EXPRESSION,
-                MACRO_INVOCATION), ERROR_PROPAGATION_EXPRESSION_TERM);
+                MACRO_INVOCATION,
+
+                LITERALS,
+                IDENTIFIER
+
+                ), ERROR_PROPAGATION_EXPRESSION_TERM);
+
+
 
         b.rule(ERROR_PROPAGATION_EXPRESSION_TERM).is(SPC, RustPunctuator.QUESTION, b.optional(ERROR_PROPAGATION_EXPRESSION_TERM));
 
