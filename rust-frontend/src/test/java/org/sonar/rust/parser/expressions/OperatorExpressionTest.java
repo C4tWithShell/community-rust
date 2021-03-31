@@ -61,6 +61,11 @@ public class OperatorExpressionTest {
                 .matches("None?")
                 .matches("Some(42)?")
                 .notMatches("== b")
+                .matches("self.get_cache_filename(url)?")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }?")
 
 
         ;

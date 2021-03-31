@@ -17,6 +17,7 @@ public class GroupedExpressionTest {
                 .matches("( #![crate_type = \"lib\"] 40+2 )")
                 .matches("(state.get_error_class_fn)")
                 .matches("(state.borrow().get_error_class_fn)")
+                .matches("(disk_byte as char)")
 
         ;
     }

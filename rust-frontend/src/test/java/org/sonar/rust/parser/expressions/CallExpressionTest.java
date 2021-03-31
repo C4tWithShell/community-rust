@@ -64,6 +64,8 @@ public class CallExpressionTest {
                 .matches("calc(get(i) + 1)")
                 .matches("Vec::new()")
                 .matches("Box::new(42)")
+                .matches("PathBuf::from(\"/demo_dir/\")")
+                .matches("PathBuf::from(r\"C:\\demo_dir\\\")")
                 .matches("Box::new(|j: i32| -> () { println!(\"hello, {}\", j); })")
                 .matches("Identifier::Numeric(n)")
                 .matches("Ok(MediaElementAudioSourceNode {\n" +
