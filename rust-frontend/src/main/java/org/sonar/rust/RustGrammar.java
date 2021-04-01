@@ -1138,6 +1138,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 ));
 
         b.rule(EXPRESSION_EXCEPT_STRUCT).is(b.firstOf(
+                EXPRESSION_WITH_BLOCK,
                 b.sequence(
                 b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
@@ -1160,7 +1161,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         CONTINUE_EXPRESSION,
                         BREAK_EXPRESSION))
 
-                , EXPRESSION_WITH_BLOCK));
+                 ));
 
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
