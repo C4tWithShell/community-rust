@@ -107,6 +107,10 @@ public class StructExpressionTest {
                         "            node,\n" +
                         "            media_element,\n" +
                         "        }")
+                .notMatches("match path.parent() {\n" +
+                "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                "             None => Ok(()),\n" +
+                "         }")
 
 
         ;

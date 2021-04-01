@@ -59,6 +59,7 @@ public class PathTest {
                 .matches("S::T")
                 .matches("result::Result")
                 .matches("Identifier::Numeric")
+                .notMatches("match")
 
 
         ;
