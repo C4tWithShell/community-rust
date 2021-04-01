@@ -111,6 +111,7 @@ public enum RustGrammar implements GrammarRuleKey {
     ERROR_PROPAGATION_EXPRESSION,
     ERROR_PROPAGATION_EXPRESSION_TERM,
     EXPRESSION,
+    EXPRESSION_EXCEPT_STRUCT,
     EXPRESSION_STATEMENT,
     EXPRESSION_WITHOUT_BLOCK,
     EXPRESSION_WITHOUT_BLOCK_TERM,
@@ -1132,8 +1133,34 @@ public enum RustGrammar implements GrammarRuleKey {
         await(b);
 
         b.rule(EXPRESSION).is(b.firstOf(
-                b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),MATCH_EXPRESSION),
-                EXPRESSION_WITHOUT_BLOCK, EXPRESSION_WITH_BLOCK));
+                EXPRESSION_WITH_BLOCK,
+                EXPRESSION_WITHOUT_BLOCK
+                ));
+
+        b.rule(EXPRESSION_EXCEPT_STRUCT).is(b.firstOf(
+                b.sequence(
+                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.firstOf(
+                        CLOSURE_EXPRESSION,
+                        RANGE_EXPRESSION,
+                        OPERATOR_EXPRESSION,
+                        DOTTED_EXPRESSION,
+                        INDEX_EXPRESSION,
+                        CALL_EXPRESSION,
+                        MACRO_INVOCATION,
+                        RETURN_EXPRESSION,
+                        LITERAL_EXPRESSION,
+                        PATH_EXPRESSION,
+                        GROUPED_EXPRESSION,
+                        ARRAY_EXPRESSION,
+                        AWAIT_EXPRESSION,
+                        TUPLE_EXPRESSION,
+                        TUPLE_INDEXING_EXPRESSION,
+                        ENUMERATION_VARIANT_EXPRESSION,
+                        CONTINUE_EXPRESSION,
+                        BREAK_EXPRESSION))
+
+                , EXPRESSION_WITH_BLOCK));
 
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
@@ -1201,7 +1228,7 @@ public enum RustGrammar implements GrammarRuleKey {
     //https://doc.rust-lang.org/reference/expressions/match-expr.html
     private static void match(LexerlessGrammarBuilder b) {
         b.rule(MATCH_EXPRESSION).is(
-                RustKeyword.KW_MATCH, SPC,EXPRESSION, //except struct expressions !!
+                RustKeyword.KW_MATCH, SPC,EXPRESSION_EXCEPT_STRUCT, //except struct expressions !!
                 SPC,"{",SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE,SPC),
                 b.optional(MATCH_ARMS,SPC),
@@ -1231,14 +1258,14 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void ifExpr(LexerlessGrammarBuilder b) {
         b.rule(IF_EXPRESSION).is(
-                RustKeyword.KW_IF, SPC, EXPRESSION,SPC, BLOCK_EXPRESSION,SPC,
+                RustKeyword.KW_IF, SPC, EXPRESSION_EXCEPT_STRUCT,SPC, BLOCK_EXPRESSION,SPC,
                 b.optional(
 
                         RustKeyword.KW_ELSE, SPC, b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
                 )
         );
         b.rule(IF_LET_EXPRESSION).is(
-                RustKeyword.KW_IF,SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC , RustPunctuator.EQ, SPC, EXPRESSION, //except struct or lazy boolean operator expression
+                RustKeyword.KW_IF,SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC , RustPunctuator.EQ, SPC, EXPRESSION_EXCEPT_STRUCT, //except struct or lazy boolean operator expression
                 SPC, BLOCK_EXPRESSION, SPC,
                 b.optional(RustKeyword.KW_ELSE, SPC, b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
                 )
@@ -1284,7 +1311,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INFINITE_LOOP_EXPRESSION).is(
                 RustKeyword.KW_LOOP, SPC, BLOCK_EXPRESSION);
         b.rule(PREDICATE_LOOP_EXPRESSION).is(
-                RustKeyword.KW_WHILE, SPC, EXPRESSION, //except struct expression
+                RustKeyword.KW_WHILE, SPC, EXPRESSION_EXCEPT_STRUCT, //except struct expression
                 BLOCK_EXPRESSION
         );
         b.rule(PREDICATE_PATTERN_LOOP_EXPRESSION).is(
@@ -1293,7 +1320,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 SPC, BLOCK_EXPRESSION
         );
         b.rule(ITERATOR_LOOP_EXPRESSION).is(
-                RustKeyword.KW_FOR, SPC, PATTERN,SPC,  RustKeyword.KW_IN, SPC, EXPRESSION, //except struct expression
+                RustKeyword.KW_FOR, SPC, PATTERN,SPC,  RustKeyword.KW_IN, SPC, EXPRESSION_EXCEPT_STRUCT, //except struct expression
                 SPC, BLOCK_EXPRESSION
         );
         b.rule(LOOP_LABEL).is(LIFETIME_OR_LABEL, SPC, RustPunctuator.COLON);
