@@ -1,296 +1,256 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-use crate::fs_util;
-use crate::http_cache::url_to_filename;
-use deno_core::url::{Host, Url};
-use std::ffi::OsStr;
-use std::fs;
-use std::io;
-use std::path::Component;
-use std::path::Path;
-use std::path::PathBuf;
-use std::path::Prefix;
+//! This mod provides functions to remap a `JsError` based on a source map.
+
+use deno_core::error::JsError;
+use sourcemap::SourceMap;
+use std::collections::HashMap;
 use std::str;
+use std::sync::Arc;
 
-#[derive(Clone)]
-pub struct DiskCache {
-    pub location: PathBuf,
-}
-
-fn with_io_context<T: AsRef<str>>(
-    e: &std::io::Error,
-    context: T,
-) -> std::io::Error {
-    std::io::Error::new(e.kind(), format!("{} (for '{}')", e, context.as_ref()))
-}
-
-impl DiskCache {
-    /// `location` must be an absolute path.
-    pub fn new(location: &Path) -> Self {
-        assert!(location.is_absolute());
-        Self {
-            location: location.to_owned(),
-        }
-    }
-
-    /// Ensures the location of the cache.
-    pub fn ensure_dir_exists(&self, path: &Path) -> io::Result<()> {
-        if path.is_dir() {
-            return Ok(());
-        }
-        fs::create_dir_all(&path).map_err(|e| {
-            io::Error::new(e.kind(), format!(
-                "Could not create TypeScript compiler cache location: {:?}\nCheck the permission of the directory.",
-                path
-            ))
-        })
-    }
-
-    fn get_cache_filename(&self, url: &Url) -> Option<PathBuf> {
-        let mut out = PathBuf::new();
-
-        let scheme = url.scheme();
-        out.push(scheme);
-
-        match scheme {
-            "wasm" => {
-                let host = url.host_str().unwrap();
-                let host_port = match url.port() {
-                    // Windows doesn't support ":" in filenames, so we represent port using a
-                    // special string.
-                    Some(port) => format!("{}_PORT{}", host, port),
-                    None => host.to_string(),
-                };
-                out.push(host_port);
-
-                for path_seg in url.path_segments().unwrap() {
-                    out.push(path_seg);
-                }
-            }
-            "http" | "https" | "data" => out = url_to_filename(url)?,
-            "file" => {
-                let path = match url.to_file_path() {
-                    Ok(path) => path,
-                    Err(_) => return None,
-                };
-                let mut path_components = path.components();
-
-                if cfg!(target_os = "windows") {
-                    if let Some(Component::Prefix(prefix_component)) =
-                    path_components.next()
-                    {
-                        // Windows doesn't support ":" in filenames, so we need to extract disk prefix
-                        // Example: file:///C:/deno/js/unit_test_runner.ts
-                        // it should produce: file\c\deno\js\unit_test_runner.ts
-                        match prefix_component.kind() {
-                            Prefix::Disk(disk_byte) | Prefix::VerbatimDisk(disk_byte) => {
-                                let disk = (disk_byte as char).to_string();
-                                out.push(disk);
-                            }
-                            Prefix::UNC(server, share)
-                            | Prefix::VerbatimUNC(server, share) => {
-                                out.push("UNC");
-                                let host = Host::parse(server.to_str().unwrap()).unwrap();
-                                let host = host.to_string().replace(":", "_");
-                                out.push(host);
-                                out.push(share);
-                            }
-                            _ => unreachable!(),
-                        }
-                    }
-                }
-
-                // Must be relative, so strip forward slash
-                let mut remaining_components = path_components.as_path();
-                if let Ok(stripped) = remaining_components.strip_prefix("/") {
-                    remaining_components = stripped;
-                };
-
-                out = out.join(remaining_components);
-            }
-            _ => return None,
-        };
-
-        Some(out)
-    }
-
-    pub fn get_cache_filename_with_extension(
+pub trait SourceMapGetter: Sync + Send {
+    /// Returns the raw source map file.
+    fn get_source_map(&self, file_name: &str) -> Option<Vec<u8>>;
+    fn get_source_line(
         &self,
-        url: &Url,
-        extension: &str,
-    ) -> Option<PathBuf> {
-        let base = self.get_cache_filename(url)?;
+        file_name: &str,
+        line_number: usize,
+    ) -> Option<String>;
+}
 
-        match base.extension() {
-            None => Some(base.with_extension(extension)),
-            Some(ext) => {
-                let original_extension = OsStr::to_str(ext).unwrap();
-                let final_extension = format!("{}.{}", original_extension, extension);
-                Some(base.with_extension(final_extension))
+/// Cached filename lookups. The key can be None if a previous lookup failed to
+/// find a SourceMap.
+pub type CachedMaps = HashMap<String, Option<SourceMap>>;
+
+/// Apply a source map to a `deno_core::JsError`, returning a `JsError` where
+/// file names and line/column numbers point to the location in the original
+/// source, rather than the transpiled source code.
+pub fn apply_source_map<G: SourceMapGetter>(
+    js_error: &JsError,
+    getter: Arc<G>,
+) -> JsError {
+    // Note that js_error.frames has already been source mapped in
+    // prepareStackTrace().
+    let mut mappings_map: CachedMaps = HashMap::new();
+
+    let (script_resource_name, line_number, start_column, source_line) =
+        get_maybe_orig_position(
+            js_error.script_resource_name.clone(),
+            js_error.line_number,
+            // start_column is 0-based, we need 1-based here.
+            js_error.start_column.map(|n| n + 1),
+            &mut mappings_map,
+            getter.clone(),
+        );
+    let start_column = start_column.map(|n| n - 1);
+    // It is better to just move end_column to be the same distance away from
+    // start column because sometimes the code point is not available in the
+    // source file map.
+    let end_column = match js_error.end_column {
+        Some(ec) => {
+            if let Some(sc) = start_column {
+                Some(ec - (js_error.start_column.unwrap() - sc))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+
+    let mut script_resource_name = script_resource_name;
+    let mut line_number = line_number;
+    let mut start_column = start_column;
+    let mut end_column = end_column;
+    let mut source_line = source_line;
+    if script_resource_name
+        .as_ref()
+        .map_or(true, |s| s.starts_with("deno:"))
+    {
+        for frame in &js_error.frames {
+            if let (Some(file_name), Some(line_number_)) =
+            (&frame.file_name, frame.line_number)
+            {
+                if !file_name.starts_with("deno:") {
+                    script_resource_name = Some(file_name.clone());
+                    line_number = Some(line_number_);
+                    start_column = frame.column_number.map(|n| n - 1);
+                    end_column = frame.column_number;
+                    // Lookup expects 0-based line and column numbers, but ours are 1-based.
+                    source_line =
+                        getter.get_source_line(file_name, (line_number_ - 1) as usize);
+                    break;
+                }
             }
         }
     }
 
-    pub fn get(&self, filename: &Path) -> std::io::Result<Vec<u8>> {
-        let path = self.location.join(filename);
-        fs::read(&path)
+    JsError {
+        message: js_error.message.clone(),
+        source_line,
+        script_resource_name,
+        line_number,
+        start_column,
+        end_column,
+        frames: js_error.frames.clone(),
+        stack: None,
     }
+}
 
-    pub fn set(&self, filename: &Path, data: &[u8]) -> std::io::Result<()> {
-        let path = self.location.join(filename);
-        match path.parent() {
-            Some(ref parent) => self.ensure_dir_exists(parent),
-            None => Ok(()),
-        }?;
-        fs_util::atomic_write_file(&path, data, crate::http_cache::CACHE_PERM)
-            .map_err(|e| with_io_context(&e, format!("{:#?}", &path)))
+fn get_maybe_orig_position<G: SourceMapGetter>(
+    file_name: Option<String>,
+    line_number: Option<i64>,
+    column_number: Option<i64>,
+    mappings_map: &mut CachedMaps,
+    getter: Arc<G>,
+) -> (Option<String>, Option<i64>, Option<i64>, Option<String>) {
+    match (file_name, line_number, column_number) {
+        (Some(file_name_v), Some(line_v), Some(column_v)) => {
+            let (file_name, line_number, column_number, source_line) =
+                get_orig_position(file_name_v, line_v, column_v, mappings_map, getter);
+            (
+                Some(file_name),
+                Some(line_number),
+                Some(column_number),
+                source_line,
+            )
+        }
+        _ => (None, None, None, None),
     }
+}
+
+pub fn get_orig_position<G: SourceMapGetter>(
+    file_name: String,
+    line_number: i64,
+    column_number: i64,
+    mappings_map: &mut CachedMaps,
+    getter: Arc<G>,
+) -> (String, i64, i64, Option<String>) {
+    // Lookup expects 0-based line and column numbers, but ours are 1-based.
+    let line_number = line_number - 1;
+    let column_number = column_number - 1;
+
+    let default_pos = (file_name.clone(), line_number, column_number, None);
+    let maybe_source_map = get_mappings(&file_name, mappings_map, getter.clone());
+    let (file_name, line_number, column_number, source_line) =
+        match maybe_source_map {
+            None => default_pos,
+            Some(source_map) => {
+                match source_map.lookup_token(line_number as u32, column_number as u32)
+                {
+                    None => default_pos,
+                    Some(token) => match token.get_source() {
+                        None => default_pos,
+                        Some(source_file_name) => {
+                            // The `source_file_name` written by tsc in the source map is
+                            // sometimes only the basename of the URL, or has unwanted `<`/`>`
+                            // around it. Use the `file_name` we get from V8 if
+                            // `source_file_name` does not parse as a URL.
+                            let file_name = match deno_core::resolve_url(source_file_name) {
+                                Ok(m) => m.to_string(),
+                                Err(_) => file_name,
+                            };
+                            let source_line =
+                                if let Some(source_view) = token.get_source_view() {
+                                    source_view
+                                        .get_line(token.get_src_line())
+                                        .map(|s| s.to_string())
+                                } else {
+                                    None
+                                };
+                            (
+                                file_name,
+                                i64::from(token.get_src_line()),
+                                i64::from(token.get_src_col()),
+                                source_line,
+                            )
+                        }
+                    },
+                }
+            }
+        };
+    let source_line = source_line
+        .or_else(|| getter.get_source_line(&file_name, line_number as usize));
+    (file_name, line_number + 1, column_number + 1, source_line)
+}
+
+fn get_mappings<'a, G: SourceMapGetter>(
+    file_name: &str,
+    mappings_map: &'a mut CachedMaps,
+    getter: Arc<G>,
+) -> &'a Option<SourceMap> {
+    mappings_map
+        .entry(file_name.to_string())
+        .or_insert_with(|| parse_map_string(file_name, getter))
+}
+
+// TODO(kitsonk) parsed source maps should probably be cached in state in
+// the module meta data.
+fn parse_map_string<G: SourceMapGetter>(
+    file_name: &str,
+    getter: Arc<G>,
+) -> Option<SourceMap> {
+    getter
+        .get_source_map(file_name)
+        .and_then(|raw_source_map| SourceMap::from_slice(&raw_source_map).ok())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
-    #[test]
-    fn test_create_cache_if_dir_exits() {
-        let cache_location = TempDir::new().unwrap();
-        let mut cache_path = cache_location.path().to_owned();
-        cache_path.push("foo");
-        let cache = DiskCache::new(&cache_path);
-        cache
-            .ensure_dir_exists(&cache.location)
-            .expect("Testing expect:");
-        assert!(cache_path.is_dir());
-    }
+    struct MockSourceMapGetter {}
 
-    #[test]
-    fn test_create_cache_if_dir_not_exits() {
-        let temp_dir = TempDir::new().unwrap();
-        let mut cache_location = temp_dir.path().to_owned();
-        assert!(fs::remove_dir(&cache_location).is_ok());
-        cache_location.push("foo");
-        assert_eq!(cache_location.is_dir(), false);
-        let cache = DiskCache::new(&cache_location);
-        cache
-            .ensure_dir_exists(&cache.location)
-            .expect("Testing expect:");
-        assert_eq!(cache_location.is_dir(), true);
-    }
-
-    #[test]
-    fn test_get_cache_filename() {
-
-
-        let cache = DiskCache::new(&cache_location);
-
-        let mut test_cases = vec![
-            (
-                "http://deno.land/std/http/file_server.ts",
-                "http/deno.land/d8300752800fe3f0beda9505dc1c3b5388beb1ee45afd1f1e2c9fc0866df15cf",
-            ),
-            (
-                "http://localhost:8000/std/http/file_server.ts",
-                "http/localhost_PORT8000/d8300752800fe3f0beda9505dc1c3b5388beb1ee45afd1f1e2c9fc0866df15cf",
-            ),
-            (
-                "https://deno.land/std/http/file_server.ts",
-                "https/deno.land/d8300752800fe3f0beda9505dc1c3b5388beb1ee45afd1f1e2c9fc0866df15cf",
-            ),
-            ("wasm://wasm/d1c677ea", "wasm/wasm/d1c677ea"),
-        ];
-
-        if cfg!(target_os = "windows") {
-            test_cases.push(("file:///D:/a/1/s/format.ts", "file/D/a/1/s/format.ts"));
-            // IPv4 localhost
-            test_cases.push((
-                "file://127.0.0.1/d$/a/1/s/format.ts",
-                "file/UNC/127.0.0.1/d$/a/1/s/format.ts",
-            ));
-            // IPv6 localhost
-            test_cases.push((
-                "file://[0:0:0:0:0:0:0:1]/d$/a/1/s/format.ts",
-                "file/UNC/[__1]/d$/a/1/s/format.ts",
-            ));
-            // shared folder
-            test_cases.push((
-                "file://comp/t-share/a/1/s/format.ts",
-                "file/UNC/comp/t-share/a/1/s/format.ts",
-            ));
-        } else {
-            test_cases.push((
-                "file:///std/http/file_server.ts",
-                "file/std/http/file_server.ts",
-            ));
+    impl SourceMapGetter for MockSourceMapGetter {
+        fn get_source_map(&self, file_name: &str) -> Option<Vec<u8>> {
+            let s = match file_name {
+                "foo_bar.ts" => {
+                    r#"{"sources": ["foo_bar.ts"], "mappings":";;;IAIA,OAAO,CAAC,GAAG,CAAC,qBAAqB,EAAE,EAAE,CAAC,OAAO,CAAC,CAAC;IAC/C,OAAO,CAAC,GAAG,CAAC,eAAe,EAAE,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC;IACjD,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,IAAI,CAAC,QAAQ,CAAC,EAAE,CAAC,CAAC;IAE3C,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC"}"#
+                }
+                "bar_baz.ts" => {
+                    r#"{"sources": ["bar_baz.ts"], "mappings":";;;IAEA,CAAC,KAAK,IAAI,EAAE;QACV,MAAM,GAAG,GAAG,sDAAa,OAAO,2BAAC,CAAC;QAClC,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC;IACnB,CAAC,CAAC,EAAE,CAAC;IAEQ,QAAA,GAAG,GAAG,KAAK,CAAC;IAEzB,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC"}"#
+                }
+                _ => return None,
+            };
+            Some(s.as_bytes().to_owned())
         }
 
-        for test_case in &test_cases {
-            let cache_filename =
-                cache.get_cache_filename(&Url::parse(test_case).unwrap());
-            assert_eq!(cache_filename, Some(PathBuf::from(test_case.1)));
+        fn get_source_line(
+            &self,
+            file_name: &str,
+            line_number: usize,
+        ) -> Option<String> {
+            let s = match file_name {
+                "foo_bar.ts" => vec![
+                    "console.log('foo');",
+                    "console.log('foo');",
+                    "console.log('foo');",
+                    "console.log('foo');",
+                    "console.log('foo');",
+                ],
+                _ => return None,
+            };
+            if s.len() > line_number {
+                Some(s[line_number].to_string())
+            } else {
+                None
+            }
         }
     }
 
     #[test]
-    fn test_get_cache_filename_with_extension() {
-
-        let cache = DiskCache::new(&PathBuf::from(p));
-
-        let mut test_cases = vec![
-            (
-                "http://deno.land/std/http/file_server.ts",
-                "js",
-                "http/deno.land/d8300752800fe3f0beda9505dc1c3b5388beb1ee45afd1f1e2c9fc0866df15cf.js",
-            ),
-            (
-                "http://deno.land/std/http/file_server.ts",
-                "js.map",
-                "http/deno.land/d8300752800fe3f0beda9505dc1c3b5388beb1ee45afd1f1e2c9fc0866df15cf.js.map",
-            ),
-        ];
-
-        if cfg!(target_os = "windows") {
-            test_cases.push((
-                "file:///D:/std/http/file_server",
-                "js",
-                "file/D/std/http/file_server.js",
-            ));
-        } else {
-            test_cases.push((
-                "file:///std/http/file_server",
-                "js",
-                "file/std/http/file_server.js",
-            ));
-        }
-
-        for test_case in &test_cases {
-            assert_eq!(
-                cache.get_cache_filename_with_extension(
-                    &Url::parse(test_case.0).unwrap(),
-                    test_case.1
-                ),
-                Some(PathBuf::from(test_case.2))
-            )
-        }
-    }
-
-    #[test]
-    fn test_get_cache_filename_invalid_urls() {
-       
-
-        let cache = DiskCache::new(&cache_location);
-
-        let mut test_cases = vec!["unknown://localhost/test.ts"];
-
-        if cfg!(target_os = "windows") {
-            test_cases.push("file://");
-            test_cases.push("file:///");
-        }
-
-        for test_case in &test_cases {
-            let cache_filename =
-                cache.get_cache_filename(&Url::parse(test_case).unwrap());
-            assert_eq!(cache_filename, None);
-        }
+    fn apply_source_map_line() {
+        let e = JsError {
+            message: "TypeError: baz".to_string(),
+            source_line: Some("foo".to_string()),
+            script_resource_name: Some("foo_bar.ts".to_string()),
+            line_number: Some(4),
+            start_column: Some(16),
+            end_column: None,
+            frames: vec![],
+            stack: None,
+        };
+        let getter = Arc::new(MockSourceMapGetter {});
+        let actual = apply_source_map(&e, getter);
+        assert_eq!(actual.source_line, Some("console.log('foo');".to_string()));
     }
 }
