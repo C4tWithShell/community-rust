@@ -1418,10 +1418,8 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void grouped(LexerlessGrammarBuilder b) {
-        b.rule(GROUPED_EXPRESSION).is("(", SPC,b.zeroOrMore(INNER_ATTRIBUTE, SPC), b.firstOf(
-                DOTTED_EXPRESSION, EXPRESSION
-
-        ), SPC, ")");
+        b.rule(GROUPED_EXPRESSION).is("(", SPC,b.zeroOrMore(INNER_ATTRIBUTE, SPC),  EXPRESSION
+                , SPC, ")");
     }
 
     private static void operator(LexerlessGrammarBuilder b) {
@@ -1755,7 +1753,8 @@ public enum RustGrammar implements GrammarRuleKey {
     public static void closure(LexerlessGrammarBuilder b) {
         b.rule(CLOSURE_EXPRESSION).is(
                 b.optional(RustKeyword.KW_MOVE,SPC),
-                b.firstOf("||", b.sequence("|", b.optional(CLOSURE_PARAMETERS), "|",SPC)),
+                b.firstOf(b.sequence(RustPunctuator.OROR, SPC),
+                        b.sequence(RustPunctuator.OR, SPC, b.optional(CLOSURE_PARAMETERS, SPC), RustPunctuator.OR,SPC)),
                 b.firstOf(EXPRESSION,  b.sequence(SPC, RustPunctuator.RARROW, SPC, TYPE_NO_BOUNDS, SPC,BLOCK_EXPRESSION))
         );
         b.rule(CLOSURE_PARAMETERS).is(CLOSURE_PARAM,
