@@ -71,17 +71,10 @@ public class ExpressionTest {
                         "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
                         "             None => Ok(()),\n" +
                         "         }")
+
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
-
-
-
-
-
-
-
-
         ;
     }
 
