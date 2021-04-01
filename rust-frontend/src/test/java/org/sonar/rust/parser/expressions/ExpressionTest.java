@@ -26,6 +26,64 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class ExpressionTest {
+
+
+
+
+    @Test
+    public void testExpressionExceptStruct() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
+                .matches("{let y=42;}")
+                .matches("{;}")
+                .matches("0")
+                .matches("3+2")
+                .matches("1 << 1")
+                .matches("foo")
+                .matches("Some(42)")
+                .matches("panic!()")
+                .notMatches("== b")
+                .matches("len(values)")
+                .matches("\"123\".parse()")
+                .matches("\"Some string\".to_string()")
+                .matches("42")
+                .matches("0.0")
+                .matches("pi.unwrap_or(1.0).log(2.72)")
+                .matches("pi.into_iter(1.0).log(2.72)")
+                .matches("other.unwrap_or(1.0).map(From::from).collect()")
+                .matches("callme()")
+                .matches("println!(\"{}, {}\", word, j)")
+                .matches("{}")
+                .matches("i.get()")
+                .matches("m.get(i) + 1")
+                .matches("dest.write_char('n')")
+                .matches("Identifier::Numeric")
+                .matches("Vec::new")
+                .notMatches("MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        }")
+                .matches("StepPosition::JumpEnd")
+                .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
+                .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    }")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
+
+
+
+
+
+
+
+        ;
+    }
+
+
+
+
 /*
     Expression :
     ExpressionWithoutBlock
