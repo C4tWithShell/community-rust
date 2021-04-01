@@ -198,6 +198,7 @@ public class OperatorExpressionTest {
                 .matches("1-3")
                 .matches("1-3-2")
                 .matches("22 % 7")
+                .matches("s_error.start_column.unwrap() - sc")
                 .matches("m.get(i) + 1")
                 //comparisons
                 .matches("a == b")

@@ -78,6 +78,7 @@ public class CallExpressionTest {
                         "    })")
                 .matches("(state.get_error_class_fn)(1)")
                 .matches("(state.borrow().get_error_class_fn)(&error)")
+                .matches("Some(ec - (js_error.start_column.unwrap() - sc))")
 
 
 

@@ -18,6 +18,7 @@ public class GroupedExpressionTest {
                 .matches("(state.get_error_class_fn)")
                 .matches("(state.borrow().get_error_class_fn)")
                 .matches("(disk_byte as char)")
+                .matches("(js_error.start_column.unwrap() - sc)")
 
         ;
     }
