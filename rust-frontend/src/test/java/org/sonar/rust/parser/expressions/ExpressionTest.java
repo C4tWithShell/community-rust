@@ -75,6 +75,7 @@ public class ExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+
         ;
     }
 
@@ -132,6 +133,19 @@ public class ExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+
+                /* FIXME async followed by dotted
+                .matches("async move {\n" +
+                        "            if check {\n" +
+                        "                check_source_files(config, paths).await?;\n" +
+                        "            } else {\n" +
+                        "                format_source_files(config, paths).await?;\n" +
+                        "            }\n" +
+                        "            Ok(())\n" +
+                        "        }\n" +
+                        "            .boxed_local()")
+
+                 */
 
 
 
