@@ -66,6 +66,7 @@ public class OperatorExpressionTest {
                         "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
                         "             None => Ok(()),\n" +
                         "         }?")
+                .matches("check_source_files(config, paths).await?")
 
 
         ;

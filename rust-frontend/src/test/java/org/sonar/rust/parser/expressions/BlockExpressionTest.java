@@ -53,6 +53,14 @@ Statements :
     }
 
     @Test
+    public void testAsyncBlockExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_BLOCK_EXPRESSION))
+                .matches("async {}")
+                .matches("async move {}")
+        ;
+    }
+
+    @Test
     public void testBlockExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_EXPRESSION))
                 .matches("{}")
@@ -95,6 +103,14 @@ Statements :
                         "            PathBuf::from(\"/demo_dir/\")\n" +
                         "        }")
                 .matches("{PathBuf::from(r\"C:\\demo_dir\\\")}")
+                .matches("{\n" +
+                        "            if check {\n" +
+                        "                check_source_files(config, paths).res1;\n" +
+                        "            } else {\n" +
+                        "                format_source_files(config, paths).res2;\n" +
+                        "            }\n" +
+                        "            Ok(())\n" +
+                        "        }")
 
 
 

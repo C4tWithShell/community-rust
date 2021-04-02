@@ -1191,6 +1191,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 ));
 
         b.rule(DOTTED_EXPRESSION).is( b.firstOf(
+                AWAIT_EXPRESSION,
+                ASYNC_BLOCK_EXPRESSION,
                 INDEX_EXPRESSION,
                 TUPLE_INDEXING_EXPRESSION,
                 CALL_EXPRESSION,
@@ -1472,13 +1474,13 @@ public enum RustGrammar implements GrammarRuleKey {
                 )), EXPRESSION_WITH_BLOCK));
         b.rule(ERROR_PROPAGATION_EXPRESSION)
                 .is(b.firstOf(
-
+                        AWAIT_EXPRESSION,
                 CALL_EXPRESSION,
                 DOTTED_EXPRESSION, EXPRESSION_WITH_BLOCK,PATH_EXPRESSION,
 
                 GROUPED_EXPRESSION,
                 ARRAY_EXPRESSION,
-                AWAIT_EXPRESSION,
+
 
                 INDEX_EXPRESSION,
                 TUPLE_EXPRESSION,
