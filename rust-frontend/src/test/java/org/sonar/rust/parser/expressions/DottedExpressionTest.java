@@ -43,6 +43,15 @@ public class DottedExpressionTest {
                 .matches("self.get_cache_filename(url)")
                 .matches("(disk_byte as char).to_string()")
                 .matches("async move {}.local()")
+                .matches("async move {\n" +
+                        "            if check {\n" +
+                        "                check_source_files(config, paths).await?;\n" +
+                        "            } else {\n" +
+                        "                format_source_files(config, paths).await?;\n" +
+                        "            }\n" +
+                        "            Ok(())\n" +
+                        "        }\n" +
+                        "            .boxed_local()")
 
 
 

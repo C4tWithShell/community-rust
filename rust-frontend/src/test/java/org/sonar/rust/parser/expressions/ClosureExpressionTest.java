@@ -29,6 +29,11 @@ public class ClosureExpressionTest {
                 .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
                         "    }")
+                .matches("|paths: Vec<PathBuf>| {\n" +
+                        "        let config = get_typescript_config();\n" +
+                        "        a\n" +
+                        "            .boxed_local()\n" +
+                        "    }")
 
             ;
     }
