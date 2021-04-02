@@ -1,256 +1,405 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-//! This mod provides functions to remap a `JsError` based on a source map.
+//! This module provides file formatting utilities using
+//! [`dprint-plugin-typescript`](https://github.com/dprint/dprint-plugin-typescript).
+//!
+//! At the moment it is only consumed using CLI but in
+//! the future it can be easily extended to provide
+//! the same functions as ops available in JS runtime.
 
-use deno_core::error::JsError;
-use sourcemap::SourceMap;
-use std::collections::HashMap;
-use std::str;
-use std::sync::Arc;
+use crate::colors;
+use crate::diff::diff;
+use crate::file_watcher;
+use crate::fs_util::{collect_files, get_extension, is_supported_ext_fmt};
+use crate::text_encoding;
+use deno_core::error::generic_error;
+use deno_core::error::AnyError;
+use deno_core::futures;
+use deno_core::futures::FutureExt;
+use std::fs;
+use std::io::stdin;
+use std::io::stdout;
+use std::io::Read;
+use std::io::Write;
+use std::path::Path;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 
-pub trait SourceMapGetter: Sync + Send {
-    /// Returns the raw source map file.
-    fn get_source_map(&self, file_name: &str) -> Option<Vec<u8>>;
-    fn get_source_line(
-        &self,
-        file_name: &str,
-        line_number: usize,
-    ) -> Option<String>;
-}
+const BOM_CHAR: char = '\u{FEFF}';
 
-/// Cached filename lookups. The key can be None if a previous lookup failed to
-/// find a SourceMap.
-pub type CachedMaps = HashMap<String, Option<SourceMap>>;
-
-/// Apply a source map to a `deno_core::JsError`, returning a `JsError` where
-/// file names and line/column numbers point to the location in the original
-/// source, rather than the transpiled source code.
-pub fn apply_source_map<G: SourceMapGetter>(
-    js_error: &JsError,
-    getter: Arc<G>,
-) -> JsError {
-    // Note that js_error.frames has already been source mapped in
-    // prepareStackTrace().
-    let mut mappings_map: CachedMaps = HashMap::new();
-
-    let (script_resource_name, line_number, start_column, source_line) =
-        get_maybe_orig_position(
-            js_error.script_resource_name.clone(),
-            js_error.line_number,
-            // start_column is 0-based, we need 1-based here.
-            js_error.start_column.map(|n| n + 1),
-            &mut mappings_map,
-            getter.clone(),
-        );
-    let start_column = start_column.map(|n| n - 1);
-    // It is better to just move end_column to be the same distance away from
-    // start column because sometimes the code point is not available in the
-    // source file map.
-    let end_column = match js_error.end_column {
-        Some(ec) => {
-            if let Some(sc) = start_column {
-                Some(ec - (js_error.start_column.unwrap() - sc))
+/// Format JavaScript/TypeScript files.
+pub async fn format(
+    args: Vec<PathBuf>,
+    ignore: Vec<PathBuf>,
+    check: bool,
+    watch: bool,
+) -> Result<(), AnyError> {
+    let target_file_resolver = || {
+        // collect the files that are to be formatted
+        collect_files(&args, &ignore, is_supported_ext_fmt).and_then(|files| {
+            if files.is_empty() {
+                Err(generic_error("No target files found."))
             } else {
-                None
+                Ok(files)
             }
+        })
+    };
+    let operation = |paths: Vec<PathBuf>| {
+        let config = get_typescript_config();
+        async move {
+            if check {
+                check_source_files(config, paths).await?;
+            } else {
+                format_source_files(config, paths).await?;
+            }
+            Ok(())
         }
-        _ => None,
+            .boxed_local()
     };
 
-    let mut script_resource_name = script_resource_name;
-    let mut line_number = line_number;
-    let mut start_column = start_column;
-    let mut end_column = end_column;
-    let mut source_line = source_line;
-    if script_resource_name
-        .as_ref()
-        .map_or(true, |s| s.starts_with("deno:"))
-    {
-        for frame in &js_error.frames {
-            if let (Some(file_name), Some(line_number_)) =
-            (&frame.file_name, frame.line_number)
-            {
-                if !file_name.starts_with("deno:") {
-                    script_resource_name = Some(file_name.clone());
-                    line_number = Some(line_number_);
-                    start_column = frame.column_number.map(|n| n - 1);
-                    end_column = frame.column_number;
-                    // Lookup expects 0-based line and column numbers, but ours are 1-based.
-                    source_line =
-                        getter.get_source_line(file_name, (line_number_ - 1) as usize);
-                    break;
-                }
-            }
-        }
+    if watch {
+        file_watcher::watch_func(target_file_resolver, operation, "Fmt").await?;
+    } else {
+        operation(target_file_resolver()?).await?;
     }
 
-    JsError {
-        message: js_error.message.clone(),
-        source_line,
-        script_resource_name,
-        line_number,
-        start_column,
-        end_column,
-        frames: js_error.frames.clone(),
-        stack: None,
-    }
+    Ok(())
 }
 
-fn get_maybe_orig_position<G: SourceMapGetter>(
-    file_name: Option<String>,
-    line_number: Option<i64>,
-    column_number: Option<i64>,
-    mappings_map: &mut CachedMaps,
-    getter: Arc<G>,
-) -> (Option<String>, Option<i64>, Option<i64>, Option<String>) {
-    match (file_name, line_number, column_number) {
-        (Some(file_name_v), Some(line_v), Some(column_v)) => {
-            let (file_name, line_number, column_number, source_line) =
-                get_orig_position(file_name_v, line_v, column_v, mappings_map, getter);
-            (
-                Some(file_name),
-                Some(line_number),
-                Some(column_number),
-                source_line,
-            )
-        }
-        _ => (None, None, None, None),
-    }
-}
+/// Formats markdown (using https://github.com/dprint/dprint-plugin-markdown) and its code blocks
+/// (ts/tsx, js/jsx).
+fn format_markdown(
+    file_text: &str,
+    ts_config: dprint_plugin_typescript::configuration::Configuration,
+) -> Result<String, String> {
+    let md_config = get_markdown_config();
+    dprint_plugin_markdown::format_text(
+        &file_text,
+        &md_config,
+        Box::new(move |tag, text, line_width| {
+            let tag = tag.to_lowercase();
+            if matches!(
+        tag.as_str(),
+        "ts"
+          | "tsx"
+          | "js"
+          | "jsx"
+          | "javascript"
+          | "typescript"
+          | "json"
+          | "jsonc"
+      ) {
+                // It's important to tell dprint proper file extension, otherwise
+                // it might parse the file twice.
+                let extension = match tag.as_str() {
+                    "javascript" => "js",
+                    "typescript" => "ts",
+                    rest => rest,
+                };
 
-pub fn get_orig_position<G: SourceMapGetter>(
-    file_name: String,
-    line_number: i64,
-    column_number: i64,
-    mappings_map: &mut CachedMaps,
-    getter: Arc<G>,
-) -> (String, i64, i64, Option<String>) {
-    // Lookup expects 0-based line and column numbers, but ours are 1-based.
-    let line_number = line_number - 1;
-    let column_number = column_number - 1;
-
-    let default_pos = (file_name.clone(), line_number, column_number, None);
-    let maybe_source_map = get_mappings(&file_name, mappings_map, getter.clone());
-    let (file_name, line_number, column_number, source_line) =
-        match maybe_source_map {
-            None => default_pos,
-            Some(source_map) => {
-                match source_map.lookup_token(line_number as u32, column_number as u32)
-                {
-                    None => default_pos,
-                    Some(token) => match token.get_source() {
-                        None => default_pos,
-                        Some(source_file_name) => {
-                            // The `source_file_name` written by tsc in the source map is
-                            // sometimes only the basename of the URL, or has unwanted `<`/`>`
-                            // around it. Use the `file_name` we get from V8 if
-                            // `source_file_name` does not parse as a URL.
-                            let file_name = match deno_core::resolve_url(source_file_name) {
-                                Ok(m) => m.to_string(),
-                                Err(_) => file_name,
-                            };
-                            let source_line =
-                                if let Some(source_view) = token.get_source_view() {
-                                    source_view
-                                        .get_line(token.get_src_line())
-                                        .map(|s| s.to_string())
-                                } else {
-                                    None
-                                };
-                            (
-                                file_name,
-                                i64::from(token.get_src_line()),
-                                i64::from(token.get_src_col()),
-                                source_line,
-                            )
-                        }
-                    },
+                if matches!(extension, "json" | "jsonc") {
+                    let mut json_config = get_json_config();
+                    json_config.line_width = line_width;
+                    dprint_plugin_json::format_text(&text, &json_config)
+                } else {
+                    let fake_filename =
+                        PathBuf::from(format!("deno_fmt_stdin.{}", extension));
+                    let mut codeblock_config = ts_config.clone();
+                    codeblock_config.line_width = line_width;
+                    dprint_plugin_typescript::format_text(
+                        &fake_filename,
+                        &text,
+                        &codeblock_config,
+                    )
                 }
-            }
-        };
-    let source_line = source_line
-        .or_else(|| getter.get_source_line(&file_name, line_number as usize));
-    (file_name, line_number + 1, column_number + 1, source_line)
-}
-
-fn get_mappings<'a, G: SourceMapGetter>(
-    file_name: &str,
-    mappings_map: &'a mut CachedMaps,
-    getter: Arc<G>,
-) -> &'a Option<SourceMap> {
-    mappings_map
-        .entry(file_name.to_string())
-        .or_insert_with(|| parse_map_string(file_name, getter))
-}
-
-// TODO(kitsonk) parsed source maps should probably be cached in state in
-// the module meta data.
-fn parse_map_string<G: SourceMapGetter>(
-    file_name: &str,
-    getter: Arc<G>,
-) -> Option<SourceMap> {
-    getter
-        .get_source_map(file_name)
-        .and_then(|raw_source_map| SourceMap::from_slice(&raw_source_map).ok())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    struct MockSourceMapGetter {}
-
-    impl SourceMapGetter for MockSourceMapGetter {
-        fn get_source_map(&self, file_name: &str) -> Option<Vec<u8>> {
-            let s = match file_name {
-                "foo_bar.ts" => {
-                    r#"{"sources": ["foo_bar.ts"], "mappings":";;;IAIA,OAAO,CAAC,GAAG,CAAC,qBAAqB,EAAE,EAAE,CAAC,OAAO,CAAC,CAAC;IAC/C,OAAO,CAAC,GAAG,CAAC,eAAe,EAAE,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC;IACjD,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,IAAI,CAAC,QAAQ,CAAC,EAAE,CAAC,CAAC;IAE3C,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC"}"#
-                }
-                "bar_baz.ts" => {
-                    r#"{"sources": ["bar_baz.ts"], "mappings":";;;IAEA,CAAC,KAAK,IAAI,EAAE;QACV,MAAM,GAAG,GAAG,sDAAa,OAAO,2BAAC,CAAC;QAClC,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC;IACnB,CAAC,CAAC,EAAE,CAAC;IAEQ,QAAA,GAAG,GAAG,KAAK,CAAC;IAEzB,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC"}"#
-                }
-                _ => return None,
-            };
-            Some(s.as_bytes().to_owned())
-        }
-
-        fn get_source_line(
-            &self,
-            file_name: &str,
-            line_number: usize,
-        ) -> Option<String> {
-            let s = match file_name {
-                "foo_bar.ts" => vec![
-                    "console.log('foo');",
-                    "console.log('foo');",
-                    "console.log('foo');",
-                    "console.log('foo');",
-                    "console.log('foo');",
-                ],
-                _ => return None,
-            };
-            if s.len() > line_number {
-                Some(s[line_number].to_string())
             } else {
-                None
+                Ok(text.to_string())
+            }
+        }),
+    )
+}
+
+/// Formats JSON and JSONC using the rules provided by .deno()
+/// of configuration builder of https://github.com/dprint/dprint-plugin-json.
+/// See https://git.io/Jt4ht for configuration.
+fn format_json(file_text: &str) -> Result<String, String> {
+    let json_config = get_json_config();
+    dprint_plugin_json::format_text(&file_text, &json_config)
+}
+
+async fn check_source_files(
+    config: dprint_plugin_typescript::configuration::Configuration,
+    paths: Vec<PathBuf>,
+) -> Result<(), AnyError> {
+    let not_formatted_files_count = Arc::new(AtomicUsize::new(0));
+    let checked_files_count = Arc::new(AtomicUsize::new(0));
+
+    // prevent threads outputting at the same time
+    let output_lock = Arc::new(Mutex::new(0));
+
+    run_parallelized(paths, {
+        let not_formatted_files_count = not_formatted_files_count.clone();
+        let checked_files_count = checked_files_count.clone();
+        move |file_path| {
+            checked_files_count.fetch_add(1, Ordering::Relaxed);
+            let file_text = read_file_contents(&file_path)?.text;
+            let ext = get_extension(&file_path).unwrap_or_else(String::new);
+            let r = if ext == "md" {
+                format_markdown(&file_text, config.clone())
+            } else if matches!(ext.as_str(), "json" | "jsonc") {
+                format_json(&file_text)
+            } else {
+                dprint_plugin_typescript::format_text(&file_path, &file_text, &config)
+            };
+            match r {
+                Ok(formatted_text) => {
+                    if formatted_text != file_text {
+                        not_formatted_files_count.fetch_add(1, Ordering::Relaxed);
+                        let _g = output_lock.lock().unwrap();
+                        let diff = diff(&file_text, &formatted_text);
+                        info!("");
+                        info!("{} {}:", colors::bold("from"), file_path.display());
+                        info!("{}", diff);
+                    }
+                }
+                Err(e) => {
+                    let _g = output_lock.lock().unwrap();
+                    eprintln!("Error checking: {}", file_path.to_string_lossy());
+                    eprintln!("   {}", e);
+                }
+            }
+            Ok(())
+        }
+    })
+        .await?;
+
+    let not_formatted_files_count =
+        not_formatted_files_count.load(Ordering::Relaxed);
+    let checked_files_count = checked_files_count.load(Ordering::Relaxed);
+    let checked_files_str =
+        format!("{} {}", checked_files_count, files_str(checked_files_count));
+    if not_formatted_files_count == 0 {
+        info!("Checked {}", checked_files_str);
+        Ok(())
+    } else {
+        let not_formatted_files_str = files_str(not_formatted_files_count);
+        Err(generic_error(format!(
+            "Found {} not formatted {} in {}",
+            not_formatted_files_count, not_formatted_files_str, checked_files_str,
+        )))
+    }
+}
+
+async fn format_source_files(
+    config: dprint_plugin_typescript::configuration::Configuration,
+    paths: Vec<PathBuf>,
+) -> Result<(), AnyError> {
+    let formatted_files_count = Arc::new(AtomicUsize::new(0));
+    let checked_files_count = Arc::new(AtomicUsize::new(0));
+    let output_lock = Arc::new(Mutex::new(0)); // prevent threads outputting at the same time
+
+    run_parallelized(paths, {
+        let formatted_files_count = formatted_files_count.clone();
+        let checked_files_count = checked_files_count.clone();
+        move |file_path| {
+            checked_files_count.fetch_add(1, Ordering::Relaxed);
+            let file_contents = read_file_contents(&file_path)?;
+            let ext = get_extension(&file_path).unwrap_or_else(String::new);
+            let r = if ext == "md" {
+                format_markdown(&file_contents.text, config.clone())
+            } else if matches!(ext.as_str(), "json" | "jsonc") {
+                format_json(&file_contents.text)
+            } else {
+                dprint_plugin_typescript::format_text(
+                    &file_path,
+                    &file_contents.text,
+                    &config,
+                )
+            };
+            match r {
+                Ok(formatted_text) => {
+                    if formatted_text != file_contents.text {
+                        write_file_contents(
+                            &file_path,
+                            FileContents {
+                                had_bom: file_contents.had_bom,
+                                text: formatted_text,
+                            },
+                        )?;
+                        formatted_files_count.fetch_add(1, Ordering::Relaxed);
+                        let _g = output_lock.lock().unwrap();
+                        info!("{}", file_path.to_string_lossy());
+                    }
+                }
+                Err(e) => {
+                    let _g = output_lock.lock().unwrap();
+                    eprintln!("Error formatting: {}", file_path.to_string_lossy());
+                    eprintln!("   {}", e);
+                }
+            }
+            Ok(())
+        }
+    })
+        .await?;
+
+    let formatted_files_count = formatted_files_count.load(Ordering::Relaxed);
+    debug!(
+        "Formatted {} {}",
+        formatted_files_count,
+        files_str(formatted_files_count),
+    );
+
+    let checked_files_count = checked_files_count.load(Ordering::Relaxed);
+    info!(
+        "Checked {} {}",
+        checked_files_count,
+        files_str(checked_files_count)
+    );
+
+    Ok(())
+}
+
+/// Format stdin and write result to stdout.
+/// Treats input as TypeScript or as set by `--ext` flag.
+/// Compatible with `--check` flag.
+pub fn format_stdin(check: bool, ext: String) -> Result<(), AnyError> {
+    let mut source = String::new();
+    if stdin().read_to_string(&mut source).is_err() {
+        return Err(generic_error("Failed to read from stdin"));
+    }
+    let config = get_typescript_config();
+    let r = if ext.as_str() == "md" {
+        format_markdown(&source, config)
+    } else if matches!(ext.as_str(), "json" | "jsonc") {
+        format_json(&source)
+    } else {
+        // dprint will fallback to jsx parsing if parsing this as a .ts file doesn't work
+        dprint_plugin_typescript::format_text(
+            &PathBuf::from("_stdin.ts"),
+            &source,
+            &config,
+        )
+    };
+    match r {
+        Ok(formatted_text) => {
+            if check {
+                if formatted_text != source {
+                    println!("Not formatted stdin");
+                }
+            } else {
+                stdout().write_all(formatted_text.as_bytes())?;
             }
         }
+        Err(e) => {
+            return Err(generic_error(e));
+        }
+    }
+    Ok(())
+}
+
+fn files_str(len: usize) -> &'static str {
+    if len <= 1 {
+        "file"
+    } else {
+        "files"
+    }
+}
+
+fn get_typescript_config(
+) -> dprint_plugin_typescript::configuration::Configuration {
+    dprint_plugin_typescript::configuration::ConfigurationBuilder::new()
+        .deno()
+        .build()
+}
+
+fn get_markdown_config() -> dprint_plugin_markdown::configuration::Configuration
+{
+    dprint_plugin_markdown::configuration::ConfigurationBuilder::new()
+        .deno()
+        .build()
+}
+
+fn get_json_config() -> dprint_plugin_json::configuration::Configuration {
+    dprint_plugin_json::configuration::ConfigurationBuilder::new()
+        .deno()
+        .build()
+}
+
+struct FileContents {
+    text: String,
+    had_bom: bool,
+}
+
+fn read_file_contents(file_path: &Path) -> Result<FileContents, AnyError> {
+    let file_bytes = fs::read(&file_path)?;
+    let charset = text_encoding::detect_charset(&file_bytes);
+    let file_text = text_encoding::convert_to_utf8(&file_bytes, charset)?;
+    let had_bom = file_text.starts_with(BOM_CHAR);
+    let text = if had_bom {
+        // remove the BOM
+        String::from(&file_text[BOM_CHAR.len_utf8()..])
+    } else {
+        String::from(file_text)
+    };
+
+    Ok(FileContents { text, had_bom })
+}
+
+fn write_file_contents(
+    file_path: &Path,
+    file_contents: FileContents,
+) -> Result<(), AnyError> {
+    let file_text = if file_contents.had_bom {
+        // add back the BOM
+        format!("{}{}", BOM_CHAR, file_contents.text)
+    } else {
+        file_contents.text
+    };
+
+    Ok(fs::write(file_path, file_text)?)
+}
+
+pub async fn run_parallelized<F>(
+    file_paths: Vec<PathBuf>,
+    f: F,
+) -> Result<(), AnyError>
+    where
+        F: FnOnce(PathBuf) -> Result<(), AnyError> + Send + 'static + Clone,
+{
+    let handles = file_paths.iter().map(|file_path| {
+        let f = f.clone();
+        let file_path = file_path.clone();
+        tokio::task::spawn_blocking(move || f(file_path))
+    });
+    let join_results = futures::future::join_all(handles).await;
+
+    // find the tasks that panicked and let the user know which files
+    let panic_file_paths = join_results
+        .iter()
+        .enumerate()
+        .filter_map(|(i, join_result)| {
+            join_result
+                .as_ref()
+                .err()
+                .map(|_| file_paths[i].to_string_lossy())
+        })
+        .collect::<Vec<_>>();
+    if !panic_file_paths.is_empty() {
+        panic!("Panic formatting: {}", panic_file_paths.join(", "))
     }
 
-    #[test]
-    fn apply_source_map_line() {
-        let e = JsError {
-            message: "TypeError: baz".to_string(),
-            source_line: Some("foo".to_string()),
-            script_resource_name: Some("foo_bar.ts".to_string()),
-            line_number: Some(4),
-            start_column: Some(16),
-            end_column: None,
-            frames: vec![],
-            stack: None,
-        };
-        let getter = Arc::new(MockSourceMapGetter {});
-        let actual = apply_source_map(&e, getter);
-        assert_eq!(actual.source_line, Some("console.log('foo');".to_string()));
+    // check for any errors and if so return the first one
+    let mut errors = join_results.into_iter().filter_map(|join_result| {
+        join_result
+            .ok()
+            .map(|handle_result| handle_result.err())
+            .flatten()
+    });
+
+    if let Some(e) = errors.next() {
+        Err(e)
+    } else {
+        Ok(())
     }
 }
