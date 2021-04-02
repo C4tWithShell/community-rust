@@ -42,6 +42,7 @@ public class DottedExpressionTest {
                 .matches("state.borrow().get_error_class_fn")
                 .matches("self.get_cache_filename(url)")
                 .matches("(disk_byte as char).to_string()")
+                .matches("async move {}.local()")
 
 
 
