@@ -166,6 +166,23 @@ public class MatchExpressionTest {
                         "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
                         "             None => Ok(()),\n" +
                         "         }")
+                .matches("match (stack.pop(), token) {\n" +
+                        "              (Some(Token::LParen), Token::RParen)\n" +
+                        "              | (Some(Token::LBracket), Token::RBracket)\n" +
+                        "              | (Some(Token::LBrace), Token::RBrace)\n" +
+                        "              | (Some(Token::DollarLBrace), Token::RBrace) => {}\n" +
+                        "              (Some(left), _) => {\n" +
+                        "                return Ok(ValidationResult::Invalid(Some(format!(\n" +
+                        "                  \"Mismatched pairs: {:?} is not properly closed\",\n" +
+                        "                  left\n" +
+                        "                ))))\n" +
+                        "              }\n" +
+                        "              (None, _) => {\n" +
+                        "                // While technically invalid when unpaired, it should be V8's task to output error instead.\n" +
+                        "                // Thus marked as valid with no info.\n" +
+                        "                return Ok(ValidationResult::Valid(None));\n" +
+                        "              }\n" +
+                        "            }")
 
 
         ;
