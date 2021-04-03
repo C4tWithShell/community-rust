@@ -945,19 +945,38 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void patterns(LexerlessGrammarBuilder b) {
         b.rule(PATTERN).is(b.firstOf(
+
                 RANGE_PATTERN,
                 TUPLE_STRUCT_PATTERN,
                 STRUCT_PATTERN,
                 MACRO_INVOCATION,
+
+
+
+
+                //unambigous PATH_PATTERN,
+                b.firstOf(
+                        b.sequence(b.optional(RustPunctuator.PATHSEP),
+                                //PATH_EXPR_SEGMENT,
+                                b.sequence(b.firstOf(
+                                        RustKeyword.KW_SUPER, b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp("^\\$crate$"), IDENTIFIER
+                                        )
+                                        , b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS))),
+                                b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)))
+                        , QUALIFIED_PATH_IN_EXPRESSION),
                 IDENTIFIER_PATTERN,
+
+
+
                 WILDCARD_PATTERN,
                 REST_PATTERN,
                 OBSOLETE_RANGE_PATTERN,
                 REFERENCE_PATTERN,
+
                 TUPLE_PATTERN,
                 GROUPED_PATTERN,
                 SLICE_PATTERN,
-                PATH_PATTERN,
+
                 LITERAL_PATTERN
         ));
         b.rule(LITERAL_PATTERN).is(b.firstOf(

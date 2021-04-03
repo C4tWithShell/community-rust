@@ -60,6 +60,7 @@ public class PathTest {
                 .matches("result::Result")
                 .matches("Identifier::Numeric")
                 .notMatches("match")
+                .matches("Token::BackQuote")
 
 
         ;
@@ -123,6 +124,7 @@ public class PathTest {
     public void testQualifiedPathInExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_IN_EXPRESSION))
                 .matches("<S as T1>::f")
+
 
         ;
     }
