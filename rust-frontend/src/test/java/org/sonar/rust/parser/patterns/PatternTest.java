@@ -138,6 +138,8 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN))
                 .matches("Point{}")
                 .matches("Point{..}")
+                .matches("TokenOrComment::Comment{..}")
+                .matches("TokenOrComment::Comment { .. }")
 
         ;
 

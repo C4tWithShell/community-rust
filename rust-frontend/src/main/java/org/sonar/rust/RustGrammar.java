@@ -1014,7 +1014,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 PATTERN
         );
         b.rule(STRUCT_PATTERN).is(
-                PATH_IN_EXPRESSION, "{", SPC, b.optional(STRUCT_PATTERN_ELEMENTS),SPC,  "}"
+                PATH_IN_EXPRESSION, SPC, "{", SPC, b.optional(STRUCT_PATTERN_ELEMENTS),SPC,  "}"
         );
         b.rule(STRUCT_PATTERN_ELEMENTS).is(b.firstOf(
                 b.sequence(STRUCT_PATTERN_FIELDS,
@@ -1034,7 +1034,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(IDENTIFIER, RustPunctuator.COLON, PATTERN),
                         b.sequence(b.optional(RustKeyword.KW_REF), SPC, b.optional(RustKeyword.KW_MUT),SPC,  IDENTIFIER)
                 ), ")");
-        b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE), "..");
+        b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE,SPC), RustPunctuator.DOTDOT);
 
         b.rule(TUPLE_STRUCT_PATTERN).is(
                 PATH_IN_EXPRESSION, "(", b.optional(TUPLE_STRUCT_ITEMS), ")"
@@ -2069,7 +2069,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
                 b.sequence("r", RAW_STRING_CONTENT)));
         b.rule(RAW_STRING_CONTENT).is(b.firstOf(
-                b.regexp("^\"[^\\r\\n].*\""),
+                b.sequence(b.regexp("^\"[^\\r\\n].*\""),SPC),
                 b.sequence(RustPunctuator.POUND, RAW_STRING_CONTENT, RustPunctuator.POUND)));
 
 
