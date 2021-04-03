@@ -42,7 +42,6 @@ public class PatternTest {
                 .matches("e @ 1..=5")
                 .matches("f @ 'a'..='z'")
                 .matches("None")
-        //FIXME.matches("Some(x)")
 
         ;
 
@@ -211,6 +210,7 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_PATTERN))
                 .matches("Vec::<u8>::with_capacity")
                 .matches("<S as T1>::f")
+                .matches("Token::BackQuote")
 
         ;
 
@@ -221,6 +221,7 @@ public class PatternTest {
     @Test
     public void testPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN))
+                .matches("Token::BackQuote") //path pattern
                 //range patterns
                 .matches("1..=9")
                 .matches("1...9") // obsolete
@@ -245,6 +246,7 @@ public class PatternTest {
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
                 .matches("(\"Bacon\", b)")
+
 
 
 
