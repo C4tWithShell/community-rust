@@ -52,6 +52,7 @@ public class DottedExpressionTest {
                         "            Ok(())\n" +
                         "        }\n" +
                         "            .boxed_local()")
+                .matches("self.state")
 
 
 
