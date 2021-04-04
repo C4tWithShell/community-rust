@@ -145,6 +145,7 @@ public class OperatorExpressionTest {
                 .matches("x = 42")
                 .notMatches("x = = 42")
                 .notMatches("x = 42 =")
+                .matches("self.state = 42")
 
         ;
     }

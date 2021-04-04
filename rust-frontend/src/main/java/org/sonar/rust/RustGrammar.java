@@ -682,14 +682,14 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(STRUCT_FIELDS).is(seq(b, STRUCT_FIELD, RustPunctuator.COMMA));
         b.rule(STRUCT_FIELD).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
-                b.optional(VISIBILITY),
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
+                b.optional(VISIBILITY,SPC),
                 IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE
         );
         b.rule(TUPLE_FIELDS).is(seq(b, TUPLE_FIELD, RustPunctuator.COMMA));
         b.rule(TUPLE_FIELD).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
-                b.optional(VISIBILITY), TYPE
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
+                b.optional(VISIBILITY,SPC), TYPE
         );
 
     }
@@ -1650,7 +1650,13 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TYPE_CAST_EXPRESSION_TERM).is(SPC, RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS,
                 SPC, b.zeroOrMore(TYPE_CAST_EXPRESSION_TERM));
 
-        b.rule(ASSIGNMENT_EXPRESSION).is(b.firstOf(IDENTIFIER, LITERALS), ASSIGNMENT_EXPRESSION_TERM);
+        b.rule(ASSIGNMENT_EXPRESSION).is(b.firstOf(DOTTED_EXPRESSION,
+                                                    CALL_EXPRESSION,
+                                                    IDENTIFIER,
+                                                    LITERALS),
+
+
+                ASSIGNMENT_EXPRESSION_TERM);
         b.rule(ASSIGNMENT_EXPRESSION_TERM).is(b.firstOf(LITERALS,
                 b.sequence(SPC,RustPunctuator.EQ, SPC,EXPRESSION, SPC, b.optional(ASSIGNMENT_EXPRESSION_TERM))));
 
