@@ -1436,10 +1436,13 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(INDEX_EXPRESSION).is(b.firstOf(
-                b.sequence(IDENTIFIER, INDEX_EXPRESSION_TERM),
-                b.sequence(ARRAY_EXPRESSION, INDEX_EXPRESSION_TERM),
-                b.sequence(BORROW_EXPRESSION, INDEX_EXPRESSION_TERM),
-                b.sequence(EXPRESSION_WITH_BLOCK, INDEX_EXPRESSION_TERM)));
+                //DOTTED_EXPRESSION,
+               IDENTIFIER,
+               ARRAY_EXPRESSION,
+                BORROW_EXPRESSION,
+                EXPRESSION_WITH_BLOCK ),INDEX_EXPRESSION_TERM
+
+                );
 
         b.rule(INDEX_EXPRESSION_TERM).is("[", EXPRESSION, "]", b.zeroOrMore(SPC, INDEX_EXPRESSION_TERM));
     }
