@@ -25,6 +25,8 @@ A25 = LoopExpression
 A26 = IfExpression
 A27 = IfLetExpression
 A28 = MatchExpression
+A29 = PathInExpression
+A30 = QualifiedPathInExpression
 A31 = BorrowExpression
 A32 = DereferenceExpression
 A33 = ErrorPropagationExpression
@@ -47,6 +49,7 @@ A49 = EnumExprTuple
 A50 = EnumExprFields
 A51 = EnumExprField
 A52 = CallParams
+A53 = PathExprSegment
 A54 = ClosureParameters
 A55 = ClosureParam
 A56 = Pattern
@@ -63,15 +66,10 @@ A66 = InfiniteLoopExpression
 A67 = PredicateLoopExpression
 A68 = PredicatePatternLoopExpression
 A69 = IteratorLoopExpression
-A70 = PatternWithoutRange
-A71 = Statements
-A72 = Statement
-A73 = LetStatement
-A74 = ExpressionStatement
 
 
 
-b= OuterAttribute
+b= OuterAttribute*
 c = LiteralExpression
 d = MacroInvocation
 e = InnerAttribute*
@@ -90,14 +88,14 @@ q = else
 r = let
 s = match
 t = |
-t2 = ||
+
 u = return
 v = async move?
 w = unsafe
 x = LoopLabel?
 y = loop 
 b1 = while
-b2 = for 
+b2 = for
 b3 = in
 b4 = ::
 b5 = PathIdentSegment
@@ -140,9 +138,8 @@ b391 = {
 b392 = }
 
 
-============
 
-
+<<<<<<< HEAD
 A1 -> c Z1 | b8 Z1 | b9  Z1 | (b10|b11) A1 Z1  | (b10|b11) b16 A1 Z1  | b12 A1 Z1 | b14 A1  Z1 | b17 A1 Z1
 | b371 e A1 b372 Z1 | b381 e A40? b382 Z1  | b371 e A42? b372 Z1 | b8 b391 e (A54| A46)? b392  Z1
 | b8 b371 e ( A1 (, A1)* ,? )? b372 Z1  | b8 Z1 | b8 b391 A50? b392 Z1  | b8 b371 ( A1 (, A1)* ,? )? b372 Z1
@@ -319,7 +316,6 @@ A74 -> (c| b8 | b9 | (b10|b11) A1 | (b10|b11) b16 A1 | b12 A1 | A1 b13 | b14 A1 
         | b+ A17 | b+ l | b+ A19 | b+ A20 | b+ A21 | b+ d) b32
         | (b391 e A71? b392 | v A22 | w A22 | x ( A66| A67 | A68| A69 ) | p A1  A22 (q ( A22 | A26 | A27 ) )?
            | p r A62 b36 A1 A22 (q ( A22 | A26 | A27 ) )? | s A1  b391 e A63? b392 | b+ A22 | b+ A23 | b+ A24 | b+ A25 | b+ A26 | b+ A27 | b+ A28) b32?
-
 
 
 
