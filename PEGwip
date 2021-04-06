@@ -1,0 +1,352 @@
+A1 = Expression
+A2 = ExpressionWithoutBlock
+A3 = ExpressionWithBlock
+A4 = PathExpression
+A5 = OperatorExpression
+A6 = GroupedExpression
+A7 = ArrayExpression
+A8 = AwaitExpression
+A9 = IndexExpression
+A10 = TupleExpression
+A11 = TupleIndexingExpression
+A12 = StructExpression
+A13 = EnumerationVariantExpression
+A14 = CallExpression
+A15 = MethodCallExpression
+A16 = FieldExpression
+A17 = ClosureExpression
+
+A19 = BreakExpression
+A20 = RangeExpression
+A21 = ReturnExpression
+A22 = BlockExpression
+A23 = AsyncBlockExpression
+A24 = UnsafeBlockExpression
+A25 = LoopExpression
+A26 = IfExpression
+A27 = IfLetExpression
+A28 = MatchExpression
+A29 = PathInExpression
+A30 = QualifiedPathInExpression
+A31 = BorrowExpression
+A32 = DereferenceExpression
+A33 = ErrorPropagationExpression
+A34 = NegationExpression
+A35 = ArithmeticOrLogicalExpression
+A36 = ComparisonExpression
+A37 = LazyBooleanExpression
+A38 = TypeCastExpression
+A39 = AssignmentExpression
+A40 = CompoundAssignmentExpression
+A41 = ArrayElements
+A42 = TupleElements
+A43 = StructExprStruct
+A44 = StructExprTuple
+A45 = StructExprFields
+A46 = StructBase
+A47 = StructExprField
+A48 = EnumExprStruct
+A49 = EnumExprTuple
+A50 = EnumExprFields
+A51 = EnumExprField
+A52 = CallParams
+A53 = PathExprSegment
+A54 = ClosureParameters
+A55 = ClosureParam
+A56 = Pattern
+A57 = RangeExpr
+A58 = RangeFromExpr
+A59 = RangeToExpr
+A60 = RangeInclusiveExpr
+A61 = RangeToInclusiveExpr
+A62 = MatchArmPatterns
+A63 = MatchArms
+A64 = MatchArm
+A65 = MatchArmGuard
+A66 = InfiniteLoopExpression
+A67 = PredicateLoopExpression
+A68 = PredicatePatternLoopExpression
+A69 = IteratorLoopExpression
+
+
+b= OuterAttribute*
+c = LiteralExpression
+d = MacroInvocation
+e = InnerAttribute*
+f = await
+g = TUPLE_INDEX
+h = move?
+i = IDENTIFIER
+j = TypeNoBounds
+k = Type
+l = continue LIFETIME_OR_LABEL?
+m = break LIFETIME_OR_LABEL?
+n = ..
+o = ..=
+p = if
+q = else
+r = let
+s = match
+t = |
+u = return
+v = async move?
+w = unsafe
+x = LoopLabel?
+y = loop 
+b1 = while
+b2 = for 
+b3 = in 
+
+
+============
+
+
+A1 -> A2|A3
+
+A2 ->
+   b
+   (c| A4| A5| A6| A7| A8| A9| A10| A11| A12| A13| A14| A15| A16| A17| l | A19 | A20 | A21| d )
+
+A3 ->
+   b
+   (  A22 | A23 | A24| A25| A26| A27| A28
+   )
+
+A4 -> A29| A30
+
+A5 -> A31| A32| A33| A34| A35| A36| A37| A38 | A39| A40
+
+
+A6 -> ( e A1 )
+
+
+A7 -> [ e A40? ]
+
+A40 ->
+      A1 ( , A1 )* ,?
+   | A1 ; A1
+
+
+A8 -> A1 . f
+
+A9 -> A1 [ A1 ]
+
+A10 -> ( e A42? )
+
+A42 -> ( A1 , )+ A1?
+
+A11 -> A1 . g
+
+A12 -> A43 | A44| A29
+
+A43 -> A29 { e (A54 | A46)? }
+
+A45 -> A47 (, A47)* (, A46 | ,?)
+
+A47 ->
+     i
+   | (i | g) : A1
+
+A46 -> .. A1
+
+A44 ->
+   A29 (
+      e
+      ( A1 (, A1)* ,? )?
+   )
+
+A13 -> A48 | A49 | A29
+
+A48 -> A29 { A50? }
+
+A50 -> A51 (, A51)* ,?
+
+A51 ->
+      i
+   | (i | g) : A1
+
+A49 ->
+   A29 (
+      ( A1 (, A1)* ,? )?
+   )
+
+A14 -> A1 ( A52? )
+
+A52 -> A1 ( , A1 )* ,?
+
+A15 -> A1 . A53 (A52? )
+
+A16 -> A1 . i
+
+A17 -> h  t A54? t (A1 | -> j A22)
+
+A54 -> A55 (, A55)* ,?
+
+A55 -> b A56 ( : k )?
+
+A19 -> m A1?      
+
+A20 -> A57 | A58 | A59| n | A60 | A61
+
+A57 -> A1 n A1
+
+A58 -> A1 n
+
+A59 -> n A1
+
+A60 -> A1 o A1
+
+A61 -> o A1
+
+A26 -> p A1  A22 (q ( A22 | A26 | A27 ) )?
+
+A27 -> p r A62 = A1 A22 (q ( A22 | A26 | A27 ) )?
+
+A28 -> s A1  { e A63? }
+
+A63 -> ( A64 => ( A2 , | A3 ,? ) )* A64 => A1 ,?
+
+A64 -> b A62 A65?
+
+A62 -> t? A56 ( t A56 )*
+
+A65 -> p A1
+
+A21 -> u A1?   
+
+A23 -> v A22
+
+A24 -> w A22
+
+A25 -> x ( A66| A67 | A68| A69 )
+
+-----------
+A29 :
+   ::? A53 (:: A53)*
+
+A53 :
+   PathIdentSegment (:: GenericArgs)?
+
+PathIdentSegment :
+   i | super | self | Self | crate | $crate
+
+GenericArgs :
+      < >
+   | < ( GenericArg , )* GenericArg ,? >
+
+GenericArg :
+   Lifetime | k | GenericArgsConst | GenericArgsBinding
+
+GenericArgsConst :
+      A22
+   | -? c
+   | SimplePathSegment
+
+GenericArgsBinding :
+   i = k
+-----------------------------
+A30 :
+   QualifiedPathType (:: A53)+
+
+QualifiedPathType :
+   < k (as TypePath)? >
+
+QualifiedPathInType :
+   QualifiedPathType (:: TypePathSegment)+
+-------------
+
+A31 :
+ (&|&&) A1
+| (&|&&) mut A1
+
+------------
+A32 :
+    * A1
+
+---------
+A33 :
+    A1 ?
+
+----------
+A34 :
+    - A1 | ! A1 
+
+---------
+A35 :
+    A1 + A1
+   | A1 - A1
+   | A1 * A1
+   | A1 / A1
+   | A1 % A1
+   | A1 & A1
+   | A1 | A1
+   | A1 ^ A1
+   | A1 << A1
+   | A1 >> A1
+
+---------
+A36 :
+  A1 == A1
+   | A1 != A1
+   | A1 > A1
+   | A1 < A1
+   | A1 >= A1
+   | A1 <= A1
+
+------------
+A37 :
+   A1 || A1 
+   | A1 && A1
+
+-------------
+A38 :
+    A1 as j
+
+-------------
+A39 :
+    A1 = A1
+-------------
+A40 :
+    A1 += A1
+   | A1 -= A1
+   | A1 *= A1
+   | A1 /= A1
+   | A1 %= A1
+   | A1 &= A1
+   | A1 |= A1
+   | A1 ^= A1
+   | A1 <<= A1
+   | A1 >>= A1
+
+----------------
+A56 :
+      PatternWithoutRange
+   | RangePattern
+
+PatternWithoutRange :
+      LiteralPattern
+   | IdentifierPattern
+   | WildcardPattern
+   | RestPattern
+   | ObsoleteRangePattern
+   | ReferencePattern
+   | StructPattern
+   | TupleStructPattern
+   | TuplePattern
+   | GroupedPattern
+   | SlicePattern
+   | PathPattern
+   | MacroInvocation
+
+-----
+
+A66 -> y A22
+
+A67 -> b1 A1 A22
+
+A68 -> b1 r A62 = A1 A22
+
+A69 -> b2 A56 b3 A1 A22
+
+
+

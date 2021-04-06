@@ -56,6 +56,7 @@ public class ArrayExpressionTest {
                 .matches("[b' ', b' ', b' '][0..1]")
                 .matches("[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
                 .matches("resp_header[0..8]")
+                .matches("my.resp_header[0..8]")
 
         ;
     }
