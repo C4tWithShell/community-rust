@@ -15,7 +15,6 @@ A14 = CallExpression
 A15 = MethodCallExpression
 A16 = FieldExpression
 A17 = ClosureExpression
-
 A19 = BreakExpression
 A20 = RangeExpression
 A21 = ReturnExpression
@@ -26,8 +25,6 @@ A25 = LoopExpression
 A26 = IfExpression
 A27 = IfLetExpression
 A28 = MatchExpression
-A29 = PathInExpression
-A30 = QualifiedPathInExpression
 A31 = BorrowExpression
 A32 = DereferenceExpression
 A33 = ErrorPropagationExpression
@@ -50,7 +47,6 @@ A49 = EnumExprTuple
 A50 = EnumExprFields
 A51 = EnumExprField
 A52 = CallParams
-A53 = PathExprSegment
 A54 = ClosureParameters
 A55 = ClosureParam
 A56 = Pattern
@@ -67,6 +63,8 @@ A66 = InfiniteLoopExpression
 A67 = PredicateLoopExpression
 A68 = PredicatePatternLoopExpression
 A69 = IteratorLoopExpression
+A70 = PatternWithoutRange
+
 
 
 
@@ -89,7 +87,6 @@ q = else
 r = let
 s = match
 t = |
-
 u = return
 v = async move?
 w = unsafe
@@ -180,6 +177,7 @@ A6 -> b371 e A1 b372
 
 A7 -> b381 e A40? b382
 
+
 A8 -> A1 . f
 
 A9 -> A1 b381 A1 b382
@@ -221,6 +219,7 @@ A27 -> p r A62 b36 A1 A22 (q ( A22 | A26 | A27 ) )?
 A28 -> s A1  b391 e A63? b392
 
 A31 ->  (b10|b11) A1 | (b10|b11) b16 A1
+
 
 A32 -> b12 A1
 
