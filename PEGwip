@@ -1,0 +1,316 @@
+A1 = Expression
+A2 = ExpressionWithoutBlock
+A3 = ExpressionWithBlock
+A4 = PathExpression
+A5 = OperatorExpression
+A6 = GroupedExpression
+A7 = ArrayExpression
+A8 = AwaitExpression
+A9 = IndexExpression
+A10 = TupleExpression
+A11 = TupleIndexingExpression
+A12 = StructExpression
+A13 = EnumerationVariantExpression
+A14 = CallExpression
+A15 = MethodCallExpression
+A16 = FieldExpression
+A17 = ClosureExpression
+A19 = BreakExpression
+A20 = RangeExpression
+A21 = ReturnExpression
+A22 = BlockExpression
+A23 = AsyncBlockExpression
+A24 = UnsafeBlockExpression
+A25 = LoopExpression
+A26 = IfExpression
+A27 = IfLetExpression
+A28 = MatchExpression
+A31 = BorrowExpression
+A32 = DereferenceExpression
+A33 = ErrorPropagationExpression
+A34 = NegationExpression
+A35 = ArithmeticOrLogicalExpression
+A36 = ComparisonExpression
+A37 = LazyBooleanExpression
+A38 = TypeCastExpression
+A39 = AssignmentExpression
+A40 = CompoundAssignmentExpression
+A41 = ArrayElements
+A42 = TupleElements
+A43 = StructExprStruct
+A44 = StructExprTuple
+A45 = StructExprFields
+A46 = StructBase
+A47 = StructExprField
+A48 = EnumExprStruct
+A49 = EnumExprTuple
+A50 = EnumExprFields
+A51 = EnumExprField
+A52 = CallParams
+A54 = ClosureParameters
+A55 = ClosureParam
+A56 = Pattern
+A57 = RangeExpr
+A58 = RangeFromExpr
+A59 = RangeToExpr
+A60 = RangeInclusiveExpr
+A61 = RangeToInclusiveExpr
+A62 = MatchArmPatterns
+A63 = MatchArms
+A64 = MatchArm
+A65 = MatchArmGuard
+A66 = InfiniteLoopExpression
+A67 = PredicateLoopExpression
+A68 = PredicatePatternLoopExpression
+A69 = IteratorLoopExpression
+A70 = PatternWithoutRange
+A71 = Statements
+A72 = Statement
+A73 = LetStatement
+A74 = ExpressionStatement
+
+
+
+b= OuterAttribute
+c = LiteralExpression
+d = MacroInvocation
+e = InnerAttribute*
+f = await
+g = TUPLE_INDEX
+h = move?
+i = IDENTIFIER
+j = TypeNoBounds
+k = Type
+l = continue LIFETIME_OR_LABEL?
+m = break LIFETIME_OR_LABEL?
+n = ..
+o = ..=
+p = if
+q = else
+r = let
+s = match
+t = |
+t2 = ||
+u = return
+v = async move?
+w = unsafe
+x = LoopLabel?
+y = loop 
+b1 = while
+b2 = for 
+b3 = in
+b4 = ::
+b5 = PathIdentSegment
+b6 = GenericArgs
+b7 = PathExprSegment
+b8 = PathInExpression
+b9 = QualifiedPathInExpression
+b10 = &
+b11 = &&
+b12 = *
+b13 = ?
+b14 = -
+b15 = +
+b16 = mut
+b17 = !
+b18 = as
+b19 = RangePattern
+b20 = LiteralPattern
+b21 = IdentifierPattern
+b22 = WildcardPattern
+b23 = RestPattern
+b24 = ObsoleteRangePattern
+b25 = ReferencePattern
+b26 = StructPattern
+b27 = TupleStructPattern
+b28 = TuplePattern
+b29 = GroupedPattern
+b30 = SlicePattern
+b31 = PathPattern
+b32 = ;
+b33 = Item
+b34 = MacroInvocationSemi
+b35 = :
+b36 = =
+
+
+============
+
+
+A1 -> c| b8| b9 | b10|b11) A1 | (b10|b11) b16 A1 | b12 A1
+         | A1 b13
+         | b14 A1 | b17 A1
+         | A1 b15 A1 | A1 b14 A1 | A1 b12 A1| A1 / A1 | A1 % A1| A1 b10 A1
+         | A1 t A1 | A1 ^ A1 | A1 << A1 | A1 >> A1| A1 == A1 | A1 != A1 | A1 > A1 | A1 < A1 | A1 >= A1 | A1 <= A1
+         | A1 t2 A1 | A1 b11 A1| A1 b18 j | A1 b36 A1| A1 += A1 | A1 -= A1 | A1 *= A1 | A1 /= A1 | A1 %= A1
+         | A1 &= A1 | A1 |= A1 | A1 ^= A1 | A1 <<= A1 | A1 >>= A1
+         | ( e A1 )| [ e A40? ]| A1 . f| A1 [ A1 ]| ( e A42? )| A1 . g| b8 { e (A54 | A46)? }
+         | b8 ( e ( A1 (, A1)* ,? )? ) | b8| b8 { A50? } | b8 ( ( A1 (, A1)* ,? )? ) | b8 | A1 ( A52? )
+         | A1 . b7 (A52? )| A1 . i
+         | h t A54? t (A1 | -> j A22) | l | m A1? | A1 n A1 | A1 n | n A1| n | A1 o A1 | o A1 | u A1?
+         | d | b+ c | b+  A4 |b+ A5 | b+ A6 | b+ A7 | b+ A8 | b+ A9 | b+ A10 | b+ A11 | b+ A12 | b+ A13 | b+ A14
+         | b+ A15 | b+ A16 | b+ A17 | b+ l
+         | b+ A19 | b+ A20 | b+ A21 | b+ d | A22 | A23 | A24| A25 | A26 | A27 | A28
+         | b+ A22 | b+ A23 | b+ A24
+         | b+ A25 | b+ A26 | b+ A27 | b+ A28
+
+A2 ->
+   c| A4| A5| A6| A7| A8| A9| A10| A11| A12| A13| A14| A15| A16| A17| l | A19 | A20 | A21| d
+   |b+ c|b+  A4|b+ A5|b+ A6|b+ A7|b+ A8|b+ A9|b+ A10|b+ A11|b+ A12|b+ A13|b+ A14|b+ A15|b+ A16|b+ A17|b+ l |b+ A19 |b+ A20 |b+ A21|b+ d
+
+A3 -> A22 | A23 | A24| A25| A26| A27| A28 |b+ A22 |b+ A23 |b+ A24|b+ A25|b+ A26|b+ A27|b+ A28
+
+
+A4 -> b8| b9
+
+A5 -> A31| A32| A33| A34| A35| A36| A37| A38 | A39| A40
+
+A6 -> ( e A1 )
+
+A7 -> [ e A40? ]
+
+A8 -> A1 . f
+
+A9 -> A1 [ A1 ]
+
+A10 -> ( e A42? )
+
+A42 -> ( A1 , )+ A1?
+
+A11 -> A1 . g
+
+A12 -> A43 | A44| b8
+
+A13 -> A48 | A49 | b8
+
+A14 -> A1 ( A52? )
+
+A15 -> A1 . b7 (A52? )
+
+A16 -> A1 . i
+
+A17 -> h t A54? t (A1 | -> j A22)
+
+A19 -> m A1?
+
+A20 -> A57 | A58 | A59| n | A60 | A61
+
+A21 -> u A1?
+
+A22 ->
+   {
+      e
+      A71?
+   }
+
+
+
+A23 -> v A22
+
+A24 -> w A22
+
+A25 -> x ( A66| A67 | A68| A69 )
+
+A26 -> p A1  A22 (q ( A22 | A26 | A27 ) )?
+
+A27 -> p r A62 b36 A1 A22 (q ( A22 | A26 | A27 ) )?
+
+A28 -> s A1  { e A63? }
+
+A31 ->  (b10|b11) A1 | (b10|b11) b16 A1
+
+A32 -> b12 A1
+
+A33 -> A1 b13
+
+A34 -> b14 A1 | b17 A1
+
+A35 ->
+    A1 b15 A1 | A1 b14 A1 | A1 b12 A1| A1 / A1 | A1 % A1| A1 b10 A1
+   | A1 t A1 | A1 ^ A1 | A1 << A1 | A1 >> A1
+
+A36 -> A1 == A1 | A1 != A1 | A1 > A1 | A1 < A1 | A1 >= A1 | A1 <= A1
+
+A37 -> A1 t2 A1 | A1 b11 A1
+
+A38 -> A1 b18 j
+
+A39 -> A1 b36 A1
+
+A40 -> A1 += A1 | A1 -= A1 | A1 *= A1 | A1 /= A1 | A1 %= A1
+   | A1 &= A1 | A1 |= A1 | A1 ^= A1 | A1 <<= A1 | A1 >>= A1
+
+A41 -> A1 ( , A1 )* ,? | A1 b32 A1
+
+A43 -> b8 { e (A54 | A46)? }
+
+A44 ->
+   b8 ( e ( A1 (, A1)* ,? )? )
+
+A45 -> A47 (, A47)* (, A46 | ,?)
+
+A46 -> .. A1
+
+A47 -> i | (i | g) b35 A1
+
+
+A48 -> b8 { A50? }
+
+A49 ->
+   b8 ( ( A1 (, A1)* ,? )? )
+
+A50 -> A51 (, A51)* ,?
+
+A51 ->
+      i
+   | (i | g) b35 A1
+
+
+A52 -> A1 ( , A1 )* ,?
+
+A54 -> A55 (, A55)* ,?
+
+A55 ->  A56 ( b35 k )? | b+ A56 ( b35 k )?
+
+A56 -> A70 | b19
+
+A57 -> A1 n A1
+
+A58 -> A1 n
+
+A59 -> n A1
+
+A60 -> A1 o A1
+
+A61 -> o A1
+
+A62 -> t? A56 ( t A56 )*
+
+A63 -> ( A64 => ( A2 , | A3 ,? ) )* A64 => A1 ,?
+
+A64 -> A62 A65? | b+ A62 A65?
+
+A65 -> p A1
+
+A66 -> y A22
+
+A67 -> b1 A1 A22
+
+A68 -> b1 r A62 = A1 A22
+
+A69 -> b2 A56 b3 A1 A22
+
+A70 -> b20 | b21 | b22| b23| b24| b25| b26| b27| b28| b29| b30| b31| d
+
+A71 -> A72+ | A72+ A2 | A2
+
+A72 -> b32 | b33 | A73 | A74 | b34
+
+A73 -> b* r A56 ( b35 k )? (b36 A1 )? ;
+
+A74 -> A2 b32 | A3 b32?
+
+
+
+
+
