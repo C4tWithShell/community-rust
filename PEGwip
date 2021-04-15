@@ -143,24 +143,22 @@ b392 = }
 ============
 
 
-A1 -> c| b8| b9 | b10|b11) A1 | (b10|b11) b16 A1 | b12 A1
-         | A1 b13
-         | b14 A1 | b17 A1
-         | A1 b15 A1 | A1 b14 A1 | A1 b12 A1| A1 / A1 | A1 % A1| A1 b10 A1
-         | A1 t A1 | A1 ^ A1 | A1 << A1 | A1 >> A1| A1 == A1 | A1 != A1 | A1 > A1 | A1 < A1 | A1 >= A1 | A1 <= A1
-         | A1 t2 A1 | A1 b11 A1| A1 b18 j | A1 b36 A1| A1 += A1 | A1 -= A1 | A1 *= A1 | A1 /= A1 | A1 %= A1
-         | A1 &= A1 | A1 |= A1 | A1 ^= A1 | A1 <<= A1 | A1 >>= A1
-         | b371 e A1 b372 | b381 e A40? b382 | A1 . f| A1 b381 A1 b382 | b371 e A42? b372 | A1 . g| b8 b391 e (A54
-         | A46)? b392
-         | b8 b371 e ( A1 (, A1)* ,? )? b372 | b8| b8 b391 A50? b392 | b8 b371 ( A1 (, A1)* ,? )? b372 | b8
-         | A1 b371 A52? b372
-         | A1 . b7 b371 A52? b372 | A1 . i
-         | h t A54? t (A1 | -> j A22) | l | m A1? | A1 n A1 | A1 n | n A1| n | A1 o A1 | o A1 | u A1?
-         | d | b+ c | b+  A4 |b+ A5 | b+ A6 | b+ A7 | b+ A8 | b+ A9 | b+ A10 | b+ A11 | b+ A12 | b+ A13 | b+ A14
-         | b+ A15 | b+ A16 | b+ A17 | b+ l
-         | b+ A19 | b+ A20 | b+ A21 | b+ d | A22 | A23 | A24| A25 | A26 | A27 | A28
-         | b+ A22 | b+ A23 | b+ A24
-         | b+ A25 | b+ A26 | b+ A27 | b+ A28
+A1 -> c Z1 | b8 Z1 | b9  Z1 | (b10|b11) A1 Z1  | (b10|b11) b16 A1 Z1  | b12 A1 Z1 | b14 A1  Z1 | b17 A1 Z1
+| b371 e A1 b372 Z1 | b381 e A40? b382 Z1  | b371 e A42? b372 Z1 | b8 b391 e (A54| A46)? b392  Z1
+| b8 b371 e ( A1 (, A1)* ,? )? b372 Z1  | b8 Z1 | b8 b391 A50? b392 Z1  | b8 b371 ( A1 (, A1)* ,? )? b372 Z1
+| b8 Z1 | h t A54? t (A1 | -> j A22) Z1  | l Z1  | m A1? Z1  | n A1 Z1 | n Z1  |  o A1 Z1  | u A1? Z1 | d Z1
+| b+ c Z1  | b+  A4 Z1  |b+ A5 Z1  | b+ A6 Z1  | b+ A7 Z1  | b+ A8 Z1  | b+ A9 Z1 | b+ A10 Z1  | b+ A11 Z1
+| b+ A12 Z1  | b+ A13 Z1  | b+ A14 Z1 | b+ A15 Z1  | b+ A16 Z1  | b+ A17 Z1  | b+ l Z1 | b+ A19 Z1  | b+ A20 Z1
+| b+ A21 Z1  | b+ d Z1  | A22 Z1  | A23 Z1  | A24 Z1 | A25 Z1  | A26 Z1  | A27 Z1 | A28 Z1 | b+ A22 Z1  | b+ A23 Z1
+| b+ A24 Z1 | b+ A25 Z1  | b+ A26 Z1  | b+ A27 Z1  | b+ A28 Z1
+
+Z1 -> b13 Z1? | b15 A1 Z1? | b14 A1 Z1? | b12 A1 Z1?| / A1 Z1? | % A1 Z1? | b10 A1 Z1? | t A1 Z1? | ^ A1 Z1?
+| << A1 Z1? | >> A1 Z1? | == A1 Z1? | != A1 Z1? | > A1 Z1? | < A1 Z1? | >= A1 Z1? | <= A1 Z1?
+| t2 A1 Z1? | b11 A1 Z1?| b18 j Z1? | b36 A1 Z1? | += A1 Z1? | -= A1 Z1? | *= A1 Z1? | /= A1 Z1? | %= A1 Z1?
+| &= A1 Z1? | "|"= A1 Z1? | ^= A1 Z1? | <<= A1 Z1? | >>= A1 Z1? | . f Z1? | b381 A1 b382 Z1? | . g Z1?
+| b371 A52? b372 Z1? | . b7 b371 A52? b372 Z1? | . i Z1? | n A1 Z1? | n Z1? | o A1 Z1?
+
+
 
 A2 ->  c| b8 | b9 | (b10|b11) A1 | (b10|b11) b16 A1 | b12 A1 | A1 b13 | b14 A1 | b17 A1 |  A1 b15 A1 | A1 b14 A1
 | A1 b12 A1| A1 / A1 | A1 % A1| A1 b10 A1| A1 t A1 | A1 ^ A1 | A1 << A1 | A1 >> A1 | A1 == A1 | A1 != A1 | A1 > A1
