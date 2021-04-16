@@ -361,7 +361,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
     private static final String IDFREGEXP2 = "_[a-zA-Z0-9_]+";
-
+    private static final String DOLLAR_CRATE_REGEX = "^\\$crate$";
 
 
     public static LexerlessGrammarBuilder create() {
@@ -959,7 +959,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(b.optional(RustPunctuator.PATHSEP),
                                 //PATH_EXPR_SEGMENT,
                                 b.sequence(b.firstOf(
-                                        RustKeyword.KW_SUPER, b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp("^\\$crate$"), IDENTIFIER
+                                        RustKeyword.KW_SUPER, b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER
                                         )
                                         , b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS))),
                                 b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)))
@@ -1874,7 +1874,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(b.sequence(RustPunctuator.PATHSEP, SIMPLE_PATH_SEGMENT))
         );
         b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
-                RustKeyword.KW_SUPER, RustKeyword.KW_SELFVALUE, b.regexp("^crate$"), b.regexp("^\\$crate$"), IDENTIFIER
+                RustKeyword.KW_SUPER, RustKeyword.KW_SELFVALUE, b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER
         ));
 
         b.rule(PATH_IN_EXPRESSION).is(
@@ -1887,7 +1887,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 PATH_IDENT_SEGMENT, b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS))
         );
         b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(
-                RustKeyword.KW_SUPER, b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp("^\\$crate$"), IDENTIFIER
+                RustKeyword.KW_SUPER, b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER
         ));
         b.rule(GENERIC_ARGS).is(b.firstOf(
                 b.sequence(RustPunctuator.LT, GENERIC_ARGS_TYPES, GENERIC_ARGS_BINDINGS, b.optional(RustPunctuator.COMMA), SPC, RustPunctuator.GT),
