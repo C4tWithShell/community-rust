@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +40,7 @@ public class ArrayExpressionTest {
                 .matches("[0; 128]")// array with 128 zeros
                 .matches("[0u8, 0u8, 0u8, 0u8,]")
                 .matches("[[1, 0, 0], [0, 1, 0], [0, 0, 1]]") // 2D array
+                .matches("[b' ', b' ', b' ']")
      ;
     }
 
@@ -49,6 +49,13 @@ public class ArrayExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.INDEX_EXPRESSION))
                 .matches("arr[42]")
                 .matches("pair[0]")
+                .matches("[42,43][0]")
+                .matches("[42,43][0..1]")
+                .matches("[b' ', b' ', b' '][0]")
+                .matches("[b' ', b' ', b' '][0..1]")
+                .matches("[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
+                .matches("resp_header[0..8]")
+
         ;
     }
 }

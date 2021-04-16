@@ -112,6 +112,8 @@ public class RustSensorTest {
         Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
     }
 
+
+
     private DefaultInputFile executeSensorOnSingleFile(String fileName) throws IOException {
         DefaultInputFile inputFile = addInputFile(fileName);
         sensor.execute(tester);

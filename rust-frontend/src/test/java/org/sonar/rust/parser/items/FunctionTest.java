@@ -1,5 +1,4 @@
 /**
- *
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
@@ -41,17 +40,6 @@ public class FunctionTest {
 
     }
 
-    @Test
-    public void testAsyncConst() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_CONST_QUALIFIERS))
-                .matches("const")
-                .matches("async")
-                .notMatches("constitution")
-                .notMatches("prefixasync")
-                .notMatches("constasync")
-        ;
-
-    }
 
 
     @Test
@@ -96,6 +84,7 @@ public class FunctionTest {
                 .matches("y:i64")
                 .matches("x : i32")
                 .matches("x : i32, y:i64")
+                .matches("&self, n:u32")
 
         ;
 
@@ -164,6 +153,15 @@ public class FunctionTest {
                         "            argument: u32::from_le_bytes(bytes[8..12].try_into().unwrap()),\n" +
                         "        })\n" +
                         "    }")
+                .matches("fn gen_padding_32bit(len: usize) -> &'static [u8] {\n" +
+                        "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
+                        "}")
+                .matches("fn foo() -> u8\n" +
+                        "{\n" +
+                        "    Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    })\n" +
+                        "}")
 
 
         ;

@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +25,67 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class ExpressionTest {
+
+
+
+
+    @Test
+    public void testExpressionExceptStruct() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
+                .matches("{let y=42;}")
+                .matches("{;}")
+                .matches("0")
+                .matches("3+2")
+                .matches("1 << 1")
+                .matches("foo")
+                .matches("Some(42)")
+                .matches("panic!()")
+                .notMatches("== b")
+                .matches("len(values)")
+                .matches("\"123\".parse()")
+                .matches("\"Some string\".to_string()")
+                .matches("42")
+                .matches("0.0")
+                .matches("pi.unwrap_or(1.0).log(2.72)")
+                .matches("pi.into_iter(1.0).log(2.72)")
+                .matches("other.unwrap_or(1.0).map(From::from).collect()")
+                .matches("callme()")
+                .matches("println!(\"{}, {}\", word, j)")
+                .matches("{}")
+                .matches("i.get()")
+                .matches("m.get(i) + 1")
+                .matches("dest.write_char('n')")
+                .matches("Identifier::Numeric")
+                .matches("Vec::new")
+                .notMatches("MediaElementAudioSourceNode {\n" +
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        }")
+                .matches("StepPosition::JumpEnd")
+                .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
+                .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    }")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
+                .matches("if run_coverage {\n" +
+                        "        println!(\"Coverage is running\");" +
+                        " } ")
+
+        ;
+    }
+
+
+
+
+/*
+    Expression :
+    ExpressionWithoutBlock
+   | ExpressionWithBlock
+
+ */
 
     @Test
     public void testExpression() {
@@ -61,6 +121,31 @@ public class ExpressionTest {
                 "        }")
                 .matches("StepPosition::JumpEnd")
                 .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
+                .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    }")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
+                .matches("if run_coverage {\n" +
+                        "        println!(\"Coverage is running\");" +
+                        " } ")
+
+                /* FIXME async followed by dotted
+                .matches("async move {\n" +
+                        "            if check {\n" +
+                        "                check_source_files(config, paths).await?;\n" +
+                        "            } else {\n" +
+                        "                format_source_files(config, paths).await?;\n" +
+                        "            }\n" +
+                        "            Ok(())\n" +
+                        "        }\n" +
+                        "            .boxed_local()")
+
+                 */
+
+
 
 
 

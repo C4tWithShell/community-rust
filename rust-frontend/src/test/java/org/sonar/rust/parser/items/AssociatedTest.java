@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -86,24 +85,5 @@ public class AssociatedTest {
     }
 
 
-    @Test
-    public void testMethod() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.METHOD))
-                .matches("fn by_value(self: Self) {}")
-                .matches("fn by_ref(self: &Self) {}")
-                .matches("fn by_ref_mut(self: &mut Self) {}")
-                .matches("fn by_box(self: Box<Self>) {}")
-                .matches("fn by_rc(self: Rc<Self>) {}")
-                .matches("fn by_arc(self: Arc<Self>) {}")
-                .matches("async fn by_pin(self: Pin<&Self>) {}")
-                .matches("const fn explicit_type(self: Arc<Example>) {}")
-                //FIXME.matches("fn with_lifetime<'a>(self: &'a Self) {}")
-                .matches("fn with_lifetime<'a,T>(self: &'a Self) {}")
-                .matches("fn nested<'a,T>(self: &mut  Arc<Rc<Box<Alias>>>) {}")
-                .matches("fn nested<'a,T>(self: &'a  Arc<Rc<Box<Alias>>>) {}")
-                .matches("fn via_projection(self: <Example as Trait>::Output) {}")
 
-        ;
-
-    }
 }

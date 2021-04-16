@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -63,19 +62,25 @@ public class CallExpressionTest {
                 .matches("add(1i32, 2i32)")
                 .matches("calc(get(i) + 1)")
                 .matches("Vec::new()")
+                .matches("Box::new(42)")
+                .matches("PathBuf::from(\"/demo_dir/\")")
+                .matches("PathBuf::from(r\"C:\\demo_dir\\\")")
+                .matches("Box::new(|j: i32| -> () { println!(\"hello, {}\", j); })")
                 .matches("Identifier::Numeric(n)")
                 .matches("Ok(MediaElementAudioSourceNode {\n" +
                         "            node,\n" +
                         "            media_element,\n" +
                         "        })")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone())")
-
-
-
-
-
-
-
+                .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    })")
+                .matches("(state.get_error_class_fn)(1)")
+                .matches("(state.borrow().get_error_class_fn)(&error)")
+                .matches("Some(ec - (js_error.start_column.unwrap() - sc))")
+                .matches("Ok(2)")
+                .matches("Ok(())")
+                .matches("f(stdout[..40])")
         ;
     }
 

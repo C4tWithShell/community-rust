@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +28,7 @@ public class ImplementationTest {
 
     @Test
     public void testInherentImplItem() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.INHERENT_IMPL_ITEM))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASSOCIATED_ITEM))
                 .matches("println!(\"hello\");") //macro invocation semi
                 .matches("#[outer] println!(\"hello\");") //macro invocation semi
                 .matches("const BIT2: u32 = 1 << 1;") //constant
@@ -63,18 +62,6 @@ public class ImplementationTest {
                         "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
                         "        Ok(reflect_dom_object(Box::new(node), window))\n" +
                         "    }")
-
-                .matches("\n" +
-                        "    #[allow(unrooted_must_root)]\n" +
-                        "    pub fn new(\n" +
-                        "        window: &Window,\n" +
-                        "        context: &AudioContext,\n" +
-                        "        media_element: &HTMLMediaElement,\n" +
-                        "    ) -> Fallible<DomRoot<MediaElementAudioSourceNode>> {\n" +
-                        "        let node = MediaElementAudioSourceNode::new_inherited(context, media_element)?;\n" +
-                        "        Ok(reflect_dom_object(Box::new(node), window))\n" +
-                        "    }\n" +
-                        "\n")
                 .matches("pub const BIT2: u32 = 1 << 1;") //constant
 
 
@@ -165,15 +152,6 @@ public class ImplementationTest {
                         "#[outer]" +
                         "fn answer_to_life_the_universe_and_everything() -> i32 {\n}" +
                         "    }")
-                .matches("impl fmt::Display for Identifier {\n" +
-                        "    #[inline]\n" +
-                        "    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {\n" +
-                        "        match *self {\n" +
-                        "            Identifier::Numeric(ref n) => fmt::Display::fmt(n, f),\n" +
-                        "            Identifier::AlphaNumeric(ref s) => fmt::Display::fmt(s, f),\n" +
-                        "        }\n" +
-                        "    }\n" +
-                        "}")
                 .matches("impl<'de> Deserialize<'de> for Identifier {\n" +
                         "    fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>\n" +
                         "    where\n" +
@@ -216,7 +194,7 @@ public class ImplementationTest {
 
     @Test
     public void testTraitImplItem() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_IMPL_ITEM))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASSOCIATED_ITEM))
                 .matches("println!(\"hello\");") //macro invocation semi
                 .matches("#[outer] println!(\"hello\");") //macro invocation semi
                 .matches("type Point = (u8, u8);") //type alias
@@ -311,4 +289,6 @@ public class ImplementationTest {
         ;
 
     }
+
+
 }

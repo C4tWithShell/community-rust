@@ -1,18 +1,18 @@
 /**
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- * <p>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -53,6 +53,14 @@ Statements :
     }
 
     @Test
+    public void testAsyncBlockExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_BLOCK_EXPRESSION))
+                .matches("async {}")
+                .matches("async move {}")
+        ;
+    }
+
+    @Test
     public void testBlockExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_EXPRESSION))
                 .matches("{}")
@@ -84,6 +92,27 @@ Statements :
                 .matches("{\n" +
                         "        self.len() as u32\n" +
                         "    }")
+                .matches("{\n" +
+                        "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
+                        "}")
+                .matches("{ Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    })\n" +
+                        "}")
+                .matches("{\n" +
+                        "            PathBuf::from(\"/demo_dir/\")\n" +
+                        "        }")
+                .matches("{PathBuf::from(r\"C:\\demo_dir\\\")}")
+                .matches("{\n" +
+                        "            if check {\n" +
+                        "                check_source_files(config, paths).res1;\n" +
+                        "            } else {\n" +
+                        "                format_source_files(config, paths).res2;\n" +
+                        "            }\n" +
+                        "            Ok(())\n" +
+                        "        }")
+
+
 
 
         ;

@@ -37,6 +37,13 @@ public class StatementTest {
                 .matches("let mut vec = Vec::new();")
                 .matches("let three: i32 = add(1i32, 2i32);")
                 //FIXME.matches("let name: &'static str = (|| \"Rust\")();")
+                /* FIXME.matches("let p = if mycondition {\n" +
+                        "             42\n" +
+                        "         } else {\n" +
+                        "             43\n" +
+                        "         };")
+
+                 */
 
 
 
@@ -47,6 +54,7 @@ public class StatementTest {
     public void testExpressionStatement() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_STATEMENT))
                 .matches("return None;")
+
         ;
     }
 
@@ -75,6 +83,10 @@ public class StatementTest {
                 .matches("state.put::<req::Client>({node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()});")
                 .matches("return;")
                 .matches("return None;")
+                .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+                        "        let mut b = 42;\n" +
+                        "    });")
+
 
 
 

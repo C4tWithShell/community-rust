@@ -118,6 +118,13 @@ public class LitteralsTest {
                 .matches("r#\"\"foo\"\"#")
                 .matches("r\"R\"")
                 .matches("r\"\\x52\"")
+                .matches("r\"C:\\demo_dir\\\"")
+                /*FIXME.matches("r#\"\n" +
+                        "multine\n" +
+                        "multine\n" +
+                        "\"#")
+
+                 */
 
         ;
     }

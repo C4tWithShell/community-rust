@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +58,8 @@ public class PathTest {
                 .matches("S::T")
                 .matches("result::Result")
                 .matches("Identifier::Numeric")
+                .notMatches("match")
+                .matches("Token::BackQuote")
 
 
         ;
@@ -123,6 +124,7 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_IN_EXPRESSION))
                 .matches("<S as T1>::f")
 
+
         ;
     }
 
@@ -146,6 +148,7 @@ public class PathTest {
     public void testTypePathFnInputs() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PATH_FN_INPUTS))
                 .matches("isize")
+                .matches("&mut OpState, u32, &mut [ZeroCopyBuf]")
 
         ;
     }
@@ -154,6 +157,7 @@ public class PathTest {
     public void testTypePathFn() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PATH_FN))
                 .matches("(isize) -> isize")
+                .matches("(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
         ;
     }
@@ -169,6 +173,7 @@ public class PathTest {
                 .matches("abc::<>")
                 .matches("abc::(isize) -> isize")
                 .notMatches("abc::abc for")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
         ;
     }
 
@@ -179,6 +184,7 @@ public class PathTest {
                 .notMatches("abc::abc for")
                 .matches("T")
                 .matches("abc::def")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
         ;
     }

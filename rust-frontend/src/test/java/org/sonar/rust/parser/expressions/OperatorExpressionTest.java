@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +37,8 @@ public class OperatorExpressionTest {
                 .matches("&&&& mut 10")
                 .matches("&& && mut 10")
                 .matches("& & & & mut 10")
-                .notMatches("== b")
+                .matches("&[b' ', b' ', b' ']")
+
 
 
         ;
@@ -60,6 +60,12 @@ public class OperatorExpressionTest {
                 .matches("None?")
                 .matches("Some(42)?")
                 .notMatches("== b")
+                .matches("self.get_cache_filename(url)?")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }?")
+                .matches("check_source_files(config, paths).await?")
 
 
         ;
@@ -124,6 +130,7 @@ public class OperatorExpressionTest {
                 .matches("value as f64")
                 .matches("{} as i32")
                 .matches("'test' as i32")
+                .matches("self.len() as u32")
                 //FIXME.matches("abc() as i32")
                 //FIXME.matches("len(vals) as f64")
         ;
@@ -137,6 +144,7 @@ public class OperatorExpressionTest {
                 .matches("x = 42")
                 .notMatches("x = = 42")
                 .notMatches("x = 42 =")
+                .matches("self.state = 42")
 
         ;
     }
@@ -191,6 +199,7 @@ public class OperatorExpressionTest {
                 .matches("1-3")
                 .matches("1-3-2")
                 .matches("22 % 7")
+                .matches("s_error.start_column.unwrap() - sc")
                 .matches("m.get(i) + 1")
                 //comparisons
                 .matches("a == b")

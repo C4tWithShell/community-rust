@@ -1,5 +1,4 @@
 /**
- *
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
@@ -117,6 +116,73 @@ public class MatchExpressionTest {
                         "    1 | _ if { i.set(i.get() + 1); false } => {}\n" +
                         "    \n" +
                         "}")
+                .matches("match RequestHeader::from_raw(&record_buf) {\n" +
+                        "            Some(r) => r,\n" +
+                        "            None => {\n" +
+                        "                let error_class = b\"TypeError\";\n" +
+                        "                let error_message = b\"Unparsable control buffer\";\n" +
+                        "                let len = error_class.len() + error_message.len();\n" +
+                        "                let padding = gen_padding_32bit(len);\n" +
+                        "                let resp_header = ResponseHeader {\n" +
+                        "                    request_id: 0,\n" +
+                        "                    status: 1,\n" +
+                        "                    result: error_class.len() as u32,\n" +
+                        "                };\n" +
+                        "                return Op::Sync(\n" +
+                        "                    error_class\n" +
+                        "                        .iter()\n" +
+                        "                        .chain(error_message.iter())\n" +
+                        "                        .chain(padding)\n" +
+                        "                        .chain(&Into::<[u8; 16]>::into(resp_header))\n" +
+                        "                        .cloned()\n" +
+                        "                        .collect(),\n" +
+                        "                );\n" +
+                        "            }\n" +
+                        "        }")
+                .matches("match op_fn(&mut state.borrow_mut(), req_header.argument, &mut zero_copy) {\n" +
+                        "            Ok(possibly_vector) => {\n" +
+                        "               \n" +
+                        "\n" +
+                        "               42\n" +
+                        "            }\n" +
+                        "            Err(error) => {\n" +
+                        "                \n" +
+                        "                return 43;\n" +
+                        "            }\n" +
+                        "        }")
+                .matches("match op_fn(&mut state.borrow_mut(), req_header.argument, &mut zero_copy) {\n" +
+                        "            Ok(possibly_vector) => {\n" +
+                        "               \n" +
+                        "\n" +
+                        "               42\n" +
+                        "            }\n" +
+                        "            Err(error) => {\n" +
+                        "                \n" +
+                        "                return 43;\n" +
+                        "            }\n" +
+                        "        }")
+                .matches("match path.parent() {\n" +
+                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+                        "             None => Ok(()),\n" +
+                        "         }")
+                .matches("match (stack.pop(), token) {\n" +
+                        "              (Some(Token::LParen), Token::RParen)\n" +
+                        "              | (Some(Token::LBracket), Token::RBracket)\n" +
+                        "              | (Some(Token::LBrace), Token::RBrace)\n" +
+                        "              | (Some(Token::DollarLBrace), Token::RBrace) => {}\n" +
+                        "              (Some(left), _) => {\n" +
+                        "                return Ok(ValidationResult::Invalid(Some(format!(\n" +
+                        "                  \"Mismatched pairs: {:?} is not properly closed\",\n" +
+                        "                  left\n" +
+                        "                ))))\n" +
+                        "              }\n" +
+                        "              (None, _) => {\n" +
+                        "                // While technically invalid when unpaired, it should be V8's task to output error instead.\n" +
+                        "                // Thus marked as valid with no info.\n" +
+                        "                return Ok(ValidationResult::Valid(None));\n" +
+                        "              }\n" +
+                        "            }")
+
 
         ;
     }

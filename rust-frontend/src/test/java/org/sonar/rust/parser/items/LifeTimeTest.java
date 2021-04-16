@@ -1,7 +1,6 @@
 /**
- *
  * Sonar Rust Plugin (Community)
- * Copyright (C) 2020 Eric Le Goff
+ * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -75,6 +74,8 @@ public class LifeTimeTest {
                 .matches("'a:'b+'c+'d")
                 .matches("'a : 'b+'c+'d")
                 .matches("'ABC : 'b+ 'c+ 'd")
+                .matches(" R: ValueOrVector")
+                .matches("F: Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
         ;
     }
 
@@ -90,6 +91,11 @@ public class LifeTimeTest {
                 .matches("where 'a : 'b +'c +'d")
                 .matches("where 'ABC : 'a+ 'b+ 'c, 'DEF : 'd + 'e + 'f")
                 .notMatches("where 'a : 'b +'c +'d {}")
+                .matches("where\n" +
+                        "        R: ValueOrVector,")
+                .matches("where\n" +
+                        "        F: Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static,\n" +
+                        "        R: ValueOrVector,")
         ;
     }
 
@@ -118,6 +124,7 @@ public class LifeTimeTest {
                 .matches("(? abc::def)")
                 .matches("( for <'a> abc::def )")
                 .matches("(? for <'a> abc::def)")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
         ;
 
@@ -161,6 +168,8 @@ public class LifeTimeTest {
                 .matches("'_+'a+'ABC")
                 .notMatches("'a self")
                 .matches("(? for <'a> abc::def)+'a+abc::def")
+                .matches("ValueOrVector")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
         ;
 
     }
@@ -172,6 +181,14 @@ public class LifeTimeTest {
                 .matches("#[test] AAA")
                 .matches("#[test] AAA : i32")
                 .matches("T")
+        ;
+    }
+
+    @Test
+    public void testConstParam(){
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CONST_PARAM))
+                .matches("const AAA : i32")
+
         ;
     }
 
@@ -233,15 +250,15 @@ public class LifeTimeTest {
 
     @Test
     public void testGenericParams(){
-        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAMS))
-
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAM))
                 .matches("T")
-                .matches("'ABC,U")
-                .matches("'a,T")
                 .matches("'de")
                 .notMatches("'trait")
                 .notMatches("'trait>")
-                .matches("#[outer]'ABC,V")
+                .matches("#[outer] 'ABC")
+                .matches("#[outer] id = f64")
+                .matches("#[outer] const AAA : i32")
+
 
         ;
     }
@@ -249,7 +266,9 @@ public class LifeTimeTest {
 
     @Test
     public void testGenerics() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERICS))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAMS))
+                .matches("<>")
+                .matches("< >")
                 .matches("<T>")
                 .matches("<'a,T>")
                 .matches("<'a>")
