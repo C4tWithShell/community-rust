@@ -27,9 +27,9 @@ public class IfExpressionTest {
                         "            return None;\n" +
                         "        }")
                 .matches("if cfg!(target_os = \"windows\") {\n" +
-                        "            PathBuf::from(\"/deni_dir/\")\n" +
+                        "            PathBuf::from(\"/first_dir/\")\n" +
                         "        } else {\n" +
-                        "            PathBuf::from(\"/deno_dir/\")\n" +
+                        "            PathBuf::from(\"/other_dir/\")\n" +
                         "        }")
                 .matches("if cfg!(target_os = \"windows\") {\n" +
                         "                    if let Some(Component::Prefix(prefix_component)) =\n" +

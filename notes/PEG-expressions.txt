@@ -15,10 +15,6 @@ A14 = CallExpression
 A15 = MethodCallExpression
 A16 = FieldExpression
 A17 = ClosureExpression
-<<<<<<< HEAD
-=======
-
->>>>>>> 3489fad6b07c85eac34b1b530eb416b68824fadc
 A19 = BreakExpression
 A20 = RangeExpression
 A21 = ReturnExpression
@@ -29,11 +25,6 @@ A25 = LoopExpression
 A26 = IfExpression
 A27 = IfLetExpression
 A28 = MatchExpression
-<<<<<<< HEAD
-=======
-A29 = PathInExpression
-A30 = QualifiedPathInExpression
->>>>>>> 3489fad6b07c85eac34b1b530eb416b68824fadc
 A31 = BorrowExpression
 A32 = DereferenceExpression
 A33 = ErrorPropagationExpression
@@ -56,10 +47,6 @@ A49 = EnumExprTuple
 A50 = EnumExprFields
 A51 = EnumExprField
 A52 = CallParams
-<<<<<<< HEAD
-=======
-A53 = PathExprSegment
->>>>>>> 3489fad6b07c85eac34b1b530eb416b68824fadc
 A54 = ClosureParameters
 A55 = ClosureParam
 A56 = Pattern
@@ -76,12 +63,7 @@ A66 = InfiniteLoopExpression
 A67 = PredicateLoopExpression
 A68 = PredicatePatternLoopExpression
 A69 = IteratorLoopExpression
-<<<<<<< HEAD
 A70 = PatternWithoutRange
-
-
-=======
->>>>>>> 3489fad6b07c85eac34b1b530eb416b68824fadc
 
 
 b= OuterAttribute*
@@ -109,7 +91,6 @@ w = unsafe
 x = LoopLabel?
 y = loop 
 b1 = while
-<<<<<<< HEAD
 b2 = for
 b3 = in
 b4 = ::
