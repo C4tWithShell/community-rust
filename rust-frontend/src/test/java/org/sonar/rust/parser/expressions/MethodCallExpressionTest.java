@@ -24,11 +24,11 @@ import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class DottedExpressionTest {
+public class MethodCallExpressionTest {
 
     @Test
-    public void testDottedExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.DOTTED_EXPRESSION))
+    public void testMethodCallExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.METHOD_CALL_EXPRESSION))
                 .matches("\"Some string\".to_string()")
                 .matches("\"3.14\".parse()")
                 .matches("a.b()")
@@ -62,15 +62,6 @@ public class DottedExpressionTest {
                 .matches("self.get_cache_filename(url)")
                 .matches("(disk_byte as char).to_string()")
                 .matches("async move {}.local()")
-                .matches("async move {\n" +
-                        "            if check {\n" +
-                        "                check_source_files(config, paths).await?;\n" +
-                        "            } else {\n" +
-                        "                format_source_files(config, paths).await?;\n" +
-                        "            }\n" +
-                        "            Ok(())\n" +
-                        "        }\n" +
-                        "            .boxed_local()")
                 .matches("self.state")
 
 
