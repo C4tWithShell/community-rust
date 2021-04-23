@@ -334,7 +334,6 @@ public enum RustGrammar implements GrammarRuleKey {
     TYPE_ALIAS,
     TYPE_BOUND_CLAUSE_ITEM,
     TYPE_CAST_EXPRESSION,
-    TYPE_CAST_EXPRESSION_TERM,
     TYPE_NO_BOUNDS,
     TYPE_PARAM,
     TYPE_PARAMS,
@@ -1158,7 +1157,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(DEREFERENCE_EXPRESSION, EXPRESSION_TERM),
                         b.sequence(NEGATION_EXPRESSION, EXPRESSION_TERM),
                         b.sequence(ARITHMETIC_OR_LOGICAL_EXPRESSION, EXPRESSION_TERM),
-                        b.sequence(TYPE_CAST_EXPRESSION, EXPRESSION_TERM),
                         b.sequence(ASSIGNMENT_EXPRESSION, EXPRESSION_TERM),
                         b.sequence(COMPOUND_ASSIGNMENT_EXPRESSION ,EXPRESSION_TERM),
                         b.sequence(INDEX_EXPRESSION, EXPRESSION_TERM),
@@ -1190,7 +1188,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         DEREFERENCE_EXPRESSION,
                         NEGATION_EXPRESSION,
                         ARITHMETIC_OR_LOGICAL_EXPRESSION,
-                        TYPE_CAST_EXPRESSION,
                         ASSIGNMENT_EXPRESSION,
                         COMPOUND_ASSIGNMENT_EXPRESSION,
                         INDEX_EXPRESSION,
@@ -1215,12 +1212,14 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.DOT, IDENTIFIER, EXPRESSION_TERM),
                         b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")", EXPRESSION_TERM),
                         b.sequence(RustPunctuator.QUESTION, EXPRESSION_TERM),
+                        b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS,EXPRESSION_TERM),
 
                         b.sequence(RustPunctuator.DOT, "await"),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")"),
                         b.sequence(RustPunctuator.DOT, IDENTIFIER),
                         b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")"),
-                        RustPunctuator.QUESTION
+                        RustPunctuator.QUESTION,
+                        b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS)
                 )
 
 
@@ -1611,33 +1610,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(LAZY_OR_TERM).is(
                 RustPunctuator.OROR, SPC, EXPRESSION, SPC, b.zeroOrMore(LAZY_OR_TERM, SPC));
 
-
-        b.rule(TYPE_CAST_EXPRESSION).is(
-                b.firstOf(EXPRESSION_WITH_BLOCK,
-
-
-                        PATH_EXPRESSION,
-                        GROUPED_EXPRESSION,
-                        ARRAY_EXPRESSION,
-
-                        INDEX_EXPRESSION,
-                        TUPLE_INDEXING_EXPRESSION,
-                        STRUCT_EXPRESSION,
-                        ENUMERATION_VARIANT_EXPRESSION,
-
-
-                        CLOSURE_EXPRESSION,
-                        CONTINUE_EXPRESSION,
-                        BREAK_EXPRESSION,
-                        RANGE_EXPRESSION,
-                        RETURN_EXPRESSION,
-                        MACRO_INVOCATION,
-                        LITERALS
-                ), TYPE_CAST_EXPRESSION_TERM);
-
-
-        b.rule(TYPE_CAST_EXPRESSION_TERM).is(SPC, RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS,
-                SPC, b.zeroOrMore(TYPE_CAST_EXPRESSION_TERM));
+        b.rule(TYPE_CAST_EXPRESSION).is(EXPRESSION, SPC, RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS);
 
         b.rule(ASSIGNMENT_EXPRESSION).is(b.firstOf(
 
