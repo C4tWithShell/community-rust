@@ -1151,9 +1151,35 @@ public enum RustGrammar implements GrammarRuleKey {
         returnExpr(b);
         await(b);
 
-        b.rule(EXPRESSION).is(b.firstOf(
-                EXPRESSION_WITH_BLOCK,
-                EXPRESSION_WITHOUT_BLOCK
+        b.rule(EXPRESSION).is(
+                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.firstOf(
+                        BLOCK_EXPRESSION,
+                        MATCH_EXPRESSION,
+                        ASYNC_BLOCK_EXPRESSION,
+                        UNSAFE_BLOCK_EXPRESSION,
+                        LOOP_EXPRESSION,
+                        IF_EXPRESSION,
+                        IF_LET_EXPRESSION,
+                        CLOSURE_EXPRESSION,
+                        RANGE_EXPRESSION,
+                        OPERATOR_EXPRESSION,
+                        DOTTED_EXPRESSION,
+                        INDEX_EXPRESSION,
+                        CALL_EXPRESSION,
+                        MACRO_INVOCATION,
+                        RETURN_EXPRESSION,
+                        LITERAL_EXPRESSION,
+                        STRUCT_EXPRESSION,
+                        PATH_EXPRESSION,
+                        GROUPED_EXPRESSION,
+                        ARRAY_EXPRESSION,
+                        AWAIT_EXPRESSION,
+                        TUPLE_EXPRESSION,
+                        TUPLE_INDEXING_EXPRESSION,
+                        ENUMERATION_VARIANT_EXPRESSION,
+                        CONTINUE_EXPRESSION,
+                        BREAK_EXPRESSION
                 ));
 
 
