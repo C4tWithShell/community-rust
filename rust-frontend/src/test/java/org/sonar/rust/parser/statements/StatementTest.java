@@ -67,6 +67,7 @@ public class StatementTest {
                 .matches("let x;")
                 .matches("let z = 40 + 2;")
                 .matches("use std::error::Error;")
+                .matches("j.set(i.get());")
                 .matches("j.set(i.get() + 1);")
                 .matches("mod foobar{#![crate_type = \"lib\"]\n" +
                         "}")
