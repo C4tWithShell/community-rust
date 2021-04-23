@@ -163,10 +163,8 @@ public enum RustGrammar implements GrammarRuleKey {
     ITERATOR_LOOP_EXPRESSION,
     KEYWORD,
     LAZY_AND,
-    LAZY_AND_TERM,
     LAZY_BOOLEAN_EXPRESSION,
     LAZY_OR,
-    LAZY_OR_TERM,
     LET_STATEMENT,
     LE_EXPRESSION,
     LE_EXPRESSION_TERM,
@@ -1151,7 +1149,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(CLOSURE_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RANGE_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(BORROW_EXPRESSION, SPC, EXPRESSION_TERM),
-                        b.sequence(LAZY_BOOLEAN_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(COMPARISON_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(DEREFERENCE_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(NEGATION_EXPRESSION, SPC, EXPRESSION_TERM),
@@ -1181,7 +1178,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         CLOSURE_EXPRESSION,
                         RANGE_EXPRESSION,
                         BORROW_EXPRESSION,
-                        LAZY_BOOLEAN_EXPRESSION,
                         COMPARISON_EXPRESSION,
                         DEREFERENCE_EXPRESSION,
                         NEGATION_EXPRESSION,
@@ -1211,6 +1207,8 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.QUESTION, SPC, EXPRESSION_TERM),
                         b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS,SPC, EXPRESSION_TERM),
                         b.sequence("[", EXPRESSION, "]", SPC, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.OROR, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.ANDAND, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
 
                         b.sequence(RustPunctuator.DOT, "await"),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")"),
@@ -1218,7 +1216,10 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")"),
                         RustPunctuator.QUESTION,
                         b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS),
-                        b.sequence("[", EXPRESSION, "]")
+                        b.sequence("[", EXPRESSION, "]"),
+                        b.sequence(RustPunctuator.OROR, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.ANDAND, SPC, EXPRESSION)
+
                 )
 
 
@@ -1592,13 +1593,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 LAZY_OR,
                 LAZY_AND));
 
-        b.rule(LAZY_AND).is(b.firstOf(COMPARISON_EXPRESSION, DEREFERENCE_EXPRESSION, IDENTIFIER, LITERALS), SPC, LAZY_AND_TERM);
-        b.rule(LAZY_AND_TERM).is(
-                RustPunctuator.ANDAND, SPC, EXPRESSION, SPC, b.zeroOrMore(LAZY_AND_TERM, SPC));
-
-        b.rule(LAZY_OR).is(b.firstOf(COMPARISON_EXPRESSION, DEREFERENCE_EXPRESSION, IDENTIFIER, LITERALS), SPC, LAZY_OR_TERM);
-        b.rule(LAZY_OR_TERM).is(
-                RustPunctuator.OROR, SPC, EXPRESSION, SPC, b.zeroOrMore(LAZY_OR_TERM, SPC));
+        b.rule(LAZY_AND).is(EXPRESSION, SPC, RustPunctuator.ANDAND, SPC, EXPRESSION);
+        b.rule(LAZY_OR).is(EXPRESSION, SPC, RustPunctuator.OROR, SPC, EXPRESSION);
 
         b.rule(TYPE_CAST_EXPRESSION).is(EXPRESSION, SPC, RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS);
 
