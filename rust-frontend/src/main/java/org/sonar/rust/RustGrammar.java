@@ -319,7 +319,6 @@ public enum RustGrammar implements GrammarRuleKey {
     TUPLE_FIELDS,
     TUPLE_INDEX,
     TUPLE_INDEXING_EXPRESSION,
-    TUPLE_INDEXING_EXPRESSION_TERM,
     TUPLE_PATTERN,
     TUPLE_PATTERN_ITEMS,
     TUPLE_STRUCT,
@@ -1162,7 +1161,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(GROUPED_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(ARRAY_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(TUPLE_EXPRESSION, SPC, EXPRESSION_TERM),
-                        b.sequence(TUPLE_INDEXING_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(ENUMERATION_VARIANT_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(CONTINUE_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(BREAK_EXPRESSION, SPC, EXPRESSION_TERM),
@@ -1192,7 +1190,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         GROUPED_EXPRESSION,
                         ARRAY_EXPRESSION,
                         TUPLE_EXPRESSION,
-                        TUPLE_INDEXING_EXPRESSION,
                         ENUMERATION_VARIANT_EXPRESSION,
                         CONTINUE_EXPRESSION,
                         BREAK_EXPRESSION
@@ -1202,6 +1199,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(
                         b.sequence(RustPunctuator.DOT, "await", SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")", SPC, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.DOT, TUPLE_INDEX, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.DOT, IDENTIFIER, SPC, EXPRESSION_TERM),
                         b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")", SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.QUESTION, SPC, EXPRESSION_TERM),
@@ -1212,6 +1210,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
                         b.sequence(RustPunctuator.DOT, "await"),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")"),
+                        b.sequence(RustPunctuator.DOT, TUPLE_INDEX),
                         b.sequence(RustPunctuator.DOT, IDENTIFIER),
                         b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")"),
                         RustPunctuator.QUESTION,
@@ -1429,8 +1428,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.sequence(EXPRESSION, SPC, RustPunctuator.COMMA, SPC)), b.optional(EXPRESSION, SPC));
 
-        b.rule(TUPLE_INDEXING_EXPRESSION).is(b.firstOf(LITERALS, IDENTIFIER), TUPLE_INDEXING_EXPRESSION_TERM);
-        b.rule(TUPLE_INDEXING_EXPRESSION_TERM).is(RustPunctuator.DOT, TUPLE_INDEX, b.zeroOrMore(SPC, TUPLE_INDEXING_EXPRESSION_TERM));
+        b.rule(TUPLE_INDEXING_EXPRESSION).is(EXPRESSION,RustPunctuator.DOT, TUPLE_INDEX);
 
 
     }
