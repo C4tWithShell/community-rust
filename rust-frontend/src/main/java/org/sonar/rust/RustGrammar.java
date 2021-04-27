@@ -1132,7 +1132,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(BORROW_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(DEREFERENCE_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(NEGATION_EXPRESSION, SPC, EXPRESSION_TERM),
-                        b.sequence(COMPOUND_ASSIGNMENT_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(MACRO_INVOCATION, SPC, EXPRESSION_TERM),
                         b.sequence(RETURN_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(STRUCT_EXPRESSION, SPC, EXPRESSION_TERM),
@@ -1159,7 +1158,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         BORROW_EXPRESSION,
                         DEREFERENCE_EXPRESSION,
                         NEGATION_EXPRESSION,
-                        COMPOUND_ASSIGNMENT_EXPRESSION,
                         MACRO_INVOCATION,
                         RETURN_EXPRESSION,
                         LITERAL_EXPRESSION,
@@ -1203,6 +1201,17 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.CARET, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.SHL, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.SHR, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.EQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.PLUSEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.MINUSEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.STAREQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.SLASHEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.PERCENTEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.ANDEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.OREQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.CARETEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.SHLEQ, SPC, EXPRESSION, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.SHREQ, SPC, EXPRESSION, EXPRESSION_TERM),
 
                         b.sequence(RustPunctuator.DOT, RustKeyword.KW_AWAIT),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")"),
@@ -1232,7 +1241,18 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.OR, SPC, EXPRESSION),
                         b.sequence(RustPunctuator.CARET, SPC, EXPRESSION),
                         b.sequence(RustPunctuator.SHL, SPC, EXPRESSION),
-                        b.sequence(RustPunctuator.SHR, SPC, EXPRESSION)
+                        b.sequence(RustPunctuator.SHR, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.EQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.PLUSEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.MINUSEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.STAREQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.SLASHEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.PERCENTEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.ANDEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.OREQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.CARETEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.SHLEQ, SPC, EXPRESSION),
+                        b.sequence(RustPunctuator.SHREQ, SPC, EXPRESSION)
 
                 )
 
@@ -1564,28 +1584,27 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(COMPOUND_ASSIGNMENT_EXPRESSION).is(b.firstOf(
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), PLUSEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), MINUSEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), STAREQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), SLASHEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), PERCENTEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), ANDEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), OREQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), CARETEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), SHLEQ_EXPRESSION),
-                b.sequence(b.firstOf(IDENTIFIER, LITERALS), SHREQ_EXPRESSION)
+                PLUSEQ_EXPRESSION,
+                MINUSEQ_EXPRESSION,
+                STAREQ_EXPRESSION,
+                SLASHEQ_EXPRESSION,
+                PERCENTEQ_EXPRESSION,
+                ANDEQ_EXPRESSION,
+                OREQ_EXPRESSION),
+                CARETEQ_EXPRESSION,
+                SHLEQ_EXPRESSION,
+                SHREQ_EXPRESSION);
 
-        ));
-        b.rule(PLUSEQ_EXPRESSION).is(SPC, RustPunctuator.PLUSEQ, SPC, EXPRESSION, SPC, b.optional(PLUSEQ_EXPRESSION));
-        b.rule(MINUSEQ_EXPRESSION).is(SPC, RustPunctuator.MINUSEQ, SPC, EXPRESSION, SPC, b.optional(MINUSEQ_EXPRESSION));
-        b.rule(STAREQ_EXPRESSION).is(SPC, RustPunctuator.STAREQ, SPC, EXPRESSION, SPC, b.optional(STAREQ_EXPRESSION));
-        b.rule(SLASHEQ_EXPRESSION).is(SPC, RustPunctuator.SLASHEQ, SPC, EXPRESSION, SPC, b.optional(SLASHEQ_EXPRESSION));
-        b.rule(PERCENTEQ_EXPRESSION).is(SPC, RustPunctuator.PERCENTEQ, SPC, EXPRESSION, SPC, b.optional(PERCENTEQ_EXPRESSION));
-        b.rule(ANDEQ_EXPRESSION).is(SPC, RustPunctuator.ANDEQ, SPC, EXPRESSION, SPC, b.optional(ANDEQ_EXPRESSION));
-        b.rule(OREQ_EXPRESSION).is(SPC, RustPunctuator.OREQ, SPC, EXPRESSION, SPC, b.optional(OREQ_EXPRESSION));
-        b.rule(CARETEQ_EXPRESSION).is(SPC, RustPunctuator.CARETEQ, SPC, EXPRESSION, SPC, b.optional(CARETEQ_EXPRESSION));
-        b.rule(SHLEQ_EXPRESSION).is(SPC, RustPunctuator.SHLEQ, SPC, EXPRESSION, SPC, b.optional(SHLEQ_EXPRESSION));
-        b.rule(SHREQ_EXPRESSION).is(SPC, RustPunctuator.SHREQ, SPC, EXPRESSION, SPC, b.optional(SHREQ_EXPRESSION));
+        b.rule(PLUSEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.PLUSEQ, SPC, EXPRESSION);
+        b.rule(MINUSEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.MINUSEQ, SPC, EXPRESSION);
+        b.rule(STAREQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.STAREQ, SPC, EXPRESSION);
+        b.rule(SLASHEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.SLASHEQ, SPC, EXPRESSION);
+        b.rule(PERCENTEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.PERCENTEQ, SPC, EXPRESSION);
+        b.rule(ANDEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.ANDEQ, SPC, EXPRESSION);
+        b.rule(OREQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.OREQ, SPC, EXPRESSION);
+        b.rule(CARETEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.CARETEQ, SPC, EXPRESSION);
+        b.rule(SHLEQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.SHLEQ, SPC, EXPRESSION);
+        b.rule(SHREQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.SHREQ, SPC, EXPRESSION);
 
 
     }
