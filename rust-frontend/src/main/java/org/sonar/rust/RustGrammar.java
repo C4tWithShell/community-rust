@@ -238,12 +238,9 @@ public enum RustGrammar implements GrammarRuleKey {
     QUOTE_ESCAPE,
     RANGE_EXPR,
     RANGE_EXPRESSION,
-    RANGE_EXPR_TERM,
     RANGE_FROM_EXPR,
-    RANGE_FROM_EXPR_TERM,
     RANGE_FULL_EXPR,
     RANGE_INCLUSIVE_EXPR,
-    RANGE_INCLUSIVE_EXPR_TERM,
     RANGE_PATTERN,
     RANGE_PATTERN_BOUND,
     RANGE_TO_EXPR,
@@ -1140,13 +1137,15 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(IF_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(IF_LET_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(CLOSURE_EXPRESSION, SPC, EXPRESSION_TERM),
-                        b.sequence(RANGE_EXPRESSION, SPC, EXPRESSION_TERM),
+                        b.sequence(RANGE_TO_INCLUSIVE_EXPR, SPC, EXPRESSION_TERM),
+                        b.sequence(RANGE_TO_EXPR, SPC, EXPRESSION_TERM),
+                        b.sequence(RANGE_FULL_EXPR, SPC, EXPRESSION_TERM),
                         b.sequence(BORROW_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(DEREFERENCE_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(NEGATION_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(ARITHMETIC_OR_LOGICAL_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(ASSIGNMENT_EXPRESSION, SPC, EXPRESSION_TERM),
-                        b.sequence(COMPOUND_ASSIGNMENT_EXPRESSION ,SPC, EXPRESSION_TERM),
+                        b.sequence(COMPOUND_ASSIGNMENT_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(MACRO_INVOCATION, SPC, EXPRESSION_TERM),
                         b.sequence(RETURN_EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(STRUCT_EXPRESSION, SPC, EXPRESSION_TERM),
@@ -1167,7 +1166,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         IF_EXPRESSION,
                         IF_LET_EXPRESSION,
                         CLOSURE_EXPRESSION,
-                        RANGE_EXPRESSION,
+                        RANGE_TO_INCLUSIVE_EXPR,
+                        RANGE_TO_EXPR,
+                        RANGE_FULL_EXPR,
                         BORROW_EXPRESSION,
                         DEREFERENCE_EXPRESSION,
                         NEGATION_EXPRESSION,
@@ -1195,7 +1196,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.DOT, IDENTIFIER, SPC, EXPRESSION_TERM),
                         b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")", SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.QUESTION, SPC, EXPRESSION_TERM),
-                        b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS,SPC, EXPRESSION_TERM),
+                        b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS, SPC, EXPRESSION_TERM),
                         b.sequence("[", EXPRESSION, "]", SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.OROR, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.ANDAND, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
@@ -1204,6 +1205,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.LT, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.GE, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.LE, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
+                        b.sequence( RustPunctuator.DOTDOT, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.DOTDOT, SPC, EXPRESSION_TERM),
+                        b.sequence( RustPunctuator.DOTDOTEQ, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
 
                         b.sequence(RustPunctuator.DOT, RustKeyword.KW_AWAIT),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")"),
@@ -1220,8 +1224,10 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.GT, SPC, EXPRESSION),
                         b.sequence(RustPunctuator.LT, SPC, EXPRESSION),
                         b.sequence(RustPunctuator.GE, SPC, EXPRESSION),
-                        b.sequence(RustPunctuator.LE, SPC, EXPRESSION)
-
+                        b.sequence(RustPunctuator.LE, SPC, EXPRESSION),
+                        b.sequence( RustPunctuator.DOTDOT, SPC, EXPRESSION),
+                        RustPunctuator.DOTDOT,
+                        b.sequence( RustPunctuator.DOTDOTEQ, SPC, EXPRESSION)
                 )
 
 
@@ -1333,17 +1339,16 @@ public enum RustGrammar implements GrammarRuleKey {
 
         ));
 
-        b.rule(RANGE_EXPR).is(b.firstOf(DEC_LITERAL, IDENTIFIER), RANGE_EXPR_TERM);
-        b.rule(RANGE_EXPR_TERM).is(b.sequence(RustPunctuator.DOTDOT, EXPRESSION, b.zeroOrMore(RANGE_EXPR_TERM)));
-        b.rule(RANGE_FROM_EXPR).is(b.firstOf(DEC_LITERAL, IDENTIFIER), RANGE_FROM_EXPR_TERM);
-        b.rule(RANGE_FROM_EXPR_TERM).is(RustPunctuator.DOTDOT, b.zeroOrMore(RANGE_FROM_EXPR_TERM));
+
+        b.rule(RANGE_EXPR).is(EXPRESSION, RustPunctuator.DOTDOT, EXPRESSION);
+        b.rule(RANGE_FROM_EXPR).is(EXPRESSION, RustPunctuator.DOTDOT);
+        b.rule(RANGE_INCLUSIVE_EXPR).is(EXPRESSION, RustPunctuator.DOTDOTEQ, EXPRESSION);
 
 
         b.rule(RANGE_TO_EXPR).is(RustPunctuator.DOTDOT, EXPRESSION);
         b.rule(RANGE_FULL_EXPR).is(RustPunctuator.DOTDOT);
 
-        b.rule(RANGE_INCLUSIVE_EXPR).is(b.firstOf(DEC_LITERAL, IDENTIFIER), RANGE_INCLUSIVE_EXPR_TERM);
-        b.rule(RANGE_INCLUSIVE_EXPR_TERM).is(RustPunctuator.DOTDOTEQ, EXPRESSION, b.zeroOrMore(RANGE_INCLUSIVE_EXPR_TERM));
+
 
 
         b.rule(RANGE_TO_INCLUSIVE_EXPR).is(RustPunctuator.DOTDOTEQ, EXPRESSION);
@@ -1431,7 +1436,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.sequence(EXPRESSION, SPC, RustPunctuator.COMMA, SPC)), b.optional(EXPRESSION, SPC));
 
-        b.rule(TUPLE_INDEXING_EXPRESSION).is(EXPRESSION,RustPunctuator.DOT, TUPLE_INDEX);
+        b.rule(TUPLE_INDEXING_EXPRESSION).is(EXPRESSION, RustPunctuator.DOT, TUPLE_INDEX);
 
 
     }
@@ -1449,7 +1454,7 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
 
-        b.rule(INDEX_EXPRESSION).is(EXPRESSION, SPC,"[", EXPRESSION, "]");
+        b.rule(INDEX_EXPRESSION).is(EXPRESSION, SPC, "[", EXPRESSION, "]");
 
         b.rule(FIELD_EXPRESSION).is(EXPRESSION, RustPunctuator.DOT, IDENTIFIER);
     }
@@ -1479,22 +1484,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence(b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND), SPC, RustKeyword.KW_MUT, SPC, EXPRESSION),
                 b.sequence(b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND), SPC, EXPRESSION)
         ));
-        b.rule(DEREFERENCE_EXPRESSION).is(RustPunctuator.STAR, b.firstOf(b.sequence(b.zeroOrMore(OUTER_ATTRIBUTE),
-                b.firstOf(
-                        RANGE_EXPRESSION,
-                        MACRO_INVOCATION,
-                        LITERAL_EXPRESSION,
-                        STRUCT_EXPRESSION,
-                        PATH_EXPRESSION,
-                        GROUPED_EXPRESSION,
-                        ARRAY_EXPRESSION,
-                        INDEX_EXPRESSION,
-                        TUPLE_EXPRESSION,
-                        TUPLE_INDEXING_EXPRESSION,
-                        ENUMERATION_VARIANT_EXPRESSION,
-                        CLOSURE_EXPRESSION
-
-                )), EXPRESSION_WITH_BLOCK));
+        b.rule(DEREFERENCE_EXPRESSION).is(RustPunctuator.STAR, EXPRESSION);
 
 
         b.rule(ERROR_PROPAGATION_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.QUESTION);
@@ -1569,19 +1559,19 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EQ_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.EQEQ, SPC, EXPRESSION);
 
         b.rule(NEQ_EXPRESSION).is(
-                EXPRESSION, SPC,RustPunctuator.NE, SPC, EXPRESSION);
+                EXPRESSION, SPC, RustPunctuator.NE, SPC, EXPRESSION);
 
         b.rule(GT_EXPRESSION).is(
-                EXPRESSION, SPC,RustPunctuator.GT, SPC, EXPRESSION);
+                EXPRESSION, SPC, RustPunctuator.GT, SPC, EXPRESSION);
 
         b.rule(LT_EXPRESSION).is(
-                EXPRESSION, SPC,RustPunctuator.LT, SPC, EXPRESSION);
+                EXPRESSION, SPC, RustPunctuator.LT, SPC, EXPRESSION);
 
         b.rule(GE_EXPRESSION).is(
-                EXPRESSION, SPC,RustPunctuator.GE, SPC, EXPRESSION);
+                EXPRESSION, SPC, RustPunctuator.GE, SPC, EXPRESSION);
 
         b.rule(LE_EXPRESSION).is(
-                EXPRESSION, SPC,RustPunctuator.LE, SPC, EXPRESSION);
+                EXPRESSION, SPC, RustPunctuator.LE, SPC, EXPRESSION);
 
 
         b.rule(LAZY_BOOLEAN_EXPRESSION).is(b.firstOf(
