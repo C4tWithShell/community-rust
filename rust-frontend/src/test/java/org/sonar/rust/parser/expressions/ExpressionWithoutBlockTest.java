@@ -34,6 +34,7 @@ public class ExpressionWithoutBlockTest {
                 //Operator expressdions
                 //borrow expr
                 .matches("&7")
+                .matches("& Value")
                 .matches("&mut array")
                 .matches("&& 10")
                 .matches("& & 10")
@@ -102,7 +103,9 @@ public class ExpressionWithoutBlockTest {
                 //TODO ContinueExpression
                 //TODO BreakExpression
                 //TODO RangeExpression
-                //TODO ReturnExpression
+                //ReturnExpression
+                .matches("return 42")
+                .matches("return None")
                 //MacroInvocation
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
@@ -112,7 +115,7 @@ public class ExpressionWithoutBlockTest {
                 .matches("Numeric(n)")
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
-                .matches("return None")
+
                 .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
                 /* FIXME lr
                 .matches("async move {\n" +
