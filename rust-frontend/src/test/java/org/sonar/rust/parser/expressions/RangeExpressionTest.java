@@ -64,8 +64,8 @@ public class RangeExpressionTest {
 
     @Test
     public void testRangeInclusive() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+        //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
+       assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("40..=42")
 
         ;
@@ -88,11 +88,11 @@ public class RangeExpressionTest {
 
                 .matches("..4")// std::ops::RangeTo
                 .matches("..")// std::ops::RangeFull
-
+                .matches("3..")// std::ops::RangeFrom
                 .matches("..=7")// std::ops::RangeToInclusive
                 .matches("0..top()")
                 //FIXME.matches("0..(4 - (len & 3)) & 3")
-                .matches("3..")// std::ops::RangeFrom
+
                 .matches("5..=6")// std::ops::RangeInclusive
         ;
     }
