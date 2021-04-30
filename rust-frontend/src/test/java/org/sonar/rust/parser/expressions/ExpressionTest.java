@@ -28,65 +28,6 @@ public class ExpressionTest {
 
 
 
-
-    @Test
-    public void testExpressionExceptStruct() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
-                .matches("{let y=42;}")
-                .matches("{;}")
-                .matches("0")
-                .matches("3+2")
-                .matches("1 << 1")
-                .matches("foo")
-                .matches("Some(42)")
-                .matches("panic!()")
-                .notMatches("== b")
-                .matches("len(values)")
-                .matches("\"123\".parse()")
-                .matches("\"Some string\".to_string()")
-                .matches("42")
-                .matches("0.0")
-                .matches("pi.unwrap_or(1.0).log(2.72)")
-                .matches("pi.into_iter(1.0).log(2.72)")
-                .matches("other.unwrap_or(1.0).map(From::from).collect()")
-                .matches("callme()")
-                .matches("println!(\"{}, {}\", word, j)")
-                .matches("{}")
-                .matches("i.get()")
-                .matches("m.get(i) + 1")
-                .matches("dest.write_char('n')")
-                .matches("Identifier::Numeric")
-                .matches("Vec::new")
-                .notMatches("MediaElementAudioSourceNode {\n" +
-                        "            node,\n" +
-                        "            media_element,\n" +
-                        "        }")
-                .matches("StepPosition::JumpEnd")
-                .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
-                .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
-                        "        let mut b = 42;\n" +
-                        "    }")
-                .matches("match path.parent() {\n" +
-                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
-                        "             None => Ok(()),\n" +
-                        "         }")
-                .matches("if run_coverage {\n" +
-                        "        println!(\"Coverage is running\");" +
-                        " } ")
-
-        ;
-    }
-
-
-
-
-/*
-    Expression :
-    ExpressionWithoutBlock
-   | ExpressionWithBlock
-
- */
-
     @Test
     public void testExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
@@ -103,6 +44,8 @@ public class ExpressionTest {
                 .matches("\"123\".parse()")
                 .matches("\"Some string\".to_string()")
                 .matches("42")
+                .matches("return 42")
+                .matches("return None")
                 .matches("0.0")
                 .matches("pi.unwrap_or(1.0).log(2.72)")
                 .matches("pi.into_iter(1.0).log(2.72)")
@@ -131,8 +74,8 @@ public class ExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+                .matches("(4 - (len & 3)) & 3")
 
-                /* FIXME async followed by dotted
                 .matches("async move {\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).await?;\n" +
@@ -142,14 +85,6 @@ public class ExpressionTest {
                         "            Ok(())\n" +
                         "        }\n" +
                         "            .boxed_local()")
-
-                 */
-
-
-
-
-
-
-        ;
+     ;
     }
 }

@@ -40,7 +40,8 @@ public class TupleExpressionTest {
 
     @Test
     public void testTupleIndexingExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_INDEXING_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_INDEXING_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("point.1")
                 .matches("self.0")
         ;

@@ -30,7 +30,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testShlExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.SHL_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.SHL_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1 << 0")
                 .matches("0<< 1 <<2")
         ;
@@ -41,7 +42,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testAddition() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ADDITION_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.ADDITION_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("0+0")
                 .matches("0 + 0")
                 .matches("40 + 2")
@@ -57,7 +59,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testSubstraction() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.SUBTRACTION_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.SUBTRACTION_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("0-0")
                 .matches("0 - 0")
                 .matches("40 - 2")
@@ -70,7 +73,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testMultiplication() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.MULTIPLICATION_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.MULTIPLICATION_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("0*0")
                 .matches("0 * 0")
                 .matches("40 * 2")
@@ -83,7 +87,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testBitAnd() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BITAND_EXPRESSION))
+       // assertThat(RustGrammar.create().build().rule(RustGrammar.BITAND_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("0&0")
                 .matches("0 & 0")
                 .matches("40 & 2")
@@ -97,7 +102,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testDivision() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.DIVISION_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.DIVISION_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("0/0")
                 .matches("0 / 0")
                 .matches("40 / 2")
@@ -114,7 +120,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testArithmeticOrLogicalExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1<<0")
                 .matches("40+2")
                 .matches("39+1+2")

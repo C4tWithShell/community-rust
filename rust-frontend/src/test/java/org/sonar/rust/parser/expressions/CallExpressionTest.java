@@ -27,7 +27,7 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class CallExpressionTest {
 
     @Test
-    public void testCallExpressionTerm() {
+    public void testCallParams() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_PARAMS))
                 //.matches("")
                 .matches("1i32")
@@ -55,7 +55,8 @@ public class CallExpressionTest {
 
     @Test
     public void testCallExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("foo()")
                 .matches("abc()")
                 .matches("add(1i32,2i32)")

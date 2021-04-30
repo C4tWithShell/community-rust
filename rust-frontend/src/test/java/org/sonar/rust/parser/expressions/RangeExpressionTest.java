@@ -19,8 +19,14 @@
  */
 package org.sonar.rust.parser.expressions;
 
+import com.sonar.sslr.api.AstNode;
+import org.fest.assertions.Assertions;
 import org.junit.Test;
 import org.sonar.rust.RustGrammar;
+import org.sonar.sslr.parser.LexerlessGrammar;
+import org.sonar.sslr.parser.ParserAdapter;
+
+import java.nio.charset.StandardCharsets;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
@@ -28,16 +34,19 @@ public class RangeExpressionTest {
 
     @Test
     public void testRangeExpr() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPR))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPR))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1..2")
                 .matches("start..end")
+                .matches("0..(4 - (len & 3)) & 3")
 
         ;
     }
 
     @Test
     public void testRangeFrom() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
+        //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1..")
 
         ;
@@ -61,7 +70,8 @@ public class RangeExpressionTest {
 
     @Test
     public void testRangeInclusive() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
+        //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
+       assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("40..=42")
 
         ;
@@ -78,14 +88,48 @@ public class RangeExpressionTest {
 
     @Test
     public void testRangeExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1..2")// std::ops::Range
-                .matches("3..")// std::ops::RangeFrom
                 .matches("..4")// std::ops::RangeTo
                 .matches("..")// std::ops::RangeFull
-                .matches("5..=6")// std::ops::RangeInclusive
+                .matches("3..")// std::ops::RangeFrom
                 .matches("..=7")// std::ops::RangeToInclusive
+                .matches("0..top()")
                 .matches("0..(4 - (len & 3)) & 3")
+                .matches("5..=6")// std::ops::RangeInclusive
         ;
+    }
+
+    @Test
+    public void testParsing(){
+
+        //Print out Ast node content for debugging purpose
+
+        ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8,RustGrammar.create().build());
+        AstNode rootNode = parser.parse("let a = 1..5;");
+        System.out.printf("[DEBUG]" + rootNode.getType());
+        Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
+        AstNode astNode = rootNode;
+        Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
+        System.out.println("[DEBUG]" + astNode.getType());
+        for (AstNode n : astNode.getChildren()){
+            System.out.println("[DEBUG] child" + n.getType());
+        }
+        AstNode st = astNode.getChildren().get(1);
+        System.out.println("[ELG] st is " + st);
+        for (AstNode n : st.getChildren()){
+            System.out.println("[L1]" + n.getType());
+            for (AstNode n2 : n.getChildren()){
+                System.out.println("   [L2]" + n2.getType());
+                for (AstNode n3 : n2.getChildren()){
+                    System.out.println("      [L3]" + n3.getType());
+                    for (AstNode n4 : n3.getChildren()){
+                        System.out.println("         [L4]" + n4.getType());
+                    }
+                }
+
+            }
+        }
     }
 }
