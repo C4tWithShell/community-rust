@@ -54,6 +54,7 @@ public class StatementTest {
     public void testExpressionStatement() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_STATEMENT))
                 .matches("return None;")
+                .matches("a.b();")
 
         ;
     }

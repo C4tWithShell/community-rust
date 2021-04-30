@@ -46,6 +46,7 @@ Statements :
                 .matches("println!(\"hi there\");")
                 .matches("println!(\"hi there\");\n" +
                         "println!(\"how are you today ?\");")
+
                 .matches("j.set(i.get()); false")
                 .matches("j.set(i.get() + 1); false")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")

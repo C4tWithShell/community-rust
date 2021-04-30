@@ -37,7 +37,8 @@ public class RangeExpressionTest {
 
     @Test
     public void testRangeFrom() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
+        //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1..")
 
         ;
@@ -78,7 +79,8 @@ public class RangeExpressionTest {
 
     @Test
     public void testRangeExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1..2")// std::ops::Range
                 .matches("3..")// std::ops::RangeFrom
                 .matches("..4")// std::ops::RangeTo
