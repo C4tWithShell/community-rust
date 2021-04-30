@@ -46,7 +46,8 @@ public class ArrayExpressionTest {
 
     @Test
     public void testIndexExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.INDEX_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.INDEX_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("arr[42]")
                 .matches("pair[0]")
                 .matches("[42,43][0]")
