@@ -1142,7 +1142,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
-                        
+
                 ));
 
         b.rule(EXPRESSION_TERM).is(
@@ -1235,28 +1235,24 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
 
-                         LITERAL_EXPRESSION,
-                         PATH_EXPRESSION
-                        , OPERATOR_EXPRESSION
-                        , GROUPED_EXPRESSION
-                        , ARRAY_EXPRESSION
-                        , AWAIT_EXPRESSION
-                        , INDEX_EXPRESSION
-                        , TUPLE_EXPRESSION
-                        , TUPLE_INDEXING_EXPRESSION
-                        , STRUCT_EXPRESSION
-                        , ENUMERATION_VARIANT_EXPRESSION
-                        , CALL_EXPRESSION
-                        , METHOD_CALL_EXPRESSION
-                        , FIELD_EXPRESSION
-                        , CLOSURE_EXPRESSION
-                        , CONTINUE_EXPRESSION
-                        , BREAK_EXPRESSION
-                        , RANGE_EXPRESSION
-                        , RETURN_EXPRESSION
-                        , MACRO_INVOCATION
+                        b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(TUPLE_INDEXING_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(STRUCT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(CLOSURE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(RANGE_TO_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(RANGE_FULL_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM))
 
-        ));
+                ));
 
         b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
