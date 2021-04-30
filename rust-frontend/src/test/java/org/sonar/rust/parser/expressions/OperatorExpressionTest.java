@@ -31,6 +31,8 @@ public class OperatorExpressionTest {
     public void testBorrowExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BORROW_EXPRESSION))
                 .matches("&7")
+                .matches("& 7")
+                .matches("& Value")
                 .matches("&mut array")
                 .matches("&& 10")
                 .matches("& & 10")
@@ -48,6 +50,7 @@ public class OperatorExpressionTest {
     public void testDereferenceExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.DEREFERENCE_EXPRESSION))
                 .matches("*x")
+                .notMatches("**")
                 .notMatches("== b")
                 .matches("*position")
         ;
