@@ -54,23 +54,21 @@
         <sonar.version>7.9</sonar.version>
         <java.version>8</java.version>
         <sslr.version>1.24.0.633</sslr.version>
-        <sslr-squid-bridge.version>2.6.1</sslr-squid-bridge.version>
-        <mockito.version>2.21.0</mockito.version>
-        <assertj-core.version>3.15.0</assertj-core.version>
-        <jacoco.version>0.8.4</jacoco.version>
-        <logback.version>1.1.7</logback.version>
+        <sslr-squid-bridge.version>2.7.0.377</sslr-squid-bridge.version>
+        <mockito.version>3.6.28</mockito.version>
+        <assertj-core.version>3.19.0</assertj-core.version>
+        <jacoco.version>0.8.6</jacoco.version>
+        <logback.version>1.2.3</logback.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <sonar.branch.name>lr-2</sonar.branch.name>
-        <sonar.branch.target>master</sonar.branch.target>
-        <commons.io.version>2.7</commons.io.version>
+        <commons.io.version>2.8.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.13.1</junit.version>
-        <sonar-analyzer-commons.version>1.11.0.541</sonar-analyzer-commons.version>
+        <sonar-analyzer-commons.version>1.14.1.690</sonar-analyzer-commons.version>
     </properties>
 
     <dependencyManagement>
@@ -178,7 +176,7 @@
             <dependency>
                 <groupId>cglib</groupId>
                 <artifactId>cglib-nodep</artifactId>
-                <version>3.2.5</version>
+                <version>3.3.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -220,7 +218,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>29.0-jre</version>
+                <version>10.0.1</version>
             </dependency>
 
 
@@ -267,7 +265,7 @@
                 <plugin>
                     <groupId>org.sonarsource.scanner.maven</groupId>
                     <artifactId>sonar-maven-plugin</artifactId>
-                    <version>3.7.0.1746</version>
+                    <version>3.8.0.2131</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
