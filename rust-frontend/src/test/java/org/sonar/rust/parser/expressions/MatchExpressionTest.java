@@ -84,6 +84,8 @@ public class MatchExpressionTest {
                 .matches("1 | _ if { i.set(i.get() + 1); false } => {}" )
                 .matches("1 | _ if { i.set(i.get() + 1); false } => {}\n" +
                         "_ => {}")
+
+
                 .matches("(1, 0) => dest.write_char('n')")
                 .matches("(1, 0) => dest.write_char('n'),")
                 .matches("semver_parser::version::Identifier::Numeric(n) => dest.write_char('n'),")

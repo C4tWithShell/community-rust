@@ -31,6 +31,8 @@ public class OperatorExpressionTest {
     public void testBorrowExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BORROW_EXPRESSION))
                 .matches("&7")
+                .matches("& 7")
+                .matches("& Value")
                 .matches("&mut array")
                 .matches("&& 10")
                 .matches("& & 10")
@@ -48,6 +50,7 @@ public class OperatorExpressionTest {
     public void testDereferenceExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.DEREFERENCE_EXPRESSION))
                 .matches("*x")
+                .notMatches("**")
                 .notMatches("== b")
                 .matches("*position")
         ;
@@ -55,7 +58,8 @@ public class OperatorExpressionTest {
 
     @Test
     public void testErrPropagationExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ERROR_PROPAGATION_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.ERROR_PROPAGATION_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("foo?")
                 .matches("None?")
                 .matches("Some(42)?")
@@ -85,7 +89,8 @@ public class OperatorExpressionTest {
 
     @Test
     public void testComparisonExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.COMPARISON_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.COMPARISON_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("a==b")
                 .matches("a == b")
                 .notMatches("== b")
@@ -115,7 +120,8 @@ public class OperatorExpressionTest {
 
     @Test
     public void testLazyBooleanExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.LAZY_BOOLEAN_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.LAZY_BOOLEAN_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("false || true")
                 .matches("false && panic!()")
                 .notMatches("== b")
@@ -126,20 +132,22 @@ public class OperatorExpressionTest {
 
     @Test
     public void testTypeCastExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_CAST_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_CAST_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("value as f64")
                 .matches("{} as i32")
                 .matches("'test' as i32")
                 .matches("self.len() as u32")
-                //FIXME.matches("abc() as i32")
-                //FIXME.matches("len(vals) as f64")
+                .matches("abc() as i32")
+                .matches("len(vals) as f64")
         ;
     }
 
 
     @Test
     public void testAssignmentExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ASSIGNMENT_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.ASSIGNMENT_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("x=42")
                 .matches("x = 42")
                 .notMatches("x = = 42")
@@ -151,7 +159,8 @@ public class OperatorExpressionTest {
 
     @Test
     public void testCompoundAssignmentExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.COMPOUND_ASSIGNMENT_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.COMPOUND_ASSIGNMENT_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("x+=42")
                 .matches("x -= y")
                 .matches("a *= y")
@@ -168,7 +177,8 @@ public class OperatorExpressionTest {
 
     @Test
     public void testOperatorExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.OPERATOR_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.OPERATOR_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 //borrow expr
                 .matches("&7")
                 .matches("&mut array")
