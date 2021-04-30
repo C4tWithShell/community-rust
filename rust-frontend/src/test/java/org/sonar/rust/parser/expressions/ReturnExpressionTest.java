@@ -31,6 +31,7 @@ public class ReturnExpressionTest {
                 .matches("return")
                 .matches("return result")
                 .matches("return calc()")
+                .matches("return m.run()")
                 .matches("return None")
 
         ;

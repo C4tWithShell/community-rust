@@ -44,6 +44,8 @@ public class ExpressionTest {
                 .matches("\"123\".parse()")
                 .matches("\"Some string\".to_string()")
                 .matches("42")
+                .matches("return 42")
+                .matches("return None")
                 .matches("0.0")
                 .matches("pi.unwrap_or(1.0).log(2.72)")
                 .matches("pi.into_iter(1.0).log(2.72)")
