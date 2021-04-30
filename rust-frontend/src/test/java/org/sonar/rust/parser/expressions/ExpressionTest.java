@@ -74,8 +74,8 @@ public class ExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+                .matches("(4 - (len & 3)) & 3")
 
-                /* FIXME async followed by dotted
                 .matches("async move {\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).await?;\n" +
@@ -85,14 +85,6 @@ public class ExpressionTest {
                         "            Ok(())\n" +
                         "        }\n" +
                         "            .boxed_local()")
-
-                 */
-
-
-
-
-
-
-        ;
+     ;
     }
 }

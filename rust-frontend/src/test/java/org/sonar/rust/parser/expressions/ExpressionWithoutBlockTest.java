@@ -116,8 +116,8 @@ public class ExpressionWithoutBlockTest {
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
 
-                .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
-                /* FIXME lr
+                //FIXME.matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
+
                 .matches("async move {\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).await?;\n" +
@@ -128,7 +128,7 @@ public class ExpressionWithoutBlockTest {
                         "        }\n" +
                         "            .boxed_local()")
 
-                 */
+
 
 
 

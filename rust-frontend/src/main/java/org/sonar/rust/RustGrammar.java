@@ -1126,9 +1126,11 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(IF_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(IF_LET_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(CLOSURE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RANGE_TO_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RANGE_FULL_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+
                         b.sequence(BORROW_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(DEREFERENCE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(NEGATION_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
@@ -1163,8 +1165,10 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.GE, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.LE, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(b.firstOf(
+                                b.sequence(RustPunctuator.DOTDOT, b.endOfInput()),
                                 b.sequence(RustPunctuator.DOTDOTEQ, EXPRESSION),
-                                b.sequence(RustPunctuator.DOTDOT, b.optional(EXPRESSION))), SPC, EXPRESSION_TERM),
+                                b.sequence(RustPunctuator.DOTDOT, EXPRESSION)
+                                ), SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.PLUS, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.MINUS, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.STAR, SPC, EXPRESSION, SPC, EXPRESSION_TERM),
@@ -1329,13 +1333,14 @@ public enum RustGrammar implements GrammarRuleKey {
     private static void range(LexerlessGrammarBuilder b) {
 
         b.rule(RANGE_EXPRESSION).is(b.firstOf(
+
+                RANGE_TO_INCLUSIVE_EXPR,
+                RANGE_TO_EXPR,
+                RANGE_FULL_EXPR,
                 b.sequence(EXPRESSION, b.firstOf(
                         b.sequence(RustPunctuator.DOTDOTEQ, EXPRESSION),
                         b.sequence(RustPunctuator.DOTDOT, EXPRESSION),
-                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(EXPRESSION)))),
-                RANGE_TO_INCLUSIVE_EXPR,
-                RANGE_TO_EXPR,
-                RANGE_FULL_EXPR
+                        b.sequence(RustPunctuator.DOTDOT, b.endOfInput())))
         ));
 
 

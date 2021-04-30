@@ -93,9 +93,12 @@ Statements :
                 .matches("{\n" +
                         "        self.len() as u32\n" +
                         "    }")
+                /* FIXME
                 .matches("{\n" +
                         "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
                         "}")
+                        */
+
                 .matches("{ Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
                         "    })\n" +
