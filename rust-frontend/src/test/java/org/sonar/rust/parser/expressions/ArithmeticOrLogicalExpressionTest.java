@@ -120,7 +120,8 @@ public class ArithmeticOrLogicalExpressionTest {
 
     @Test
     public void testArithmeticOrLogicalExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
+//        assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("1<<0")
                 .matches("40+2")
                 .matches("39+1+2")
