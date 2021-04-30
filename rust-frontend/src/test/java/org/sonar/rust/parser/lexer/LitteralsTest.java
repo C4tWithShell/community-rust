@@ -295,6 +295,7 @@ public class LitteralsTest {
                 .matches("0.1f32")         // type f32
                 .matches("3.1415927")
                 .matches("2.")
+                .notMatches("2..")
         ;
     }
 
