@@ -67,7 +67,7 @@
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
         <sonar.branch.name>lr-2</sonar.branch.name>
         <sonar.branch.target>master</sonar.branch.target>
-        <commons.io.version>2.5</commons.io.version>
+        <commons.io.version>2.7</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.13.1</junit.version>
         <sonar-analyzer-commons.version>1.11.0.541</sonar-analyzer-commons.version>
