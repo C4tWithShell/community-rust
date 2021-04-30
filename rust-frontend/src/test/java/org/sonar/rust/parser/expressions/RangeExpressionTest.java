@@ -19,8 +19,14 @@
  */
 package org.sonar.rust.parser.expressions;
 
+import com.sonar.sslr.api.AstNode;
+import org.fest.assertions.Assertions;
 import org.junit.Test;
 import org.sonar.rust.RustGrammar;
+import org.sonar.sslr.parser.LexerlessGrammar;
+import org.sonar.sslr.parser.ParserAdapter;
+
+import java.nio.charset.StandardCharsets;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
@@ -95,5 +101,34 @@ public class RangeExpressionTest {
 
                 .matches("5..=6")// std::ops::RangeInclusive
         ;
+    }
+
+    @Test
+    public void testParsing(){
+        ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8,RustGrammar.create().build());
+        AstNode rootNode = parser.parse("let a = 1..5;");
+        System.out.printf("[ELG]" + rootNode.getType());
+        Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
+        AstNode astNode = rootNode;
+        Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
+        System.out.println("[ELG]" + astNode.getType());
+        for (AstNode n : astNode.getChildren()){
+            System.out.println("[ELG] child" + n.getType());
+        }
+        AstNode st = astNode.getChildren().get(1);
+        System.out.println("[ELG] st is " + st);
+        for (AstNode n : st.getChildren()){
+            System.out.println("[L1]" + n.getType());
+            for (AstNode n2 : n.getChildren()){
+                System.out.println("   [L2]" + n2.getType());
+                for (AstNode n3 : n2.getChildren()){
+                    System.out.println("      [L3]" + n3.getType());
+                    for (AstNode n4 : n3.getChildren()){
+                        System.out.println("         [L4]" + n4.getType());
+                    }
+                }
+
+            }
+        }
     }
 }

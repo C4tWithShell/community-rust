@@ -1130,9 +1130,9 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
-                        b.sequence(RustPunctuator.DOTDOTEQ, b.endOfInput()),
-                        b.sequence(RustPunctuator.DOTDOT, b.endOfInput()),
-                        b.sequence(RustPunctuator.DOTDOT, EXPRESSION),
+                        b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
+                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), EXPRESSION),
                         b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(BLOCK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(MATCH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
@@ -1160,9 +1160,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(EXPRESSION_TERM).is(
                 b.firstOf(
-                        b.sequence( RustPunctuator.DOTDOT, b.endOfInput()) ,
-                        b.sequence( RustPunctuator.DOTDOTEQ,b.optional(EXPRESSION)) ,
-                        b.sequence( RustPunctuator.DOTDOT,b.optional(EXPRESSION)),
+                        b.sequence( RustPunctuator.DOTDOT,b.nextNot(RustPunctuator.EQ), b.endOfInput()) ,
+                        b.sequence( RustPunctuator.DOTDOTEQ,EXPRESSION) ,
+                        b.sequence( RustPunctuator.DOTDOT,b.nextNot(RustPunctuator.EQ), b.optional(EXPRESSION)),
                         b.sequence(RustPunctuator.DOT, RustKeyword.KW_AWAIT, SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")", SPC, EXPRESSION_TERM),
                         b.sequence(RustPunctuator.DOT, TUPLE_INDEX, SPC, EXPRESSION_TERM),
@@ -1912,9 +1912,9 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(FLOAT_LITERAL).is(b.token(RustTokenType.FLOAT_LITERAL,
                 b.firstOf(
                         b.sequence(DEC_LITERAL, b.optional(b.sequence(".", DEC_LITERAL)), b.optional(FLOAT_EXPONENT), FLOAT_SUFFIX),
-                        b.sequence(DEC_LITERAL, ".", DEC_LITERAL, b.optional(FLOAT_EXPONENT)),
+                        b.sequence(DEC_LITERAL, RustPunctuator.DOT, DEC_LITERAL, b.optional(FLOAT_EXPONENT)),
                         b.sequence(DEC_LITERAL, FLOAT_EXPONENT),
-                        b.sequence(DEC_LITERAL, ".")//(not immediately followed by ., _ or an identifier)
+                        b.sequence(DEC_LITERAL, RustPunctuator.DOT, b.nextNot(RustPunctuator.DOT))//(not immediately followed by ., _ or an identifier)
                 )));
         b.rule(FLOAT_EXPONENT).is(b.regexp("[eE]+[+-]?[0-9][0-9_]*"));
 
