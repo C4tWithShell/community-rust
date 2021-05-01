@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -63,8 +63,6 @@ public class ImplementationTest {
                         "        Ok(reflect_dom_object(Box::new(node), window))\n" +
                         "    }")
                 .matches("pub const BIT2: u32 = 1 << 1;") //constant
-
-
 
 
         ;
@@ -187,6 +185,7 @@ public class ImplementationTest {
                         "}")
 
 
+
         ;
 
     }
@@ -215,6 +214,7 @@ public class ImplementationTest {
         ;
 
     }
+
     @Test
     public void testImplementation() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.IMPLEMENTATION))
@@ -282,8 +282,25 @@ public class ImplementationTest {
                         "        MediaElementAudioSourceNode::new(window, context, &*options.mediaElement)\n" +
                         "    }\n" +
                         "}")
-
-
+                .matches("impl<'a, 'b, 'c, S> ser::SerializeTupleVariant\n" +
+                        "  for VariantSerializer<'a, 'b, 'c, S>\n" +
+                        "where\n" +
+                        "  S: ser::SerializeTupleStruct<Ok = JsValue<'a>, Error = Error>,\n" +
+                        "{\n" +
+                        "  type Ok = JsValue<'a>;\n" +
+                        "  type Error = Error;\n" +
+                        "\n" +
+                        "  fn serialize_field<T: ?Sized + Serialize>(\n" +
+                        "    &mut self,\n" +
+                        "    value: &T,\n" +
+                        "  ) -> Result<()> {\n" +
+                        "    self.inner.serialize_field(value)\n" +
+                        "  }\n" +
+                        "\n" +
+                        "  fn end(self) -> JsResult<'a> {\n" +
+                        "    self.end(S::end)\n" +
+                        "  }\n" +
+                        "}")
 
 
         ;
