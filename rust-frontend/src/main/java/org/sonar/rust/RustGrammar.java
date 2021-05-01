@@ -842,7 +842,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/macros.html */
     private static void macros(LexerlessGrammarBuilder b) {
         b.rule(MACRO_INVOCATION).is(
-                SIMPLE_PATH, RustPunctuator.NOT, DELIM_TOKEN_TREE
+                SIMPLE_PATH, RustPunctuator.NOT, SPC, DELIM_TOKEN_TREE
         );
 
         b.rule(DELIM_TOKEN_TREE).is(b.firstOf(
@@ -859,9 +859,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         DELIM_TOKEN_TREE
                 ));
         b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
-                b.sequence(SIMPLE_PATH, RustPunctuator.NOT, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
-                b.sequence(SIMPLE_PATH, RustPunctuator.NOT, "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
-                b.sequence(SIMPLE_PATH, RustPunctuator.NOT, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")
+                b.sequence(SIMPLE_PATH, RustPunctuator.NOT,SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
+                b.sequence(SIMPLE_PATH, RustPunctuator.NOT,SPC,  "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
+                b.sequence(SIMPLE_PATH, RustPunctuator.NOT,SPC,  "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")
         ));
         macrosByExample(b);
     }
@@ -877,13 +877,13 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence("{", SPC, MACRO_RULES, SPC, "}")
         ));
         b.rule(MACRO_RULES).is(
-                MACRO_RULE, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, MACRO_RULE)), b.optional(RustPunctuator.COMMA)
+                seq(b, MACRO_RULE, RustPunctuator.COMMA)
         );
-        b.rule(MACRO_RULE).is(MACRO_MATCHER, SPC, "=>", SPC, MACRO_TRANSCRIBER);
+        b.rule(MACRO_RULE).is(MACRO_MATCHER, SPC, RustPunctuator.FATARROW, SPC, MACRO_TRANSCRIBER);
         b.rule(MACRO_MATCHER).is(b.firstOf(
-                b.sequence("(", SPC, MACRO_MATCH, SPC, ")"),
-                b.sequence("[", SPC, MACRO_MATCH, SPC, "]"),
-                b.sequence("{", SPC, MACRO_MATCH, SPC, "}")
+                b.sequence("(", SPC, b.zeroOrMore(MACRO_MATCH), SPC, ")"),
+                b.sequence("[", SPC, b.zeroOrMore(MACRO_MATCH), SPC, "]"),
+                b.sequence("{", SPC, b.zeroOrMore(MACRO_MATCH), SPC, "}")
         ));
 
 
@@ -892,7 +892,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence("$", IDENTIFIER, SPC, RustPunctuator.COLON, SPC, MACRO_FRAG_SPEC),
 
                 b.sequence("$(", b.oneOrMore(MACRO_MATCH, SPC), b.firstOf(")+", ")*", ")?")),
-                TOKEN_MACRO,
+                TOKEN,
                 MACRO_MATCHER
         ));
 

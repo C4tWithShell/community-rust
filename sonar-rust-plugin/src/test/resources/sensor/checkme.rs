@@ -15,8 +15,8 @@ type JsResult<'s> = Result<JsValue<'s>>;
 type ScopePtr<'a, 'b, 'c> = &'c RefCell<&'b mut v8::HandleScope<'a>>;
 
 pub fn to_v8<'a, T>(scope: &mut v8::HandleScope<'a>, input: T) -> JsResult<'a>
-where
-  T: Serialize,
+  where
+      T: Serialize,
 {
   let scopeptr = RefCell::new(scope);
   let serializer = Serializer::new(&scopeptr);
@@ -56,9 +56,9 @@ impl<'a, 'b, 'c, S> VariantSerializer<'a, 'b, 'c, S> {
 }
 
 impl<'a, 'b, 'c, S> ser::SerializeTupleVariant
-  for VariantSerializer<'a, 'b, 'c, S>
-where
-  S: ser::SerializeTupleStruct<Ok = JsValue<'a>, Error = Error>,
+for VariantSerializer<'a, 'b, 'c, S>
+  where
+      S: ser::SerializeTupleStruct<Ok = JsValue<'a>, Error = Error>,
 {
   type Ok = JsValue<'a>;
   type Error = Error;
@@ -76,9 +76,9 @@ where
 }
 
 impl<'a, 'b, 'c, S> ser::SerializeStructVariant
-  for VariantSerializer<'a, 'b, 'c, S>
-where
-  S: ser::SerializeStruct<Ok = JsValue<'a>, Error = Error>,
+for VariantSerializer<'a, 'b, 'c, S>
+  where
+      S: ser::SerializeStruct<Ok = JsValue<'a>, Error = Error>,
 {
   type Ok = JsValue<'a>;
   type Error = Error;
@@ -371,11 +371,11 @@ impl<'a, 'b, 'c> ser::Serializer for Serializer<'a, 'b, 'c> {
   type SerializeTuple = ArraySerializer<'a, 'b, 'c>;
   type SerializeTupleStruct = ArraySerializer<'a, 'b, 'c>;
   type SerializeTupleVariant =
-    VariantSerializer<'a, 'b, 'c, ArraySerializer<'a, 'b, 'c>>;
+  VariantSerializer<'a, 'b, 'c, ArraySerializer<'a, 'b, 'c>>;
   type SerializeMap = MapSerializer<'a, 'b, 'c>;
   type SerializeStruct = StructSerializers<'a, 'b, 'c>;
   type SerializeStructVariant =
-    VariantSerializer<'a, 'b, 'c, StructSerializers<'a, 'b, 'c>>;
+  VariantSerializer<'a, 'b, 'c, StructSerializers<'a, 'b, 'c>>;
 
   forward_to! {
       serialize_i8(i8, serialize_i32, 'a);
@@ -411,8 +411,8 @@ impl<'a, 'b, 'c> ser::Serializer for Serializer<'a, 'b, 'c> {
 
   fn serialize_str(self, v: &str) -> JsResult<'a> {
     v8::String::new(&mut self.scope.borrow_mut(), v)
-      .map(|v| v.into())
-      .ok_or(Error::ExpectedString)
+        .map(|v| v.into())
+        .ok_or(Error::ExpectedString)
   }
 
   fn serialize_bytes(self, _v: &[u8]) -> JsResult<'a> {
@@ -548,12 +548,12 @@ pub fn boxed_slice_to_uint8array<'a>(
   if buf.is_empty() {
     let ab = v8::ArrayBuffer::new(scope, 0);
     return v8::Uint8Array::new(scope, ab, 0, 0)
-      .expect("Failed to create UintArray8");
+        .expect("Failed to create UintArray8");
   }
   let buf_len = buf.len();
   let backing_store = v8::ArrayBuffer::new_backing_store_from_boxed_slice(buf);
   let backing_store_shared = backing_store.make_shared();
   let ab = v8::ArrayBuffer::with_backing_store(scope, &backing_store_shared);
   v8::Uint8Array::new(scope, ab, 0, buf_len)
-    .expect("Failed to create UintArray8")
+      .expect("Failed to create UintArray8")
 }
