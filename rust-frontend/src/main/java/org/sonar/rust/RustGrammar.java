@@ -592,7 +592,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP),
                         "{", SPC, b.optional(seq(b, USE_TREE, RustPunctuator.COMMA)), SPC, "}"
                 ),
-                b.sequence(SIMPLE_PATH, b.optional(
+                b.sequence(SIMPLE_PATH, SPC, b.optional(
                         RustKeyword.KW_AS, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)
                 ))
         ));

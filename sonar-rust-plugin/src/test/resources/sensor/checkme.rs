@@ -1,17 +1,34 @@
-fn main() {
-    let vec1 = vec![1, 2, 3];
-    let vec2 = vec![4, 5, 6];
+// Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+use rusty_v8 as v8;
+use std::sync::Once;
 
-    // `iter()` for vecs yields `&i32`. Destructure to `i32`.
-    println!("2 in vec1: {}", vec1.iter()     .any(|&x| x == 2));
-    // `into_iter()` for vecs yields `i32`. No destructuring required.
-    println!("2 in vec2: {}", vec2.into_iter().any(| x| x == 2));
+pub fn js_exec<'s>(
+  scope: &mut v8::HandleScope<'s>,
+  src: &str,
+) -> v8::Local<'s, v8::Value> {
+  let code = v8::String::new(scope, src).unwrap();
+  let script = v8::Script::compile(scope, code, None).unwrap();
+  script.run(scope).unwrap()
+}
 
-    let array1 = [1, 2, 3];
-    let array2 = [4, 5, 6];
+pub fn v8_init() {
+  let platform = v8::new_default_platform().unwrap();
+  v8::V8::initialize_platform(platform);
+  v8::V8::initialize();
+}
 
-    // `iter()` for arrays yields `&i32`.
-    println!("2 in array1: {}", array1.iter()     .any(|&x| x == 2));
-    // `into_iter()` for arrays unusually yields `&i32`.
-    println!("2 in array2: {}", array2.into_iter().any(|&x| x == 2));
+pub fn v8_shutdown() {
+  unsafe {
+    v8::V8::dispose();
+  }
+  v8::V8::shutdown_platform();
+}
+
+pub fn v8_do(f: impl FnOnce()) {
+  static V8_INIT: Once = Once::new();
+  V8_INIT.call_once(|| {
+    v8_init();
+  });
+  f();
+  // v8_shutdown();
 }
