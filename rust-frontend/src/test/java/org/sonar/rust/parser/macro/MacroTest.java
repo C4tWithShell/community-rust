@@ -153,12 +153,49 @@ public class MacroTest {
                 ;
     }
 
+
+    @Test
+    public void testMacroRules() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES))
+                .matches("($l:tt) => { bar!($l); }" )
+                .matches("($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
+                        "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
+                        "            self.$to(v as _)\n" +
+                        "        })*\n" +
+                        "    };")
+
+        ;
+    }
+
+    @Test
+    public void testMacroRulesDef() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEF))
+                .matches("{($l:tt) => { bar!($l); }}" )
+                .matches("{($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
+                        "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
+                        "            self.$to(v as _)\n" +
+                        "        })*\n" +
+                        "    };\n" +
+                        "}")
+
+
+        ;
+    }
+
     @Test
     public void testMacroRulesDefinition() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEFINITION))
                 .matches("macro_rules! foo {\n" +
                         "    ($l:tt) => { bar!($l); }\n" +
                         "}")
+                .matches("macro_rules! forward_to {\n" +
+                        "    ($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
+                        "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
+                        "            self.$to(v as _)\n" +
+                        "        })*\n" +
+                        "    };\n" +
+                        "}")
+
 
         ;
     }
