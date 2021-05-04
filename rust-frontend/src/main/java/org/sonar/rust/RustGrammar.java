@@ -616,7 +616,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(RustKeyword.KW_EXTERN, SPC, b.optional(ABI))
         );
 
-        b.rule(ABI).is(b.firstOf(STRING_LITERAL, RAW_STRING_LITERAL));
+        b.rule(ABI).is(b.firstOf(RAW_STRING_LITERAL, STRING_LITERAL));
         b.rule(FUNCTION_PARAMETERS).is(
                 b.firstOf(b.sequence(SELF_PARAM, b.optional(RustPunctuator.COMMA), SPC, b.optional(seq(b, FUNCTION_PARAM, RustPunctuator.COMMA))),
                         seq(b, FUNCTION_PARAM, RustPunctuator.COMMA)
@@ -715,7 +715,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/external-blocks.html */
     private static void extblocksItem(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_BLOCK).is(b.optional(RustKeyword.KW_UNSAFE),
-                RustKeyword.KW_EXTERN, SPC, b.optional(ABI, SPC), "{", SPC,
+                RustKeyword.KW_EXTERN, SPC, b.optional(ABI),SPC,  "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.zeroOrMore(EXTERNAL_ITEM, SPC), "}"
         );
@@ -1945,8 +1945,16 @@ public enum RustGrammar implements GrammarRuleKey {
                 "\\n", "\\r", "\\t", "\\", "\0"));
         b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT, b.zeroOrMore(RustPunctuator.UNDERSCORE))), "}");
         b.rule(STRING_CONTINUE).is("\\\n");
+        /*
         b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
                 b.sequence("r", RAW_STRING_CONTENT)));
+         */
+
+        b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
+        b.firstOf(b.regexp("r#\\\"(\\s*\\S)+\\s*\\\"#"),
+                b.regexp("r\\\"(\\s*\\S)+\\s*\\\"")
+                )));
+
         b.rule(RAW_STRING_CONTENT).is(b.firstOf(
                 b.sequence(b.regexp("^\"[^\\r\\n].*\""), SPC),
                 b.sequence(RustPunctuator.POUND, RAW_STRING_CONTENT, RustPunctuator.POUND)));

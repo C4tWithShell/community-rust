@@ -119,12 +119,16 @@ public class LitteralsTest {
                 .matches("r\"R\"")
                 .matches("r\"\\x52\"")
                 .matches("r\"C:\\demo_dir\\\"")
-                /*FIXME.matches("r#\"\n" +
+                .matches("r\"\n" +
+                        "multine\n" +
+                        "multine\n" +
+                        "\"")
+                .matches("r#\"\n" +
                         "multine\n" +
                         "multine\n" +
                         "\"#")
 
-                 */
+
 
         ;
     }

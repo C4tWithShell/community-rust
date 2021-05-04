@@ -106,7 +106,7 @@ Statements :
                 .matches("{\n" +
                         "            PathBuf::from(\"/demo_dir/\")\n" +
                         "        }")
-                .matches("{PathBuf::from(r\"C:\\demo_dir\\\")}")
+                .matches("{PathBuf::from(r\"C:\\demodir\\\")}")
                 .matches("{\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).res1;\n" +
