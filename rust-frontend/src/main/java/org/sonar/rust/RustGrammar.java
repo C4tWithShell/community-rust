@@ -1951,8 +1951,8 @@ public enum RustGrammar implements GrammarRuleKey {
          */
 
         b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
-        b.firstOf(b.regexp("r\\#\\\"[\\r\\n]*(\\S+\\s*)+\\\"\\#"),
-                b.regexp("r\\\"[\\r\\n]*(\\S+\\s*)+\\\"")
+        b.firstOf(b.sequence("r#\"", b.oneOrMore(b.regexp("[^\\\"]+"), SPC), "\"#"),
+                b.sequence("r\"", b.oneOrMore(b.regexp("[^\\\"]+"), SPC), "\"")
                 )));
 
         b.rule(RAW_STRING_CONTENT).is(b.firstOf(

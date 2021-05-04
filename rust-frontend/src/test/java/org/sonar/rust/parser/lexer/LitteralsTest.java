@@ -115,7 +115,6 @@ public class LitteralsTest {
     public void testRawStrings() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL))
                 .matches("r\"foo\"")
-                .matches("r#\"\"foo\"\"#")
                 .matches("r\"R\"")
                 .matches("r\"\\x52\"")
                 .matches("r\"C:\\demo_dir\\\"")

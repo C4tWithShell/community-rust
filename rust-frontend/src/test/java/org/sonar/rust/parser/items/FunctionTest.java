@@ -46,8 +46,8 @@ public class FunctionTest {
     public void testAbi() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.ABI))
                 .matches("r\"foo\"")
-                .matches("r#\"\"foo\"\"#")
                 .matches("\"abc\"")
+                .matches("r#\"foo\"#")
         ;
 
     }
