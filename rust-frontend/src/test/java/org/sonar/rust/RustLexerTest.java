@@ -20,10 +20,14 @@
 package org.sonar.rust;
 
 import com.google.common.base.Charsets;
+import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
 import org.junit.Test;
+import org.sonar.sslr.parser.LexerlessGrammar;
+import org.sonar.sslr.parser.ParserAdapter;
 import org.sonar.sslr.tests.Assertions;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -58,5 +62,39 @@ public class RustLexerTest {
 
 
         ;
+    }
+
+    @Test
+    public void testParsing(){
+
+        String sexpr = "{break;}";
+
+        //Print out Ast node content for debugging purpose
+
+        ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8,RustGrammar.create().build());
+        AstNode rootNode = parser.parse(sexpr);
+        System.out.printf("[DEBUG]" + rootNode.getType());
+        org.fest.assertions.Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
+        AstNode astNode = rootNode;
+        org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
+        System.out.println("[DEBUG]" + astNode.getType());
+        for (AstNode n : astNode.getChildren()){
+            System.out.println("[DEBUG] child" + n.getType());
+        }
+        AstNode st = astNode.getChildren().get(1);
+        System.out.println("[ELG] st is " + st);
+        for (AstNode n : st.getChildren()){
+            System.out.println("[L1]" + n.getType());
+            for (AstNode n2 : n.getChildren()){
+                System.out.println("   [L2]" + n2.getType());
+                for (AstNode n3 : n2.getChildren()){
+                    System.out.println("      [L3]" + n3.getType());
+                    for (AstNode n4 : n3.getChildren()){
+                        System.out.println("         [L4]" + n4.getType());
+                    }
+                }
+
+            }
+        }
     }
 }

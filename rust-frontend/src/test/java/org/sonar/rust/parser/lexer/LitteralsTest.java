@@ -115,8 +115,9 @@ public class LitteralsTest {
     public void testRawStrings() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL))
                 .matches("r\"foo\"")
+                .matches("r#\"foo\"#")
+                .matches("r#####\"foo\"#####")
                 .matches("r\"R\"")
-                .matches("r\"\\x52\"")
                 .matches("r\"C:\\demo_dir\\\"")
                 .matches("r\"\n" +
                         "multine\n" +
@@ -126,6 +127,7 @@ public class LitteralsTest {
                         "multine\n" +
                         "multine\n" +
                         "\"#")
+                .matches("r#\"{\"sources\": [\"foo_bar.ts\"], \"mappings\":\";;;IAIA,OAAO,CAAC,GAAG,CAAC,qBAAqB,EAAE,EAAE,CAAC,OAAO,CAAC,CAAC;IAC/C,OAAO,CAAC,GAAG,CAAC,eAAe,EAAE,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC;IACjD,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,IAAI,CAAC,QAAQ,CAAC,EAAE,CAAC,CAAC;IAE3C,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC\"}\"#")
 
 
 

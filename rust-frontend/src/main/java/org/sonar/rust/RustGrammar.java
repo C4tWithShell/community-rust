@@ -1945,19 +1945,19 @@ public enum RustGrammar implements GrammarRuleKey {
                 "\\n", "\\r", "\\t", "\\", "\0"));
         b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT, b.zeroOrMore(RustPunctuator.UNDERSCORE))), "}");
         b.rule(STRING_CONTINUE).is("\\\n");
-        /*
-        b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
-                b.sequence("r", RAW_STRING_CONTENT)));
-         */
+
 
         b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
-        b.firstOf(b.sequence("r#\"", b.oneOrMore(b.regexp("[^\\\"]+"), SPC), "\"#"),
-                b.sequence("r\"", b.oneOrMore(b.regexp("[^\\\"]+"), SPC), "\"")
-                )));
 
-        b.rule(RAW_STRING_CONTENT).is(b.firstOf(
-                b.sequence(b.regexp("^\"[^\\r\\n].*\""), SPC),
-                b.sequence(RustPunctuator.POUND, RAW_STRING_CONTENT, RustPunctuator.POUND)));
+                b.sequence("r", RAW_STRING_CONTENT)
+                ));
+
+        b.rule(RAW_STRING_CONTENT).is(
+                b.firstOf(
+                b.regexp("(?=\")([\\S\\s]+)(?<=\")"),
+                b.sequence("#",RAW_STRING_CONTENT, "#")
+
+                        ));
 
 
     }
