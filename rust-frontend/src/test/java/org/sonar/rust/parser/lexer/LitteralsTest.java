@@ -119,6 +119,7 @@ public class LitteralsTest {
                 .matches("r#####\"foo\"#####")
                 .matches("r\"R\"")
                 .matches("r\"C:\\demo_dir\\\"")
+
                 .matches("r\"\n" +
                         "multine\n" +
                         "multine\n" +
@@ -127,7 +128,13 @@ public class LitteralsTest {
                         "multine\n" +
                         "multine\n" +
                         "\"#")
+
+
                 .matches("r#\"{\"sources\": [\"foo_bar.ts\"], \"mappings\":\";;;IAIA,OAAO,CAAC,GAAG,CAAC,qBAAqB,EAAE,EAAE,CAAC,OAAO,CAAC,CAAC;IAC/C,OAAO,CAAC,GAAG,CAAC,eAAe,EAAE,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC;IACjD,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,IAAI,CAAC,QAAQ,CAAC,EAAE,CAAC,CAAC;IAE3C,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC\"}\"#")
+                .matches("r#\"some \"text\"\"#")
+                .notMatches("r#\"some \"text\"\"#\"abc\"")
+
+
 
 
 

@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -578,7 +578,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/type-aliases.html */
     private static void aliasItem(LexerlessGrammarBuilder b) {
         b.rule(TYPE_ALIAS).is(
-                RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS),SPC,
+                RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS), SPC,
                 b.optional(WHERE_CLAUSE),
                 RustPunctuator.EQ, SPC, TYPE, SPC, ";"
         );
@@ -715,7 +715,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/external-blocks.html */
     private static void extblocksItem(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_BLOCK).is(b.optional(RustKeyword.KW_UNSAFE),
-                RustKeyword.KW_EXTERN, SPC, b.optional(ABI),SPC,  "{", SPC,
+                RustKeyword.KW_EXTERN, SPC, b.optional(ABI), SPC, "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.zeroOrMore(EXTERNAL_ITEM, SPC), "}"
         );
@@ -859,9 +859,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         DELIM_TOKEN_TREE
                 ));
         b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
-                b.sequence(SIMPLE_PATH, RustPunctuator.NOT,SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
-                b.sequence(SIMPLE_PATH, RustPunctuator.NOT,SPC,  "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
-                b.sequence(SIMPLE_PATH, RustPunctuator.NOT,SPC,  "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")
+                b.sequence(SIMPLE_PATH, RustPunctuator.NOT, SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
+                b.sequence(SIMPLE_PATH, RustPunctuator.NOT, SPC, "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
+                b.sequence(SIMPLE_PATH, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")
         ));
         macrosByExample(b);
     }
@@ -881,9 +881,9 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(MACRO_RULE).is(MACRO_MATCHER, SPC, RustPunctuator.FATARROW, SPC, MACRO_TRANSCRIBER);
         b.rule(MACRO_MATCHER).is(b.firstOf(
-                b.sequence("(", SPC, b.zeroOrMore(MACRO_MATCH,SPC), SPC, ")"),
-                b.sequence("[", SPC, b.zeroOrMore(MACRO_MATCH,SPC), SPC, "]"),
-                b.sequence("{", SPC, b.zeroOrMore(MACRO_MATCH,SPC), SPC, "}")
+                b.sequence("(", SPC, b.zeroOrMore(MACRO_MATCH, SPC), SPC, ")"),
+                b.sequence("[", SPC, b.zeroOrMore(MACRO_MATCH, SPC), SPC, "]"),
+                b.sequence("{", SPC, b.zeroOrMore(MACRO_MATCH, SPC), SPC, "}")
         ));
 
 
@@ -1950,14 +1950,15 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
 
                 b.sequence("r", RAW_STRING_CONTENT)
-                ));
+        ));
 
         b.rule(RAW_STRING_CONTENT).is(
                 b.firstOf(
-                b.regexp("(?=\")([\\S\\s]+)(?<=\")"),
-                b.sequence("#",RAW_STRING_CONTENT, "#")
+                        b.regexp("(?=\")([\\S\\s]+)(?<=\")"),
+                        b.regexp("(?=#\")([\\S\\s]+)(?<=\"#)"),
+                        b.sequence("#", RAW_STRING_CONTENT, "#")
 
-                        ));
+                ));
 
 
     }
