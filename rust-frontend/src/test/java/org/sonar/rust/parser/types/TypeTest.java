@@ -26,7 +26,52 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class TypeTest {
 
+    @Test
+    public void testParenthesisType() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PARENTHESIZED_TYPE))
+                .matches("(i32)")
+                .matches("( i32 )")
 
+        ;
+    }
+
+    @Test
+    public void testImplTraitTypeOneBound() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.IMPL_TRAIT_TYPE_ONE_BOUND))
+                .matches("impl ? abc::def")
+                .matches("impl for <'a> abc::def")
+                .matches("impl ? for <'a> abc::def<T>")
+                .matches("impl (abc::def::ghi)")
+                .matches("impl (? abc::def)")
+                .matches("impl ( for <'a> abc::def )")
+                .matches("impl (? for <'a> abc::def)")
+                .matches("impl Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
+
+        ;
+    }
+
+    @Test
+    public void testTraitObjectTypeOneBound() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_OBJECT_TYPE_ONE_BOUND))
+                .matches("? abc::def")
+                .matches("for <'a> abc::def")
+                .matches("? for <'a> abc::def<T>")
+                .matches("(abc::def::ghi)")
+                .matches("(? abc::def)")
+                .matches("( for <'a> abc::def )")
+                .matches("(? for <'a> abc::def)")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
+                .matches("dyn ? abc::def")
+                .matches("dyn for <'a> abc::def")
+                .matches("dyn ? for <'a> abc::def<T>")
+                .matches("dyn (abc::def::ghi)")
+                .matches("dyn (? abc::def)")
+                .matches("dyn ( for <'a> abc::def )")
+                .matches("dyn (? for <'a> abc::def)")
+                .matches("dyn Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
+
+        ;
+    }
 
     @Test
     public void testTypeNoBounds() {
@@ -53,11 +98,44 @@ public class TypeTest {
     @Test
     public void testTraitObjectType() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_OBJECT_TYPE))
-        //TODO
+                .matches("'a")
+                .matches("'a+'a")
+                .matches("'a + 'b + 'c")
+                .matches("'ABC")
+                .matches("'ABC+'DCE")
+                .notMatches("'trait") //no keyword allowed
+                .matches("'static")
+                .matches("'_")
+                .matches("'_+'a")
+                .matches("'_+'a+'ABC")
+                .notMatches("'a self")
+                .matches("(? for <'a> abc::def)+'a+abc::def")
+                .matches("ValueOrVector")
+                .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
+                .matches("dyn 'a")
+                .matches("dyn 'a+'a")
+                .matches("dyn 'a + 'b + 'c")
+                .matches("dyn 'ABC")
+                .matches("dyn 'ABC+'DCE")
+                .notMatches("dyn 'trait") //no keyword allowed
+                .matches("dyn 'static")
+                .matches("dyn '_")
+                .matches("dyn '_+'a")
+                .matches("dyn '_+'a+'ABC")
+                .notMatches("dyn 'a self")
+                .matches("dyn (? for <'a> abc::def)+'a+abc::def")
+                .matches("dyn ValueOrVector")
+                .matches("dyn Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
+                .matches("dyn Future<Output = i32>\n" +
+                        "       + 'static\n" +
+                        "       + Send")
+
 
 
         ;
     }
+
+
 
 
     @Test
@@ -73,6 +151,12 @@ public class TypeTest {
                 .matches("&hhh")
                 .matches("&u8")
                 .matches("&[u8]")
+                .matches("Result<CachedModule, ModuleSpecifier>")
+                .matches("Result<(CachedModule, ModuleSpecifier)>")
+                .matches("Result<(CachedModule, ModuleSpecifier),AnyError >")
+                .matches("Result<T,(U,V)>")
+                .matches("Result<T, (U, V)>")
+                //.matches("Result<CachedModule, (ModuleSpecifier, AnyError)>")
 
         ;
     }
