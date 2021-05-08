@@ -120,11 +120,12 @@ public enum RustGrammar implements GrammarRuleKey {
     FUNCTION_QUALIFIERS,
     FUNCTION_RETURN_TYPE,
     GE_EXPRESSION,
+    GENERIC_ARG,
     GENERIC_ARGS,
     GENERIC_ARGS_BINDING,
-    GENERIC_ARGS_BINDINGS,
-    GENERIC_ARGS_LIFETIMES,
-    GENERIC_ARGS_TYPES,
+    GENERIC_ARGS_CONST,
+    //GENERIC_ARGS_LIFETIMES,
+    //GENERIC_ARGS_TYPES,
     GENERIC_PARAMS,
     GENERIC_PARAM,
     GROUPED_EXPRESSION,
@@ -760,7 +761,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(CONST_PARAM).is(RustKeyword.KW_CONST, SPC, IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE);
         b.rule(WHERE_CLAUSE).is(
-                RustKeyword.KW_WHERE, b.zeroOrMore(b.sequence(WHERE_CLAUSE_ITEM, SPC, RustPunctuator.COMMA,SPC)), b.optional(WHERE_CLAUSE_ITEM)
+                RustKeyword.KW_WHERE, b.zeroOrMore(b.sequence(WHERE_CLAUSE_ITEM, SPC, RustPunctuator.COMMA, SPC)), b.optional(WHERE_CLAUSE_ITEM)
         );
         b.rule(WHERE_CLAUSE_ITEM).is(b.firstOf(
                 LIFETIME_WHERE_CLAUSE_ITEM
@@ -1016,7 +1017,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(GROUPED_PATTERN).is("(", SPC, PATTERN, SPC, ")");
         b.rule(SLICE_PATTERN).is("[", SPC, PATTERN, SPC,
-                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, PATTERN)), b.optional(RustPunctuator.COMMA,SPC),SPC,  "]"
+                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, PATTERN)), b.optional(RustPunctuator.COMMA, SPC), SPC, "]"
         );
         b.rule(PATH_PATTERN).is(b.firstOf(PATH_IN_EXPRESSION, QUALIFIED_PATH_IN_EXPRESSION));
     }
@@ -1055,8 +1056,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 )), TYPE
         );
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(
-                b.zeroOrMore(b.sequence(MAYBE_NAMED_PARAM, SPC, RustPunctuator.COMMA,SPC)),
-                MAYBE_NAMED_PARAM, RustPunctuator.COMMA, SPC, b.zeroOrMore(OUTER_ATTRIBUTE,SPC), RustPunctuator.DOTDOTDOT
+                b.zeroOrMore(b.sequence(MAYBE_NAMED_PARAM, SPC, RustPunctuator.COMMA, SPC)),
+                MAYBE_NAMED_PARAM, RustPunctuator.COMMA, SPC, b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOTDOT
         );
 
 
@@ -1690,8 +1691,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 MACRO_INVOCATION
         ));
         b.rule(PARENTHESIZED_TYPE).is("(", TYPE, ")");
-        b.rule(TRAIT_OBJECT_TYPE).is(b.optional(RustKeyword.KW_DYN, SPC)   ,TYPE_PARAM_BOUNDS);
-        b.rule(TRAIT_OBJECT_TYPE_ONE_BOUND).is(b.optional(RustKeyword.KW_DYN, SPC),SPC, TRAIT_BOUND);
+        b.rule(TRAIT_OBJECT_TYPE).is(b.optional(RustKeyword.KW_DYN, SPC), TYPE_PARAM_BOUNDS);
+        b.rule(TRAIT_OBJECT_TYPE_ONE_BOUND).is(b.optional(RustKeyword.KW_DYN, SPC), SPC, TRAIT_BOUND);
         b.rule(RAW_POINTER_TYPE).is(RustPunctuator.STAR, b.firstOf(RustKeyword.KW_MUT, RustKeyword.KW_CONST), TYPE_NO_BOUNDS);
         b.rule(INFERRED_TYPE).is(RustPunctuator.UNDERSCORE);
         b.rule(SLICE_TYPE).is("[", TYPE, "]");
@@ -1725,7 +1726,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(TUPLE_TYPE).is(b.firstOf(
                 b.sequence("(", SPC, ")"),
-                b.sequence("(", SPC, b.oneOrMore(b.sequence(TYPE, SPC, RustPunctuator.COMMA, SPC)), b.optional(TYPE),SPC, ")")
+                b.sequence("(", SPC, b.oneOrMore(b.sequence(TYPE, SPC, RustPunctuator.COMMA, SPC)), b.optional(TYPE), SPC, ")")
         ));
 
 
@@ -1760,28 +1761,31 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(
                 RustKeyword.KW_SUPER, b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER
         ));
+
         b.rule(GENERIC_ARGS).is(b.firstOf(
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_TYPES, SPC, GENERIC_ARGS_BINDINGS,SPC,  b.optional(RustPunctuator.COMMA), SPC, RustPunctuator.GT),
                 b.sequence(RustPunctuator.LT, SPC, RustPunctuator.GT),
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_LIFETIMES, SPC, GENERIC_ARGS_TYPES, SPC, GENERIC_ARGS_BINDINGS, b.optional(RustPunctuator.COMMA,SPC), SPC, RustPunctuator.GT),
+                b.sequence(RustPunctuator.LT, SPC, b.zeroOrMore(GENERIC_ARG, SPC, RustPunctuator.COMMA,SPC),
+                        GENERIC_ARG,
+                        b.optional(RustPunctuator.COMMA, SPC), RustPunctuator.GT
 
-
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_LIFETIMES, SPC, GENERIC_ARGS_TYPES, b.optional(RustPunctuator.COMMA,SPC), SPC, RustPunctuator.GT),
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_LIFETIMES, SPC, GENERIC_ARGS_BINDINGS, b.optional(RustPunctuator.COMMA,SPC), SPC, RustPunctuator.GT),
-
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_LIFETIMES, b.optional(RustPunctuator.COMMA,SPC), SPC, RustPunctuator.GT),
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_BINDINGS, SPC, b.optional(RustPunctuator.COMMA), SPC, RustPunctuator.GT),
-                b.sequence(RustPunctuator.LT, SPC, GENERIC_ARGS_TYPES, SPC, b.optional(RustPunctuator.COMMA), SPC, RustPunctuator.GT)
+                )
         ));
-        b.rule(GENERIC_ARGS_LIFETIMES).is(
-                LIFETIME, SPC, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, LIFETIME))
-        );
-        b.rule(GENERIC_ARGS_TYPES).is(
-                TYPE, SPC, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, TYPE))
-        );
-        b.rule(GENERIC_ARGS_BINDINGS).is(
-                GENERIC_ARGS_BINDING, b.zeroOrMore(b.sequence(SPC, RustPunctuator.COMMA, SPC, GENERIC_ARGS_BINDING))
-        );
+        b.rule(GENERIC_ARG).is(b.firstOf(
+                GENERIC_ARGS_BINDING,
+                LIFETIME,
+                TYPE,
+                GENERIC_ARGS_CONST
+
+        ));
+
+
+        b.rule(GENERIC_ARGS_CONST).is(b.firstOf(
+                BLOCK_EXPRESSION,
+                LITERAL_EXPRESSION,
+                b.sequence(RustPunctuator.MINUS, SPC, LITERAL_EXPRESSION),
+                SIMPLE_PATH_SEGMENT
+                ));
+
         b.rule(GENERIC_ARGS_BINDING).is(
                 IDENTIFIER, SPC, RustPunctuator.EQ, SPC, TYPE
         );
@@ -1815,7 +1819,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TYPE_PATH_FN_INPUTS).is(
                 TYPE,
                 b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, TYPE)),
-                b.optional(RustPunctuator.COMMA,SPC)
+                b.optional(RustPunctuator.COMMA, SPC)
         );
         b.rule(TYPE_PATH).is(
                 //::? TypePathSegment (:: TypePathSegment)*

@@ -61,18 +61,10 @@ public class PathTest {
                 .notMatches("match")
                 .matches("Token::BackQuote")
 
-
         ;
     }
 
-    @Test
-    public void testGenericArgsTypes() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS_TYPES))
-                .matches("f64")
-                .matches("Circle")
 
-        ;
-    }
 
     @Test
     public void testGenericArgsBinding() {
@@ -82,15 +74,7 @@ public class PathTest {
         ;
     }
 
-    @Test
-    public void testGenericArgsBindings() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS_BINDINGS))
-                .matches("V=f64")
-                .matches("U=Cirle")
-                .matches("U=Cirle,V=f64,W=i32")
 
-        ;
-    }
 
 
     @Test
@@ -105,6 +89,14 @@ public class PathTest {
                 .matches("<U=i32>")
                 .matches("<V=f64>")
                 //FIXME.matches("<T,U,V=f64>")
+                .matches("<Pin<T>>")
+                .matches("<Pin<Box<T>>>")
+                .matches("<Pin<Box<(dyn Future<T>)>>>")
+                .matches("<Pin<Box<(dyn Future<A = B>)>>>")
+                .matches("<Pin<Box<(dyn Future<A = Result<T>>)>>>")
+                .matches("<Pin<Box<(dyn Future<A = Result<T,(U,V)>>)>>>")
+
+
 
 
         ;

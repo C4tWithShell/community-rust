@@ -129,6 +129,9 @@ public class TypeTest {
                 .matches("dyn Future<Output = i32>\n" +
                         "       + 'static\n" +
                         "       + Send")
+                .matches("dyn Future<Output = Result<CachedModule, (ModuleSpecifier, AnyError)>>\n" +
+                        "    + 'static\n" +
+                        "    + Send")
 
 
 
@@ -156,7 +159,7 @@ public class TypeTest {
                 .matches("Result<(CachedModule, ModuleSpecifier),AnyError >")
                 .matches("Result<T,(U,V)>")
                 .matches("Result<T, (U, V)>")
-                //.matches("Result<CachedModule, (ModuleSpecifier, AnyError)>")
+                .matches("Result<CachedModule, (ModuleSpecifier, AnyError)>")
 
         ;
     }

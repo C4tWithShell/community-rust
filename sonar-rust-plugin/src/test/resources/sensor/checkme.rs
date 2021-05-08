@@ -31,7 +31,6 @@ pub type FetchFuture = Pin<
     (dyn Future<Output = Result<CachedModule, (ModuleSpecifier, AnyError)>>
     + 'static
     + Send),
-  >,
 >;
 
 /// A group of errors that represent errors that can occur with an
