@@ -164,6 +164,19 @@ public class FunctionTest {
                         "        let mut b = 42;\n" +
                         "    })\n" +
                         "}")
+                .matches("fn foo() -> u8\n" +
+                        "{\n" +
+                        "   let mut b = 42;\n" +
+                        "   a.local()\n" +
+                        "}")
+                /*FIXME
+                .matches("fn foo() -> u8\n" +
+                        "{\n" +
+                        "   let mut b = 42;\n" +
+                        "   async move {}.local()\n" +
+                        "}")
+
+                 */
 
 
         ;

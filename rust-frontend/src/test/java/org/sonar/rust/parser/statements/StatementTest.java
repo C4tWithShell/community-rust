@@ -36,14 +36,14 @@ public class StatementTest {
                 .matches("let mut account=0.0;")
                 .matches("let mut vec = Vec::new();")
                 .matches("let three: i32 = add(1i32, 2i32);")
-                //FIXME.matches("let name: &'static str = (|| \"Rust\")();")
-                /* FIXME.matches("let p = if mycondition {\n" +
+                .matches("let name: &'static str = (|| \"Rust\")();")
+                .matches("let p = if mycondition {\n" +
                         "             42\n" +
                         "         } else {\n" +
                         "             43\n" +
                         "         };")
 
-                 */
+
 
 
 
@@ -88,9 +88,32 @@ public class StatementTest {
                 .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
                         "    });")
+                //.matches("async move {}.local();")
+                .notMatches("let y=42; 42")
 
 
+        ;
+    }
 
+    @Test
+    public void testStatements() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENTS))
+                //single statement
+                .matches(";")
+                .matches("let y=42;")
+                .matches("extern crate pcre;")
+
+                //multi statements
+                .matches("let y=42;let y=43;")
+                .matches("let y = 42;return y;")
+                //expression without block
+                .matches("a.todo()")
+                .matches("Vec::new")
+                .matches("\"HELLO\"")
+                .matches("other.major")
+                //FIXME.matches("async {}.inc()")
+                //statement +ewob
+                .matches("let y=42; 42")
 
 
 

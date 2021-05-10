@@ -39,6 +39,7 @@ public class ExpressionWithBlockTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+                .matches("async move {}")
                 .matches("async move {\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).await?;\n" +

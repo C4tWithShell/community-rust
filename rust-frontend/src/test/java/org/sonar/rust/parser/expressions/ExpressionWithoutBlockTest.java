@@ -29,10 +29,6 @@ public class ExpressionWithoutBlockTest {
     public void testExpressionWithoutBlock() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITHOUT_BLOCK))
                 .notMatches("== b")
-                //TODO Litteral Expression
-                //TODO Path expression
-                //Operator expressdions
-                //borrow expr
                 .matches("&7")
                 .matches("& Value")
                 .matches("&mut array")
@@ -41,14 +37,14 @@ public class ExpressionWithoutBlockTest {
                 .matches("&&&& mut 10")
                 .matches("&& && mut 10")
                 .matches("& & & & mut 10")
-                //deref
-                .matches("*thing")
-                //err propagation
-                .matches("foo?")
+
+                .matches("*thing") //deref
+
+                .matches("foo?")//err propagation
                 .matches("None?")
                 .matches("Some(42)?")
-                //negation expression
-                .matches("!foo")
+
+                .matches("!foo")//negation expression
                 .matches("-5")
                 .matches("-bar")
                 .notMatches("== b")
@@ -94,7 +90,7 @@ public class ExpressionWithoutBlockTest {
                 //MethodCallExpression
                 //
                 //
-
+                .matches("async move {}.local()")
                 .matches("\"123\".parse()")
                 .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
                 //FieldExpression
@@ -116,6 +112,9 @@ public class ExpressionWithoutBlockTest {
                 .matches("Vec::new")
                 .matches("Identifier::Numeric")
                 .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
+                .matches("async move {}.await")
+
+
         ;
     }
 }
