@@ -82,6 +82,7 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS))
                 .matches("<>")
                 .matches("<T>")
+                .matches("<T,>")
                 .matches("<i32>")
                 .matches("<u8>")
                 .matches("<Circle>")

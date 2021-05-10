@@ -735,8 +735,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(GENERIC_PARAMS).is(b.firstOf(
-                b.sequence("<", SPC, seq(b, GENERIC_PARAM, RustPunctuator.COMMA), SPC, ">"),
-                b.sequence("<", SPC, ">")
+                b.sequence(RustPunctuator.LT, SPC, seq(b, GENERIC_PARAM, RustPunctuator.COMMA), SPC, RustPunctuator.GT),
+                b.sequence(RustPunctuator.LT, SPC, RustPunctuator.GT)
 
         ));
 
@@ -771,7 +771,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(FOR_LIFETIMES), TYPE, RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)
         );
 
-        b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPC, RustPunctuator.LT, LIFETIME_PARAMS, RustPunctuator.GT);
+        b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPC, RustPunctuator.LT, SPC, LIFETIME_PARAMS, SPC, RustPunctuator.GT);
 
 
     }
@@ -1673,7 +1673,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* https://doc.rust-lang.org/reference/types.html#type-expressions */
     public static void type(LexerlessGrammarBuilder b) {
-        b.rule(TYPE).is(b.firstOf(TYPE_NO_BOUNDS, IMPL_TRAIT_TYPE, TRAIT_OBJECT_TYPE));
+        b.rule(TYPE).is(b.firstOf(TRAIT_OBJECT_TYPE, TYPE_NO_BOUNDS, IMPL_TRAIT_TYPE ));
         b.rule(TYPE_NO_BOUNDS).is(b.firstOf(
                 PARENTHESIZED_TYPE,
                 IMPL_TRAIT_TYPE_ONE_BOUND,
@@ -1763,10 +1763,10 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
         b.rule(GENERIC_ARGS).is(b.firstOf(
-                b.sequence(RustPunctuator.LT, SPC, RustPunctuator.GT),
-                b.sequence(RustPunctuator.LT, SPC, b.zeroOrMore(GENERIC_ARG, SPC, RustPunctuator.COMMA,SPC),
-                        GENERIC_ARG,
-                        b.optional(RustPunctuator.COMMA, SPC), RustPunctuator.GT
+                b.sequence(RustPunctuator.LT,  RustPunctuator.GT),
+                b.sequence(RustPunctuator.LT,SPC,
+                      seq(b,GENERIC_ARG, RustPunctuator.COMMA),
+                      SPC, RustPunctuator.GT
 
                 )
         ));

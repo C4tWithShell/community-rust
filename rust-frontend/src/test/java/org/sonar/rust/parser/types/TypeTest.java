@@ -160,6 +160,9 @@ public class TypeTest {
                 .matches("Result<T,(U,V)>")
                 .matches("Result<T, (U, V)>")
                 .matches("Result<CachedModule, (ModuleSpecifier, AnyError)>")
+                .matches("dyn Future<Output = Result<CachedModule, (ModuleSpecifier, AnyError)>>\n" +
+                        "    + 'static\n" +
+                        "    + Send")
 
         ;
     }
