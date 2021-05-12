@@ -132,7 +132,10 @@ public class MacroTest {
                 .matches("($(token)*)")
                 .matches("[$i:ident]")
                 .matches("[($i:ident)]")
-                .matches("($($i:ident)*)");
+                .matches("($($i:ident)*)")
+                .matches("$($key:expr => $value:expr)+")
+                .matches("$($key:expr => $value:expr),+")
+                ;
     }
 
     @Test
@@ -150,6 +153,8 @@ public class MacroTest {
                 .matches("{[($i:ident)]}")
                 .matches("(($($i:ident)*))")
                 .matches("($l:tt)")
+                .matches("{ $($key:expr => $value:expr)+ }")
+                .matches("{ $($key:expr => $value:expr),+ }")
                 ;
     }
 
@@ -162,6 +167,15 @@ public class MacroTest {
                         "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
                         "            self.$to(v as _)\n" +
                         "        })*\n" +
+                        "    };")
+                .matches("{ $($key:expr => $value:expr),+ } => {\n" +
+                        "      {\n" +
+                        "        let mut m = ::std::collections::HashMap::new();\n" +
+                        "        $(\n" +
+                        "          m.insert($key, $value);\n" +
+                        "        )+\n" +
+                        "        m\n" +
+                        "      }\n" +
                         "    };")
 
         ;
@@ -177,6 +191,17 @@ public class MacroTest {
                         "        })*\n" +
                         "    };\n" +
                         "}")
+                .matches("(\n" +
+                        "    { $($key:expr => $value:expr),+ } => {\n" +
+                        "      {\n" +
+                        "        let mut m = ::std::collections::HashMap::new();\n" +
+                        "        $(\n" +
+                        "          m.insert($key, $value);\n" +
+                        "        )+\n" +
+                        "        m\n" +
+                        "      }\n" +
+                        "    };\n" +
+                        "  );")
 
 
         ;
@@ -188,6 +213,18 @@ public class MacroTest {
                 .matches("macro_rules! foo {\n" +
                         "    ($l:tt) => { bar!($l); }\n" +
                         "}")
+                .matches("macro_rules! pat {\n" +
+                        "    ($i:ident) => (Some($i))\n" +
+                        "}")
+                .matches("macro_rules! Tuple {\n" +
+                        "    { $A:ty, $B:ty } => { ($A, $B) };\n" +
+                        "}")
+                .matches("macro_rules! const_maker {\n" +
+                        "    ($t:ty, $v:tt) => { const CONST: $t = $v; };\n" +
+                        "}")
+                .matches("macro_rules! example {\n" +
+                        "    () => { println!(\"Macro call in a macro!\") };\n" +
+                        "}")
                 .matches("macro_rules! forward_to {\n" +
                         "    ($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
                         "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
@@ -195,6 +232,17 @@ public class MacroTest {
                         "        })*\n" +
                         "    };\n" +
                         "}")
+                .matches("macro_rules! map (\n" +
+                        "    { $($key:expr => $value:expr),+ } => {\n" +
+                        "      {\n" +
+                        "        let mut m = ::std::collections::HashMap::new();\n" +
+                        "        $(\n" +
+                        "          m.insert($key, $value);\n" +
+                        "        )+\n" +
+                        "        m\n" +
+                        "      }\n" +
+                        "    };\n" +
+                        "  );")
 
 
         ;

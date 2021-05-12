@@ -892,7 +892,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
                 b.sequence("$", IDENTIFIER, SPC, RustPunctuator.COLON, SPC, MACRO_FRAG_SPEC),
 
-                b.sequence("$(", b.oneOrMore(MACRO_MATCH, SPC), b.firstOf(")+", ")*", ")?")),
+                b.sequence("$(", b.oneOrMore(MACRO_MATCH, SPC), ")"
+                        , b.optional(RustPunctuator.COMMA) // MacroRepSep
+                        , b.firstOf("+", "*", "?")),
                 TOKEN_MACRO,
                 MACRO_MATCHER
         ));
