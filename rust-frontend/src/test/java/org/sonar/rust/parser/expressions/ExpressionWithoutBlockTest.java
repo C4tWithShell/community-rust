@@ -113,6 +113,10 @@ public class ExpressionWithoutBlockTest {
                 .matches("Identifier::Numeric")
                 .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
                 .matches("async move {}.await")
+                .matches("async move {}.local()")
+
+                .matches("async move {}\n" +
+                        "           .boxed()")
 
 
         ;

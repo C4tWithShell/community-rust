@@ -40,6 +40,7 @@ public class ExpressionWithBlockTest {
                         "        println!(\"Coverage is running\");" +
                         " } ")
                 .matches("async move {}")
+                .notMatches("async move {}.f()")
                 .matches("async move {\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).await?;\n" +

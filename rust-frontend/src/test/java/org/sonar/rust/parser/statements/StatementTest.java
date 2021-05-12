@@ -88,7 +88,8 @@ public class StatementTest {
                 .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
                         "    });")
-                //.matches("async move {}.local();")
+                .matches("obj.local();")
+                .matches("async move {}.local();")
                 .notMatches("let y=42; 42")
 
 
@@ -105,15 +106,23 @@ public class StatementTest {
 
                 //multi statements
                 .matches("let y=42;let y=43;")
+                .matches("let y=42; let y=43;")
                 .matches("let y = 42;return y;")
+                .matches("let a = 41;\n" +
+                         "let c = 42;")
                 //expression without block
                 .matches("a.todo()")
                 .matches("Vec::new")
                 .matches("\"HELLO\"")
                 .matches("other.major")
-                //FIXME.matches("async {}.inc()")
+                .matches("a.major()")
+                .matches("async {}.inc()")
+                .matches("async {}\n" +
+                        ".inc()")
                 //statement +ewob
+                .matches("let y=42;42")
                 .matches("let y=42; 42")
+                .matches("let y=42; async {}.inc()")
 
 
 
