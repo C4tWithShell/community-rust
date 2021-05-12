@@ -117,12 +117,23 @@ public class StatementTest {
                 .matches("other.major")
                 .matches("a.major()")
                 .matches("async {}.inc()")
+                .matches("unsafe {}.inc()")
                 .matches("async {}\n" +
                         ".inc()")
                 //statement +ewob
                 .matches("let y=42;42")
                 .matches("let y=42; 42")
                 .matches("let y=42; async {}.inc()")
+                //ewb
+                .matches("unsafe {}")
+                .matches("unsafe {};")
+                .matches("v8::V8::shutdown_platform();")
+                .matches("unsafe {};\n" +
+                        "let x=42;")
+                .matches("unsafe {}let x=42;")
+                .matches("unsafe {} let x=42;")
+                .matches("unsafe {}\n" +
+                        "let x=42;")
 
 
 

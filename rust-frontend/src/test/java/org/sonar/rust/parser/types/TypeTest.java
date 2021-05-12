@@ -89,7 +89,9 @@ public class TypeTest {
     @Test
     public void testimplTraitType() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.IMPL_TRAIT_TYPE))
-        //TODO
+            .matches("impl Foo")
+                .matches("impl Foo")
+                .matches("impl FnOnce()")
 
 
         ;
@@ -163,6 +165,7 @@ public class TypeTest {
                 .matches("dyn Future<Output = Result<CachedModule, (ModuleSpecifier, AnyError)>>\n" +
                         "    + 'static\n" +
                         "    + Send")
+                .matches("impl FnOnce()")
 
         ;
     }

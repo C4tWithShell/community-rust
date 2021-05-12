@@ -1606,7 +1606,7 @@ public enum RustGrammar implements GrammarRuleKey {
                                 b.firstOf(
                                         b.sequence(RustPunctuator.SEMI,SPC),
                                         b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI,SPC),
-                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, EXPRESSION_TERM), b.optional(SPC, RustPunctuator.SEMI,SPC)),
+                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, EXPRESSION_TERM), b.optional(RustPunctuator.SEMI),SPC),
                                         b.sequence(ITEM,SPC),
                                         b.sequence(LET_STATEMENT,SPC),
                                         b.sequence(MACRO_INVOCATION_SEMI,SPC)
@@ -1617,7 +1617,7 @@ public enum RustGrammar implements GrammarRuleKey {
                                 b.firstOf(
                                         b.sequence(RustPunctuator.SEMI,SPC),
                                         b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI,SPC),
-                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, EXPRESSION_TERM), b.optional(SPC, RustPunctuator.SEMI,SPC)),
+                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, EXPRESSION_TERM), b.optional(RustPunctuator.SEMI),SPC),
                                         b.sequence(ITEM,SPC),
                                         b.sequence(LET_STATEMENT,SPC),
                                         b.sequence(MACRO_INVOCATION_SEMI,SPC)
@@ -1727,7 +1727,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* https://doc.rust-lang.org/reference/types.html#type-expressions */
     public static void type(LexerlessGrammarBuilder b) {
-        b.rule(TYPE).is(b.firstOf(TRAIT_OBJECT_TYPE, TYPE_NO_BOUNDS, IMPL_TRAIT_TYPE));
+        b.rule(TYPE).is(b.firstOf(IMPL_TRAIT_TYPE, TRAIT_OBJECT_TYPE, TYPE_NO_BOUNDS ));
         b.rule(TYPE_NO_BOUNDS).is(b.firstOf(
                 PARENTHESIZED_TYPE,
                 IMPL_TRAIT_TYPE_ONE_BOUND,
@@ -1751,8 +1751,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INFERRED_TYPE).is(RustPunctuator.UNDERSCORE);
         b.rule(SLICE_TYPE).is("[", TYPE, "]");
         b.rule(ARRAY_TYPE).is("[", SPC, TYPE, SPC, RustPunctuator.SEMI, SPC, EXPRESSION, SPC, "]");
-        b.rule(IMPL_TRAIT_TYPE).is(RustKeyword.KW_IMPL, TYPE_PARAM_BOUNDS);
-        b.rule(IMPL_TRAIT_TYPE_ONE_BOUND).is(RustKeyword.KW_IMPL, TRAIT_BOUND);
+        b.rule(IMPL_TRAIT_TYPE).is(RustKeyword.KW_IMPL, SPC, TYPE_PARAM_BOUNDS);
+        b.rule(IMPL_TRAIT_TYPE_ONE_BOUND).is(RustKeyword.KW_IMPL, SPC, TRAIT_BOUND);
         b.rule(NEVER_TYPE).is(RustPunctuator.NOT);
 
     }
