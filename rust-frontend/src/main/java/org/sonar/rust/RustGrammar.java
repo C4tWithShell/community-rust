@@ -1606,25 +1606,35 @@ public enum RustGrammar implements GrammarRuleKey {
                                 b.firstOf(
                                         b.sequence(RustPunctuator.SEMI,SPC),
                                         b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI,SPC),
-                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, EXPRESSION_TERM), b.optional(RustPunctuator.SEMI),SPC),
+                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(RustPunctuator.SEMI),SPC),
                                         b.sequence(ITEM,SPC),
                                         b.sequence(LET_STATEMENT,SPC),
                                         b.sequence(MACRO_INVOCATION_SEMI,SPC)
                                 )
-                        ), SPC, b.sequence(EXPRESSION_WITHOUT_BLOCK, b.nextNot(SPC, RustPunctuator.SEMI))),
+                        ), SPC, b.firstOf(
+                                b.sequence(EXPRESSION_WITHOUT_BLOCK, b.nextNot(SPC, RustPunctuator.SEMI)),
+                                b.sequence(EXPRESSION_WITH_BLOCK, SPC, EXPRESSION_TERM, b.nextNot(SPC, RustPunctuator.SEMI))
+
+
+                                )),
 
                         b.oneOrMore(
                                 b.firstOf(
                                         b.sequence(RustPunctuator.SEMI,SPC),
                                         b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI,SPC),
-                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, EXPRESSION_TERM), b.optional(RustPunctuator.SEMI),SPC),
+                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(RustPunctuator.SEMI),SPC),
                                         b.sequence(ITEM,SPC),
                                         b.sequence(LET_STATEMENT,SPC),
                                         b.sequence(MACRO_INVOCATION_SEMI,SPC)
                                 )
                         ),
 
-                        b.sequence(EXPRESSION_WITHOUT_BLOCK, b.nextNot(SPC, RustPunctuator.SEMI)))
+                        b.sequence(EXPRESSION_WITH_BLOCK, SPC, EXPRESSION_TERM, b.nextNot(SPC, RustPunctuator.SEMI)),
+                        b.sequence(EXPRESSION_WITHOUT_BLOCK, b.nextNot(SPC, RustPunctuator.SEMI))
+
+
+
+                )
 
 
         );

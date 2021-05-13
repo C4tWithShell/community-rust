@@ -49,6 +49,7 @@ public class ExpressionWithBlockTest {
                         "            }\n" +
                         "            Ok(())\n" +
                         "        }")
+                .notMatches("async {}.inc()")
         ;
     }
 }

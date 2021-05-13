@@ -99,6 +99,7 @@ public class StatementTest {
     @Test
     public void testStatements() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENTS))
+
                 //single statement
                 .matches(";")
                 .matches("let y=42;")
@@ -134,6 +135,17 @@ public class StatementTest {
                 .matches("unsafe {} let x=42;")
                 .matches("unsafe {}\n" +
                         "let x=42;")
+                //macro invocation semi
+                .matches("assert_eq!(state.borrow::<MyStruct>().value, 110);")
+                .matches("let x=42;\n" +
+                        "assert_eq!(state.borrow::<MyStruct>().value, 110);")
+                .matches("assert_eq!(state.borrow::<MyStruct>().value, 110);\n" +
+                        "unsafe {}")
+                .matches("unsafe {}\n" +
+                        "assert_eq!(state.borrow::<MyStruct>().value, 110);")
+
+
+
 
 
 

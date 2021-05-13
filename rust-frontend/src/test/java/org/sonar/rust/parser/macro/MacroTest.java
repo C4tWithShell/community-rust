@@ -79,6 +79,7 @@ public class MacroTest {
                 .matches("println!(\"hello,{}\", j);")
                 .matches("println!(\"{}, {}\", word, j);")
                 .notMatches("")
+                .matches("assert_eq!(state.borrow::<MyStruct>().value, 110);")
         ;
     }
 
