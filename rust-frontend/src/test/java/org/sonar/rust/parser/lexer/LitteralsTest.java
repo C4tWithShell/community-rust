@@ -180,6 +180,7 @@ public class LitteralsTest {
                 .matches("b\"5\"")
                 .matches("b\"a string\"")
                 .matches("b\"\\xff\"")
+                .matches("b\"\"")
         ;
 
     }
