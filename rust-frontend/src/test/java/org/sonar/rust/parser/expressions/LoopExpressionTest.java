@@ -50,6 +50,10 @@ public class LoopExpressionTest {
                 .matches("for n in 1..11 {\n" +
                         "    sum += n;\n" +
                         "}")
+                .matches("while i < j {\n" +
+                        "    println!(\"hello\");\n" +
+                        "    i = i + 1;\n" +
+                        "}")
         ;
     }
 }

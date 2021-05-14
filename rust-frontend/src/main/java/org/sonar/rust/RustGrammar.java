@@ -1472,7 +1472,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INFINITE_LOOP_EXPRESSION).is(
                 RustKeyword.KW_LOOP, SPC, BLOCK_EXPRESSION);
         b.rule(PREDICATE_LOOP_EXPRESSION).is(
-                RustKeyword.KW_WHILE, SPC, EXPRESSION_EXCEPT_STRUCT,
+                RustKeyword.KW_WHILE, SPC, EXPRESSION_EXCEPT_STRUCT,SPC,
                 BLOCK_EXPRESSION
         );
         b.rule(PREDICATE_PATTERN_LOOP_EXPRESSION).is(
