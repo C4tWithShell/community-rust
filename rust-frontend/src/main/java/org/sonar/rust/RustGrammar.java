@@ -2139,7 +2139,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(RAW_STRING_CONTENT).is(
                 b.firstOf(
                         b.regexp("(?=\")([\\S\\s]+)(?<=\")"),
-                        b.regexp("(?=#\")([\\S\\s]+)(?<=\"#)"),
+                        b.regexp("(?=#\")((.|\\n)+?\\\"#)"),
                         b.sequence("#", RAW_STRING_CONTENT, "#")
 
                 ));
