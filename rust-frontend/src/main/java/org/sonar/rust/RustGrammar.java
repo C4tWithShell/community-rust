@@ -646,14 +646,14 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(b.sequence("{", SPC, b.optional(STRUCT_FIELDS, SPC), "}"),
                         RustPunctuator.SEMI));
         b.rule(TUPLE_STRUCT).is(
-                RustKeyword.KW_STRUCT, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS, SPC), "(",
+                RustKeyword.KW_STRUCT, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS, SPC), "(",SPC,
                 b.optional(TUPLE_FIELDS, SPC), ")", SPC,
                 b.optional(WHERE_CLAUSE, SPC), RustPunctuator.SEMI
         );
         b.rule(STRUCT_FIELDS).is(seq(b, STRUCT_FIELD, RustPunctuator.COMMA));
         b.rule(STRUCT_FIELD).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
-                b.optional(VISIBILITY, SPC),
+                b.zeroOrMore(OUTER_ATTRIBUTE),SPC,
+                b.optional(VISIBILITY),SPC,
                 IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE
         );
         b.rule(TUPLE_FIELDS).is(seq(b, TUPLE_FIELD, RustPunctuator.COMMA));
