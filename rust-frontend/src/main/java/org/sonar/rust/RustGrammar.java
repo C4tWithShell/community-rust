@@ -628,8 +628,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(FUNCTION_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
-                b.firstOf(FUNCTION_PARAM_PATTERN, RustPunctuator.DOTDOTDOT, TYPE));
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
+                b.firstOf(FUNCTION_PARAM_PATTERN, SPC, RustPunctuator.DOTDOTDOT, SPC, TYPE));
 
         b.rule(FUNCTION_PARAM_PATTERN).is(PATTERN, SPC, RustPunctuator.COLON, SPC, b.firstOf(TYPE, RustPunctuator.DOTDOTDOT));
 
@@ -1055,9 +1055,9 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS).is(seq(b, MAYBE_NAMED_PARAM, RustPunctuator.COMMA));
         b.rule(MAYBE_NAMED_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.optional(b.sequence(
-                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), RustPunctuator.COLON
+                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON
                 )), TYPE
         );
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(
@@ -1123,7 +1123,7 @@ public enum RustGrammar implements GrammarRuleKey {
         await(b);
 
         b.rule(EXPRESSION).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
                 b.firstOf(
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
@@ -1153,7 +1153,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 ));
 
         b.rule(EXPRESSION_EXCEPT_STRUCT).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
                 b.firstOf(
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
@@ -1344,7 +1344,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.SHREQ, SPC, EXPRESSION_EXCEPT_STRUCT)
                 ));
 
-        b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
+        b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
                 b.firstOf(
                         b.sequence(EXPRESSION_WITH_BLOCK, b.oneOrMore(SPC, EXPRESSION_TERM)),
 
@@ -1371,7 +1371,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
                 ));
 
-        b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
+        b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
                 b.firstOf(
                         BLOCK_EXPRESSION,
                         MATCH_EXPRESSION,
