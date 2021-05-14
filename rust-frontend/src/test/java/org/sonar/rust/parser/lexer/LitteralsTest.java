@@ -98,13 +98,13 @@ public class LitteralsTest {
                 .matches("\"5\"")
                 .matches("\"some text\"")
                 .matches("\"hello,world!\"")
-                //FIXME .matches("\"some text with \\\" quote escape \"")
+                .matches("\"some text with \\\" quote escape \"")
                 .matches("\"\\'\"")
-                .notMatches("\"\\\"\"")
+                //FIXME.notMatches("\"\\\"\"")
                 .matches("\"\\x7f\"")
                 .matches("\"\\r\"")
                 .matches("\"\\t\"")
-                   .matches("\"\\\"")
+                .notMatches("\"\\\"")
                 .notMatches("\"hello\")")
 
 

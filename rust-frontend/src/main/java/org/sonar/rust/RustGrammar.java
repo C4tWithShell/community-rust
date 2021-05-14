@@ -396,7 +396,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                 b.firstOf(
-                        "\"\\\"",
+                        "\"\\\\\"",
                 b.sequence(
                         "\"", b.zeroOrMore(b.firstOf(
 
@@ -2084,23 +2084,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\", "\\0"));
 
-        /*
-        b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
 
-                b.sequence("r", RAW_STRING_CONTENT)
-        ));
-
-        b.rule(RAW_STRING_CONTENT).is(
-                b.firstOf(
-                        b.regexp("(?=\"+)((.|\\n)+?\"+)"),
-                        b.regexp("(?=#\")((.|\\n)+?\\\"#)"),
-                        b.sequence("#", RAW_STRING_CONTENT, "#")
-
-                ));
-         */
 
         b.rule(RAW_BYTE_STRING_LITERAL).is(b.token(RustTokenType.RAW_BYTE_STRING_LITERAL,
-
                 b.sequence("br", RAW_BYTE_STRING_CONTENT)
         ));
 
@@ -2108,19 +2094,9 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(
                         b.regexp("^\"[\\x00-\\x7F]*\""),
                         b.sequence("#", RAW_BYTE_STRING_CONTENT, "#")
-
                 ));
-        /*
-        b.rule(RAW_BYTE_STRING_LITERAL).is(b.token(RustTokenType.RAW_BYTE_STRING_LITERAL, b.sequence("br", RAW_BYTE_STRING_CONTENT)));
-        b.rule(RAW_BYTE_STRING_CONTENT).is(b.firstOf(
-                b.regexp("^\"[\\x00-\\x7F]*\""),
-                b.sequence(RustPunctuator.POUND, RAW_STRING_CONTENT, RustPunctuator.POUND)
-        ));
 
-         */
         b.rule(ASCII).is(b.regexp("[\\x00-\\x7F]"));
-
-
     }
 
 
