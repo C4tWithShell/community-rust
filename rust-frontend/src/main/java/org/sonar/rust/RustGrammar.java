@@ -1358,8 +1358,9 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(NEGATION_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(STRUCT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),

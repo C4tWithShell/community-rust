@@ -184,6 +184,9 @@ public class FunctionTest {
                         "   let mut b = 42;\n" +
                         "   async move {}.local()\n" +
                         "}")
+                .matches("fn apply_source() -> JsError {\n" +
+                        "    JsError {}     \n" +
+                        "}")
 
 
 

@@ -80,6 +80,7 @@ public class ExpressionWithoutBlockTest {
                 //TODO   TupleExpression
                 //TODO   TupleIndexingExpression
                 //TODO   StructExpression
+                .matches("mystruct{}")
                 //TODO   EnumerationVariantExpression
                 //  CallExpression
 

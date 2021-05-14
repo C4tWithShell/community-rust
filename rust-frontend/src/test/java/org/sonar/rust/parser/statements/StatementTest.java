@@ -44,6 +44,16 @@ public class StatementTest {
                         "         };")
                 .matches("let mystruct{a,}=value;")
                 .matches("let ModuleSource{code,module_url_specified,module_url_found,}=info;")
+                .matches("let e = JsError {\n" +
+                        "      message: \"TypeError: baz\".to_string(),\n" +
+                        "      source_line: Some(\"foo\".to_string()),\n" +
+                        "      script_resource_name: Some(\"foo_bar.ts\".to_string()),\n" +
+                        "      line_number: Some(4),\n" +
+                        "      start_column: Some(16),\n" +
+                        "      end_column: None,\n" +
+                        "      frames: vec![],\n" +
+                        "      stack: None,\n" +
+                        "    };")
 
 
         ;
@@ -102,6 +112,16 @@ public class StatementTest {
                 //single statement
                 .matches(";")
                 .matches("let y=42;")
+                .matches("let e = JsError {\n" +
+                        "      message: \"TypeError: baz\".to_string(),\n" +
+                        "      source_line: Some(\"foo\".to_string()),\n" +
+                        "      script_resource_name: Some(\"foo_bar.ts\".to_string()),\n" +
+                        "      line_number: Some(4),\n" +
+                        "      start_column: Some(16),\n" +
+                        "      end_column: None,\n" +
+                        "      frames: vec![],\n" +
+                        "      stack: None,\n" +
+                        "    };")
                 .matches("extern crate pcre;")
 
                 //multi statements
@@ -142,6 +162,8 @@ public class StatementTest {
                         "unsafe {}")
                 .matches("unsafe {}\n" +
                         "assert_eq!(state.borrow::<MyStruct>().value, 110);")
+                .matches("mystruct{};")
+
 
 
         ;

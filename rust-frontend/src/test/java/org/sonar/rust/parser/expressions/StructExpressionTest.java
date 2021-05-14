@@ -131,6 +131,16 @@ public class StructExpressionTest {
                 "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
                 "             None => Ok(()),\n" +
                 "         }")
+                .matches("JsError {\n" +
+                        "message: js_error.message.clone(),\n" +
+                        "source_line,\n" +
+                        "script_resource_name,\n" +
+                        "line_number,\n" +
+                        "start_column,\n" +
+                        "end_column,\n" +
+                        "frames: js_error.frames.clone(),\n" +
+                        "stack: None,\n" +
+                        "}")
 
 
 

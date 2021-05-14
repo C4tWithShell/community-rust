@@ -69,11 +69,16 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let ModuleSource {\n" +
-                "code,\n" +
-                "module_url_specified,\n" +
-                "module_url_found\n" +
-                "} = info;";
+        String sexpr = "JsError {\n" +
+                "message: js_error.message.clone(),\n" +
+                "source_line,\n" +
+                "script_resource_name,\n" +
+                "line_number,\n" +
+                "start_column,\n" +
+                "end_column,\n" +
+                "frames: js_error.frames.clone(),\n" +
+                "stack: None,\n" +
+                "};";
 
 
         //Print out Ast node content for debugging purpose
