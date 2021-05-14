@@ -72,6 +72,7 @@ public class StructExpressionTest {
                 .matches("TuplePoint { 0: 10.0, 1: 20.0}")
                 .matches("TuplePoint { .. bar}")
                 .matches("TuplePoint { age :35,.. structbase}")
+                .matches("Point {x: 10, y: 20}")
         ;
     }
 

@@ -69,7 +69,11 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let a = CachedModule{};";
+        String sexpr = "let ModuleSource {\n" +
+                "code,\n" +
+                "module_url_specified,\n" +
+                "module_url_found\n" +
+                "} = info;";
 
 
         //Print out Ast node content for debugging purpose

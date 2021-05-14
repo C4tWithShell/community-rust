@@ -985,23 +985,24 @@ public enum RustGrammar implements GrammarRuleKey {
                 PATH_IN_EXPRESSION, SPC, "{", SPC, b.optional(STRUCT_PATTERN_ELEMENTS), SPC, "}"
         );
         b.rule(STRUCT_PATTERN_ELEMENTS).is(b.firstOf(
-                b.sequence(STRUCT_PATTERN_FIELDS,
+                b.sequence(STRUCT_PATTERN_FIELDS,SPC,
                         b.optional(b.firstOf(
-                                "'",
-                                b.sequence(RustPunctuator.COMMA, SPC, STRUCT_PATTERN_ETCETERA)
-                        ))), STRUCT_PATTERN_ETCETERA
+                                RustPunctuator.COMMA,
+                                b.sequence( RustPunctuator.COMMA,SPC, STRUCT_PATTERN_ETCETERA)))
+                )
+                , STRUCT_PATTERN_ETCETERA
 
         ));
         b.rule(STRUCT_PATTERN_FIELDS).is(
                 STRUCT_PATTERN_FIELD, b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, STRUCT_PATTERN_FIELD))
         );
         b.rule(STRUCT_PATTERN_FIELD).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE), "(",
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
                 b.firstOf(
-                        b.sequence(TUPLE_INDEX, RustPunctuator.COLON, PATTERN),
-                        b.sequence(IDENTIFIER, RustPunctuator.COLON, PATTERN),
-                        b.sequence(b.optional(RustKeyword.KW_REF), SPC, b.optional(RustKeyword.KW_MUT), SPC, IDENTIFIER)
-                ), ")");
+                        b.sequence(TUPLE_INDEX, SPC,RustPunctuator.COLON, SPC, PATTERN),
+                        b.sequence(IDENTIFIER, SPC, RustPunctuator.COLON, SPC, PATTERN),
+                        b.sequence(b.optional(RustKeyword.KW_REF, SPC),  b.optional(RustKeyword.KW_MUT,SPC),  IDENTIFIER)
+                ));
         b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOT);
 
         b.rule(TUPLE_STRUCT_PATTERN).is(
