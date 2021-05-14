@@ -628,8 +628,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(FUNCTION_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE,SPC),
-                b.firstOf(FUNCTION_PARAM_PATTERN, SPC, RustPunctuator.DOTDOTDOT, SPC, TYPE));
+                                b.zeroOrMore(OUTER_ATTRIBUTE),SPC,
+                                b.firstOf(FUNCTION_PARAM_PATTERN, RustPunctuator.DOTDOTDOT, TYPE));
 
         b.rule(FUNCTION_PARAM_PATTERN).is(PATTERN, SPC, RustPunctuator.COLON, SPC, b.firstOf(TYPE, RustPunctuator.DOTDOTDOT));
 

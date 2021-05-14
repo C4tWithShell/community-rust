@@ -1,253 +1,235 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
 
-//! This mod provides functions to remap a `JsError` based on a source map.
+use crate::deno_dir::DenoDir;
+use crate::flags::DenoSubcommand;
+use crate::flags::Flags;
+use deno_core::error::bail;
+use deno_core::error::AnyError;
+use deno_core::serde_json;
+use deno_runtime::deno_fetch::reqwest::Client;
+use std::env;
+use std::fs::read;
+use std::fs::File;
+use std::io::Read;
+use std::io::Seek;
+use std::io::SeekFrom;
+use std::io::Write;
+use std::path::Path;
+use std::path::PathBuf;
 
-use deno_core::error::JsError;
-use sourcemap::SourceMap;
-use std::collections::HashMap;
-use std::str;
-use std::sync::Arc;
+use crate::standalone::Metadata;
+use crate::standalone::MAGIC_TRAILER;
 
-pub trait SourceMapGetter: Sync + Send {
-    /// Returns the raw source map file.
-    fn get_source_map(&self, file_name: &str) -> Option<Vec<u8>>;
-    fn get_source_line(
-        &self,
-        file_name: &str,
-        line_number: usize,
-    ) -> Option<String>;
-}
+pub async fn get_base_binary(
+    deno_dir: &DenoDir,
+    target: Option<String>,
+) -> Result<Vec<u8>, AnyError> {
+    if target.is_none() {
+        let path = std::env::current_exe()?;
+        return Ok(tokio::fs::read(path).await?);
+    }
 
-/// Cached filename lookups. The key can be None if a previous lookup failed to
-/// find a SourceMap.
-pub type CachedMaps = HashMap<String, Option<SourceMap>>;
+    let target = target.unwrap_or_else(|| env!("TARGET").to_string());
+    let binary_name = format!("deno-{}.zip", target);
 
-/// Apply a source map to a `deno_core::JsError`, returning a `JsError` where
-/// file names and line/column numbers point to the location in the original
-/// source, rather than the transpiled source code.
-pub fn apply_source_map<G: SourceMapGetter>(
-    js_error: &JsError,
-    getter: Arc<G>,
-) -> JsError {
-    // Note that js_error.frames has already been source mapped in
-    // prepareStackTrace().
-    let mut mappings_map: CachedMaps = HashMap::new();
-
-    let (script_resource_name, line_number, start_column, source_line) =
-        get_maybe_orig_position(
-            js_error.script_resource_name.clone(),
-            js_error.line_number,
-            // start_column is 0-based, we need 1-based here.
-            js_error.start_column.map(|n| n + 1),
-            &mut mappings_map,
-            getter.clone(),
-        );
-    let start_column = start_column.map(|n| n - 1);
-    // It is better to just move end_column to be the same distance away from
-    // start column because sometimes the code point is not available in the
-    // source file map.
-    let end_column = match js_error.end_column {
-        Some(ec) => {
-            start_column.map(|sc| ec - (js_error.start_column.unwrap() - sc))
-        }
-        _ => None,
+    let binary_path_suffix = if crate::version::is_canary() {
+        format!("canary/{}/{}", crate::version::GIT_COMMIT_HASH, binary_name)
+    } else {
+        format!("release/v{}/{}", env!("CARGO_PKG_VERSION"), binary_name)
     };
 
-    let mut script_resource_name = script_resource_name;
-    let mut line_number = line_number;
-    let mut start_column = start_column;
-    let mut end_column = end_column;
-    let mut source_line = source_line;
-    if script_resource_name
-        .as_ref()
-        .map_or(true, |s| s.starts_with("deno:"))
-    {
-        for frame in &js_error.frames {
-            if let (Some(file_name), Some(line_number_)) =
-            (&frame.file_name, frame.line_number)
-            {
-                if !file_name.starts_with("deno:") {
-                    script_resource_name = Some(file_name.clone());
-                    line_number = Some(line_number_);
-                    start_column = frame.column_number.map(|n| n - 1);
-                    end_column = frame.column_number;
-                    // Lookup expects 0-based line and column numbers, but ours are 1-based.
-                    source_line =
-                        getter.get_source_line(file_name, (line_number_ - 1) as usize);
-                    break;
-                }
-            }
-        }
+    let download_directory = deno_dir.root.join("dl");
+    let binary_path = download_directory.join(&binary_path_suffix);
+
+    if !binary_path.exists() {
+        download_base_binary(&download_directory, &binary_path_suffix).await?;
     }
 
-    JsError {
-        message: js_error.message.clone(),
-        source_line,
-        script_resource_name,
-        line_number,
-        start_column,
-        end_column,
-        frames: js_error.frames.clone(),
-        stack: None,
-    }
+    let archive_data = tokio::fs::read(binary_path).await?;
+    let base_binary_path = crate::tools::upgrade::unpack(
+        archive_data,
+        "deno",
+        target.contains("windows"),
+    )?;
+    let base_binary = tokio::fs::read(base_binary_path).await?;
+    Ok(base_binary)
 }
 
-fn get_maybe_orig_position<G: SourceMapGetter>(
-    file_name: Option<String>,
-    line_number: Option<i64>,
-    column_number: Option<i64>,
-    mappings_map: &mut CachedMaps,
-    getter: Arc<G>,
-) -> (Option<String>, Option<i64>, Option<i64>, Option<String>) {
-    match (file_name, line_number, column_number) {
-        (Some(file_name_v), Some(line_v), Some(column_v)) => {
-            let (file_name, line_number, column_number, source_line) =
-                get_orig_position(file_name_v, line_v, column_v, mappings_map, getter);
-            (
-                Some(file_name),
-                Some(line_number),
-                Some(column_number),
-                source_line,
-            )
-        }
-        _ => (None, None, None, None),
-    }
+async fn download_base_binary(
+    output_directory: &Path,
+    binary_path_suffix: &str,
+) -> Result<(), AnyError> {
+    let download_url = format!("https://dl.deno.land/{}", binary_path_suffix);
+
+    let client_builder = Client::builder();
+    let client = client_builder.build()?;
+
+    println!("Checking {}", &download_url);
+
+    let res = client.get(&download_url).send().await?;
+
+    let binary_content = if res.status().is_success() {
+        println!("Download has been found");
+        res.bytes().await?.to_vec()
+    } else {
+        println!("Download could not be found, aborting");
+        std::process::exit(1)
+    };
+
+    std::fs::create_dir_all(&output_directory)?;
+    let output_path = output_directory.join(binary_path_suffix);
+    std::fs::create_dir_all(&output_path.parent().unwrap())?;
+    tokio::fs::write(output_path, binary_content).await?;
+    Ok(())
 }
 
-pub fn get_orig_position<G: SourceMapGetter>(
-    file_name: String,
-    line_number: i64,
-    column_number: i64,
-    mappings_map: &mut CachedMaps,
-    getter: Arc<G>,
-) -> (String, i64, i64, Option<String>) {
-    // Lookup expects 0-based line and column numbers, but ours are 1-based.
-    let line_number = line_number - 1;
-    let column_number = column_number - 1;
+/// This functions creates a standalone deno binary by appending a bundle
+/// and magic trailer to the currently executing binary.
+pub fn create_standalone_binary(
+    mut original_bin: Vec<u8>,
+    source_code: String,
+    flags: Flags,
+) -> Result<Vec<u8>, AnyError> {
+    let mut source_code = source_code.as_bytes().to_vec();
+    let ca_data = match &flags.ca_file {
+        Some(ca_file) => Some(read(ca_file)?),
+        None => None,
+    };
+    let metadata = Metadata {
+        argv: flags.argv.clone(),
+        unstable: flags.unstable,
+        seed: flags.seed,
+        location: flags.location.clone(),
+        permissions: flags.clone().into(),
+        v8_flags: flags.v8_flags.clone(),
+        log_level: flags.log_level,
+        ca_data,
+    };
+    let mut metadata = serde_json::to_string(&metadata)?.as_bytes().to_vec();
 
-    let default_pos = (file_name.clone(), line_number, column_number, None);
-    let maybe_source_map = get_mappings(&file_name, mappings_map, getter.clone());
-    let (file_name, line_number, column_number, source_line) =
-        match maybe_source_map {
-            None => default_pos,
-            Some(source_map) => {
-                match source_map.lookup_token(line_number as u32, column_number as u32)
-                {
-                    None => default_pos,
-                    Some(token) => match token.get_source() {
-                        None => default_pos,
-                        Some(source_file_name) => {
-                            // The `source_file_name` written by tsc in the source map is
-                            // sometimes only the basename of the URL, or has unwanted `<`/`>`
-                            // around it. Use the `file_name` we get from V8 if
-                            // `source_file_name` does not parse as a URL.
-                            let file_name = match deno_core::resolve_url(source_file_name) {
-                                Ok(m) if m.scheme() == "blob" => file_name,
-                                Ok(m) => m.to_string(),
-                                Err(_) => file_name,
-                            };
-                            let source_line =
-                                if let Some(source_view) = token.get_source_view() {
-                                    source_view
-                                        .get_line(token.get_src_line())
-                                        .map(|s| s.to_string())
-                                } else {
-                                    None
-                                };
-                            (
-                                file_name,
-                                i64::from(token.get_src_line()),
-                                i64::from(token.get_src_col()),
-                                source_line,
-                            )
-                        }
-                    },
-                }
-            }
-        };
-    let source_line = source_line
-        .or_else(|| getter.get_source_line(&file_name, line_number as usize));
-    (file_name, line_number + 1, column_number + 1, source_line)
+    let bundle_pos = original_bin.len();
+    let metadata_pos = bundle_pos + source_code.len();
+    let mut trailer = MAGIC_TRAILER.to_vec();
+    trailer.write_all(&bundle_pos.to_be_bytes())?;
+    trailer.write_all(&metadata_pos.to_be_bytes())?;
+
+    let mut final_bin =
+        Vec::with_capacity(original_bin.len() + source_code.len() + trailer.len());
+    final_bin.append(&mut original_bin);
+    final_bin.append(&mut source_code);
+    final_bin.append(&mut metadata);
+    final_bin.append(&mut trailer);
+
+    Ok(final_bin)
 }
 
-fn get_mappings<'a, G: SourceMapGetter>(
-    file_name: &str,
-    mappings_map: &'a mut CachedMaps,
-    getter: Arc<G>,
-) -> &'a Option<SourceMap> {
-    mappings_map
-        .entry(file_name.to_string())
-        .or_insert_with(|| parse_map_string(file_name, getter))
-}
-
-// TODO(kitsonk) parsed source maps should probably be cached in state in
-// the module meta data.
-fn parse_map_string<G: SourceMapGetter>(
-    file_name: &str,
-    getter: Arc<G>,
-) -> Option<SourceMap> {
-    getter
-        .get_source_map(file_name)
-        .and_then(|raw_source_map| SourceMap::from_slice(&raw_source_map).ok())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    struct MockSourceMapGetter {}
-
-    impl SourceMapGetter for MockSourceMapGetter {
-        fn get_source_map(&self, file_name: &str) -> Option<Vec<u8>> {
-            let s = match file_name {
-                "foo_bar.ts" => {
-                    r#"{"sources": ["foo_bar.ts"], "mappings":";;;IAIA,OAAO,CAAC,GAAG,CAAC,qBAAqB,EAAE,EAAE,CAAC,OAAO,CAAC,CAAC;IAC/C,OAAO,CAAC,GAAG,CAAC,eAAe,EAAE,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC;IACjD,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,IAAI,CAAC,QAAQ,CAAC,EAAE,CAAC,CAAC;IAE3C,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC"}"#
-                }
-                "bar_baz.ts" => {
-                    r#"{"sources": ["bar_baz.ts"], "mappings":";;;IAEA,CAAC,KAAK,IAAI,EAAE;QACV,MAAM,GAAG,GAAG,sDAAa,OAAO,2BAAC,CAAC;QAClC,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC;IACnB,CAAC,CAAC,EAAE,CAAC;IAEQ,QAAA,GAAG,GAAG,KAAK,CAAC;IAEzB,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC"}"#
-                }
-                _ => return None,
-            };
-            Some(s.as_bytes().to_owned())
-        }
-
-        fn get_source_line(
-            &self,
-            file_name: &str,
-            line_number: usize,
-        ) -> Option<String> {
-            let s = match file_name {
-                "foo_bar.ts" => vec![
-                    "console.log('foo');",
-                    "console.log('foo');",
-                    "console.log('foo');",
-                    "console.log('foo');",
-                    "console.log('foo');",
-                ],
-                _ => return None,
-            };
-            if s.len() > line_number {
-                Some(s[line_number].to_string())
+/// This function writes out a final binary to specified path. If output path
+/// is not already standalone binary it will return error instead.
+pub async fn write_standalone_binary(
+    output: PathBuf,
+    target: Option<String>,
+    final_bin: Vec<u8>,
+) -> Result<(), AnyError> {
+    let output = match target {
+        Some(target) => {
+            if target.contains("windows") {
+                PathBuf::from(output.display().to_string() + ".exe")
             } else {
-                None
+                output
             }
         }
-    }
+        None => {
+            if cfg!(windows) && output.extension().unwrap_or_default() != "exe" {
+                PathBuf::from(output.display().to_string() + ".exe")
+            } else {
+                output
+            }
+        }
+    };
 
-    #[test]
-    fn apply_source_map_line() {
-        let e = JsError {
-            message: "TypeError: baz".to_string(),
-            source_line: Some("foo".to_string()),
-            script_resource_name: Some("foo_bar.ts".to_string()),
-            line_number: Some(4),
-            start_column: Some(16),
-            end_column: None,
-            frames: vec![],
-            stack: None,
-        };
-        let getter = Arc::new(MockSourceMapGetter {});
-        let actual = apply_source_map(&e, getter);
-        assert_eq!(actual.source_line, Some("console.log('foo');".to_string()));
+    if output.exists() {
+        // If the output is a directory, throw error
+        if output.is_dir() {
+            bail!("Could not compile: {:?} is a directory.", &output);
+        }
+
+        // Make sure we don't overwrite any file not created by Deno compiler.
+        // Check for magic trailer in last 24 bytes.
+        let mut has_trailer = false;
+        let mut output_file = File::open(&output)?;
+        // This seek may fail because the file is too small to possibly be
+        // `deno compile` output.
+        if output_file.seek(SeekFrom::End(-24)).is_ok() {
+            let mut trailer = [0; 24];
+            output_file.read_exact(&mut trailer)?;
+            let (magic_trailer, _) = trailer.split_at(8);
+            has_trailer = magic_trailer == MAGIC_TRAILER;
+        }
+        if !has_trailer {
+            bail!("Could not compile: cannot overwrite {:?}.", &output);
+        }
+
+        // Remove file if it was indeed a deno compiled binary, to avoid corruption
+        // (see https://github.com/denoland/deno/issues/10310)
+        std::fs::remove_file(&output)?;
     }
+    tokio::fs::write(&output, final_bin).await?;
+    #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let perms = std::fs::Permissions::from_mode(0o777);
+            tokio::fs::set_permissions(output, perms).await?;
+        }
+
+    Ok(())
+}
+
+/// Transform the flags passed to `deno compile` to flags that would be used at
+/// runtime, as if `deno run` were used.
+/// - Flags that affect module resolution, loading, type checking, etc. aren't
+///   applicable at runtime so are set to their defaults like `false`.
+/// - Other flags are inherited.
+pub fn compile_to_runtime_flags(
+    flags: Flags,
+    baked_args: Vec<String>,
+) -> Result<Flags, AnyError> {
+    // IMPORTANT: Don't abbreviate any of this to `..flags` or
+    // `..Default::default()`. That forces us to explicitly consider how any
+    // change to `Flags` should be reflected here.
+    Ok(Flags {
+        argv: baked_args,
+        subcommand: DenoSubcommand::Run {
+            script: "placeholder".to_string(),
+        },
+        allow_env: flags.allow_env,
+        allow_hrtime: flags.allow_hrtime,
+        allow_net: flags.allow_net,
+        allow_plugin: flags.allow_plugin,
+        allow_read: flags.allow_read,
+        allow_run: flags.allow_run,
+        allow_write: flags.allow_write,
+        cache_blocklist: vec![],
+        ca_file: flags.ca_file,
+        cached_only: false,
+        config_path: None,
+        coverage_dir: flags.coverage_dir,
+        ignore: vec![],
+        import_map_path: None,
+        inspect: None,
+        inspect_brk: None,
+        location: flags.location,
+        lock: None,
+        lock_write: false,
+        log_level: flags.log_level,
+        no_check: false,
+        prompt: flags.prompt,
+        no_remote: false,
+        reload: false,
+        repl: false,
+        seed: flags.seed,
+        unstable: flags.unstable,
+        v8_flags: flags.v8_flags,
+        version: false,
+        watch: false,
+    })
 }
