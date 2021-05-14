@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -39,6 +39,17 @@ public class IfExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+                .matches("if is_ok {} ")
+                .matches("if is_red || is_black {let cpt = 1 ;} else  {let cpt = 0 ;}")
+                .matches("if is_red || is_black {}")
+                .matches("if is_red || is_black {} else  {let cpt = 0 ;}")
+                .matches("if is_ok {\n" +
+                        "        // empty block\n" +
+                        " } ")
+                .matches("if is_ok {} else {let x = 42;}")
+                .matches("if is_ok {\n" +
+                        "        // empty block\n" +
+                        " } else {let x = 42;}")
                 .matches("if bytes.len() < 3 * 4 {\n" +
                         "        println!(\"Too short\");" +
                         "        }")
@@ -68,6 +79,32 @@ public class IfExpressionTest {
                         "                        }\n" +
                         "                    }\n" +
                         "                }")
+                .matches("if is_ok \n" +
+                        "            {} else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if is_ops || has_pending_dyn_imports || has_pending_dyn_module_evaluation\n" +
+                        "            {} else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if has_ops\n" +
+                        "                || has_pending_dyn_imports\n" +
+                        "                || has_pending_dyn_module_evaluation\n" +
+                        "            {} else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if has_pending_ops\n" +
+                        "                || has_pending_dyn_imports\n" +
+                        "                || has_pending_dyn_module_evaluation\n" +
+                        "            {\n" +
+                        "                // pass, will be polled again\n" +
+                        "            } else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
 
 
         ;

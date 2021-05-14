@@ -69,13 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "fn try_borrow_mut() {\n" +
-
-                "        if let Some(a) = state.try_borrow_mut::<MyStruct>() {\n" +
-                "            a.value += 10;\n" +
-                "        }\n" +
-                "        basfoo!(\"hello\");\n" +
-                "    }";
+        String sexpr = "let a = CachedModule{};";
 
 
         //Print out Ast node content for debugging purpose

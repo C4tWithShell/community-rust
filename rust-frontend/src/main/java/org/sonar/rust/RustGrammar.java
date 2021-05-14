@@ -100,8 +100,10 @@ public enum RustGrammar implements GrammarRuleKey {
     EQ_EXPRESSION,
     ERROR_PROPAGATION_EXPRESSION,
     EXPRESSION,
+    EXPRESSION_EXCEPT_STRUCT,
     EXPRESSION_STATEMENT,
     EXPRESSION_TERM,
+    EXPRESSION_TERM_EXCEPT_STRUCT,
     EXPRESSION_WITHOUT_BLOCK,
     EXPRESSION_WITH_BLOCK,
     EXTERNAL_ITEM,
@@ -1140,13 +1142,44 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(STRUCT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
+
+                ));
+
+        b.rule(EXPRESSION_EXCEPT_STRUCT).is(
+                b.zeroOrMore(OUTER_ATTRIBUTE),
+                b.firstOf(
+                        b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
+                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(BLOCK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(MATCH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(ASYNC_BLOCK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(UNSAFE_BLOCK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(LOOP_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(IF_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(IF_LET_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(CLOSURE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(BORROW_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(DEREFERENCE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(NEGATION_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(STRUCT_EXPRESSION, b.oneOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)), //NB : one or more
+
+                        b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT))
 
                 ));
 
@@ -1230,6 +1263,86 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(RustPunctuator.SHREQ, SPC, EXPRESSION)
                 ));
 
+        b.rule(EXPRESSION_TERM_EXCEPT_STRUCT).is(
+                b.firstOf(
+                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
+                        b.sequence(RustPunctuator.DOTDOTEQ, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.optional(EXPRESSION_EXCEPT_STRUCT)),
+                        b.sequence(RustPunctuator.DOT, RustKeyword.KW_AWAIT, SPC, EXPRESSION_TERM),
+                        b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")", SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.DOT, TUPLE_INDEX, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.DOT, IDENTIFIER, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")", SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.QUESTION, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence("[", EXPRESSION_EXCEPT_STRUCT, "]", SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.OROR, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.ANDAND, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.NE, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.GT, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.LT, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.GE, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.LE, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PLUS, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.MINUS, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.STAR, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SLASH, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PERCENT, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.AND, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.OR, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.CARET, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHL, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHR, SPC, EXPRESSION_EXCEPT_STRUCT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.EQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PLUSEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.MINUSEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.STAREQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SLASHEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PERCENTEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.ANDEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.OREQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.CARETEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHLEQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHREQ, SPC, EXPRESSION_EXCEPT_STRUCT, EXPRESSION_TERM_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.DOT, RustKeyword.KW_AWAIT),
+                        b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")"),
+                        b.sequence(RustPunctuator.DOT, TUPLE_INDEX),
+                        b.sequence(RustPunctuator.DOT, IDENTIFIER),
+                        b.sequence("(", SPC, b.optional(CALL_PARAMS), SPC, ")"),
+                        RustPunctuator.QUESTION,
+                        b.sequence(RustKeyword.KW_AS, SPC, TYPE_NO_BOUNDS),
+                        b.sequence("[", EXPRESSION, "]"),
+                        b.sequence(RustPunctuator.OROR, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.ANDAND, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.EQEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.NE, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.GT, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.LT, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.GE, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.LE, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PLUS, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.MINUS, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.STAR, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SLASH, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PERCENT, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.AND, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.OR, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.CARET, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHL, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHR, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.EQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PLUSEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.MINUSEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.STAREQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SLASHEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.PERCENTEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.ANDEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.OREQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.CARETEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHLEQ, SPC, EXPRESSION_EXCEPT_STRUCT),
+                        b.sequence(RustPunctuator.SHREQ, SPC, EXPRESSION_EXCEPT_STRUCT)
+                ));
+
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE),
                 b.firstOf(
                         b.sequence(EXPRESSION_WITH_BLOCK, b.oneOrMore(SPC, EXPRESSION_TERM)),
@@ -1244,8 +1357,8 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(NEGATION_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(STRUCT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(STRUCT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
@@ -1281,7 +1394,7 @@ public enum RustGrammar implements GrammarRuleKey {
     //https://doc.rust-lang.org/reference/expressions/match-expr.html
     private static void match(LexerlessGrammarBuilder b) {
         b.rule(MATCH_EXPRESSION).is(
-                RustKeyword.KW_MATCH, SPC, EXPRESSION, //except struct expressions !!
+                RustKeyword.KW_MATCH, SPC, EXPRESSION_EXCEPT_STRUCT,
                 SPC, "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.optional(MATCH_ARMS, SPC),
@@ -1311,7 +1424,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void ifExpr(LexerlessGrammarBuilder b) {
         b.rule(IF_EXPRESSION).is(
-                RustKeyword.KW_IF, SPC, EXPRESSION //except struct
+                RustKeyword.KW_IF, SPC, EXPRESSION_EXCEPT_STRUCT, b.next(SPC, "{")
                 , SPC, BLOCK_EXPRESSION, SPC,
                 b.optional(
 
@@ -1319,7 +1432,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 )
         );
         b.rule(IF_LET_EXPRESSION).is(
-                RustKeyword.KW_IF, SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC, RustPunctuator.EQ, SPC, EXPRESSION, //except struct or lazy boolean operator expression
+                RustKeyword.KW_IF, SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC, RustPunctuator.EQ, SPC, EXPRESSION_EXCEPT_STRUCT, //except struct or lazy boolean operator expression
                 SPC, BLOCK_EXPRESSION, SPC,
                 b.optional(RustKeyword.KW_ELSE, SPC, b.firstOf(BLOCK_EXPRESSION, IF_EXPRESSION, IF_LET_EXPRESSION)
                 )
@@ -1357,16 +1470,16 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INFINITE_LOOP_EXPRESSION).is(
                 RustKeyword.KW_LOOP, SPC, BLOCK_EXPRESSION);
         b.rule(PREDICATE_LOOP_EXPRESSION).is(
-                RustKeyword.KW_WHILE, SPC, EXPRESSION, //except struct expression
+                RustKeyword.KW_WHILE, SPC, EXPRESSION_EXCEPT_STRUCT,
                 BLOCK_EXPRESSION
         );
         b.rule(PREDICATE_PATTERN_LOOP_EXPRESSION).is(
                 RustKeyword.KW_WHILE, SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC, RustPunctuator.EQ,
-                SPC, EXPRESSION, //except struct expression
+                SPC, EXPRESSION_EXCEPT_STRUCT,
                 SPC, BLOCK_EXPRESSION
         );
         b.rule(ITERATOR_LOOP_EXPRESSION).is(
-                RustKeyword.KW_FOR, SPC, PATTERN, SPC, RustKeyword.KW_IN, SPC, EXPRESSION, //except struct expression
+                RustKeyword.KW_FOR, SPC, PATTERN, SPC, RustKeyword.KW_IN, SPC, EXPRESSION_EXCEPT_STRUCT,
                 SPC, BLOCK_EXPRESSION
         );
         b.rule(LOOP_LABEL).is(LIFETIME_OR_LABEL, SPC, RustPunctuator.COLON);
@@ -1671,7 +1784,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRUCT_EXPRESSION).is(b.firstOf(
                 STRUCT_EXPR_STRUCT,
                 STRUCT_EXPR_TUPLE,
-                STRUCT_EXPR_UNIT));
+                STRUCT_EXPR_UNIT
+        ));
         b.rule(STRUCT_EXPR_STRUCT).is(PATH_IN_EXPRESSION, SPC, "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.optional(b.firstOf(STRUCT_EXPR_FIELDS, STRUCT_BASE)), SPC,
