@@ -69,9 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "struct s( #[derive(Deserialize)]\n" +
-                "    fff\n" +
-                ");";
+        String sexpr = "cwd_str.replace(\"\\n\", \"/\");";
 
 
         //Print out Ast node content for debugging purpose

@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -77,7 +77,7 @@ public class LitteralsTest {
     }
 
     @Test
-    public void testStringContent(){
+    public void testStringContent() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_CONTENT))
                 .matches("abc")
                 .matches("abc,def!@")
@@ -88,7 +88,7 @@ public class LitteralsTest {
                 .notMatches("hello\"")
                 .notMatches("hello\"world")
                 .notMatches("\"hello\"")
-                ;
+        ;
     }
 
     @Test
@@ -100,13 +100,22 @@ public class LitteralsTest {
                 .matches("\"hello,world!\"")
                 //FIXME .matches("\"some text with \\\" quote escape \"")
                 .matches("\"\\'\"")
-                .matches("\"\\\"\"")
+                .notMatches("\"\\\"\"")
                 .matches("\"\\x7f\"")
                 .matches("\"\\r\"")
                 .matches("\"\\t\"")
-                .notMatches("\"\\\"")
+                   .matches("\"\\\"")
                 .notMatches("\"hello\")")
 
+
+
+        ;
+    }
+
+    @Test
+    public void testRawStringContent() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_CONTENT))
+                .matches("\"a string\"")
 
         ;
     }
@@ -116,10 +125,10 @@ public class LitteralsTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL))
                 .matches("r\"foo\"")
                 .matches("r#\"foo\"#")
+                .matches("r#\"\"foo\"\"#")
                 .matches("r#####\"foo\"#####")
                 .matches("r\"R\"")
                 .matches("r\"C:\\demo_dir\\\"")
-
                 .matches("r\"\n" +
                         "multine\n" +
                         "multine\n" +
@@ -128,13 +137,11 @@ public class LitteralsTest {
                         "multine\n" +
                         "multine\n" +
                         "\"#")
-
-
                 .matches("r#\"{\"sources\": [\"foo_bar.ts\"], \"mappings\":\";;;IAIA,OAAO,CAAC,GAAG,CAAC,qBAAqB,EAAE,EAAE,CAAC,OAAO,CAAC,CAAC;IAC/C,OAAO,CAAC,GAAG,CAAC,eAAe,EAAE,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC;IACjD,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,IAAI,CAAC,QAAQ,CAAC,EAAE,CAAC,CAAC;IAE3C,OAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC\"}\"#")
                 .matches("r#\"some \"text\"\"#")
                 .notMatches("r#\"some \"text\"\"#\"abc\"")
-
-
+                .matches("r\"tests\\006_url_imports.ts\"")
+                .matches("r\"tests/006_url_imports.ts\"")
 
 
 
@@ -170,7 +177,6 @@ public class LitteralsTest {
         ;
 
     }
-
 
 
     @Test
@@ -320,7 +326,6 @@ public class LitteralsTest {
     }
 
 
-
     @Test
     public void testPunctuation() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION))
@@ -372,7 +377,7 @@ public class LitteralsTest {
     }
 
     @Test
-    public void testDelimiters(){
+    public void testDelimiters() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.DELIMITERS))
                 .matches("{")
                 .matches("}")
