@@ -27,6 +27,18 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class LoopExpressionTest {
 
     @Test
+    public void testBreakExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BREAK_EXPRESSION))
+                .matches("break")
+                .matches("break 42")
+                .matches("break foo")
+                .matches("break a.method()")
+                .matches("break 'a b.method()")
+                .matches("break Ok(Poll::Pending)")
+                ;
+    }
+
+    @Test
     public void testLoopExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LOOP_EXPRESSION))
                 .matches("while i < 10 {\n" +

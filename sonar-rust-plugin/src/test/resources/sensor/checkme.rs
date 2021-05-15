@@ -531,7 +531,7 @@ impl DenoInspector {
 
         // Tell the inspector about the global context.
         let context = v8::Local::new(scope, context);
-        let context_name = v8::inspector::StringView::from(&b"global context"[..]);
+
         self_.context_created(context, Self::CONTEXT_GROUP_ID, context_name);
 
         // Poll the session handler so we will get notified whenever there is

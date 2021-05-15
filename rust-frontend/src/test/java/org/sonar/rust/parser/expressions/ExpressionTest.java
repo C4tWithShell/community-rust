@@ -100,6 +100,8 @@ public class ExpressionTest {
                 "        // empty block" +
                 " } ")
                 .matches("..")
+                .matches("break 42")
+                .matches("break Ok(Poll::Pending)")
      ;
     }
 }

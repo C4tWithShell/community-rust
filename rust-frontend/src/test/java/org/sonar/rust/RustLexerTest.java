@@ -69,10 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "match f {\n" +
-                "44 => { foo }\n" +
-                "(a,b) => 42\n" +
-                "};";
+        String sexpr = "Ok(Poll::Pending);";
 
 
         //Print out Ast node content for debugging purpose

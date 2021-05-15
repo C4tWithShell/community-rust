@@ -212,6 +212,32 @@ public class MatchExpressionTest {
                         "            }\n" +
                         "            _ => 42\n" +
                         "          }")
+                .matches("match new_state {\n" +
+                        "      PollState::Polling => 42,\n" +
+                        "            }")
+                .matches("match new_state {\n" +
+
+                        "      PollState::Polling => {} // Poll the session handler again.\n" +
+
+                        "            }")
+                .matches("match new_state {\n" +
+
+                        "        PollState::Parked => thread::park(), // Park the thread.\n" +
+
+                        "            }")
+                .matches("match new_state {\n" +
+                        "         42 => break foo\n" +
+                        "            }")
+                .matches("match new_state {\n" +
+                        "         PollState::Idle => break Ok(Poll::Pending),\n" +
+                        "            }")
+
+                .matches("match new_state {\n" +
+                        "         PollState::Idle => break Ok(Poll::Pending), // Yield to task.\n" +
+                        "      PollState::Polling => {} // Poll the session handler again.\n" +
+                        "        PollState::Parked => thread::park(), // Park the thread.\n" +
+                        "          _ => unreachable!(),\n" +
+                        "            }")
 
 
 
