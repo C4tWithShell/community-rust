@@ -157,7 +157,7 @@ public class LitteralsTest {
                 .matches("\\n")
                 .matches("\\r")
                 .matches("\\t")
-                .matches("\\")
+                .matches("\\\\")
 
         ;
     }
@@ -174,6 +174,7 @@ public class LitteralsTest {
                 .notMatches("b''\\r")
                 .notMatches("b''\\t")
                 .matches("b'\\xff'")
+                .matches("b'\\\\'")
         ;
 
     }
