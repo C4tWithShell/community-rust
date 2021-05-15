@@ -1129,7 +1129,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(RustPunctuator.DOTDOT, b.next(")")),
+                        b.sequence(RustPunctuator.DOTDOT, b.next(b.firstOf(")", "]", "}"))),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), EXPRESSION),
@@ -1416,7 +1416,7 @@ MatchArms :
    MatchArm => Expression ,?
  */
         b.rule(MATCH_ARMS).is(
-                b.zeroOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,
+                b.oneOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,
                         b.firstOf(b.sequence(EXPRESSION_WITH_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC)),
                                 b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC))
                         ))

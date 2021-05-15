@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "Ok(Poll::Pending);";
+        String sexpr = "let reason = v8::inspector::StringView::from(&b\"debugCommand\"[..]);";
 
 
         //Print out Ast node content for debugging purpose
