@@ -69,11 +69,11 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "flags.log_level = match matcheskdjfhkjsh.value_of(\"log-level\").unwrap() {\n" +
-                "            \"debug\" => Some(Level::DEBUG),\n" +
-                "            \"info\" => Some(Level::INFO),\n" +
-                "            _ => unreachable!(),\n" +
-                "        };";
+        String sexpr = " let NodeInner::Linked {\n" +
+                "                prev: mut prev_nn,\n" +
+                "                next: mut next_nn,\n" +
+                "                ..\n" +
+                "            } = 42;";
 
 
         //Print out Ast node content for debugging purpose

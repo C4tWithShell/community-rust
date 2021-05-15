@@ -988,12 +988,15 @@ public enum RustGrammar implements GrammarRuleKey {
                 PATH_IN_EXPRESSION, SPC, "{", SPC, b.optional(STRUCT_PATTERN_ELEMENTS), SPC, "}"
         );
         b.rule(STRUCT_PATTERN_ELEMENTS).is(b.firstOf(
+                STRUCT_PATTERN_ETCETERA,
                 b.sequence(STRUCT_PATTERN_FIELDS, SPC,
                         b.optional(b.firstOf(
-                                RustPunctuator.COMMA,
-                                b.sequence(RustPunctuator.COMMA, SPC, STRUCT_PATTERN_ETCETERA)))
+                                b.sequence(RustPunctuator.COMMA, SPC, STRUCT_PATTERN_ETCETERA),
+                                RustPunctuator.COMMA
+
+                        ))
                 )
-                , STRUCT_PATTERN_ETCETERA
+
 
         ));
         b.rule(STRUCT_PATTERN_FIELDS).is(
