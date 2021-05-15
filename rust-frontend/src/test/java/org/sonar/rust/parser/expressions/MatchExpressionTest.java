@@ -120,6 +120,14 @@ public class MatchExpressionTest {
                         "    5 => println!(\"five\"),\n" +
                         "    _ => println!(\"something else\")" +
                         "}")
+                .matches("match matches.value {\n" +
+                        "    1 => println!(\"one\"),\n" +
+                        "    _ => println!(\"something else\")" +
+                        "}")
+                .matches("match if_prefix {\n" +
+                        "    1 => println!(\"one\"),\n" +
+                        "    _ => println!(\"something else\")" +
+                        "}")
                 .matches("match S(1, 2) {\n" +
                         "    S(z @ 1, _) | S(_, z @ 2) => assert_eq!(z, 1),\n" +
                         "    _ => panic!()" +

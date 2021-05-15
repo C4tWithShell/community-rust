@@ -1404,33 +1404,20 @@ public enum RustGrammar implements GrammarRuleKey {
     //https://doc.rust-lang.org/reference/expressions/match-expr.html
     private static void match(LexerlessGrammarBuilder b) {
         b.rule(MATCH_EXPRESSION).is(
-                RustKeyword.KW_MATCH, SPC, EXPRESSION_EXCEPT_STRUCT,
+                RustKeyword.KW_MATCH, SPC, b.optional(RustKeyword.KW_MATCH),EXPRESSION_EXCEPT_STRUCT,
                 SPC, "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.optional(MATCH_ARMS, SPC),
                 "}"
         );
-/*
-MatchArms :
-   ( MatchArm => ( ExpressionWithoutBlock , | ExpressionWithBlock ,? ) )*
-   MatchArm => Expression ,?
- */
+
         b.rule(MATCH_ARMS).is(
                 b.oneOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,
                         b.firstOf(b.sequence(EXPRESSION_WITH_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC)),
                                 b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC))
                         ))
-                //, MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC, EXPRESSION, b.optional(SPC, RustPunctuator.COMMA, SPC)
-
         );
 
-        /*
-        b.rule(MATCH_ARMS).is(
-                b.oneOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,
-                        EXPRESSION, b.nextNot(SPC, MATCH_ARM), SPC, b.optional(RustPunctuator.COMMA, SPC)))
-        ;
-
-         */
 
 
         b.rule(MATCH_ARM).is(
@@ -1449,7 +1436,7 @@ MatchArms :
 
     private static void ifExpr(LexerlessGrammarBuilder b) {
         b.rule(IF_EXPRESSION).is(
-                RustKeyword.KW_IF, SPC, EXPRESSION_EXCEPT_STRUCT, b.next(SPC, "{")
+                RustKeyword.KW_IF, SPC, b.optional(b.firstOf(RustKeyword.KW_IF, RustKeyword.KW_MATCH)), EXPRESSION_EXCEPT_STRUCT, b.next(SPC, "{")
                 , SPC, BLOCK_EXPRESSION, SPC,
                 b.optional(
 

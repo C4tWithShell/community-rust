@@ -40,6 +40,9 @@ public class IfExpressionTest {
                         "        println!(\"Coverage is running\");" +
                         " } ")
                 .matches("if is_ok {} ")
+                .matches("if if_ok {} ")
+                .matches("if match_ok {} ")
+                .matches("if async_ok {} ")
                 .matches("if is_red || is_black {let cpt = 1 ;} else  {let cpt = 0 ;}")
                 .matches("if is_red || is_black {}")
                 .matches("if is_red || is_black {} else  {let cpt = 0 ;}")

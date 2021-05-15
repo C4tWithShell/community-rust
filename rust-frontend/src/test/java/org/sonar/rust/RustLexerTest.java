@@ -69,7 +69,11 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let reason = v8::inspector::StringView::from(&b\"debugCommand\"[..]);";
+        String sexpr = "flags.log_level = match matcheskdjfhkjsh.value_of(\"log-level\").unwrap() {\n" +
+                "            \"debug\" => Some(Level::DEBUG),\n" +
+                "            \"info\" => Some(Level::INFO),\n" +
+                "            _ => unreachable!(),\n" +
+                "        };";
 
 
         //Print out Ast node content for debugging purpose

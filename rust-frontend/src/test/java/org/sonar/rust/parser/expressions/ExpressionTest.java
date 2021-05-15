@@ -35,6 +35,7 @@ public class ExpressionTest {
                 .notMatches("my_struct{}")
                 .notMatches("my_struct{}.field")
                 .notMatches("a || not_struct {}")
+                .matches("matches.value_of(\"log-level\").unwrap()")
 
         ;
     }
