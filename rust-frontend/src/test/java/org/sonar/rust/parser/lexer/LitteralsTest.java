@@ -106,6 +106,7 @@ public class LitteralsTest {
                 .matches("\"\\t\"")
                 .notMatches("\"\\\"")
                 .notMatches("\"hello\")")
+                .matches("\"\\n    - \"")
 
 
 
@@ -142,8 +143,7 @@ public class LitteralsTest {
                 .notMatches("r#\"some \"text\"\"#\"abc\"")
                 .matches("r\"tests\\006_url_imports.ts\"")
                 .matches("r\"tests/006_url_imports.ts\"")
-
-
+                .matches("r#\"# Server Status\"#")
 
         ;
     }
