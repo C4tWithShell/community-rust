@@ -1016,7 +1016,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(TUPLE_STRUCT_ITEMS).is(seq(b, PATTERN, RustPunctuator.COMMA));
 
-        b.rule(TUPLE_PATTERN).is("(", b.optional(TUPLE_PATTERN_ITEMS), ")");
+        b.rule(TUPLE_PATTERN).is("(", SPC,b.optional(TUPLE_PATTERN_ITEMS), SPC, ")");
 
 
         b.rule(TUPLE_PATTERN_ITEMS).is(b.firstOf(

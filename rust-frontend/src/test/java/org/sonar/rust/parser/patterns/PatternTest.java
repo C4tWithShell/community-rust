@@ -173,7 +173,6 @@ public class PatternTest {
                 .matches("\"bacon\", foo")
                 .matches("\"bacon\" , foo")
 
-
         ;
 
     }
@@ -188,6 +187,7 @@ public class PatternTest {
                 .matches("(..)")
                 .matches("(\"bacon\" ,)")
                 .matches("(\"bacon\",42)")
+                .matches("( field_1, )")
 
         ;
 
@@ -257,6 +257,26 @@ public class PatternTest {
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
                 .matches("(\"Bacon\", b)")
+                .matches("(\n" +
+                        "          field_1,\n" +
+                        ")")
+                .matches("p((\n" +
+                        "          field_2,\n" +
+                        "))")
+                .matches("(\n" +
+                        "          specifier,\n" +
+                        "          position,\n" +
+                        "          find_in_strings,\n" +
+                        "          find_in_comments,\n" +
+                        "          provide_prefix_and_suffix_text_for_rename,\n" +
+                        ")")
+                .matches("RequestMethod::FindRenameLocations((\n" +
+                        "          specifier,\n" +
+                        "          position,\n" +
+                        "          find_in_strings,\n" +
+                        "          find_in_comments,\n" +
+                        "          provide_prefix_and_suffix_text_for_rename,\n" +
+                        "))")
 
 
 
