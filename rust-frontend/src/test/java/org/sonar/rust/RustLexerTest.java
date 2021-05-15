@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "cwd_str.replace(\"\\n\", \"/\");";
+        String sexpr = "keys.drain(..);";
 
 
         //Print out Ast node content for debugging purpose

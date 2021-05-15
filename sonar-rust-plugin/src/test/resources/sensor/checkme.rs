@@ -1,518 +1,631 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
+use rusty_v8 as v8;
+use serde::de::{self, Visitor};
+use serde::Deserialize;
 
-use crate::normalize_path;
-use std::env::current_dir;
-use std::error::Error;
-use std::fmt;
-use std::path::PathBuf;
-use url::ParseError;
-use url::Url;
+use std::convert::TryFrom;
 
-pub const DUMMY_SPECIFIER: &str = "<unknown>";
+use crate::error::{Error, Result};
+use crate::keys::{v8_struct_key, KeyCache};
+use crate::payload::ValueType;
 
-/// Error indicating the reason resolving a module specifier failed.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ModuleResolutionError {
-    InvalidUrl(ParseError),
-    InvalidBaseUrl(ParseError),
-    InvalidPath(PathBuf),
-    ImportPrefixMissing(String, Option<String>),
+use crate::magic;
+
+pub struct Deserializer<'a, 'b, 's> {
+    input: v8::Local<'a, v8::Value>,
+    scope: &'b mut v8::HandleScope<'s>,
+    _key_cache: Option<&'b mut KeyCache>,
 }
-use ModuleResolutionError::*;
 
-impl Error for ModuleResolutionError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            InvalidUrl(ref err) | InvalidBaseUrl(ref err) => Some(err),
-            _ => None,
+impl<'a, 'b, 's> Deserializer<'a, 'b, 's> {
+    pub fn new(
+        scope: &'b mut v8::HandleScope<'s>,
+        input: v8::Local<'a, v8::Value>,
+        key_cache: Option<&'b mut KeyCache>,
+    ) -> Self {
+        Deserializer {
+            input,
+            scope,
+            _key_cache: key_cache,
         }
     }
 }
 
-impl fmt::Display for ModuleResolutionError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidUrl(ref err) => write!(f, "invalid URL: {}", err),
-            InvalidBaseUrl(ref err) => {
-                write!(f, "invalid base URL for relative import: {}", err)
-            }
-            InvalidPath(ref path) => write!(f, "invalid module path: {:?}", path),
-            ImportPrefixMissing(ref specifier, ref maybe_referrer) => write!(
-                f,
-                "relative import path \"{}\" not prefixed with / or ./ or ../{}",
-                specifier,
-                match maybe_referrer {
-                    Some(referrer) => format!(" Imported from \"{}\"", referrer),
-                    None => format!(""),
-                }
-            ),
-        }
-    }
+// from_v8 deserializes a v8::Value into a Deserializable / rust struct
+pub fn from_v8<'de, 'a, 'b, 's, T>(
+    scope: &'b mut v8::HandleScope<'s>,
+    input: v8::Local<'a, v8::Value>,
+) -> Result<T>
+    where
+        T: Deserialize<'de>,
+{
+    let mut deserializer = Deserializer::new(scope, input, None);
+    let t = T::deserialize(&mut deserializer)?;
+    Ok(t)
 }
 
-/// Resolved module specifier
-pub type ModuleSpecifier = Url;
+// like from_v8 except accepts a KeyCache to optimize struct key decoding
+pub fn from_v8_cached<'de, 'a, 'b, 's, T>(
+    scope: &'b mut v8::HandleScope<'s>,
+    input: v8::Local<'a, v8::Value>,
+    key_cache: &mut KeyCache,
+) -> Result<T>
+    where
+        T: Deserialize<'de>,
+{
+    let mut deserializer = Deserializer::new(scope, input, Some(key_cache));
+    let t = T::deserialize(&mut deserializer)?;
+    Ok(t)
+}
 
-/// Resolves module using this algorithm:
-/// https://html.spec.whatwg.org/multipage/webappapis.html#resolve-a-module-specifier
-pub fn resolve_import(
-    specifier: &str,
-    base: &str,
-) -> Result<ModuleSpecifier, ModuleResolutionError> {
-    let url = match Url::parse(specifier) {
-        // 1. Apply the URL parser to specifier.
-        //    If the result is not failure, return he result.
-        Ok(url) => url,
+macro_rules! wip {
+  ($method:ident) => {
+    fn $method<V>(self, _v: V) -> Result<V::Value>
+    where
+      V: Visitor<'de>,
+    {
+      unimplemented!()
+    }
+  };
+}
 
-        // 2. If specifier does not start with the character U+002F SOLIDUS (/),
-        //    the two-character sequence U+002E FULL STOP, U+002F SOLIDUS (./),
-        //    or the three-character sequence U+002E FULL STOP, U+002E FULL STOP,
-        //    U+002F SOLIDUS (../), return failure.
-        Err(ParseError::RelativeUrlWithoutBase)
-        if !(specifier.starts_with('/')
-            || specifier.starts_with("./")
-            || specifier.starts_with("../")) =>
-            {
-                let maybe_referrer = if base.is_empty() {
-                    None
+macro_rules! deserialize_signed {
+  ($dmethod:ident, $vmethod:ident, $t:tt) => {
+    fn $dmethod<V>(self, visitor: V) -> Result<V::Value>
+    where
+      V: Visitor<'de>,
+    {
+      visitor.$vmethod(self.input.integer_value(&mut self.scope).unwrap() as $t)
+    }
+  };
+}
+
+impl<'de, 'a, 'b, 's, 'x> de::Deserializer<'de>
+for &'x mut Deserializer<'a, 'b, 's>
+{
+    type Error = Error;
+
+    fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        match ValueType::from_v8(self.input) {
+            ValueType::Null => self.deserialize_unit(visitor),
+            ValueType::Bool => self.deserialize_bool(visitor),
+            // Handle floats & ints separately to work with loosely-typed serde_json
+            ValueType::Number => {
+                if self.input.is_uint32() {
+                    self.deserialize_u32(visitor)
+                } else if self.input.is_int32() {
+                    self.deserialize_i32(visitor)
                 } else {
-                    Some(base.to_string())
-                };
-                return Err(ImportPrefixMissing(specifier.to_string(), maybe_referrer));
+                    self.deserialize_f64(visitor)
+                }
             }
+            ValueType::String => self.deserialize_string(visitor),
+            ValueType::Array => self.deserialize_seq(visitor),
+            ValueType::Object => self.deserialize_map(visitor),
+        }
+    }
 
-        // 3. Return the result of applying the URL parser to specifier with base
-        //    URL as the base URL.
-        Err(ParseError::RelativeUrlWithoutBase) => {
-            let base = if base == DUMMY_SPECIFIER {
-                // Handle <unknown> case, happening under e.g. repl.
-                // Use CWD for such case.
+    fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        // Relaxed typechecking, will map all non-true vals to false
+        visitor.visit_bool(self.input.is_true())
+    }
 
-                // Forcefully join base to current dir.
-                // Otherwise, later joining in Url would be interpreted in
-                // the parent directory (appending trailing slash does not work)
-                let path = current_dir().unwrap().join(base);
-                Url::from_file_path(path).unwrap()
-            } else {
-                Url::parse(base).map_err(InvalidBaseUrl)?
+    deserialize_signed!(deserialize_i8, visit_i8, i8);
+    deserialize_signed!(deserialize_i16, visit_i16, i16);
+    deserialize_signed!(deserialize_i32, visit_i32, i32);
+    deserialize_signed!(deserialize_i64, visit_i64, i64);
+    // TODO: maybe handle unsigned by itself ?
+    deserialize_signed!(deserialize_u8, visit_u8, u8);
+    deserialize_signed!(deserialize_u16, visit_u16, u16);
+    deserialize_signed!(deserialize_u32, visit_u32, u32);
+    deserialize_signed!(deserialize_u64, visit_u64, u64);
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        visitor.visit_f32(self.input.number_value(&mut self.scope).unwrap() as f32)
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        visitor.visit_f64(self.input.number_value(&mut self.scope).unwrap())
+    }
+
+    wip!(deserialize_char);
+
+    fn deserialize_str<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        self.deserialize_string(visitor)
+    }
+
+    fn deserialize_string<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        if self.input.is_string() {
+            // TODO(@AaronO): implement a `.to_rust_string -> Option<String>` in rusty-v8
+            let v8_string = v8::Local::<v8::String>::try_from(self.input).unwrap();
+            let string = match v8_to_rust_string(self.scope, v8_string) {
+                Some(string) => string,
+                None => return Err(Error::ExpectedUtf8),
             };
-            base.join(&specifier).map_err(InvalidUrl)?
-        }
-
-        // If parsing the specifier as a URL failed for a different reason than
-        // it being relative, always return the original error. We don't want to
-        // return `ImportPrefixMissing` or `InvalidBaseUrl` if the real
-        // problem lies somewhere else.
-        Err(err) => return Err(InvalidUrl(err)),
-    };
-
-    Ok(url)
-}
-
-/// Converts a string representing an absolute URL into a ModuleSpecifier.
-pub fn resolve_url(
-    url_str: &str,
-) -> Result<ModuleSpecifier, ModuleResolutionError> {
-    Url::parse(url_str).map_err(ModuleResolutionError::InvalidUrl)
-}
-
-/// Takes a string representing either an absolute URL or a file path,
-/// as it may be passed to deno as a command line argument.
-/// The string is interpreted as a URL if it starts with a valid URI scheme,
-/// e.g. 'http:' or 'file:' or 'git+ssh:'. If not, it's interpreted as a
-/// file path; if it is a relative path it's resolved relative to the current
-/// working directory.
-pub fn resolve_url_or_path(
-    specifier: &str,
-) -> Result<ModuleSpecifier, ModuleResolutionError> {
-    if specifier_has_uri_scheme(specifier) {
-        resolve_url(specifier)
-    } else {
-        resolve_path(specifier)
-    }
-}
-
-/// Converts a string representing a relative or absolute path into a
-/// ModuleSpecifier. A relative path is considered relative to the current
-/// working directory.
-pub fn resolve_path(
-    path_str: &str,
-) -> Result<ModuleSpecifier, ModuleResolutionError> {
-    let path = current_dir().unwrap().join(path_str);
-    let path = normalize_path(&path);
-    Url::from_file_path(path.clone())
-        .map_err(|()| ModuleResolutionError::InvalidPath(path))
-}
-
-/// Returns true if the input string starts with a sequence of characters
-/// that could be a valid URI scheme, like 'https:', 'git+ssh:' or 'data:'.
-///
-/// According to RFC 3986 (https://tools.ietf.org/html/rfc3986#section-3.1),
-/// a valid scheme has the following format:
-///   scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
-///
-/// We additionally require the scheme to be at least 2 characters long,
-/// because otherwise a windows path like c:/foo would be treated as a URL,
-/// while no schemes with a one-letter name actually exist.
-fn specifier_has_uri_scheme(specifier: &str) -> bool {
-    let mut chars = specifier.chars();
-    let mut len = 0usize;
-    // THe first character must be a letter.
-    match chars.next() {
-        Some(c) if c.is_ascii_alphabetic() => len += 1,
-        _ => return false,
-    }
-    // Second and following characters must be either a letter, number,
-    // plus sign, minus sign, or dot.
-    loop {
-        match chars.next() {
-            Some(c) if c.is_ascii_alphanumeric() || "+-.".contains(c) => len += 1,
-            Some(':') if len >= 2 => return true,
-            _ => return false,
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::serde_json::from_value;
-    use crate::serde_json::json;
-    use std::path::Path;
-
-    #[test]
-    fn test_resolve_import() {
-        fn get_path(specifier: &str) -> Url {
-            let base_path = current_dir().unwrap().join("<unknown>");
-            let base_url = Url::from_file_path(base_path).unwrap();
-            base_url.join(specifier).unwrap()
-        }
-        let awesome = get_path("/awesome.ts");
-        let awesome_srv = get_path("/service/awesome.ts");
-        let tests = vec![
-            ("/awesome.ts", "<unknown>", awesome.as_str()),
-            ("/service/awesome.ts", "<unknown>", awesome_srv.as_str()),
-            (
-                "./005_more_imports.ts",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "http://deno.land/core/tests/005_more_imports.ts",
-            ),
-            (
-                "../005_more_imports.ts",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "http://deno.land/core/005_more_imports.ts",
-            ),
-            (
-                "http://deno.land/core/tests/005_more_imports.ts",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "http://deno.land/core/tests/005_more_imports.ts",
-            ),
-            (
-                "data:text/javascript,export default 'grapes';",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "data:text/javascript,export default 'grapes';",
-            ),
-            (
-                "blob:https://whatwg.org/d0360e2f-caee-469f-9a2f-87d5b0456f6f",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "blob:https://whatwg.org/d0360e2f-caee-469f-9a2f-87d5b0456f6f",
-            ),
-            (
-                "javascript:export default 'artichokes';",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "javascript:export default 'artichokes';",
-            ),
-            (
-                "data:text/plain,export default 'kale';",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "data:text/plain,export default 'kale';",
-            ),
-            (
-                "/dev/core/tests/005_more_imports.ts",
-                "file:///home/yeti",
-                "file:///dev/core/tests/005_more_imports.ts",
-            ),
-            (
-                "//zombo.com/1999.ts",
-                "https://cherry.dev/its/a/thing",
-                "https://zombo.com/1999.ts",
-            ),
-            (
-                "http://deno.land/this/url/is/valid",
-                "base is clearly not a valid url",
-                "http://deno.land/this/url/is/valid",
-            ),
-            (
-                "//server/some/dir/file",
-                "file:///home/yeti/deno",
-                "file://server/some/dir/file",
-            ),
-            // This test is disabled because the url crate does not follow the spec,
-            // dropping the server part from the final result.
-            // (
-            //   "/another/path/at/the/same/server",
-            //   "file://server/some/dir/file",
-            //   "file://server/another/path/at/the/same/server",
-            // ),
-        ];
-
-        for (specifier, base, expected_url) in tests {
-            let url = resolve_import(specifier, base).unwrap().to_string();
-            assert_eq!(url, expected_url);
-        }
-    }
-
-    #[test]
-    fn test_resolve_import_error() {
-        use url::ParseError::*;
-        use ModuleResolutionError::*;
-
-        let tests = vec![
-            (
-                "awesome.ts",
-                "<unknown>",
-                ImportPrefixMissing(
-                    "awesome.ts".to_string(),
-                    Some("<unknown>".to_string()),
-                ),
-            ),
-            (
-                "005_more_imports.ts",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                ImportPrefixMissing(
-                    "005_more_imports.ts".to_string(),
-                    Some("http://deno.land/core/tests/006_url_imports.ts".to_string()),
-                ),
-            ),
-            (
-                ".tomato",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                ImportPrefixMissing(
-                    ".tomato".to_string(),
-                    Some("http://deno.land/core/tests/006_url_imports.ts".to_string()),
-                ),
-            ),
-            (
-                "..zucchini.mjs",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                ImportPrefixMissing(
-                    "..zucchini.mjs".to_string(),
-                    Some("http://deno.land/core/tests/006_url_imports.ts".to_string()),
-                ),
-            ),
-            (
-                r".\yam.es",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                ImportPrefixMissing(
-                    r".\yam.es".to_string(),
-                    Some("http://deno.land/core/tests/006_url_imports.ts".to_string()),
-                ),
-            ),
-            (
-                r"..\yam.es",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                ImportPrefixMissing(
-                    r"..\yam.es".to_string(),
-                    Some("http://deno.land/core/tests/006_url_imports.ts".to_string()),
-                ),
-            ),
-            (
-                "https://eggplant:b/c",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                InvalidUrl(InvalidPort),
-            ),
-            (
-                "https://eggplant@/c",
-                "http://deno.land/core/tests/006_url_imports.ts",
-                InvalidUrl(EmptyHost),
-            ),
-            (
-                "./foo.ts",
-                "/relative/base/url",
-                InvalidBaseUrl(RelativeUrlWithoutBase),
-            ),
-        ];
-
-        for (specifier, base, expected_err) in tests {
-            let err = resolve_import(specifier, base).unwrap_err();
-            assert_eq!(err, expected_err);
-        }
-    }
-
-    #[test]
-    fn test_resolve_url_or_path() {
-        // Absolute URL.
-        let mut tests: Vec<(&str, String)> = vec![
-            (
-                "http://deno.land/core/tests/006_url_imports.ts",
-                "http://deno.land/core/tests/006_url_imports.ts".to_string(),
-            ),
-            (
-                "https://deno.land/core/tests/006_url_imports.ts",
-                "https://deno.land/core/tests/006_url_imports.ts".to_string(),
-            ),
-        ];
-
-        // The local path tests assume that the cwd is the deno repo root.
-        let cwd = current_dir().unwrap();
-        let cwd_str = cwd.to_str().unwrap();
-
-        if cfg!(target_os = "windows") {
-            // Absolute local path.
-            let expected_url = "file:///C:/deno/tests/006_url_imports.ts";
-            tests.extend(vec![
-                (
-                    r"C:/deno/tests/006_url_imports.ts",
-                    expected_url.to_string(),
-                ),
-                (
-                    r"C:\deno\tests\006_url_imports.ts",
-                    expected_url.to_string(),
-                ),
-                (
-                    r"\\?\C:\deno\tests\006_url_imports.ts",
-                    expected_url.to_string(),
-                ),
-                // Not supported: `Url::from_file_path()` fails.
-                // (r"\\.\C:\deno\tests\006_url_imports.ts", expected_url.to_string()),
-                // Not supported: `Url::from_file_path()` performs the wrong conversion.
-                // (r"//./C:/deno/tests/006_url_imports.ts", expected_url.to_string()),
-            ]);
-
-            // Rooted local path without drive letter.
-            let expected_url = format!(
-                "file:///{}:/deno/tests/006_url_imports.ts",
-                cwd_str.get(..1).unwrap(),
-            );
-            tests.extend(vec![
-                (r"/deno/tests/006_url_imports.ts", expected_url.to_string()),
-                (r"\deno\tests\006_url_imports.ts", expected_url.to_string()),
-                (
-                    r"\deno\..\deno\tests\006_url_imports.ts",
-                    expected_url.to_string(),
-                ),
-                (r"\deno\.\tests\006_url_imports.ts", expected_url),
-            ]);
-
-            // Relative local path.
-            let expected_url = format!(
-                "file:///{}/tests/006_url_imports.ts",
-                cwd_str.replace("\\", "/")
-            );
-            tests.extend(vec![
-                (r"tests/006_url_imports.ts", expected_url.to_string()),
-                (r"tests\006_url_imports.ts", expected_url.to_string()),
-                (r"./tests/006_url_imports.ts", (*expected_url).to_string()),
-                (r".\tests\006_url_imports.ts", (*expected_url).to_string()),
-            ]);
-
-            // UNC network path.
-            let expected_url = "file://server/share/deno/cool";
-            tests.extend(vec![
-                (r"\\server\share\deno\cool", expected_url.to_string()),
-                (r"\\server/share/deno/cool", expected_url.to_string()),
-                // Not supported: `Url::from_file_path()` performs the wrong conversion.
-                // (r"//server/share/deno/cool", expected_url.to_string()),
-            ]);
+            visitor.visit_string(string)
         } else {
-            // Absolute local path.
-            let expected_url = "file:///deno/tests/006_url_imports.ts";
-            tests.extend(vec![
-                ("/deno/tests/006_url_imports.ts", expected_url.to_string()),
-                ("//deno/tests/006_url_imports.ts", expected_url.to_string()),
-            ]);
-
-            // Relative local path.
-            let expected_url = format!("file://{}/tests/006_url_imports.ts", cwd_str);
-            tests.extend(vec![
-                ("tests/006_url_imports.ts", expected_url.to_string()),
-                ("./tests/006_url_imports.ts", expected_url.to_string()),
-                (
-                    "tests/../tests/006_url_imports.ts",
-                    expected_url.to_string(),
-                ),
-                ("tests/./006_url_imports.ts", expected_url),
-            ]);
-        }
-
-        for (specifier, expected_url) in tests {
-            let url = resolve_url_or_path(specifier).unwrap().to_string();
-            assert_eq!(url, expected_url);
+            Err(Error::ExpectedString)
         }
     }
 
-    #[test]
-    fn test_resolve_url_or_path_error() {
-        use url::ParseError::*;
-        use ModuleResolutionError::*;
+    wip!(deserialize_bytes);
+    wip!(deserialize_byte_buf);
 
-        let mut tests = vec![
-            ("https://eggplant:b/c", InvalidUrl(InvalidPort)),
-            ("https://:8080/a/b/c", InvalidUrl(EmptyHost)),
-        ];
-        if cfg!(target_os = "windows") {
-            let p = r"\\.\c:/stuff/deno/script.ts";
-            tests.push((p, InvalidPath(PathBuf::from(p))));
-        }
-
-        for (specifier, expected_err) in tests {
-            let err = resolve_url_or_path(specifier).unwrap_err();
-            assert_eq!(err, expected_err);
+    fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        if self.input.is_null_or_undefined() {
+            visitor.visit_none()
+        } else {
+            visitor.visit_some(self)
         }
     }
 
-    #[test]
-    fn test_specifier_has_uri_scheme() {
-        let tests = vec![
-            ("http://foo.bar/etc", true),
-            ("HTTP://foo.bar/etc", true),
-            ("http:ftp:", true),
-            ("http:", true),
-            ("hTtP:", true),
-            ("ftp:", true),
-            ("mailto:spam@please.me", true),
-            ("git+ssh://git@github.com/denoland/deno", true),
-            ("blob:https://whatwg.org/mumbojumbo", true),
-            ("abc.123+DEF-ghi:", true),
-            ("abc.123+def-ghi:@", true),
-            ("", false),
-            (":not", false),
-            ("http", false),
-            ("c:dir", false),
-            ("X:", false),
-            ("./http://not", false),
-            ("1abc://kinda/but/no", false),
-            ("schluẞ://no/more", false),
-        ];
-
-        for (specifier, expected) in tests {
-            let result = specifier_has_uri_scheme(specifier);
-            assert_eq!(result, expected);
+    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        if self.input.is_null_or_undefined() {
+            visitor.visit_unit()
+        } else {
+            Err(Error::ExpectedNull)
         }
     }
 
-    #[test]
-    fn test_normalize_path() {
-        assert_eq!(normalize_path(Path::new("a/../b")), PathBuf::from("b"));
-        assert_eq!(normalize_path(Path::new("a/./b/")), PathBuf::from("a/b/"));
-        assert_eq!(
-            normalize_path(Path::new("a/./b/../c")),
-            PathBuf::from("a/c")
-        );
+    fn deserialize_unit_struct<V>(
+        self,
+        _name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        self.deserialize_unit(visitor)
+    }
 
-        if cfg!(windows) {
-            assert_eq!(
-                normalize_path(Path::new("C:\\a\\.\\b\\..\\c")),
-                PathBuf::from("C:\\a\\c")
-            );
+    // As is done here, serializers are encouraged to treat newtype structs as
+    // insignificant wrappers around the data they contain. That means not
+    // parsing anything other than the contained value.
+    fn deserialize_newtype_struct<V>(
+        self,
+        _name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        visitor.visit_newtype_struct(self)
+    }
+
+    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        let arr = v8::Local::<v8::Array>::try_from(self.input)
+            .map_err(|_| Error::ExpectedArray)?;
+        let len = arr.length();
+        let obj = v8::Local::<v8::Object>::from(arr);
+        let seq = SeqAccess {
+            pos: 0,
+            len,
+            obj,
+            scope: self.scope,
+        };
+        visitor.visit_seq(seq)
+    }
+
+    // Like deserialize_seq except it prefers tuple's length over input array's length
+    fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        // TODO: error on length mismatch
+        let obj = v8::Local::<v8::Object>::try_from(self.input).unwrap();
+        let seq = SeqAccess {
+            pos: 0,
+            len: len as u32,
+            obj,
+            scope: self.scope,
+        };
+        visitor.visit_seq(seq)
+    }
+
+    // Tuple structs look just like sequences in JSON.
+    fn deserialize_tuple_struct<V>(
+        self,
+        _name: &'static str,
+        len: usize,
+        visitor: V,
+    ) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        self.deserialize_tuple(len, visitor)
+    }
+
+    fn deserialize_map<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: de::Visitor<'de>,
+    {
+        // Assume object, then get_own_property_names
+        let obj = v8::Local::<v8::Object>::try_from(self.input).unwrap();
+        let prop_names = obj.get_own_property_names(self.scope);
+        let mut keys: Vec<magic::Value> = match prop_names {
+            Some(names) => from_v8(self.scope, names.into()).unwrap(),
+            None => vec![],
+        };
+        let keys: Vec<v8::Local<v8::Value>> = keys.drain(..).map(|x| x.into())
+            // Filter keys to drop keys whose value is undefined
+            // TODO: optimize, since this doubles our get calls
+            .filter(|key| !obj.get(self.scope, *key).unwrap().is_undefined())
+            .collect();
+
+        let map = MapAccess {
+            obj,
+            keys,
+            pos: 0,
+            scope: self.scope,
+        };
+        visitor.visit_map(map)
+    }
+
+    fn deserialize_struct<V>(
+        self,
+        name: &'static str,
+        fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        // Magic for serde_v8::magic::Value, to passthrough v8::Value
+        // TODO: ensure this is cross-platform and there's no alternative
+        if name == magic::NAME {
+            let mv = magic::Value {
+                v8_value: self.input,
+            };
+            let hack: u64 = unsafe { std::mem::transmute(mv) };
+            return visitor.visit_u64(hack);
+        }
+
+        // Magic Buffer
+        if name == magic::buffer::BUF_NAME {
+            let zero_copy_buf =
+                v8::Local::<v8::ArrayBufferView>::try_from(self.input)
+                    .map(|view| magic::zero_copy_buf::ZeroCopyBuf::new(self.scope, view))
+                    .map_err(|_| Error::ExpectedArray)?;
+            let data: [u8; 32] = unsafe { std::mem::transmute(zero_copy_buf) };
+            return visitor.visit_bytes(&data);
+        }
+
+        // Regular struct
+        let obj = v8::Local::<v8::Object>::try_from(self.input).unwrap();
+        let map = ObjectAccess {
+            fields,
+            obj,
+            pos: 0,
+            scope: self.scope,
+            _cache: None,
+        };
+
+        visitor.visit_map(map)
+    }
+
+    /// To be compatible with `serde-json`, we expect enums to be:
+    /// - `"Variant"`: strings for unit variants, i.e: Enum::Variant
+    /// - `{ Variant: payload }`: single K/V pairs, converted to `Enum::Variant { payload }`
+    fn deserialize_enum<V>(
+        self,
+        _name: &str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        // Unit variant
+        if self.input.is_string() {
+            let payload = v8::undefined(self.scope).into();
+            visitor.visit_enum(EnumAccess {
+                scope: self.scope,
+                tag: self.input,
+                payload,
+            })
+        }
+        // Struct or tuple variant
+        else if self.input.is_object() {
+            // Assume object
+            let obj = v8::Local::<v8::Object>::try_from(self.input).unwrap();
+            // Unpack single-key
+            let tag = {
+                let prop_names = obj.get_own_property_names(self.scope);
+                let prop_names = prop_names.ok_or(Error::ExpectedEnum)?;
+                if prop_names.length() != 1 {
+                    return Err(Error::LengthMismatch);
+                }
+                prop_names.get_index(self.scope, 0).unwrap()
+            };
+
+            let payload = obj.get(self.scope, tag).unwrap();
+            visitor.visit_enum(EnumAccess {
+                scope: self.scope,
+                tag,
+                payload,
+            })
+        } else {
+            // TODO: improve error
+            Err(Error::ExpectedEnum)
         }
     }
 
-    #[test]
-    fn test_deserialize_module_specifier() {
-        let actual: ModuleSpecifier =
-            from_value(json!("http://deno.land/x/mod.ts")).unwrap();
-        let expected = resolve_url("http://deno.land/x/mod.ts").unwrap();
-        assert_eq!(actual, expected);
+    // An identifier in Serde is the type that identifies a field of a struct or
+    // the variant of an enum. In JSON, struct fields and enum variants are
+    // represented as strings. In other formats they may be represented as
+    // numeric indices.
+    fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        self.deserialize_str(visitor)
+    }
+
+    fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value>
+        where
+            V: Visitor<'de>,
+    {
+        visitor.visit_none()
+    }
+}
+
+struct MapAccess<'a, 'b, 's> {
+    obj: v8::Local<'a, v8::Object>,
+    scope: &'b mut v8::HandleScope<'s>,
+    keys: Vec<v8::Local<'a, v8::Value>>,
+    pos: usize,
+}
+
+impl<'de> de::MapAccess<'de> for MapAccess<'_, '_, '_> {
+    type Error = Error;
+
+    fn next_key_seed<K: de::DeserializeSeed<'de>>(
+        &mut self,
+        seed: K,
+    ) -> Result<Option<K::Value>> {
+        Ok(match self.keys.get(self.pos) {
+            Some(key) => {
+                let mut deserializer = Deserializer::new(self.scope, *key, None);
+                Some(seed.deserialize(&mut deserializer)?)
+            }
+            None => None,
+        })
+    }
+
+    fn next_value_seed<V: de::DeserializeSeed<'de>>(
+        &mut self,
+        seed: V,
+    ) -> Result<V::Value> {
+        if self.pos >= self.keys.len() {
+            return Err(Error::LengthMismatch);
+        }
+        let key = self.keys[self.pos];
+        self.pos += 1;
+        let v8_val = self.obj.get(self.scope, key).unwrap();
+        let mut deserializer = Deserializer::new(self.scope, v8_val, None);
+        seed.deserialize(&mut deserializer)
+    }
+
+    fn next_entry_seed<
+        K: de::DeserializeSeed<'de>,
+        V: de::DeserializeSeed<'de>,
+    >(
+        &mut self,
+        kseed: K,
+        vseed: V,
+    ) -> Result<Option<(K::Value, V::Value)>> {
+        if self.pos >= self.keys.len() {
+            return Ok(None);
+        }
+        let v8_key = self.keys[self.pos];
+        self.pos += 1;
+        let mut kdeserializer = Deserializer::new(self.scope, v8_key, None);
+        Ok(Some((kseed.deserialize(&mut kdeserializer)?, {
+            let v8_val = self.obj.get(self.scope, v8_key).unwrap();
+            let mut deserializer = Deserializer::new(self.scope, v8_val, None);
+            vseed.deserialize(&mut deserializer)?
+        })))
+    }
+}
+
+struct ObjectAccess<'a, 'b, 's> {
+    obj: v8::Local<'a, v8::Object>,
+    scope: &'b mut v8::HandleScope<'s>,
+    fields: &'static [&'static str],
+    pos: usize,
+    _cache: Option<&'b mut KeyCache>,
+}
+
+fn str_deserializer(s: &str) -> de::value::StrDeserializer<Error> {
+    de::IntoDeserializer::into_deserializer(s)
+}
+
+impl<'de, 'a, 'b, 's> de::MapAccess<'de> for ObjectAccess<'a, 'b, 's> {
+    type Error = Error;
+
+    fn next_key_seed<K: de::DeserializeSeed<'de>>(
+        &mut self,
+        seed: K,
+    ) -> Result<Option<K::Value>> {
+        Ok(match self.fields.get(self.pos) {
+            Some(&field) => Some(seed.deserialize(str_deserializer(field))?),
+            None => None,
+        })
+    }
+
+    fn next_value_seed<V: de::DeserializeSeed<'de>>(
+        &mut self,
+        seed: V,
+    ) -> Result<V::Value> {
+        if self.pos >= self.fields.len() {
+            return Err(Error::LengthMismatch);
+        }
+        let field = self.fields[self.pos];
+        self.pos += 1;
+        let key = v8_struct_key(self.scope, field).into();
+        let v8_val = self.obj.get(self.scope, key).unwrap();
+        let mut deserializer = Deserializer::new(self.scope, v8_val, None);
+        seed.deserialize(&mut deserializer)
+    }
+
+    fn next_entry_seed<
+        K: de::DeserializeSeed<'de>,
+        V: de::DeserializeSeed<'de>,
+    >(
+        &mut self,
+        kseed: K,
+        vseed: V,
+    ) -> Result<Option<(K::Value, V::Value)>> {
+        if self.pos >= self.fields.len() {
+            return Ok(None);
+        }
+        let field = self.fields[self.pos];
+        self.pos += 1;
+        Ok(Some((kseed.deserialize(str_deserializer(field))?, {
+            let key = v8_struct_key(self.scope, field).into();
+            let v8_val = self.obj.get(self.scope, key).unwrap();
+            let mut deserializer = Deserializer::new(self.scope, v8_val, None);
+            vseed.deserialize(&mut deserializer)?
+        })))
+    }
+}
+
+struct SeqAccess<'a, 'b, 's> {
+    obj: v8::Local<'a, v8::Object>,
+    scope: &'b mut v8::HandleScope<'s>,
+    len: u32,
+    pos: u32,
+}
+
+impl<'de> de::SeqAccess<'de> for SeqAccess<'_, '_, '_> {
+    type Error = Error;
+
+    fn next_element_seed<T: de::DeserializeSeed<'de>>(
+        &mut self,
+        seed: T,
+    ) -> Result<Option<T::Value>> {
+        let pos = self.pos;
+        self.pos += 1;
+
+        if pos < self.len {
+            let val = self.obj.get_index(self.scope, pos).unwrap();
+            let mut deserializer = Deserializer::new(self.scope, val, None);
+            Ok(Some(seed.deserialize(&mut deserializer)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn size_hint(&self) -> Option<usize> {
+        Some((self.len - self.pos) as usize)
+    }
+}
+
+struct EnumAccess<'a, 'b, 's> {
+    tag: v8::Local<'a, v8::Value>,
+    payload: v8::Local<'a, v8::Value>,
+    scope: &'b mut v8::HandleScope<'s>,
+    // p1: std::marker::PhantomData<&'x ()>,
+}
+
+impl<'de, 'a, 'b, 's, 'x> de::EnumAccess<'de> for EnumAccess<'a, 'b, 's> {
+    type Error = Error;
+    type Variant = VariantDeserializer<'a, 'b, 's>;
+
+    fn variant_seed<V: de::DeserializeSeed<'de>>(
+        self,
+        seed: V,
+    ) -> Result<(V::Value, Self::Variant)> {
+        let seed = {
+            let mut dtag = Deserializer::new(self.scope, self.tag, None);
+            seed.deserialize(&mut dtag)
+        };
+        let dpayload = VariantDeserializer::<'a, 'b, 's> {
+            scope: self.scope,
+            value: self.payload,
+        };
+
+        Ok((seed?, dpayload))
+    }
+}
+
+struct VariantDeserializer<'a, 'b, 's> {
+    value: v8::Local<'a, v8::Value>,
+    scope: &'b mut v8::HandleScope<'s>,
+}
+
+impl<'de, 'a, 'b, 's> de::VariantAccess<'de>
+for VariantDeserializer<'a, 'b, 's>
+{
+    type Error = Error;
+
+    fn unit_variant(self) -> Result<()> {
+        let mut d = Deserializer::new(self.scope, self.value, None);
+        de::Deserialize::deserialize(&mut d)
+    }
+
+    fn newtype_variant_seed<T: de::DeserializeSeed<'de>>(
+        self,
+        seed: T,
+    ) -> Result<T::Value> {
+        let mut d = Deserializer::new(self.scope, self.value, None);
+        seed.deserialize(&mut d)
+    }
+
+    fn tuple_variant<V: de::Visitor<'de>>(
+        self,
+        len: usize,
+        visitor: V,
+    ) -> Result<V::Value> {
+        let mut d = Deserializer::new(self.scope, self.value, None);
+        de::Deserializer::deserialize_tuple(&mut d, len, visitor)
+    }
+
+    fn struct_variant<V: de::Visitor<'de>>(
+        self,
+        fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value> {
+        let mut d = Deserializer::new(self.scope, self.value, None);
+        de::Deserializer::deserialize_struct(&mut d, "", fields, visitor)
+    }
+}
+
+// Like v8::String::to_rust_string_lossy except returns None on non-utf8
+fn v8_to_rust_string(
+    scope: &mut v8::HandleScope,
+    s: v8::Local<v8::String>,
+) -> Option<String> {
+    let string = s.to_rust_string_lossy(scope);
+    match string.find(std::char::REPLACEMENT_CHARACTER) {
+        Some(_) => None,
+        None => Some(string),
     }
 }

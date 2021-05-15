@@ -99,6 +99,7 @@ public class ExpressionTest {
                 .notMatches("is_ok {\n" +
                 "        // empty block" +
                 " } ")
+                .matches("..")
      ;
     }
 }

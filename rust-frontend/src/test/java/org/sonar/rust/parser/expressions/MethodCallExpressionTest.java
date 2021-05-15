@@ -28,7 +28,6 @@ public class MethodCallExpressionTest {
 
     @Test
     public void testMethodCallExpression() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.METHOD_CALL_EXPRESSION))
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("\"Some string\".to_string()")
                 .matches("\"3.14\".parse()")
@@ -166,6 +165,7 @@ public class MethodCallExpressionTest {
                         "    }\n" +
                         "    .boxed()")
                 .matches("runtime.execute(\"foo\", r#\"raw\"#)")
+                .matches("keys.drain(..)")
 
 
         ;
