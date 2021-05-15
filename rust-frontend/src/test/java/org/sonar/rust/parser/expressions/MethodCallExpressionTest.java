@@ -166,6 +166,9 @@ public class MethodCallExpressionTest {
                         "    .boxed()")
                 .matches("runtime.execute(\"foo\", r#\"raw\"#)")
                 .matches("keys.drain(..)")
+                .matches("a321.into()")
+                .matches("321.await")
+                .matches("321.into()")
 
 
         ;

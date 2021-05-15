@@ -1131,12 +1131,13 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
+                        b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.next(b.firstOf(")", "]", "}"))),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), EXPRESSION),
-                        b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+
                         b.sequence(BLOCK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(MATCH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ASYNC_BLOCK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
@@ -2065,7 +2066,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(DEC_LITERAL, b.optional(b.sequence(".", DEC_LITERAL)), b.optional(FLOAT_EXPONENT), FLOAT_SUFFIX),
                         b.sequence(DEC_LITERAL, RustPunctuator.DOT, DEC_LITERAL, b.optional(FLOAT_EXPONENT)),
                         b.sequence(DEC_LITERAL, FLOAT_EXPONENT),
-                        b.sequence(DEC_LITERAL, RustPunctuator.DOT, b.nextNot(RustPunctuator.DOT))//(not immediately followed by ., _ or an identifier)
+                        b.sequence(DEC_LITERAL, RustPunctuator.DOT, b.nextNot(b.firstOf(IDENTIFIER, RustPunctuator.DOT, RustPunctuator.UNDERSCORE)))
                 )));
         b.rule(FLOAT_EXPONENT).is(b.regexp("[eE]+[+-]?[0-9][0-9_]*"));
 

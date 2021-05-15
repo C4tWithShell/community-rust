@@ -69,11 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = " let NodeInner::Linked {\n" +
-                "                prev: mut prev_nn,\n" +
-                "                next: mut next_nn,\n" +
-                "                ..\n" +
-                "            } = 42;";
+        String sexpr = "let a = 9898.10;";
 
 
         //Print out Ast node content for debugging purpose
