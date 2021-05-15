@@ -187,6 +187,7 @@ public class LitteralsTest {
                 .matches("b\"a string\"")
                 .matches("b\"\\xff\"")
                 .matches("b\"\"")
+                .matches("b\"\\xEF\\xBB\\xBFconsole.log(\\\"Hello World\\\");\\x0A\"")
         ;
 
     }
