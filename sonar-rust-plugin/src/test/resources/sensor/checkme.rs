@@ -1,3194 +1,1691 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
-
-use super::analysis::CodeLensSource;
-use super::analysis::ResolvedDependency;
-use super::analysis::ResolvedDependencyErr;
-use super::config;
-use super::language_server;
-use super::language_server::StateSnapshot;
-use super::semantic_tokens::SemanticTokensBuilder;
-use super::semantic_tokens::TsTokenEncodingConsts;
-use super::text;
-use super::text::LineIndex;
-
-use crate::media_type::MediaType;
-use crate::tokio_util::create_basic_runtime;
-use crate::tsc;
-use crate::tsc::ResolveArgs;
-use crate::tsc_config::TsConfig;
-
-use deno_core::error::anyhow;
-use deno_core::error::custom_error;
-use deno_core::error::AnyError;
-use deno_core::op_sync;
-use deno_core::resolve_url;
-use deno_core::serde::de;
-use deno_core::serde::Deserialize;
-use deno_core::serde::Serialize;
-use deno_core::serde_json;
-use deno_core::serde_json::json;
-use deno_core::serde_json::Value;
-use deno_core::url::Url;
-use deno_core::JsRuntime;
-use deno_core::ModuleSpecifier;
-use deno_core::OpFn;
-use deno_core::RuntimeOptions;
-use log::warn;
-use lspower::lsp;
-use regex::Captures;
+// Usage: provide a port as argument to run hyper_hello benchmark server
+// otherwise this starts multiple servers on many ports for test endpoints.
+use futures::FutureExt;
+use futures::Stream;
+use futures::StreamExt;
+use hyper::header::HeaderValue;
+use hyper::server::Server;
+use hyper::service::make_service_fn;
+use hyper::service::service_fn;
+use hyper::Body;
+use hyper::Request;
+use hyper::Response;
+use hyper::StatusCode;
+use lazy_static::lazy_static;
+use os_pipe::pipe;
 use regex::Regex;
-use std::collections::HashSet;
-use std::thread;
-use std::{borrow::Cow, cmp};
-use std::{collections::HashMap, path::Path};
-use text_size::{TextRange, TextSize};
-use tokio::sync::mpsc;
-use tokio::sync::oneshot;
+use serde::Serialize;
+use std::collections::HashMap;
+use std::convert::Infallible;
+use std::env;
+use std::io;
+use std::io::Read;
+use std::io::Write;
+use std::mem::replace;
+use std::net::SocketAddr;
+use std::path::PathBuf;
+use std::pin::Pin;
+use std::process::Child;
+use std::process::Command;
+use std::process::Output;
+use std::process::Stdio;
+use std::result::Result;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::MutexGuard;
+use std::task::Context;
+use std::task::Poll;
+use tempfile::TempDir;
+use tokio::net::TcpListener;
+use tokio::net::TcpStream;
+use tokio_rustls::rustls;
+use tokio_rustls::TlsAcceptor;
+use tokio_tungstenite::accept_async;
 
-const FILE_EXTENSION_KIND_MODIFIERS: &[&str] =
-    &[".d.ts", ".ts", ".tsx", ".js", ".jsx", ".json"];
+#[cfg(unix)]
+pub use pty;
 
-type Request = (
-    RequestMethod,
-    StateSnapshot,
-    oneshot::Sender<Result<Value, AnyError>>,
-);
+const PORT: u16 = 4545;
+const TEST_AUTH_TOKEN: &str = "abcdef123456789";
+const REDIRECT_PORT: u16 = 4546;
+const ANOTHER_REDIRECT_PORT: u16 = 4547;
+const DOUBLE_REDIRECTS_PORT: u16 = 4548;
+const INF_REDIRECTS_PORT: u16 = 4549;
+const REDIRECT_ABSOLUTE_PORT: u16 = 4550;
+const AUTH_REDIRECT_PORT: u16 = 4551;
+const HTTPS_PORT: u16 = 5545;
+const WS_PORT: u16 = 4242;
+const WSS_PORT: u16 = 4243;
+const WS_CLOSE_PORT: u16 = 4244;
 
-#[derive(Clone, Debug)]
-pub struct TsServer(mpsc::UnboundedSender<Request>);
+pub const PERMISSION_VARIANTS: [&str; 5] =
+    ["read", "write", "env", "net", "run"];
+pub const PERMISSION_DENIED_PATTERN: &str = "PermissionDenied";
 
-impl TsServer {
-    pub fn new() -> Self {
-        let (tx, mut rx) = mpsc::unbounded_channel::<Request>();
-        let _join_handle = thread::spawn(move || {
-            // TODO(@kitsonk) we need to allow displaying diagnostics here, but the
-            // current compiler snapshot sends them to stdio which would totally break
-            // the language server...
-            let mut ts_runtime = start(false).expect("could not start tsc");
+lazy_static! {
+  // STRIP_ANSI_RE and strip_ansi_codes are lifted from the "console" crate.
+  // Copyright 2017 Armin Ronacher <armin.ronacher@active-4.com>. MIT License.
+  static ref STRIP_ANSI_RE: Regex = Regex::new(
+          r"[\x1b\x9b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]"
+  ).unwrap();
 
-            let runtime = create_basic_runtime();
-            runtime.block_on(async {
-                while let Some((req, state_snapshot, tx)) = rx.recv().await {
-                    let value = request(&mut ts_runtime, state_snapshot, req);
-                    if tx.send(value).is_err() {
-                        warn!("Unable to send result to client.");
-                    }
-                }
-            })
+  static ref GUARD: Mutex<HttpServerCount> = Mutex::new(HttpServerCount::default());
+}
+
+pub fn root_path() -> PathBuf {
+    PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/.."))
+}
+
+pub fn prebuilt_path() -> PathBuf {
+    third_party_path().join("prebuilt")
+}
+
+pub fn tests_path() -> PathBuf {
+    root_path().join("cli").join("tests")
+}
+
+pub fn wpt_path() -> PathBuf {
+    root_path().join("test_util").join("wpt")
+}
+
+pub fn third_party_path() -> PathBuf {
+    root_path().join("third_party")
+}
+
+pub fn target_dir() -> PathBuf {
+    let current_exe = std::env::current_exe().unwrap();
+    let target_dir = current_exe.parent().unwrap().parent().unwrap();
+    target_dir.into()
+}
+
+pub fn deno_exe_path() -> PathBuf {
+    // Something like /Users/rld/src/deno/target/debug/deps/deno
+    let mut p = target_dir().join("deno");
+    if cfg!(windows) {
+        p.set_extension("exe");
+    }
+    p
+}
+
+pub fn prebuilt_tool_path(tool: &str) -> PathBuf {
+    let mut exe = tool.to_string();
+    exe.push_str(if cfg!(windows) { ".exe" } else { "" });
+    prebuilt_path().join(platform_dir_name()).join(exe)
+}
+
+fn platform_dir_name() -> &'static str {
+    if cfg!(target_os = "linux") {
+        "linux64"
+    } else if cfg!(target_os = "macos") {
+        "mac"
+    } else if cfg!(target_os = "windows") {
+        "win"
+    } else {
+        unreachable!()
+    }
+}
+
+pub fn test_server_path() -> PathBuf {
+    let mut p = target_dir().join("test_server");
+    if cfg!(windows) {
+        p.set_extension("exe");
+    }
+    p
+}
+
+/// Benchmark server that just serves "hello world" responses.
+async fn hyper_hello(port: u16) {
+    println!("hyper hello");
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let hello_svc = make_service_fn(|_| async move {
+        Ok::<_, Infallible>(service_fn(move |_: Request<Body>| async move {
+            Ok::<_, Infallible>(Response::new(Body::from("Hello World!")))
+        }))
+    });
+
+    let server = Server::bind(&addr).serve(hello_svc);
+    if let Err(e) = server.await {
+        eprintln!("server error: {}", e);
+    }
+}
+
+fn redirect_resp(url: String) -> Response<Body> {
+    let mut redirect_resp = Response::new(Body::empty());
+    *redirect_resp.status_mut() = StatusCode::MOVED_PERMANENTLY;
+    redirect_resp.headers_mut().insert(
+        hyper::header::LOCATION,
+        HeaderValue::from_str(&url[..]).unwrap(),
+    );
+
+    redirect_resp
+}
+
+async fn redirect(req: Request<Body>) -> hyper::Result<Response<Body>> {
+    let p = req.uri().path();
+    assert_eq!(&p[0..1], "/");
+    let url = format!("http://localhost:{}{}", PORT, p);
+
+    Ok(redirect_resp(url))
+}
+
+async fn double_redirects(req: Request<Body>) -> hyper::Result<Response<Body>> {
+    let p = req.uri().path();
+    assert_eq!(&p[0..1], "/");
+    let url = format!("http://localhost:{}{}", REDIRECT_PORT, p);
+
+    Ok(redirect_resp(url))
+}
+
+async fn inf_redirects(req: Request<Body>) -> hyper::Result<Response<Body>> {
+    let p = req.uri().path();
+    assert_eq!(&p[0..1], "/");
+    let url = format!("http://localhost:{}{}", INF_REDIRECTS_PORT, p);
+
+    Ok(redirect_resp(url))
+}
+
+async fn another_redirect(req: Request<Body>) -> hyper::Result<Response<Body>> {
+    let p = req.uri().path();
+    assert_eq!(&p[0..1], "/");
+    let url = format!("http://localhost:{}/cli/tests/subdir{}", PORT, p);
+
+    Ok(redirect_resp(url))
+}
+
+async fn auth_redirect(req: Request<Body>) -> hyper::Result<Response<Body>> {
+    if let Some(auth) = req
+        .headers()
+        .get("authorization")
+        .map(|v| v.to_str().unwrap())
+    {
+        if auth.to_lowercase() == format!("bearer {}", TEST_AUTH_TOKEN) {
+            let p = req.uri().path();
+            assert_eq!(&p[0..1], "/");
+            let url = format!("http://localhost:{}{}", PORT, p);
+            return Ok(redirect_resp(url));
+        }
+    }
+
+    let mut resp = Response::new(Body::empty());
+    *resp.status_mut() = StatusCode::NOT_FOUND;
+    Ok(resp)
+}
+
+async fn run_ws_server(addr: &SocketAddr) {
+    let listener = TcpListener::bind(addr).await.unwrap();
+    while let Ok((stream, _addr)) = listener.accept().await {
+        tokio::spawn(async move {
+            let ws_stream_fut = accept_async(stream);
+
+            let ws_stream = ws_stream_fut.await;
+            if let Ok(ws_stream) = ws_stream {
+                let (tx, rx) = ws_stream.split();
+                rx.forward(tx)
+                    .map(|result| {
+                        if let Err(e) = result {
+                            println!("websocket server error: {:?}", e);
+                        }
+                    })
+                    .await;
+            }
         });
-
-        Self(tx)
-    }
-
-    pub async fn request<R>(
-        &self,
-        snapshot: StateSnapshot,
-        req: RequestMethod,
-    ) -> Result<R, AnyError>
-        where
-            R: de::DeserializeOwned,
-    {
-        let (tx, rx) = oneshot::channel::<Result<Value, AnyError>>();
-        if self.0.send((req, snapshot, tx)).is_err() {
-            return Err(anyhow!("failed to send request to tsc thread"));
-        }
-        rx.await?.map(|v| serde_json::from_value::<R>(v).unwrap())
     }
 }
 
-/// An lsp representation of an asset in memory, that has either been retrieved
-/// from static assets built into Rust, or static assets built into tsc.
-#[derive(Debug, Clone)]
-pub struct AssetDocument {
-    pub text: String,
-    pub length: usize,
-    pub line_index: LineIndex,
-}
+async fn run_ws_close_server(addr: &SocketAddr) {
+    let listener = TcpListener::bind(addr).await.unwrap();
+    while let Ok((stream, _addr)) = listener.accept().await {
+        tokio::spawn(async move {
+            let ws_stream_fut = accept_async(stream);
 
-impl AssetDocument {
-    pub fn new<T: AsRef<str>>(text: T) -> Self {
-        let text = text.as_ref();
-        Self {
-            text: text.to_string(),
-            length: text.encode_utf16().count(),
-            line_index: LineIndex::new(text),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Assets(HashMap<ModuleSpecifier, Option<AssetDocument>>);
-
-impl Default for Assets {
-    fn default() -> Self {
-        let assets = tsc::STATIC_ASSETS
-            .iter()
-            .map(|(k, v)| {
-                let url_str = format!("asset:///{}", k);
-                let specifier = resolve_url(&url_str).unwrap();
-                let asset = AssetDocument::new(v);
-                (specifier, Some(asset))
-            })
-            .collect();
-        Self(assets)
-    }
-}
-
-impl Assets {
-    pub fn contains_key(&self, k: &ModuleSpecifier) -> bool {
-        self.0.contains_key(k)
-    }
-
-    pub fn get(&self, k: &ModuleSpecifier) -> Option<&Option<AssetDocument>> {
-        self.0.get(k)
-    }
-
-    pub fn insert(
-        &mut self,
-        k: ModuleSpecifier,
-        v: Option<AssetDocument>,
-    ) -> Option<Option<AssetDocument>> {
-        self.0.insert(k, v)
-    }
-}
-
-/// Optionally returns an internal asset, first checking for any static assets
-/// in Rust, then checking any previously retrieved static assets from the
-/// isolate, and then finally, the tsc isolate itself.
-pub async fn get_asset(
-    specifier: &ModuleSpecifier,
-    ts_server: &TsServer,
-    state_snapshot: StateSnapshot,
-) -> Result<Option<AssetDocument>, AnyError> {
-    let specifier_str = specifier.to_string().replace("asset:///", "");
-    if let Some(text) = tsc::get_asset(&specifier_str) {
-        let maybe_asset = Some(AssetDocument::new(text));
-        Ok(maybe_asset)
-    } else {
-        let res = ts_server
-            .request(state_snapshot, RequestMethod::GetAsset(specifier.clone()))
-            .await?;
-        let maybe_text: Option<String> = serde_json::from_value(res)?;
-        let maybe_asset = maybe_text.map(AssetDocument::new);
-        Ok(maybe_asset)
-    }
-}
-
-fn display_parts_to_string(parts: &[SymbolDisplayPart]) -> String {
-    parts
-        .iter()
-        .map(|p| p.text.to_string())
-        .collect::<Vec<String>>()
-        .join("")
-}
-
-fn get_tag_body_text(tag: &JsDocTagInfo) -> Option<String> {
-    tag.text.as_ref().map(|text| match tag.name.as_str() {
-        "example" => {
-            let caption_regex =
-                Regex::new(r"<caption>(.*?)</caption>\s*\r?\n((?:\s|\S)*)").unwrap();
-            if caption_regex.is_match(&text) {
-                caption_regex
-                    .replace(text, |c: &Captures| {
-                        format!("{}\n\n{}", &c[1], make_codeblock(&c[2]))
-                    })
-                    .to_string()
-            } else {
-                make_codeblock(text)
+            let ws_stream = ws_stream_fut.await;
+            if let Ok(mut ws_stream) = ws_stream {
+                ws_stream.close(None).await.unwrap();
             }
-        }
-        "author" => {
-            let email_match_regex = Regex::new(r"(.+)\s<([-.\w]+@[-.\w]+)>").unwrap();
-            email_match_regex
-                .replace(text, |c: &Captures| format!("{} {}", &c[1], &c[2]))
-                .to_string()
-        }
-        "default" => make_codeblock(text),
-        _ => replace_links(text),
-    })
+        });
+    }
 }
 
-fn get_tag_documentation(tag: &JsDocTagInfo) -> String {
-    match tag.name.as_str() {
-        "augments" | "extends" | "param" | "template" => {
-            if let Some(text) = &tag.text {
-                let part_regex = Regex::new(r"^(\S+)\s*-?\s*").unwrap();
-                let body: Vec<&str> = part_regex.split(&text).collect();
-                if body.len() == 3 {
-                    let param = body[1];
-                    let doc = body[2];
-                    let label = format!("*@{}* `{}`", tag.name, param);
-                    if doc.is_empty() {
-                        return label;
-                    }
-                    if doc.contains('\n') {
-                        return format!("{}  \n{}", label, replace_links(doc));
-                    } else {
-                        return format!("{} - {}", label, replace_links(doc));
-                    }
-                }
-            }
-        }
-        _ => (),
-    }
-    let label = format!("*@{}*", tag.name);
-    let maybe_text = get_tag_body_text(tag);
-    if let Some(text) = maybe_text {
-        if text.contains('\n') {
-            format!("{}  \n{}", label, text)
+async fn get_tls_config(
+    cert: &str,
+    key: &str,
+) -> io::Result<Arc<rustls::ServerConfig>> {
+    let mut cert_path = root_path();
+    let mut key_path = root_path();
+    cert_path.push(cert);
+    key_path.push(key);
+
+    let cert_file = std::fs::File::open(cert_path)?;
+    let key_file = std::fs::File::open(key_path)?;
+
+    let mut cert_reader = io::BufReader::new(cert_file);
+    let cert = rustls::internal::pemfile::certs(&mut cert_reader)
+        .expect("Cannot load certificate");
+    let mut key_reader = io::BufReader::new(key_file);
+    let key = {
+        let pkcs8_key =
+            rustls::internal::pemfile::pkcs8_private_keys(&mut key_reader)
+                .expect("Cannot load key file");
+        let rsa_key = rustls::internal::pemfile::rsa_private_keys(&mut key_reader)
+            .expect("Cannot load key file");
+        if !pkcs8_key.is_empty() {
+            Some(pkcs8_key[0].clone())
+        } else if !rsa_key.is_empty() {
+            Some(rsa_key[0].clone())
         } else {
-            format!("{} - {}", label, text)
+            None
         }
-    } else {
-        label
-    }
-}
+    };
 
-fn make_codeblock(text: &str) -> String {
-    let codeblock_regex = Regex::new(r"^\s*[~`]{3}").unwrap();
-    if codeblock_regex.is_match(text) {
-        text.to_string()
-    } else {
-        format!("```\n{}\n```", text)
-    }
-}
-
-/// Replace JSDoc like links (`{@link http://example.com}`) with markdown links
-fn replace_links(text: &str) -> String {
-    let jsdoc_links_regex = Regex::new(r"(?i)\{@(link|linkplain|linkcode) (https?://[^ |}]+?)(?:[| ]([^{}\n]+?))?\}").unwrap();
-    jsdoc_links_regex
-        .replace_all(text, |c: &Captures| match &c[1] {
-            "linkcode" => format!(
-                "[`{}`]({})",
-                if c.get(3).is_none() {
-                    &c[2]
-                } else {
-                    c[3].trim()
-                },
-                &c[2]
-            ),
-            _ => format!(
-                "[{}]({})",
-                if c.get(3).is_none() {
-                    &c[2]
-                } else {
-                    c[3].trim()
-                },
-                &c[2]
-            ),
-        })
-        .to_string()
-}
-
-fn parse_kind_modifier(kind_modifiers: &str) -> HashSet<&str> {
-    let re = Regex::new(r",|\s+").unwrap();
-    re.split(kind_modifiers).collect()
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum OneOrMany<T> {
-    One(T),
-    Many(Vec<T>),
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub enum ScriptElementKind {
-    #[serde(rename = "")]
-    Unknown,
-    #[serde(rename = "warning")]
-    Warning,
-    #[serde(rename = "keyword")]
-    Keyword,
-    #[serde(rename = "script")]
-    ScriptElement,
-    #[serde(rename = "module")]
-    ModuleElement,
-    #[serde(rename = "class")]
-    ClassElement,
-    #[serde(rename = "local class")]
-    LocalClassElement,
-    #[serde(rename = "interface")]
-    InterfaceElement,
-    #[serde(rename = "type")]
-    TypeElement,
-    #[serde(rename = "enum")]
-    EnumElement,
-    #[serde(rename = "enum member")]
-    EnumMemberElement,
-    #[serde(rename = "var")]
-    VariableElement,
-    #[serde(rename = "local var")]
-    LocalVariableElement,
-    #[serde(rename = "function")]
-    FunctionElement,
-    #[serde(rename = "local function")]
-    LocalFunctionElement,
-    #[serde(rename = "method")]
-    MemberFunctionElement,
-    #[serde(rename = "getter")]
-    MemberGetAccessorElement,
-    #[serde(rename = "setter")]
-    MemberSetAccessorElement,
-    #[serde(rename = "property")]
-    MemberVariableElement,
-    #[serde(rename = "constructor")]
-    ConstructorImplementationElement,
-    #[serde(rename = "call")]
-    CallSignatureElement,
-    #[serde(rename = "index")]
-    IndexSignatureElement,
-    #[serde(rename = "construct")]
-    ConstructSignatureElement,
-    #[serde(rename = "parameter")]
-    ParameterElement,
-    #[serde(rename = "type parameter")]
-    TypeParameterElement,
-    #[serde(rename = "primitive type")]
-    PrimitiveType,
-    #[serde(rename = "label")]
-    Label,
-    #[serde(rename = "alias")]
-    Alias,
-    #[serde(rename = "const")]
-    ConstElement,
-    #[serde(rename = "let")]
-    LetElement,
-    #[serde(rename = "directory")]
-    Directory,
-    #[serde(rename = "external module name")]
-    ExternalModuleName,
-    #[serde(rename = "JSX attribute")]
-    JsxAttribute,
-    #[serde(rename = "string")]
-    String,
-}
-
-impl Default for ScriptElementKind {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
-
-impl From<ScriptElementKind> for lsp::CompletionItemKind {
-    fn from(kind: ScriptElementKind) -> Self {
-        match kind {
-            ScriptElementKind::PrimitiveType | ScriptElementKind::Keyword => {
-                lsp::CompletionItemKind::Keyword
-            }
-            ScriptElementKind::ConstElement
-            | ScriptElementKind::LetElement
-            | ScriptElementKind::VariableElement
-            | ScriptElementKind::LocalVariableElement
-            | ScriptElementKind::Alias
-            | ScriptElementKind::ParameterElement => {
-                lsp::CompletionItemKind::Variable
-            }
-            ScriptElementKind::MemberVariableElement
-            | ScriptElementKind::MemberGetAccessorElement
-            | ScriptElementKind::MemberSetAccessorElement => {
-                lsp::CompletionItemKind::Field
-            }
-            ScriptElementKind::FunctionElement
-            | ScriptElementKind::LocalFunctionElement => {
-                lsp::CompletionItemKind::Function
-            }
-            ScriptElementKind::MemberFunctionElement
-            | ScriptElementKind::ConstructSignatureElement
-            | ScriptElementKind::CallSignatureElement
-            | ScriptElementKind::IndexSignatureElement => {
-                lsp::CompletionItemKind::Method
-            }
-            ScriptElementKind::EnumElement => lsp::CompletionItemKind::Enum,
-            ScriptElementKind::EnumMemberElement => {
-                lsp::CompletionItemKind::EnumMember
-            }
-            ScriptElementKind::ModuleElement
-            | ScriptElementKind::ExternalModuleName => {
-                lsp::CompletionItemKind::Module
-            }
-            ScriptElementKind::ClassElement | ScriptElementKind::TypeElement => {
-                lsp::CompletionItemKind::Class
-            }
-            ScriptElementKind::InterfaceElement => lsp::CompletionItemKind::Interface,
-            ScriptElementKind::Warning => lsp::CompletionItemKind::Text,
-            ScriptElementKind::ScriptElement => lsp::CompletionItemKind::File,
-            ScriptElementKind::Directory => lsp::CompletionItemKind::Folder,
-            ScriptElementKind::String => lsp::CompletionItemKind::Constant,
-            _ => lsp::CompletionItemKind::Property,
-        }
-    }
-}
-
-impl From<ScriptElementKind> for lsp::SymbolKind {
-    fn from(kind: ScriptElementKind) -> Self {
-        match kind {
-            ScriptElementKind::ModuleElement => lsp::SymbolKind::Module,
-            ScriptElementKind::ClassElement => lsp::SymbolKind::Class,
-            ScriptElementKind::EnumElement => lsp::SymbolKind::Enum,
-            ScriptElementKind::InterfaceElement => lsp::SymbolKind::Interface,
-            ScriptElementKind::MemberFunctionElement => lsp::SymbolKind::Method,
-            ScriptElementKind::MemberVariableElement => lsp::SymbolKind::Property,
-            ScriptElementKind::MemberGetAccessorElement => lsp::SymbolKind::Property,
-            ScriptElementKind::MemberSetAccessorElement => lsp::SymbolKind::Property,
-            ScriptElementKind::VariableElement => lsp::SymbolKind::Variable,
-            ScriptElementKind::ConstElement => lsp::SymbolKind::Variable,
-            ScriptElementKind::LocalVariableElement => lsp::SymbolKind::Variable,
-            ScriptElementKind::FunctionElement => lsp::SymbolKind::Function,
-            ScriptElementKind::LocalFunctionElement => lsp::SymbolKind::Function,
-            ScriptElementKind::ConstructSignatureElement => {
-                lsp::SymbolKind::Constructor
-            }
-            ScriptElementKind::ConstructorImplementationElement => {
-                lsp::SymbolKind::Constructor
-            }
-            _ => lsp::SymbolKind::Variable,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct TextSpan {
-    pub start: u32,
-    pub length: u32,
-}
-
-impl TextSpan {
-    pub fn to_range(&self, line_index: &LineIndex) -> lsp::Range {
-        lsp::Range {
-            start: line_index.position_tsc(self.start.into()),
-            end: line_index.position_tsc(TextSize::from(self.start + self.length)),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SymbolDisplayPart {
-    text: String,
-    kind: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct JsDocTagInfo {
-    name: String,
-    text: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QuickInfo {
-    kind: ScriptElementKind,
-    kind_modifiers: String,
-    text_span: TextSpan,
-    display_parts: Option<Vec<SymbolDisplayPart>>,
-    documentation: Option<Vec<SymbolDisplayPart>>,
-    tags: Option<Vec<JsDocTagInfo>>,
-}
-
-impl QuickInfo {
-    pub fn to_hover(&self, line_index: &LineIndex) -> lsp::Hover {
-        let mut contents = Vec::<lsp::MarkedString>::new();
-        if let Some(display_string) = self
-            .display_parts
-            .clone()
-            .map(|p| display_parts_to_string(&p))
-        {
-            contents.push(lsp::MarkedString::from_language_code(
-                "typescript".to_string(),
-                display_string,
-            ));
-        }
-        if let Some(documentation) = self
-            .documentation
-            .clone()
-            .map(|p| display_parts_to_string(&p))
-        {
-            contents.push(lsp::MarkedString::from_markdown(documentation));
-        }
-        if let Some(tags) = &self.tags {
-            let tags_preview = tags
-                .iter()
-                .map(get_tag_documentation)
-                .collect::<Vec<String>>()
-                .join("  \n\n");
-            if !tags_preview.is_empty() {
-                contents.push(lsp::MarkedString::from_markdown(format!(
-                    "\n\n{}",
-                    tags_preview
-                )));
-            }
-        }
-        lsp::Hover {
-            contents: lsp::HoverContents::Array(contents),
-            range: Some(self.text_span.to_range(line_index)),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DocumentSpan {
-    text_span: TextSpan,
-    pub file_name: String,
-    original_text_span: Option<TextSpan>,
-    original_file_name: Option<String>,
-    context_span: Option<TextSpan>,
-    original_context_span: Option<TextSpan>,
-}
-
-impl DocumentSpan {
-    pub(crate) async fn to_link(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-    ) -> Option<lsp::LocationLink> {
-        let target_specifier = resolve_url(&self.file_name).unwrap();
-        let target_line_index = language_server
-            .get_line_index(target_specifier.clone())
-            .await
-            .ok()?;
-        let target_uri = language_server
-            .url_map
-            .normalize_specifier(&target_specifier)
-            .unwrap();
-        let (target_range, target_selection_range) =
-            if let Some(context_span) = &self.context_span {
-                (
-                    context_span.to_range(&target_line_index),
-                    self.text_span.to_range(&target_line_index),
-                )
-            } else {
-                (
-                    self.text_span.to_range(&target_line_index),
-                    self.text_span.to_range(&target_line_index),
-                )
-            };
-        let origin_selection_range =
-            if let Some(original_context_span) = &self.original_context_span {
-                Some(original_context_span.to_range(line_index))
-            } else {
-                self
-                    .original_text_span
-                    .as_ref()
-                    .map(|original_text_span| original_text_span.to_range(line_index))
-            };
-        let link = lsp::LocationLink {
-            origin_selection_range,
-            target_uri,
-            target_range,
-            target_selection_range,
-        };
-        Some(link)
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct NavigationTree {
-    pub text: String,
-    pub kind: ScriptElementKind,
-    pub kind_modifiers: String,
-    pub spans: Vec<TextSpan>,
-    pub name_span: Option<TextSpan>,
-    pub child_items: Option<Vec<NavigationTree>>,
-}
-
-impl NavigationTree {
-    pub fn to_code_lens(
-        &self,
-        line_index: &LineIndex,
-        specifier: &ModuleSpecifier,
-        source: &CodeLensSource,
-    ) -> lsp::CodeLens {
-        let range = if let Some(name_span) = &self.name_span {
-            name_span.to_range(line_index)
-        } else if !self.spans.is_empty() {
-            let span = &self.spans[0];
-            span.to_range(line_index)
-        } else {
-            lsp::Range::default()
-        };
-        lsp::CodeLens {
-            range,
-            command: None,
-            data: Some(json!({
-        "specifier": specifier,
-        "source": source
-      })),
-        }
-    }
-
-    pub fn collect_document_symbols(
-        &self,
-        line_index: &LineIndex,
-        document_symbols: &mut Vec<lsp::DocumentSymbol>,
-    ) -> bool {
-        let mut should_include = self.should_include_entry();
-        if !should_include
-            && self.child_items.as_ref().map_or(true, |v| v.is_empty())
-        {
-            return false;
-        }
-
-        let children = self
-            .child_items
-            .as_ref()
-            .map_or(&[] as &[NavigationTree], |v| v.as_slice());
-        for span in self.spans.iter() {
-            let range = TextRange::at(span.start.into(), span.length.into());
-            let mut symbol_children = Vec::<lsp::DocumentSymbol>::new();
-            for child in children.iter() {
-                let should_traverse_child = child
-                    .spans
-                    .iter()
-                    .map(|child_span| {
-                        TextRange::at(child_span.start.into(), child_span.length.into())
-                    })
-                    .any(|child_range| range.intersect(child_range).is_some());
-                if should_traverse_child {
-                    let included_child =
-                        child.collect_document_symbols(line_index, &mut symbol_children);
-                    should_include = should_include || included_child;
-                }
-            }
-
-            if should_include {
-                let mut selection_span = span;
-                if let Some(name_span) = self.name_span.as_ref() {
-                    let name_range =
-                        TextRange::at(name_span.start.into(), name_span.length.into());
-                    if range.contains_range(name_range) {
-                        selection_span = name_span;
-                    }
-                }
-
-                let mut tags: Option<Vec<lsp::SymbolTag>> = None;
-                let kind_modifiers = parse_kind_modifier(&self.kind_modifiers);
-                if kind_modifiers.contains("deprecated") {
-                    tags = Some(vec![lsp::SymbolTag::Deprecated]);
-                }
-
-                let children = if !symbol_children.is_empty() {
-                    Some(symbol_children)
-                } else {
-                    None
-                };
-
-                // The field `deprecated` is deprecated but DocumentSymbol does not have
-                // a default, therefore we have to supply the deprecated deprecated
-                // field. It is like a bad version of Inception.
-                #[allow(deprecated)]
-                    document_symbols.push(lsp::DocumentSymbol {
-                    name: self.text.clone(),
-                    kind: self.kind.clone().into(),
-                    range: span.to_range(line_index),
-                    selection_range: selection_span.to_range(line_index),
-                    tags,
-                    children,
-                    detail: None,
-                    deprecated: None,
+    match key {
+        Some(key) => {
+            let mut config = rustls::ServerConfig::new(rustls::NoClientAuth::new());
+            config
+                .set_single_cert(cert, key)
+                .map_err(|e| {
+                    eprintln!("Error setting cert: {:?}", e);
                 })
-            }
+                .unwrap();
+
+            return Ok(Arc::new(config));
         }
-
-        should_include
-    }
-
-    fn should_include_entry(&self) -> bool {
-        if let ScriptElementKind::Alias = self.kind {
-            return false;
-        }
-
-        !self.text.is_empty() && self.text != "<function>" && self.text != "<class>"
-    }
-
-    pub fn walk<F>(&self, callback: &F)
-        where
-            F: Fn(&NavigationTree, Option<&NavigationTree>),
-    {
-        callback(self, None);
-        if let Some(child_items) = &self.child_items {
-            for child in child_items {
-                child.walk_child(callback, self);
-            }
-        }
-    }
-
-    fn walk_child<F>(&self, callback: &F, parent: &NavigationTree)
-        where
-            F: Fn(&NavigationTree, Option<&NavigationTree>),
-    {
-        callback(self, Some(parent));
-        if let Some(child_items) = &self.child_items {
-            for child in child_items {
-                child.walk_child(callback, self);
-            }
+        None => {
+            return Err(io::Error::new(io::ErrorKind::Other, "Cannot find key"));
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ImplementationLocation {
-    #[serde(flatten)]
-    pub document_span: DocumentSpan,
-    // ImplementationLocation props
-    kind: ScriptElementKind,
-    display_parts: Vec<SymbolDisplayPart>,
-}
+async fn run_wss_server(addr: &SocketAddr) {
+    let cert_file = "cli/tests/tls/localhost.crt";
+    let key_file = "cli/tests/tls/localhost.key";
 
-impl ImplementationLocation {
-    pub(crate) fn to_location(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-    ) -> lsp::Location {
-        let specifier = resolve_url(&self.document_span.file_name).unwrap();
-        let uri = language_server
-            .url_map
-            .normalize_specifier(&specifier)
-            .unwrap();
-        lsp::Location {
-            uri,
-            range: self.document_span.text_span.to_range(line_index),
-        }
-    }
+    let tls_config = get_tls_config(cert_file, key_file).await.unwrap();
+    let tls_acceptor = TlsAcceptor::from(tls_config);
+    let listener = TcpListener::bind(addr).await.unwrap();
 
-    pub(crate) async fn to_link(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-    ) -> Option<lsp::LocationLink> {
-        self
-            .document_span
-            .to_link(line_index, language_server)
-            .await
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RenameLocation {
-    #[serde(flatten)]
-    document_span: DocumentSpan,
-    // RenameLocation props
-    prefix_text: Option<String>,
-    suffix_text: Option<String>,
-}
-
-pub struct RenameLocations {
-    pub locations: Vec<RenameLocation>,
-}
-
-impl RenameLocations {
-    pub(crate) async fn into_workspace_edit(
-        self,
-        new_name: &str,
-        language_server: &mut language_server::Inner,
-    ) -> Result<lsp::WorkspaceEdit, AnyError> {
-        let mut text_document_edit_map: HashMap<Url, lsp::TextDocumentEdit> =
-            HashMap::new();
-        for location in self.locations.iter() {
-            let specifier = resolve_url(&location.document_span.file_name)?;
-            let uri = language_server.url_map.normalize_specifier(&specifier)?;
-
-            // ensure TextDocumentEdit for `location.file_name`.
-            if text_document_edit_map.get(&uri).is_none() {
-                text_document_edit_map.insert(
-                    uri.clone(),
-                    lsp::TextDocumentEdit {
-                        text_document: lsp::OptionalVersionedTextDocumentIdentifier {
-                            uri: uri.clone(),
-                            version: language_server.document_version(specifier.clone()),
-                        },
-                        edits:
-                        Vec::<lsp::OneOf<lsp::TextEdit, lsp::AnnotatedTextEdit>>::new(),
-                    },
-                );
-            }
-
-            // push TextEdit for ensured `TextDocumentEdit.edits`.
-            let document_edit = text_document_edit_map.get_mut(&uri).unwrap();
-            document_edit.edits.push(lsp::OneOf::Left(lsp::TextEdit {
-                range: location
-                    .document_span
-                    .text_span
-                    .to_range(&language_server.get_line_index(specifier.clone()).await?),
-                new_text: new_name.to_string(),
-            }));
-        }
-
-        Ok(lsp::WorkspaceEdit {
-            change_annotations: None,
-            changes: None,
-            document_changes: Some(lsp::DocumentChanges::Edits(
-                text_document_edit_map.values().cloned().collect(),
-            )),
-        })
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub enum HighlightSpanKind {
-    #[serde(rename = "none")]
-    None,
-    #[serde(rename = "definition")]
-    Definition,
-    #[serde(rename = "reference")]
-    Reference,
-    #[serde(rename = "writtenReference")]
-    WrittenReference,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct HighlightSpan {
-    file_name: Option<String>,
-    is_in_string: Option<bool>,
-    text_span: TextSpan,
-    context_span: Option<TextSpan>,
-    kind: HighlightSpanKind,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DefinitionInfo {
-    kind: ScriptElementKind,
-    name: String,
-    container_kind: Option<ScriptElementKind>,
-    container_name: Option<String>,
-
-    #[serde(flatten)]
-    pub document_span: DocumentSpan,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DefinitionInfoAndBoundSpan {
-    pub definitions: Option<Vec<DefinitionInfo>>,
-    text_span: TextSpan,
-}
-
-impl DefinitionInfoAndBoundSpan {
-    pub(crate) async fn to_definition(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-    ) -> Option<lsp::GotoDefinitionResponse> {
-        if let Some(definitions) = &self.definitions {
-            let mut location_links = Vec::<lsp::LocationLink>::new();
-            for di in definitions {
-                if let Some(link) =
-                di.document_span.to_link(line_index, language_server).await
-                {
-                    location_links.push(link);
-                }
-            }
-            Some(lsp::GotoDefinitionResponse::Link(location_links))
-        } else {
-            None
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DocumentHighlights {
-    file_name: String,
-    highlight_spans: Vec<HighlightSpan>,
-}
-
-impl DocumentHighlights {
-    pub fn to_highlight(
-        &self,
-        line_index: &LineIndex,
-    ) -> Vec<lsp::DocumentHighlight> {
-        self
-            .highlight_spans
-            .iter()
-            .map(|hs| lsp::DocumentHighlight {
-                range: hs.text_span.to_range(line_index),
-                kind: match hs.kind {
-                    HighlightSpanKind::WrittenReference => {
-                        Some(lsp::DocumentHighlightKind::Write)
+    while let Ok((stream, _addr)) = listener.accept().await {
+        let acceptor = tls_acceptor.clone();
+        tokio::spawn(async move {
+            match acceptor.accept(stream).await {
+                Ok(tls_stream) => {
+                    let ws_stream_fut = accept_async(tls_stream);
+                    let ws_stream = ws_stream_fut.await;
+                    if let Ok(ws_stream) = ws_stream {
+                        let (tx, rx) = ws_stream.split();
+                        rx.forward(tx)
+                            .map(|result| {
+                                if let Err(e) = result {
+                                    println!("Websocket server error: {:?}", e);
+                                }
+                            })
+                            .await;
                     }
-                    _ => Some(lsp::DocumentHighlightKind::Read),
-                },
-            })
-            .collect()
+                }
+                Err(e) => {
+                    eprintln!("TLS accept error: {:?}", e);
+                }
+            }
+        });
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct TextChange {
-    span: TextSpan,
-    new_text: String,
-}
+async fn absolute_redirect(
+    req: Request<Body>,
+) -> hyper::Result<Response<Body>> {
+    let path = req.uri().path();
 
-impl TextChange {
-    pub fn as_text_edit(
-        &self,
-        line_index: &LineIndex,
-    ) -> lsp::OneOf<lsp::TextEdit, lsp::AnnotatedTextEdit> {
-        lsp::OneOf::Left(lsp::TextEdit {
-            range: self.span.to_range(line_index),
-            new_text: self.new_text.clone(),
-        })
+    if path.starts_with("/REDIRECT") {
+        let url = &req.uri().path()[9..];
+        println!("URL: {:?}", url);
+        let redirect = redirect_resp(url.to_string());
+        return Ok(redirect);
     }
-}
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct FileTextChanges {
-    file_name: String,
-    text_changes: Vec<TextChange>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    is_new_file: Option<bool>,
-}
-
-impl FileTextChanges {
-    pub(crate) async fn to_text_document_edit(
-        &self,
-        language_server: &mut language_server::Inner,
-    ) -> Result<lsp::TextDocumentEdit, AnyError> {
-        let specifier = resolve_url(&self.file_name)?;
-        let line_index = language_server.get_line_index(specifier.clone()).await?;
-        let edits = self
-            .text_changes
-            .iter()
-            .map(|tc| tc.as_text_edit(&line_index))
-            .collect();
-        Ok(lsp::TextDocumentEdit {
-            text_document: lsp::OptionalVersionedTextDocumentIdentifier {
-                uri: specifier.clone(),
-                version: language_server.document_version(specifier),
-            },
-            edits,
-        })
+    if path.starts_with("/a/b/c") {
+        if let Some(x_loc) = req.headers().get("x-location") {
+            let loc = x_loc.to_str().unwrap();
+            return Ok(redirect_resp(loc.to_string()));
+        }
     }
+
+    let mut file_path = root_path();
+    file_path.push(&req.uri().path()[1..]);
+    if file_path.is_dir() || !file_path.exists() {
+        let mut not_found_resp = Response::new(Body::empty());
+        *not_found_resp.status_mut() = StatusCode::NOT_FOUND;
+        return Ok(not_found_resp);
+    }
+
+    let file = tokio::fs::read(file_path).await.unwrap();
+    let file_resp = custom_headers(req.uri().path(), file);
+    return Ok(file_resp);
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Classifications {
-    spans: Vec<u32>,
-}
+async fn main_server(req: Request<Body>) -> hyper::Result<Response<Body>> {
+    return match (req.method(), req.uri().path()) {
+        (&hyper::Method::POST, "/echo_server") => {
+            let (parts, body) = req.into_parts();
+            let mut response = Response::new(body);
 
-impl Classifications {
-    pub fn to_semantic_tokens(
-        &self,
-        line_index: &LineIndex,
-    ) -> lsp::SemanticTokens {
-        let token_count = self.spans.len() / 3;
-        let mut builder = SemanticTokensBuilder::new();
-        for i in 0..token_count {
-            let src_offset = 3 * i;
-            let offset = self.spans[src_offset];
-            let length = self.spans[src_offset + 1];
-            let ts_classification = self.spans[src_offset + 2];
+            if let Some(status) = parts.headers.get("x-status") {
+                *response.status_mut() =
+                    StatusCode::from_bytes(status.as_bytes()).unwrap();
+            }
+            if let Some(content_type) = parts.headers.get("content-type") {
+                response
+                    .headers_mut()
+                    .insert("content-type", content_type.clone());
+            }
+            if let Some(user_agent) = parts.headers.get("user-agent") {
+                response
+                    .headers_mut()
+                    .insert("user-agent", user_agent.clone());
+            }
+            Ok(response)
+        }
+        (&hyper::Method::POST, "/echo_multipart_file") => {
+            let body = req.into_body();
+            let bytes = &hyper::body::to_bytes(body).await.unwrap()[0..];
+            let start = b"--boundary\t \r\n\
+                    Content-Disposition: form-data; name=\"field_1\"\r\n\
+                    \r\n\
+                    value_1 \r\n\
+                    \r\n--boundary\r\n\
+                    Content-Disposition: form-data; name=\"file\"; \
+                    filename=\"file.bin\"\r\n\
+                    Content-Type: application/octet-stream\r\n\
+                    \r\n";
+            let end = b"\r\n--boundary--\r\n";
+            let b = [start as &[u8], bytes, end].concat();
 
-            let token_type =
-                Classifications::get_token_type_from_classification(ts_classification);
-            let token_modifiers =
-                Classifications::get_token_modifier_from_classification(
-                    ts_classification,
-                );
-
-            let start_pos = line_index.position_tsc(offset.into());
-            let end_pos = line_index.position_tsc(TextSize::from(offset + length));
-
-            // start_pos.line == end_pos.line is always true as there are no multiline tokens
-            builder.push(
-                start_pos.line,
-                start_pos.character,
-                end_pos.character - start_pos.character,
-                token_type,
-                token_modifiers,
+            let mut response = Response::new(Body::from(b));
+            response.headers_mut().insert(
+                "content-type",
+                HeaderValue::from_static("multipart/form-data;boundary=boundary"),
             );
+            Ok(response)
         }
-        builder.build(None)
-    }
-
-    fn get_token_type_from_classification(ts_classification: u32) -> u32 {
-        (ts_classification >> (TsTokenEncodingConsts::TypeOffset as u32)) - 1
-    }
-
-    fn get_token_modifier_from_classification(ts_classification: u32) -> u32 {
-        ts_classification & (TsTokenEncodingConsts::ModifierMask as u32)
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CodeAction {
-    description: String,
-    changes: Vec<FileTextChanges>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    commands: Option<Vec<Value>>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct CodeFixAction {
-    pub description: String,
-    pub changes: Vec<FileTextChanges>,
-    // These are opaque types that should just be passed back when applying the
-    // action.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub commands: Option<Vec<Value>>,
-    pub fix_name: String,
-    // It appears currently that all fixIds are strings, but the protocol
-    // specifies an opaque type, the problem is that we need to use the id as a
-    // hash key, and `Value` does not implement hash (and it could provide a false
-    // positive depending on JSON whitespace, so we deserialize it but it might
-    // break in the future)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub fix_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub fix_all_description: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CombinedCodeActions {
-    pub changes: Vec<FileTextChanges>,
-    pub commands: Option<Vec<Value>>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReferenceEntry {
-    is_write_access: bool,
-    pub is_definition: bool,
-    is_in_string: Option<bool>,
-    #[serde(flatten)]
-    pub document_span: DocumentSpan,
-}
-
-impl ReferenceEntry {
-    pub(crate) fn to_location(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-    ) -> lsp::Location {
-        let specifier = resolve_url(&self.document_span.file_name).unwrap();
-        let uri = language_server
-            .url_map
-            .normalize_specifier(&specifier)
-            .unwrap();
-        lsp::Location {
-            uri,
-            range: self.document_span.text_span.to_range(line_index),
+        (_, "/multipart_form_data.txt") => {
+            let b = "Preamble\r\n\
+             --boundary\t \r\n\
+             Content-Disposition: form-data; name=\"field_1\"\r\n\
+             \r\n\
+             value_1 \r\n\
+             \r\n--boundary\r\n\
+             Content-Disposition: form-data; name=\"field_2\";\
+             filename=\"file.js\"\r\n\
+             Content-Type: text/javascript\r\n\
+             \r\n\
+             console.log(\"Hi\")\
+             \r\n--boundary--\r\n\
+             Epilogue";
+            let mut res = Response::new(Body::from(b));
+            res.headers_mut().insert(
+                "content-type",
+                HeaderValue::from_static("multipart/form-data;boundary=boundary"),
+            );
+            Ok(res)
         }
-    }
-}
+        (_, "/multipart_form_bad_content_type") => {
+            let b = "Preamble\r\n\
+             --boundary\t \r\n\
+             Content-Disposition: form-data; name=\"field_1\"\r\n\
+             \r\n\
+             value_1 \r\n\
+             \r\n--boundary\r\n\
+             Content-Disposition: form-data; name=\"field_2\";\
+             filename=\"file.js\"\r\n\
+             Content-Type: text/javascript\r\n\
+             \r\n\
+             console.log(\"Hi\")\
+             \r\n--boundary--\r\n\
+             Epilogue";
+            let mut res = Response::new(Body::from(b));
+            res.headers_mut().insert(
+                "content-type",
+                HeaderValue::from_static("multipart/form-datatststs;boundary=boundary"),
+            );
+            Ok(res)
+        }
+        (_, "/bad_redirect") => {
+            let mut res = Response::new(Body::empty());
+            *res.status_mut() = StatusCode::FOUND;
+            Ok(res)
+        }
+        (_, "/non_ascii_redirect") => {
+            let mut res = Response::new(Body::empty());
+            *res.status_mut() = StatusCode::MOVED_PERMANENTLY;
+            res.headers_mut().insert(
+                "location",
+                HeaderValue::from_bytes(b"/redirect\xae").unwrap(),
+            );
+            Ok(res)
+        }
+        (_, "/etag_script.ts") => {
+            let if_none_match = req.headers().get("if-none-match");
+            if if_none_match == Some(&HeaderValue::from_static("33a64df551425fcc55e"))
+            {
+                let mut resp = Response::new(Body::empty());
+                *resp.status_mut() = StatusCode::NOT_MODIFIED;
+                resp.headers_mut().insert(
+                    "Content-type",
+                    HeaderValue::from_static("application/typescript"),
+                );
+                resp
+                    .headers_mut()
+                    .insert("ETag", HeaderValue::from_static("33a64df551425fcc55e"));
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CallHierarchyItem {
-    name: String,
-    kind: ScriptElementKind,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    kind_modifiers: Option<String>,
-    file: String,
-    span: TextSpan,
-    selection_span: TextSpan,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    container_name: Option<String>,
-}
-
-impl CallHierarchyItem {
-    pub(crate) async fn try_resolve_call_hierarchy_item(
-        &self,
-        language_server: &mut language_server::Inner,
-        maybe_root_path: Option<&Path>,
-    ) -> Option<lsp::CallHierarchyItem> {
-        let target_specifier = resolve_url(&self.file).unwrap();
-        let target_line_index = language_server
-            .get_line_index(target_specifier)
-            .await
-            .ok()?;
-
-        Some(self.to_call_hierarchy_item(
-            &target_line_index,
-            language_server,
-            maybe_root_path,
-        ))
-    }
-
-    pub(crate) fn to_call_hierarchy_item(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-        maybe_root_path: Option<&Path>,
-    ) -> lsp::CallHierarchyItem {
-        let target_specifier = resolve_url(&self.file).unwrap();
-        let uri = language_server
-            .url_map
-            .normalize_specifier(&target_specifier)
-            .unwrap();
-
-        let use_file_name = self.is_source_file_item();
-        let maybe_file_path = if uri.scheme() == "file" {
-            uri.to_file_path().ok()
-        } else {
-            None
-        };
-        let name = if use_file_name {
-            if let Some(file_path) = maybe_file_path.as_ref() {
-                file_path.file_name().unwrap().to_string_lossy().to_string()
+                Ok(resp)
             } else {
-                uri.to_string()
+                let mut resp = Response::new(Body::from("console.log('etag')"));
+                resp.headers_mut().insert(
+                    "Content-type",
+                    HeaderValue::from_static("application/typescript"),
+                );
+                resp
+                    .headers_mut()
+                    .insert("ETag", HeaderValue::from_static("33a64df551425fcc55e"));
+                Ok(resp)
             }
-        } else {
-            self.name.clone()
-        };
-        let detail = if use_file_name {
-            if let Some(file_path) = maybe_file_path.as_ref() {
-                // TODO: update this to work with multi root workspaces
-                let parent_dir = file_path.parent().unwrap();
-                if let Some(root_path) = maybe_root_path {
-                    parent_dir
-                        .strip_prefix(root_path)
-                        .unwrap_or(parent_dir)
-                        .to_string_lossy()
-                        .to_string()
-                } else {
-                    parent_dir.to_string_lossy().to_string()
-                }
+        }
+        (_, "/xTypeScriptTypes.js") => {
+            let mut res = Response::new(Body::from("export const foo = 'foo';"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/javascript"),
+            );
+            res.headers_mut().insert(
+                "X-TypeScript-Types",
+                HeaderValue::from_static("./xTypeScriptTypes.d.ts"),
+            );
+            Ok(res)
+        }
+        (_, "/xTypeScriptTypes.d.ts") => {
+            let mut res = Response::new(Body::from("export const foo: 'foo';"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/typescript"),
+            );
+            Ok(res)
+        }
+        (_, "/type_directives_redirect.js") => {
+            let mut res = Response::new(Body::from("export const foo = 'foo';"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/javascript"),
+            );
+            res.headers_mut().insert(
+                "X-TypeScript-Types",
+                HeaderValue::from_static(
+                    "http://localhost:4547/xTypeScriptTypesRedirect.d.ts",
+                ),
+            );
+            Ok(res)
+        }
+        (_, "/type_headers_deno_types.foo.js") => {
+            let mut res = Response::new(Body::from(
+                "export function foo(text) { console.log(text); }",
+            ));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/javascript"),
+            );
+            res.headers_mut().insert(
+                "X-TypeScript-Types",
+                HeaderValue::from_static(
+                    "http://localhost:4545/type_headers_deno_types.d.ts",
+                ),
+            );
+            Ok(res)
+        }
+        (_, "/type_headers_deno_types.d.ts") => {
+            let mut res =
+                Response::new(Body::from("export function foo(text: number): void;"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/typescript"),
+            );
+            Ok(res)
+        }
+        (_, "/type_headers_deno_types.foo.d.ts") => {
+            let mut res =
+                Response::new(Body::from("export function foo(text: string): void;"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/typescript"),
+            );
+            Ok(res)
+        }
+        (_, "/cli/tests/subdir/xTypeScriptTypesRedirect.d.ts") => {
+            let mut res = Response::new(Body::from(
+                "import './xTypeScriptTypesRedirected.d.ts';",
+            ));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/typescript"),
+            );
+            Ok(res)
+        }
+        (_, "/cli/tests/subdir/xTypeScriptTypesRedirected.d.ts") => {
+            let mut res = Response::new(Body::from("export const foo: 'foo';"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/typescript"),
+            );
+            Ok(res)
+        }
+        (_, "/referenceTypes.js") => {
+            let mut res = Response::new(Body::from("/// <reference types=\"./xTypeScriptTypes.d.ts\" />\r\nexport const foo = \"foo\";\r\n"));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/javascript"),
+            );
+            Ok(res)
+        }
+        (_, "/cli/tests/subdir/file_with_:_in_name.ts") => {
+            let mut res = Response::new(Body::from(
+                "console.log('Hello from file_with_:_in_name.ts');",
+            ));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/typescript"),
+            );
+            Ok(res)
+        }
+        (_, "/cli/tests/subdir/no_js_ext@1.0.0") => {
+            let mut res = Response::new(Body::from(
+                r#"import { printHello } from "./mod2.ts";
+        printHello();
+        "#,
+            ));
+            res.headers_mut().insert(
+                "Content-type",
+                HeaderValue::from_static("application/javascript"),
+            );
+            Ok(res)
+        }
+        (_, "/.well-known/deno-import-intellisense.json") => {
+            let file_path = root_path()
+                .join("cli/tests/lsp/registries/deno-import-intellisense.json");
+            if let Ok(body) = tokio::fs::read(file_path).await {
+                Ok(custom_headers(
+                    "/.well-known/deno-import-intellisense.json",
+                    body,
+                ))
             } else {
-                String::new()
-            }
-        } else {
-            self.container_name.as_ref().cloned().unwrap_or_default()
-        };
-
-        let mut tags: Option<Vec<lsp::SymbolTag>> = None;
-        if let Some(modifiers) = self.kind_modifiers.as_ref() {
-            let kind_modifiers = parse_kind_modifier(modifiers);
-            if kind_modifiers.contains("deprecated") {
-                tags = Some(vec![lsp::SymbolTag::Deprecated]);
+                Ok(Response::new(Body::empty()))
             }
         }
+        _ => {
+            let mut file_path = root_path();
+            file_path.push(&req.uri().path()[1..]);
+            if let Ok(file) = tokio::fs::read(file_path).await {
+                let file_resp = custom_headers(&req.uri().path()[1..], file);
+                return Ok(file_resp);
+            }
 
-        lsp::CallHierarchyItem {
-            name,
-            tags,
-            uri,
-            detail: Some(detail),
-            kind: self.kind.clone().into(),
-            range: self.span.to_range(line_index),
-            selection_range: self.selection_span.to_range(line_index),
-            data: None,
+            return Ok(Response::new(Body::empty()));
         }
-    }
+    };
+}
 
-    fn is_source_file_item(&self) -> bool {
-        self.kind == ScriptElementKind::ScriptElement
-            || self.kind == ScriptElementKind::ModuleElement
-            && self.selection_span.start == 0
+/// Taken from example in https://github.com/ctz/hyper-rustls/blob/a02ef72a227dcdf102f86e905baa7415c992e8b3/examples/server.rs
+struct HyperAcceptor<'a> {
+    acceptor: Pin<
+        Box<
+            dyn Stream<Item = io::Result<tokio_rustls::server::TlsStream<TcpStream>>>
+            + 'a,
+        >,
+    >,
+}
+
+impl hyper::server::accept::Accept for HyperAcceptor<'_> {
+    type Conn = tokio_rustls::server::TlsStream<TcpStream>;
+    type Error = io::Error;
+
+    fn poll_accept(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
+        Pin::new(&mut self.acceptor).poll_next(cx)
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CallHierarchyIncomingCall {
-    from: CallHierarchyItem,
-    from_spans: Vec<TextSpan>,
+unsafe impl std::marker::Send for HyperAcceptor<'_> {}
+
+async fn wrap_redirect_server() {
+    let redirect_svc =
+        make_service_fn(|_| async { Ok::<_, Infallible>(service_fn(redirect)) });
+    let redirect_addr = SocketAddr::from(([127, 0, 0, 1], REDIRECT_PORT));
+    let redirect_server = Server::bind(&redirect_addr).serve(redirect_svc);
+    if let Err(e) = redirect_server.await {
+        eprintln!("Redirect error: {:?}", e);
+    }
 }
 
-impl CallHierarchyIncomingCall {
-    pub(crate) async fn try_resolve_call_hierarchy_incoming_call(
-        &self,
-        language_server: &mut language_server::Inner,
-        maybe_root_path: Option<&Path>,
-    ) -> Option<lsp::CallHierarchyIncomingCall> {
-        let target_specifier = resolve_url(&self.from.file).unwrap();
-        let target_line_index = language_server
-            .get_line_index(target_specifier)
+async fn wrap_double_redirect_server() {
+    let double_redirects_svc = make_service_fn(|_| async {
+        Ok::<_, Infallible>(service_fn(double_redirects))
+    });
+    let double_redirects_addr =
+        SocketAddr::from(([127, 0, 0, 1], DOUBLE_REDIRECTS_PORT));
+    let double_redirects_server =
+        Server::bind(&double_redirects_addr).serve(double_redirects_svc);
+    if let Err(e) = double_redirects_server.await {
+        eprintln!("Double redirect error: {:?}", e);
+    }
+}
+
+async fn wrap_inf_redirect_server() {
+    let inf_redirects_svc = make_service_fn(|_| async {
+        Ok::<_, Infallible>(service_fn(inf_redirects))
+    });
+    let inf_redirects_addr =
+        SocketAddr::from(([127, 0, 0, 1], INF_REDIRECTS_PORT));
+    let inf_redirects_server =
+        Server::bind(&inf_redirects_addr).serve(inf_redirects_svc);
+    if let Err(e) = inf_redirects_server.await {
+        eprintln!("Inf redirect error: {:?}", e);
+    }
+}
+
+async fn wrap_another_redirect_server() {
+    let another_redirect_svc = make_service_fn(|_| async {
+        Ok::<_, Infallible>(service_fn(another_redirect))
+    });
+    let another_redirect_addr =
+        SocketAddr::from(([127, 0, 0, 1], ANOTHER_REDIRECT_PORT));
+    let another_redirect_server =
+        Server::bind(&another_redirect_addr).serve(another_redirect_svc);
+    if let Err(e) = another_redirect_server.await {
+        eprintln!("Another redirect error: {:?}", e);
+    }
+}
+
+async fn wrap_auth_redirect_server() {
+    let auth_redirect_svc = make_service_fn(|_| async {
+        Ok::<_, Infallible>(service_fn(auth_redirect))
+    });
+    let auth_redirect_addr =
+        SocketAddr::from(([127, 0, 0, 1], AUTH_REDIRECT_PORT));
+    let auth_redirect_server =
+        Server::bind(&auth_redirect_addr).serve(auth_redirect_svc);
+    if let Err(e) = auth_redirect_server.await {
+        eprintln!("Auth redirect error: {:?}", e);
+    }
+}
+
+async fn wrap_abs_redirect_server() {
+    let abs_redirect_svc = make_service_fn(|_| async {
+        Ok::<_, Infallible>(service_fn(absolute_redirect))
+    });
+    let abs_redirect_addr =
+        SocketAddr::from(([127, 0, 0, 1], REDIRECT_ABSOLUTE_PORT));
+    let abs_redirect_server =
+        Server::bind(&abs_redirect_addr).serve(abs_redirect_svc);
+    if let Err(e) = abs_redirect_server.await {
+        eprintln!("Absolute redirect error: {:?}", e);
+    }
+}
+
+async fn wrap_main_server() {
+    let main_server_svc =
+        make_service_fn(|_| async { Ok::<_, Infallible>(service_fn(main_server)) });
+    let main_server_addr = SocketAddr::from(([127, 0, 0, 1], PORT));
+    let main_server = Server::bind(&main_server_addr).serve(main_server_svc);
+    if let Err(e) = main_server.await {
+        eprintln!("HTTP server error: {:?}", e);
+    }
+}
+
+async fn wrap_main_https_server() {
+    let main_server_https_addr = SocketAddr::from(([127, 0, 0, 1], HTTPS_PORT));
+    let cert_file = "cli/tests/tls/localhost.crt";
+    let key_file = "cli/tests/tls/localhost.key";
+    let tls_config = get_tls_config(cert_file, key_file)
+        .await
+        .expect("Cannot get TLS config");
+    loop {
+        let tcp = TcpListener::bind(&main_server_https_addr)
             .await
-            .ok()?;
+            .expect("Cannot bind TCP");
+        println!("tls ready");
+        let tls_acceptor = TlsAcceptor::from(tls_config.clone());
+        // Prepare a long-running future stream to accept and serve cients.
+        let incoming_tls_stream = async_stream::stream! {
+      loop {
+          let (socket, _) = tcp.accept().await?;
+          let stream = tls_acceptor.accept(socket);
+          yield stream.await;
+      }
+    }
+            .boxed();
 
-        Some(lsp::CallHierarchyIncomingCall {
-            from: self.from.to_call_hierarchy_item(
-                &target_line_index,
-                language_server,
-                maybe_root_path,
-            ),
-            from_ranges: self
-                .from_spans
-                .iter()
-                .map(|span| span.to_range(&target_line_index))
-                .collect(),
+        let main_server_https_svc = make_service_fn(|_| async {
+            Ok::<_, Infallible>(service_fn(main_server))
+        });
+        let main_server_https = Server::builder(HyperAcceptor {
+            acceptor: incoming_tls_stream,
         })
-    }
-}
+            .serve(main_server_https_svc);
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CallHierarchyOutgoingCall {
-    to: CallHierarchyItem,
-    from_spans: Vec<TextSpan>,
-}
-
-impl CallHierarchyOutgoingCall {
-    pub(crate) async fn try_resolve_call_hierarchy_outgoing_call(
-        &self,
-        line_index: &LineIndex,
-        language_server: &mut language_server::Inner,
-        maybe_root_path: Option<&Path>,
-    ) -> Option<lsp::CallHierarchyOutgoingCall> {
-        let target_specifier = resolve_url(&self.to.file).unwrap();
-        let target_line_index = language_server
-            .get_line_index(target_specifier)
-            .await
-            .ok()?;
-
-        Some(lsp::CallHierarchyOutgoingCall {
-            to: self.to.to_call_hierarchy_item(
-                &target_line_index,
-                language_server,
-                maybe_root_path,
-            ),
-            from_ranges: self
-                .from_spans
-                .iter()
-                .map(|span| span.to_range(&line_index))
-                .collect(),
-        })
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CompletionEntryDetails {
-    name: String,
-    kind: ScriptElementKind,
-    kind_modifiers: String,
-    display_parts: Vec<SymbolDisplayPart>,
-    documentation: Option<Vec<SymbolDisplayPart>>,
-    tags: Option<Vec<JsDocTagInfo>>,
-    code_actions: Option<Vec<CodeAction>>,
-    source: Option<Vec<SymbolDisplayPart>>,
-}
-
-impl CompletionEntryDetails {
-    pub fn as_completion_item(
-        &self,
-        original_item: &lsp::CompletionItem,
-    ) -> lsp::CompletionItem {
-        let detail = if original_item.detail.is_some() {
-            original_item.detail.clone()
-        } else if !self.display_parts.is_empty() {
-            Some(replace_links(&display_parts_to_string(&self.display_parts)))
-        } else {
-            None
-        };
-        let documentation = if let Some(parts) = &self.documentation {
-            let mut value = display_parts_to_string(parts);
-            if let Some(tags) = &self.tags {
-                let tag_documentation = tags
-                    .iter()
-                    .map(get_tag_documentation)
-                    .collect::<Vec<String>>()
-                    .join("");
-                value = format!("{}\n\n{}", value, tag_documentation);
-            }
-            Some(lsp::Documentation::MarkupContent(lsp::MarkupContent {
-                kind: lsp::MarkupKind::Markdown,
-                value,
-            }))
-        } else {
-            None
-        };
-        // TODO(@kitsonk) add `self.code_actions`
-        // TODO(@kitsonk) add `use_code_snippet`
-
-        lsp::CompletionItem {
-            data: None,
-            detail,
-            documentation,
-            ..original_item.clone()
+        //continue to prevent TLS error stopping the server
+        if main_server_https.await.is_err() {
+            continue;
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CompletionInfo {
-    entries: Vec<CompletionEntry>,
-    is_global_completion: bool,
-    is_member_completion: bool,
-    is_new_identifier_location: bool,
-    metadata: Option<Value>,
-    optional_replacement_span: Option<TextSpan>,
-}
-
-impl CompletionInfo {
-    pub fn as_completion_response(
-        &self,
-        line_index: &LineIndex,
-        settings: &config::CompletionSettings,
-        specifier: &ModuleSpecifier,
-        position: u32,
-    ) -> lsp::CompletionResponse {
-        let items = self
-            .entries
-            .iter()
-            .map(|entry| {
-                entry
-                    .as_completion_item(line_index, self, settings, specifier, position)
-            })
-            .collect();
-        let is_incomplete = self
-            .metadata
-            .clone()
-            .map(|v| {
-                v.as_object()
-                    .unwrap()
-                    .get("isIncomplete")
-                    .unwrap_or(&json!(false))
-                    .as_bool()
-                    .unwrap()
-            })
-            .unwrap_or(false);
-        lsp::CompletionResponse::List(lsp::CompletionList {
-            is_incomplete,
-            items,
-        })
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CompletionItemData {
-    pub specifier: ModuleSpecifier,
-    pub position: u32,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<Value>,
-    pub use_code_snippet: bool,
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CompletionEntry {
-    name: String,
-    kind: ScriptElementKind,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    kind_modifiers: Option<String>,
-    sort_text: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    insert_text: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    replacement_span: Option<TextSpan>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    has_action: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    source: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    is_recommended: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    is_from_unchecked_file: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    data: Option<Value>,
-}
-
-impl CompletionEntry {
-    fn get_commit_characters(
-        &self,
-        info: &CompletionInfo,
-        settings: &config::CompletionSettings,
-    ) -> Option<Vec<String>> {
-        if info.is_new_identifier_location {
-            return None;
-        }
-
-        let mut commit_characters = vec![];
-        match self.kind {
-            ScriptElementKind::MemberGetAccessorElement
-            | ScriptElementKind::MemberSetAccessorElement
-            | ScriptElementKind::ConstructSignatureElement
-            | ScriptElementKind::CallSignatureElement
-            | ScriptElementKind::IndexSignatureElement
-            | ScriptElementKind::EnumElement
-            | ScriptElementKind::InterfaceElement => {
-                commit_characters.push(".");
-                commit_characters.push(";");
-            }
-            ScriptElementKind::ModuleElement
-            | ScriptElementKind::Alias
-            | ScriptElementKind::ConstElement
-            | ScriptElementKind::LetElement
-            | ScriptElementKind::VariableElement
-            | ScriptElementKind::LocalVariableElement
-            | ScriptElementKind::MemberVariableElement
-            | ScriptElementKind::ClassElement
-            | ScriptElementKind::FunctionElement
-            | ScriptElementKind::MemberFunctionElement
-            | ScriptElementKind::Keyword
-            | ScriptElementKind::ParameterElement => {
-                commit_characters.push(".");
-                commit_characters.push(",");
-                commit_characters.push(";");
-                if !settings.complete_function_calls {
-                    commit_characters.push("(");
-                }
-            }
-            _ => (),
-        }
-
-        if commit_characters.is_empty() {
-            None
-        } else {
-            Some(commit_characters.into_iter().map(String::from).collect())
-        }
+// Use the single-threaded scheduler. The hyper server is used as a point of
+// comparison for the (single-threaded!) benchmarks in cli/bench. We're not
+// comparing apples to apples if we use the default multi-threaded scheduler.
+#[tokio::main(flavor = "current_thread")]
+pub async fn run_all_servers() {
+    if let Some(port) = env::args().nth(1) {
+        return hyper_hello(port.parse::<u16>().unwrap()).await;
     }
 
-    fn get_filter_text(&self) -> Option<String> {
-        // TODO(@kitsonk) this is actually quite a bit more complex.
-        // See `MyCompletionItem.getFilterText` in vscode completion.ts.
-        if self.name.starts_with('#') && self.insert_text.is_none() {
-            return Some(self.name.clone());
-        }
+    let redirect_server_fut = wrap_redirect_server();
+    let double_redirects_server_fut = wrap_double_redirect_server();
+    let inf_redirects_server_fut = wrap_inf_redirect_server();
+    let another_redirect_server_fut = wrap_another_redirect_server();
+    let auth_redirect_server_fut = wrap_auth_redirect_server();
+    let abs_redirect_server_fut = wrap_abs_redirect_server();
 
-        if let Some(insert_text) = &self.insert_text {
-            if insert_text.starts_with("this.") {
-                return None;
-            }
-            if insert_text.starts_with('[') {
-                let re = Regex::new(r#"^\[['"](.+)['"]\]$"#).unwrap();
-                let insert_text = re.replace(insert_text, ".$1").to_string();
-                return Some(insert_text);
-            }
-        }
+    let ws_addr = SocketAddr::from(([127, 0, 0, 1], WS_PORT));
+    let ws_server_fut = run_ws_server(&ws_addr);
+    let wss_addr = SocketAddr::from(([127, 0, 0, 1], WSS_PORT));
+    let wss_server_fut = run_wss_server(&wss_addr);
+    let ws_close_addr = SocketAddr::from(([127, 0, 0, 1], WS_CLOSE_PORT));
+    let ws_close_server_fut = run_ws_close_server(&ws_close_addr);
 
-        self.insert_text.clone()
+    let main_server_fut = wrap_main_server();
+    let main_server_https_fut = wrap_main_https_server();
+
+    let mut server_fut = async {
+        futures::join!(
+      redirect_server_fut,
+      ws_server_fut,
+      wss_server_fut,
+      ws_close_server_fut,
+      another_redirect_server_fut,
+      auth_redirect_server_fut,
+      inf_redirects_server_fut,
+      double_redirects_server_fut,
+      abs_redirect_server_fut,
+      main_server_fut,
+      main_server_https_fut,
+    )
+    }
+        .boxed();
+
+    let mut did_print_ready = false;
+    futures::future::poll_fn(move |cx| {
+        let poll_result = server_fut.poll_unpin(cx);
+        if !replace(&mut did_print_ready, true) {
+            println!("ready");
+        }
+        poll_result
+    })
+        .await;
+}
+
+fn custom_headers(p: &str, body: Vec<u8>) -> Response<Body> {
+    let mut response = Response::new(Body::from(body));
+
+    if p.ends_with("cli/tests/x_deno_warning.js") {
+        response.headers_mut().insert(
+            "Content-Type",
+            HeaderValue::from_static("application/javascript"),
+        );
+        response
+            .headers_mut()
+            .insert("X-Deno-Warning", HeaderValue::from_static("foobar"));
+        return response;
+    }
+    if p.ends_with("cli/tests/053_import_compression/brotli") {
+        response
+            .headers_mut()
+            .insert("Content-Encoding", HeaderValue::from_static("br"));
+        response.headers_mut().insert(
+            "Content-Type",
+            HeaderValue::from_static("application/javascript"),
+        );
+        response
+            .headers_mut()
+            .insert("Content-Length", HeaderValue::from_static("26"));
+        return response;
+    }
+    if p.ends_with("cli/tests/053_import_compression/gziped") {
+        response
+            .headers_mut()
+            .insert("Content-Encoding", HeaderValue::from_static("gzip"));
+        response.headers_mut().insert(
+            "Content-Type",
+            HeaderValue::from_static("application/javascript"),
+        );
+        response
+            .headers_mut()
+            .insert("Content-Length", HeaderValue::from_static("39"));
+        return response;
     }
 
-    pub fn as_completion_item(
-        &self,
-        line_index: &LineIndex,
-        info: &CompletionInfo,
-        settings: &config::CompletionSettings,
-        specifier: &ModuleSpecifier,
-        position: u32,
-    ) -> lsp::CompletionItem {
-        let mut label = self.name.clone();
-        let mut kind: Option<lsp::CompletionItemKind> =
-            Some(self.kind.clone().into());
+    if p.contains("cli/tests/encoding/") {
+        let charset = p
+            .split_terminator('/')
+            .last()
+            .unwrap()
+            .trim_end_matches(".ts");
 
-        let sort_text = if self.source.is_some() {
-            Some(format!("\u{ffff}{}", self.sort_text))
-        } else {
-            Some(self.sort_text.clone())
-        };
+        response.headers_mut().insert(
+            "Content-Type",
+            HeaderValue::from_str(
+                &format!("application/typescript;charset={}", charset)[..],
+            )
+                .unwrap(),
+        );
+        return response;
+    }
 
-        let preselect = self.is_recommended;
-        let use_code_snippet = settings.complete_function_calls
-            && (kind == Some(lsp::CompletionItemKind::Function)
-            || kind == Some(lsp::CompletionItemKind::Method));
-        // TODO(@kitsonk) missing from types: https://github.com/gluon-lang/lsp-types/issues/204
-        let _commit_characters = self.get_commit_characters(info, settings);
-        let mut insert_text = self.insert_text.clone();
-        let range = self.replacement_span.clone();
-        let mut filter_text = self.get_filter_text();
-        let mut tags = None;
-        let mut detail = None;
+    let content_type = if p.contains(".t1.") {
+        Some("text/typescript")
+    } else if p.contains(".t2.") {
+        Some("video/vnd.dlna.mpeg-tts")
+    } else if p.contains(".t3.") {
+        Some("video/mp2t")
+    } else if p.contains(".t4.") {
+        Some("application/x-typescript")
+    } else if p.contains(".j1.") {
+        Some("text/javascript")
+    } else if p.contains(".j2.") {
+        Some("application/ecmascript")
+    } else if p.contains(".j3.") {
+        Some("text/ecmascript")
+    } else if p.contains(".j4.") {
+        Some("application/x-javascript")
+    } else if p.contains("form_urlencoded") {
+        Some("application/x-www-form-urlencoded")
+    } else if p.contains("unknown_ext") || p.contains("no_ext") {
+        Some("text/typescript")
+    } else if p.contains("mismatch_ext") || p.contains("no_js_ext") {
+        Some("text/javascript")
+    } else if p.ends_with(".ts") || p.ends_with(".tsx") {
+        Some("application/typescript")
+    } else if p.ends_with(".js") || p.ends_with(".jsx") {
+        Some("application/javascript")
+    } else if p.ends_with(".json") {
+        Some("application/json")
+    } else {
+        None
+    };
 
-        if let Some(kind_modifiers) = &self.kind_modifiers {
-            let kind_modifiers = parse_kind_modifier(kind_modifiers);
-            if kind_modifiers.contains("optional") {
-                if insert_text.is_none() {
-                    insert_text = Some(label.clone());
-                }
-                if filter_text.is_none() {
-                    filter_text = Some(label.clone());
-                }
-                label += "?";
-            }
-            if kind_modifiers.contains("deprecated") {
-                tags = Some(vec![lsp::CompletionItemTag::Deprecated]);
-            }
-            if kind_modifiers.contains("color") {
-                kind = Some(lsp::CompletionItemKind::Color);
-            }
-            if self.kind == ScriptElementKind::ScriptElement {
-                for ext_modifier in FILE_EXTENSION_KIND_MODIFIERS {
-                    if kind_modifiers.contains(ext_modifier) {
-                        detail = if self.name.to_lowercase().ends_with(ext_modifier) {
-                            Some(self.name.clone())
-                        } else {
-                            Some(format!("{}{}", self.name, ext_modifier))
-                        };
+    if let Some(t) = content_type {
+        response
+            .headers_mut()
+            .insert("Content-Type", HeaderValue::from_str(t).unwrap());
+        return response;
+    }
+
+    response
+}
+
+#[derive(Default)]
+struct HttpServerCount {
+    count: usize,
+    test_server: Option<Child>,
+}
+
+impl HttpServerCount {
+    fn inc(&mut self) {
+        self.count += 1;
+        if self.test_server.is_none() {
+            assert_eq!(self.count, 1);
+
+            println!("test_server starting...");
+            let mut test_server = Command::new(test_server_path())
+                .current_dir(root_path())
+                .stdout(Stdio::piped())
+                .spawn()
+                .expect("failed to execute test_server");
+            let stdout = test_server.stdout.as_mut().unwrap();
+            use std::io::{BufRead, BufReader};
+            let lines = BufReader::new(stdout).lines();
+            let mut ready = false;
+            let mut tls_ready = false;
+            for maybe_line in lines {
+                if let Ok(line) = maybe_line {
+                    if line.starts_with("ready") {
+                        ready = true;
+                    }
+                    if line.starts_with("tls ready") {
+                        tls_ready = true;
+                    }
+                    if ready && tls_ready {
                         break;
                     }
+                } else {
+                    panic!("{}", maybe_line.unwrap_err());
                 }
             }
-        }
-
-        let text_edit =
-            if let (Some(text_span), Some(new_text)) = (range, &insert_text) {
-                let range = text_span.to_range(line_index);
-                let insert_replace_edit = lsp::InsertReplaceEdit {
-                    new_text: new_text.clone(),
-                    insert: range,
-                    replace: range,
-                };
-                Some(insert_replace_edit.into())
-            } else {
-                None
-            };
-
-        let tsc = CompletionItemData {
-            specifier: specifier.clone(),
-            position,
-            name: self.name.clone(),
-            source: self.source.clone(),
-            data: self.data.clone(),
-            use_code_snippet,
-        };
-
-        lsp::CompletionItem {
-            label,
-            kind,
-            sort_text,
-            preselect,
-            text_edit,
-            filter_text,
-            insert_text,
-            detail,
-            tags,
-            data: Some(json!({
-        "tsc": tsc,
-      })),
-            ..Default::default()
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub enum OutliningSpanKind {
-    #[serde(rename = "comment")]
-    Comment,
-    #[serde(rename = "region")]
-    Region,
-    #[serde(rename = "code")]
-    Code,
-    #[serde(rename = "imports")]
-    Imports,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OutliningSpan {
-    text_span: TextSpan,
-    hint_span: TextSpan,
-    banner_text: String,
-    auto_collapse: bool,
-    kind: OutliningSpanKind,
-}
-
-const FOLD_END_PAIR_CHARACTERS: &[u8] = &[b'}', b']', b')', b'`'];
-
-impl OutliningSpan {
-    pub fn to_folding_range(
-        &self,
-        line_index: &LineIndex,
-        content: &[u8],
-        line_folding_only: bool,
-    ) -> lsp::FoldingRange {
-        let range = self.text_span.to_range(line_index);
-        lsp::FoldingRange {
-            start_line: range.start.line,
-            start_character: if line_folding_only {
-                None
-            } else {
-                Some(range.start.character)
-            },
-            end_line: self.adjust_folding_end_line(
-                &range,
-                line_index,
-                content,
-                line_folding_only,
-            ),
-            end_character: if line_folding_only {
-                None
-            } else {
-                Some(range.end.character)
-            },
-            kind: self.get_folding_range_kind(&self.kind),
+            self.test_server = Some(test_server);
         }
     }
 
-    fn adjust_folding_end_line(
-        &self,
-        range: &lsp::Range,
-        line_index: &LineIndex,
-        content: &[u8],
-        line_folding_only: bool,
-    ) -> u32 {
-        if line_folding_only && range.end.line > 0 && range.end.character > 0 {
-            let offset_end: usize = line_index.offset(range.end).unwrap().into();
-            let fold_end_char = content[offset_end - 1];
-            if FOLD_END_PAIR_CHARACTERS.contains(&fold_end_char) {
-                return cmp::max(range.end.line - 1, range.start.line);
+    fn dec(&mut self) {
+        assert!(self.count > 0);
+        self.count -= 1;
+        if self.count == 0 {
+            let mut test_server = self.test_server.take().unwrap();
+            match test_server.try_wait() {
+                Ok(None) => {
+                    test_server.kill().expect("failed to kill test_server");
+                    let _ = test_server.wait();
+                }
+                Ok(Some(status)) => {
+                    panic!("test_server exited unexpectedly {}", status)
+                }
+                Err(e) => panic!("test_server error: {}", e),
             }
         }
-
-        range.end.line
-    }
-
-    fn get_folding_range_kind(
-        &self,
-        span_kind: &OutliningSpanKind,
-    ) -> Option<lsp::FoldingRangeKind> {
-        match span_kind {
-            OutliningSpanKind::Comment => Some(lsp::FoldingRangeKind::Comment),
-            OutliningSpanKind::Region => Some(lsp::FoldingRangeKind::Region),
-            OutliningSpanKind::Imports => Some(lsp::FoldingRangeKind::Imports),
-            _ => None,
-        }
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignatureHelpItems {
-    items: Vec<SignatureHelpItem>,
-    applicable_span: TextSpan,
-    selected_item_index: u32,
-    argument_index: u32,
-    argument_count: u32,
-}
-
-impl SignatureHelpItems {
-    pub fn into_signature_help(self) -> lsp::SignatureHelp {
-        lsp::SignatureHelp {
-            signatures: self
-                .items
-                .into_iter()
-                .map(|item| item.into_signature_information())
-                .collect(),
-            active_parameter: Some(self.argument_index),
-            active_signature: Some(self.selected_item_index),
-        }
+impl Drop for HttpServerCount {
+    fn drop(&mut self) {
+        assert_eq!(self.count, 0);
+        assert!(self.test_server.is_none());
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignatureHelpItem {
-    is_variadic: bool,
-    prefix_display_parts: Vec<SymbolDisplayPart>,
-    suffix_display_parts: Vec<SymbolDisplayPart>,
-    separator_display_parts: Vec<SymbolDisplayPart>,
-    parameters: Vec<SignatureHelpParameter>,
-    documentation: Vec<SymbolDisplayPart>,
-    tags: Vec<JsDocTagInfo>,
-}
-
-impl SignatureHelpItem {
-    pub fn into_signature_information(self) -> lsp::SignatureInformation {
-        let prefix_text = display_parts_to_string(&self.prefix_display_parts);
-        let params_text = self
-            .parameters
-            .iter()
-            .map(|param| display_parts_to_string(&param.display_parts))
-            .collect::<Vec<String>>()
-            .join(", ");
-        let suffix_text = display_parts_to_string(&self.suffix_display_parts);
-        lsp::SignatureInformation {
-            label: format!("{}{}{}", prefix_text, params_text, suffix_text),
-            documentation: Some(lsp::Documentation::String(display_parts_to_string(
-                &self.documentation,
-            ))),
-            parameters: Some(
-                self
-                    .parameters
-                    .into_iter()
-                    .map(|param| param.into_parameter_information())
-                    .collect(),
-            ),
-            active_parameter: None,
-        }
+fn lock_http_server<'a>() -> MutexGuard<'a, HttpServerCount> {
+    let r = GUARD.lock();
+    if let Err(poison_err) = r {
+        // If panics happened, ignore it. This is for tests.
+        poison_err.into_inner()
+    } else {
+        r.unwrap()
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignatureHelpParameter {
-    name: String,
-    documentation: Vec<SymbolDisplayPart>,
-    display_parts: Vec<SymbolDisplayPart>,
-    is_optional: bool,
-}
+pub struct HttpServerGuard {}
 
-impl SignatureHelpParameter {
-    pub fn into_parameter_information(self) -> lsp::ParameterInformation {
-        lsp::ParameterInformation {
-            label: lsp::ParameterLabel::Simple(display_parts_to_string(
-                &self.display_parts,
-            )),
-            documentation: Some(lsp::Documentation::String(display_parts_to_string(
-                &self.documentation,
-            ))),
-        }
+impl Drop for HttpServerGuard {
+    fn drop(&mut self) {
+        let mut g = lock_http_server();
+        g.dec();
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SelectionRange {
-    text_span: TextSpan,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    parent: Option<Box<SelectionRange>>,
+/// Adds a reference to a shared target/debug/test_server subprocess. When the
+/// last instance of the HttpServerGuard is dropped, the subprocess will be
+/// killed.
+pub fn http_server() -> HttpServerGuard {
+    let mut g = lock_http_server();
+    g.inc();
+    HttpServerGuard {}
 }
 
-impl SelectionRange {
-    pub fn to_selection_range(
-        &self,
-        line_index: &LineIndex,
-    ) -> lsp::SelectionRange {
-        lsp::SelectionRange {
-            range: self.text_span.to_range(line_index),
-            parent: self.parent.as_ref().map(|parent_selection| {
-                Box::new(parent_selection.to_selection_range(line_index))
-            }),
-        }
+/// Helper function to strip ansi codes.
+pub fn strip_ansi_codes(s: &str) -> std::borrow::Cow<str> {
+    STRIP_ANSI_RE.replace_all(s, "")
+}
+
+pub fn run(
+    cmd: &[&str],
+    input: Option<&[&str]>,
+    envs: Option<Vec<(String, String)>>,
+    current_dir: Option<&str>,
+    expect_success: bool,
+) {
+    let mut process_builder = Command::new(cmd[0]);
+    process_builder.args(&cmd[1..]).stdin(Stdio::piped());
+
+    if let Some(dir) = current_dir {
+        process_builder.current_dir(dir);
+    }
+    if let Some(envs) = envs {
+        process_builder.envs(envs);
+    }
+    let mut prog = process_builder.spawn().expect("failed to spawn script");
+    if let Some(lines) = input {
+        let stdin = prog.stdin.as_mut().expect("failed to get stdin");
+        stdin
+            .write_all(lines.join("\n").as_bytes())
+            .expect("failed to write to stdin");
+    }
+    let status = prog.wait().expect("failed to wait on child");
+    if expect_success != status.success() {
+        panic!("Unexpected exit code: {:?}", status.code());
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
-struct Response {
-    id: usize,
-    data: Value,
-}
-
-struct State<'a> {
-    last_id: usize,
-    response: Option<Response>,
-    state_snapshot: StateSnapshot,
-    snapshots: HashMap<(ModuleSpecifier, Cow<'a, str>), String>,
-}
-
-impl<'a> State<'a> {
-    fn new(state_snapshot: StateSnapshot) -> Self {
-        Self {
-            last_id: 1,
-            response: None,
-            state_snapshot,
-            snapshots: HashMap::default(),
-        }
+pub fn run_collect(
+    cmd: &[&str],
+    input: Option<&[&str]>,
+    envs: Option<Vec<(String, String)>>,
+    current_dir: Option<&str>,
+    expect_success: bool,
+) -> (String, String) {
+    let mut process_builder = Command::new(cmd[0]);
+    process_builder
+        .args(&cmd[1..])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(dir) = current_dir {
+        process_builder.current_dir(dir);
     }
+    if let Some(envs) = envs {
+        process_builder.envs(envs);
+    }
+    let mut prog = process_builder.spawn().expect("failed to spawn script");
+    if let Some(lines) = input {
+        let stdin = prog.stdin.as_mut().expect("failed to get stdin");
+        stdin
+            .write_all(lines.join("\n").as_bytes())
+            .expect("failed to write to stdin");
+    }
+    let Output {
+        stdout,
+        stderr,
+        status,
+    } = prog.wait_with_output().expect("failed to wait on child");
+    let stdout = String::from_utf8(stdout).unwrap();
+    let stderr = String::from_utf8(stderr).unwrap();
+    if expect_success != status.success() {
+        eprintln!("stdout: <<<{}>>>", stdout);
+        eprintln!("stderr: <<<{}>>>", stderr);
+        panic!("Unexpected exit code: {:?}", status.code());
+    }
+    (stdout, stderr)
 }
 
-/// If a snapshot is missing from the state cache, add it.
-fn cache_snapshot(
-    state: &mut State,
-    specifier: &ModuleSpecifier,
-    version: String,
-) -> Result<(), AnyError> {
-    if !state
-        .snapshots
-        .contains_key(&(specifier.clone(), version.clone().into()))
-    {
-        let content = if state.state_snapshot.documents.contains_key(specifier) {
-            state
-                .state_snapshot
-                .documents
-                .content(specifier)?
-                .ok_or_else(|| {
-                    anyhow!("Specifier unexpectedly doesn't have content: {}", specifier)
-                })?
-        } else {
-            state.state_snapshot.sources.get_source(specifier).ok_or_else(|| {
-                anyhow!("Specifier (\"{}\") is not an in memory document or on disk resource.", specifier)
-            })?
-        };
-        state
-            .snapshots
-            .insert((specifier.clone(), version.into()), content);
+pub fn run_and_collect_output(
+    expect_success: bool,
+    args: &str,
+    input: Option<Vec<&str>>,
+    envs: Option<Vec<(String, String)>>,
+    need_http_server: bool,
+) -> (String, String) {
+    let mut deno_process_builder = deno_cmd();
+    deno_process_builder
+        .args(args.split_whitespace())
+        .current_dir(&tests_path())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(envs) = envs {
+        deno_process_builder.envs(envs);
     }
+    let _http_guard = if need_http_server {
+        Some(http_server())
+    } else {
+        None
+    };
+    let mut deno = deno_process_builder
+        .spawn()
+        .expect("failed to spawn script");
+    if let Some(lines) = input {
+        let stdin = deno.stdin.as_mut().expect("failed to get stdin");
+        stdin
+            .write_all(lines.join("\n").as_bytes())
+            .expect("failed to write to stdin");
+    }
+    let Output {
+        stdout,
+        stderr,
+        status,
+    } = deno.wait_with_output().expect("failed to wait on child");
+    let stdout = String::from_utf8(stdout).unwrap();
+    let stderr = String::from_utf8(stderr).unwrap();
+    if expect_success != status.success() {
+        eprintln!("stdout: <<<{}>>>", stdout);
+        eprintln!("stderr: <<<{}>>>", stderr);
+        panic!("Unexpected exit code: {:?}", status.code());
+    }
+    (stdout, stderr)
+}
+
+pub fn new_deno_dir() -> TempDir {
+    TempDir::new().expect("tempdir fail")
+}
+
+pub fn deno_cmd() -> Command {
+    let deno_dir = new_deno_dir();
+    deno_cmd_with_deno_dir(deno_dir.path())
+}
+
+pub fn deno_cmd_with_deno_dir(deno_dir: &std::path::Path) -> Command {
+    let e = deno_exe_path();
+    assert!(e.exists());
+    let mut c = Command::new(e);
+    c.env("DENO_DIR", deno_dir);
+    c
+}
+
+pub fn run_powershell_script_file(
+    script_file_path: &str,
+    args: Vec<&str>,
+) -> std::result::Result<(), i64> {
+    let deno_dir = new_deno_dir();
+    let mut command = Command::new("powershell.exe");
+
+    command
+        .env("DENO_DIR", deno_dir.path())
+        .current_dir(root_path())
+        .arg("-file")
+        .arg(script_file_path);
+
+    for arg in args {
+        command.arg(arg);
+    }
+
+    let output = command.output().expect("failed to spawn script");
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    println!("{}", stdout);
+    if !output.status.success() {
+        panic!(
+            "{} executed with failing error code\n{}{}",
+            script_file_path, stdout, stderr
+        );
+    }
+
     Ok(())
 }
 
-// buffer-less json_sync ops
-fn op<F, V, R>(op_fn: F) -> Box<OpFn>
-    where
-        F: Fn(&mut State, V) -> Result<R, AnyError> + 'static,
-        V: de::DeserializeOwned,
-        R: Serialize + 'static,
-{
-    op_sync(move |s, args, _bufs| {
-        let state = s.borrow_mut::<State>();
-        op_fn(state, args)
-    })
+#[derive(Debug, Default)]
+pub struct CheckOutputIntegrationTest {
+    pub args: &'static str,
+    pub output: &'static str,
+    pub input: Option<&'static str>,
+    pub output_str: Option<&'static str>,
+    pub exit_code: i32,
+    pub http_server: bool,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SourceSnapshotArgs {
-    specifier: String,
-    version: String,
-}
+impl CheckOutputIntegrationTest {
+    pub fn run(&self) {
+        let args = self.args.split_whitespace();
+        let root = root_path();
+        let deno_exe = deno_exe_path();
+        println!("root path {}", root.display());
+        println!("deno_exe path {}", deno_exe.display());
 
-/// The language service is dropping a reference to a source file snapshot, and
-/// we can drop our version of that document.
-#[allow(clippy::unnecessary_wraps)]
-fn dispose(
-    state: &mut State,
-    args: SourceSnapshotArgs,
-) -> Result<bool, AnyError> {
-    let mark = state.state_snapshot.performance.mark("op_dispose");
-    let specifier = resolve_url(&args.specifier)?;
-    state.snapshots.remove(&(specifier, args.version.into()));
-    state.state_snapshot.performance.measure(mark);
-    Ok(true)
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GetChangeRangeArgs {
-    specifier: String,
-    old_length: u32,
-    old_version: String,
-    version: String,
-}
-
-/// The language service wants to compare an old snapshot with a new snapshot to
-/// determine what source has changed.
-fn get_change_range(
-    state: &mut State,
-    args: GetChangeRangeArgs,
-) -> Result<Value, AnyError> {
-    let mark = state.state_snapshot.performance.mark("op_get_change_range");
-    let specifier = resolve_url(&args.specifier)?;
-    cache_snapshot(state, &specifier, args.version.clone())?;
-    if let Some(current) = state
-        .snapshots
-        .get(&(specifier.clone(), args.version.clone().into()))
-    {
-        if let Some(prev) = state
-            .snapshots
-            .get(&(specifier, args.old_version.clone().into()))
-        {
-            state.state_snapshot.performance.measure(mark);
-            Ok(text::get_range_change(prev, current))
+        let _http_server_guard = if self.http_server {
+            Some(http_server())
         } else {
-            let new_length = current.encode_utf16().count();
-            state.state_snapshot.performance.measure(mark);
-            // when a local file is opened up in the editor, the compiler might
-            // already have a snapshot of it in memory, and will request it, but we
-            // now are working off in memory versions of the document, and so need
-            // to tell tsc to reset the whole document
-            Ok(json!({
-        "span": {
-          "start": 0,
-          "length": args.old_length,
-        },
-        "newLength": new_length,
-      }))
-        }
-    } else {
-        state.state_snapshot.performance.measure(mark);
-        Err(custom_error(
-            "MissingSnapshot",
-            format!(
-                "The current snapshot version is missing.\n  Args: \"{:?}\"",
-                args
-            ),
-        ))
-    }
-}
-
-fn get_length(
-    state: &mut State,
-    args: SourceSnapshotArgs,
-) -> Result<usize, AnyError> {
-    let mark = state.state_snapshot.performance.mark("op_get_length");
-    let specifier = resolve_url(&args.specifier)?;
-    if let Some(Some(asset)) = state.state_snapshot.assets.get(&specifier) {
-        Ok(asset.length)
-    } else {
-        cache_snapshot(state, &specifier, args.version.clone())?;
-        let content = state
-            .snapshots
-            .get(&(specifier, args.version.into()))
-            .unwrap();
-        state.state_snapshot.performance.measure(mark);
-        Ok(content.encode_utf16().count())
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GetTextArgs {
-    specifier: String,
-    version: String,
-    start: usize,
-    end: usize,
-}
-
-fn get_text(state: &mut State, args: GetTextArgs) -> Result<String, AnyError> {
-    let mark = state.state_snapshot.performance.mark("op_get_text");
-    let specifier = resolve_url(&args.specifier)?;
-    let content =
-        if let Some(Some(content)) = state.state_snapshot.assets.get(&specifier) {
-            content.text.clone()
-        } else {
-            cache_snapshot(state, &specifier, args.version.clone())?;
-            state
-                .snapshots
-                .get(&(specifier, args.version.into()))
-                .unwrap()
-                .clone()
+            None
         };
-    state.state_snapshot.performance.measure(mark);
-    Ok(text::slice(&content, args.start..args.end).to_string())
-}
 
-fn resolve(
-    state: &mut State,
-    args: ResolveArgs,
-) -> Result<Vec<Option<(String, String)>>, AnyError> {
-    let mark = state.state_snapshot.performance.mark("op_resolve");
-    let mut resolved = Vec::new();
-    let referrer = resolve_url(&args.base)?;
-    let sources = &mut state.state_snapshot.sources;
+        let (mut reader, writer) = pipe().unwrap();
+        let tests_dir = root.join("cli").join("tests");
+        let mut command = deno_cmd();
+        println!("deno_exe args {}", self.args);
+        println!("deno_exe tests path {:?}", &tests_dir);
+        command.args(args);
+        command.current_dir(&tests_dir);
+        command.stdin(Stdio::piped());
+        let writer_clone = writer.try_clone().unwrap();
+        command.stderr(writer_clone);
+        command.stdout(writer);
 
-    if state.state_snapshot.documents.contains_key(&referrer) {
-        if let Some(dependencies) =
-        state.state_snapshot.documents.dependencies(&referrer)
-        {
-            for specifier in &args.specifiers {
-                if specifier.starts_with("asset:///") {
-                    resolved.push(Some((
-                        specifier.clone(),
-                        MediaType::from(specifier).as_ts_extension().into(),
-                    )))
-                } else if let Some(dependency) = dependencies.get(specifier) {
-                    let resolved_import =
-                        if let Some(resolved_import) = &dependency.maybe_type {
-                            resolved_import.clone()
-                        } else if let Some(resolved_import) = &dependency.maybe_code {
-                            resolved_import.clone()
-                        } else {
-                            ResolvedDependency::Err(ResolvedDependencyErr::Missing)
-                        };
-                    if let ResolvedDependency::Resolved(resolved_specifier) =
-                    resolved_import
-                    {
-                        if state
-                            .state_snapshot
-                            .documents
-                            .contains_key(&resolved_specifier)
-                        {
-                            let media_type = MediaType::from(&resolved_specifier);
-                            resolved.push(Some((
-                                resolved_specifier.to_string(),
-                                media_type.as_ts_extension().into(),
-                            )));
-                        } else if sources.contains_key(&resolved_specifier) {
-                            let media_type = if let Some(media_type) =
-                            sources.get_media_type(&resolved_specifier)
-                            {
-                                media_type
-                            } else {
-                                MediaType::from(&resolved_specifier)
-                            };
-                            resolved.push(Some((
-                                resolved_specifier.to_string(),
-                                media_type.as_ts_extension().into(),
-                            )));
-                        } else {
-                            resolved.push(None);
-                        }
-                    } else {
-                        resolved.push(None);
-                    }
+        let mut process = command.spawn().expect("failed to execute process");
+
+        if let Some(input) = self.input {
+            let mut p_stdin = process.stdin.take().unwrap();
+            write!(p_stdin, "{}", input).unwrap();
+        }
+
+        // Very important when using pipes: This parent process is still
+        // holding its copies of the write ends, and we have to close them
+        // before we read, otherwise the read end will never report EOF. The
+        // Command object owns the writers now, and dropping it closes them.
+        drop(command);
+
+        let mut actual = String::new();
+        reader.read_to_string(&mut actual).unwrap();
+
+        let status = process.wait().expect("failed to finish process");
+
+        if let Some(exit_code) = status.code() {
+            if self.exit_code != exit_code {
+                println!("OUTPUT\n{}\nOUTPUT", actual);
+                panic!(
+                    "bad exit code, expected: {:?}, actual: {:?}",
+                    self.exit_code, exit_code
+                );
+            }
+        } else {
+            #[cfg(unix)]
+                {
+                    use std::os::unix::process::ExitStatusExt;
+                    let signal = status.signal().unwrap();
+                    println!("OUTPUT\n{}\nOUTPUT", actual);
+                    panic!(
+                        "process terminated by signal, expected exit code: {:?}, actual signal: {:?}",
+                        self.exit_code, signal
+                    );
                 }
-            }
+            #[cfg(not(unix))]
+                {
+                    println!("OUTPUT\n{}\nOUTPUT", actual);
+                    panic!("process terminated without status code on non unix platform, expected exit code: {:?}", self.exit_code);
+                }
         }
-    } else if sources.contains_key(&referrer) {
-        for specifier in &args.specifiers {
-            if let Some((resolved_specifier, media_type)) =
-            sources.resolve_import(specifier, &referrer)
-            {
-                resolved.push(Some((
-                    resolved_specifier.to_string(),
-                    media_type.as_ts_extension().into(),
-                )));
-            } else {
-                resolved.push(None);
-            }
-        }
-    } else {
-        state.state_snapshot.performance.measure(mark);
-        return Err(custom_error(
-            "NotFound",
-            format!(
-                "the referring ({}) specifier is unexpectedly missing",
-                referrer
-            ),
-        ));
-    }
 
-    state.state_snapshot.performance.measure(mark);
-    Ok(resolved)
-}
+        actual = strip_ansi_codes(&actual).to_string();
 
-#[allow(clippy::unnecessary_wraps)]
-fn respond(state: &mut State, args: Response) -> Result<bool, AnyError> {
-    state.response = Some(args);
-    Ok(true)
-}
-
-#[allow(clippy::unnecessary_wraps)]
-fn script_names(
-    state: &mut State,
-    _args: Value,
-) -> Result<Vec<ModuleSpecifier>, AnyError> {
-    Ok(
-        state
-            .state_snapshot
-            .documents
-            .open_specifiers()
-            .into_iter()
-            .cloned()
-            .collect(),
-    )
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ScriptVersionArgs {
-    specifier: String,
-}
-
-fn script_version(
-    state: &mut State,
-    args: ScriptVersionArgs,
-) -> Result<Option<String>, AnyError> {
-    let mark = state.state_snapshot.performance.mark("op_script_version");
-    let specifier = resolve_url(&args.specifier)?;
-    if specifier.scheme() == "asset" {
-        return if state.state_snapshot.assets.contains_key(&specifier) {
-            Ok(Some("1".to_string()))
+        let expected = if let Some(s) = self.output_str {
+            s.to_owned()
         } else {
-            Ok(None)
+            let output_path = tests_dir.join(self.output);
+            println!("output path {}", output_path.display());
+            std::fs::read_to_string(output_path).expect("cannot read output")
         };
-    } else if let Some(version) =
-    state.state_snapshot.documents.version(&specifier)
-    {
-        return Ok(Some(version.to_string()));
+
+        if !wildcard_match(&expected, &actual) {
+            println!("OUTPUT\n{}\nOUTPUT", actual);
+            println!("EXPECTED\n{}\nEXPECTED", expected);
+            panic!("pattern match failed");
+        }
+    }
+}
+
+pub fn wildcard_match(pattern: &str, s: &str) -> bool {
+    pattern_match(pattern, s, "[WILDCARD]")
+}
+
+pub fn pattern_match(pattern: &str, s: &str, wildcard: &str) -> bool {
+    // Normalize line endings
+    let mut s = s.replace("\r\n", "\n");
+    let pattern = pattern.replace("\r\n", "\n");
+
+    if pattern == wildcard {
+        return true;
+    }
+
+    let parts = pattern.split(wildcard).collect::<Vec<&str>>();
+    if parts.len() == 1 {
+        return pattern == s;
+    }
+
+    if !s.starts_with(parts[0]) {
+        return false;
+    }
+
+    // If the first line of the pattern is just a wildcard the newline character
+    // needs to be pre-pended so it can safely match anything or nothing and
+    // continue matching.
+    if pattern.lines().next() == Some(wildcard) {
+        s.insert(0, '\n');
+    }
+
+    let mut t = s.split_at(parts[0].len());
+
+    for (i, part) in parts.iter().enumerate() {
+        if i == 0 {
+            continue;
+        }
+        dbg!(part, i);
+        if i == parts.len() - 1 && (part.is_empty() || *part == "\n") {
+            dbg!("exit 1 true", i);
+            return true;
+        }
+        if let Some(found) = t.1.find(*part) {
+            dbg!("found ", found);
+            t = t.1.split_at(found + part.len());
+        } else {
+            dbg!("exit false ", i);
+            return false;
+        }
+    }
+
+    dbg!("end ", t.1.len());
+    t.1.is_empty()
+}
+
+/// Kind of reflects `itest!()`. Note that the pty's output (which also contains
+/// stdin content) is compared against the content of the `output` path.
+#[cfg(unix)]
+pub fn test_pty(args: &str, output_path: &str, input: &[u8]) {
+    use pty::fork::Fork;
+
+    let tests_path = tests_path();
+    let fork = Fork::from_ptmx().unwrap();
+    if let Ok(mut master) = fork.is_parent() {
+        let mut output_actual = String::new();
+        master.write_all(input).unwrap();
+        master.read_to_string(&mut output_actual).unwrap();
+        fork.wait().unwrap();
+
+        let output_expected =
+            std::fs::read_to_string(tests_path.join(output_path)).unwrap();
+        if !wildcard_match(&output_expected, &output_actual) {
+            println!("OUTPUT\n{}\nOUTPUT", output_actual);
+            println!("EXPECTED\n{}\nEXPECTED", output_expected);
+            panic!("pattern match failed");
+        }
     } else {
-        let sources = &mut state.state_snapshot.sources;
-        if let Some(version) = sources.get_script_version(&specifier) {
-            return Ok(Some(version));
+        deno_cmd()
+            .current_dir(tests_path)
+            .env("NO_COLOR", "1")
+            .args(args.split_whitespace())
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
+    }
+}
+
+pub struct WrkOutput {
+    pub latency: f64,
+    pub requests: u64,
+}
+
+pub fn parse_wrk_output(output: &str) -> WrkOutput {
+    lazy_static! {
+    static ref REQUESTS_RX: Regex =
+      Regex::new(r"Requests/sec:\s+(\d+)").unwrap();
+    static ref LATENCY_RX: Regex =
+      Regex::new(r"\s+99%(?:\s+(\d+.\d+)([a-z]+))").unwrap();
+  }
+
+    let mut requests = None;
+    let mut latency = None;
+
+    for line in output.lines() {
+        if requests == None {
+            if let Some(cap) = REQUESTS_RX.captures(line) {
+                requests =
+                    Some(str::parse::<u64>(cap.get(1).unwrap().as_str()).unwrap());
+            }
+        }
+        if latency == None {
+            if let Some(cap) = LATENCY_RX.captures(line) {
+                let time = cap.get(1).unwrap();
+                let unit = cap.get(2).unwrap();
+
+                latency = Some(
+                    str::parse::<f64>(time.as_str()).unwrap()
+                        * match unit.as_str() {
+                        "ms" => 1.0,
+                        "us" => 0.001,
+                        "s" => 1000.0,
+                        _ => unreachable!(),
+                    },
+                );
+            }
         }
     }
 
-    state.state_snapshot.performance.measure(mark);
-    Ok(None)
+    WrkOutput {
+        requests: requests.unwrap(),
+        latency: latency.unwrap(),
+    }
 }
 
-/// Create and setup a JsRuntime based on a snapshot. It is expected that the
-/// supplied snapshot is an isolate that contains the TypeScript language
-/// server.
-pub fn start(debug: bool) -> Result<JsRuntime, AnyError> {
-    let mut runtime = JsRuntime::new(RuntimeOptions {
-        startup_snapshot: Some(tsc::compiler_snapshot()),
-        ..Default::default()
-    });
+#[derive(Debug, Clone, Serialize)]
+pub struct StraceOutput {
+    pub percent_time: f64,
+    pub seconds: f64,
+    pub usecs_per_call: Option<u64>,
+    pub calls: u64,
+    pub errors: u64,
+}
 
-    {
-        let op_state = runtime.op_state();
-        let mut op_state = op_state.borrow_mut();
-        op_state.put(State::new(StateSnapshot::default()));
+pub fn parse_strace_output(output: &str) -> HashMap<String, StraceOutput> {
+    let mut summary = HashMap::new();
+
+    // Filter out non-relevant lines. See the error log at
+    // https://github.com/denoland/deno/pull/3715/checks?check_run_id=397365887
+    // This is checked in testdata/strace_summary2.out
+    let mut lines = output
+        .lines()
+        .filter(|line| !line.is_empty() && !line.contains("detached ..."));
+    let count = lines.clone().count();
+
+    if count < 4 {
+        return summary;
     }
 
-    runtime.register_op("op_dispose", op(dispose));
-    runtime.register_op("op_get_change_range", op(get_change_range));
-    runtime.register_op("op_get_length", op(get_length));
-    runtime.register_op("op_get_text", op(get_text));
-    runtime.register_op("op_resolve", op(resolve));
-    runtime.register_op("op_respond", op(respond));
-    runtime.register_op("op_script_names", op(script_names));
-    runtime.register_op("op_script_version", op(script_version));
-    runtime.sync_ops_cache();
+    let total_line = lines.next_back().unwrap();
+    lines.next_back(); // Drop separator
+    let data_lines = lines.skip(2);
 
-    let init_config = json!({ "debug": debug });
-    let init_src = format!("globalThis.serverInit({});", init_config);
+    for line in data_lines {
+        let syscall_fields = line.split_whitespace().collect::<Vec<_>>();
+        let len = syscall_fields.len();
+        let syscall_name = syscall_fields.last().unwrap();
 
-    runtime.execute("[native code]", &init_src)?;
-    Ok(runtime)
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "kebab-case")]
-#[allow(dead_code)]
-pub enum QuotePreference {
-    Auto,
-    Double,
-    Single,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "kebab-case")]
-#[allow(dead_code)]
-pub enum ImportModuleSpecifierPreference {
-    Auto,
-    Relative,
-    NonRelative,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "kebab-case")]
-#[allow(dead_code)]
-pub enum ImportModuleSpecifierEnding {
-    Auto,
-    Minimal,
-    Index,
-    Js,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "kebab-case")]
-#[allow(dead_code)]
-pub enum IncludePackageJsonAutoImports {
-    Auto,
-    On,
-    Off,
-}
-
-#[derive(Debug, Default, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetCompletionsAtPositionOptions {
-    #[serde(flatten)]
-    pub user_preferences: UserPreferences,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trigger_character: Option<String>,
-}
-
-#[derive(Debug, Default, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct UserPreferences {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub disable_suggestions: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub quote_preference: Option<QuotePreference>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub include_completions_for_module_exports: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub include_automatic_optional_chain_completions: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub include_completions_with_insert_text: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub import_module_specifier_preference:
-    Option<ImportModuleSpecifierPreference>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub import_module_specifier_ending: Option<ImportModuleSpecifierEnding>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub allow_text_changes_in_new_files: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub provide_prefix_and_suffix_text_for_rename: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub include_package_json_auto_imports: Option<IncludePackageJsonAutoImports>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub provide_refactor_not_applicable_reason: Option<bool>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignatureHelpItemsOptions {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trigger_reason: Option<SignatureHelpTriggerReason>,
-}
-
-#[derive(Debug, Serialize)]
-pub enum SignatureHelpTriggerKind {
-    #[serde(rename = "characterTyped")]
-    CharacterTyped,
-    #[serde(rename = "invoked")]
-    Invoked,
-    #[serde(rename = "retrigger")]
-    Retrigger,
-}
-
-impl From<lsp::SignatureHelpTriggerKind> for SignatureHelpTriggerKind {
-    fn from(kind: lsp::SignatureHelpTriggerKind) -> Self {
-        match kind {
-            lsp::SignatureHelpTriggerKind::Invoked => Self::Invoked,
-            lsp::SignatureHelpTriggerKind::TriggerCharacter => Self::CharacterTyped,
-            lsp::SignatureHelpTriggerKind::ContentChange => Self::Retrigger,
+        if (5..=6).contains(&len) {
+            summary.insert(
+                syscall_name.to_string(),
+                StraceOutput {
+                    percent_time: str::parse::<f64>(syscall_fields[0]).unwrap(),
+                    seconds: str::parse::<f64>(syscall_fields[1]).unwrap(),
+                    usecs_per_call: Some(str::parse::<u64>(syscall_fields[2]).unwrap()),
+                    calls: str::parse::<u64>(syscall_fields[3]).unwrap(),
+                    errors: if syscall_fields.len() < 6 {
+                        0
+                    } else {
+                        str::parse::<u64>(syscall_fields[4]).unwrap()
+                    },
+                },
+            );
         }
     }
+
+    let total_fields = total_line.split_whitespace().collect::<Vec<_>>();
+    summary.insert(
+        "total".to_string(),
+        StraceOutput {
+            percent_time: str::parse::<f64>(total_fields[0]).unwrap(),
+            seconds: str::parse::<f64>(total_fields[1]).unwrap(),
+            usecs_per_call: None,
+            calls: str::parse::<u64>(total_fields[2]).unwrap(),
+            errors: str::parse::<u64>(total_fields[3]).unwrap(),
+        },
+    );
+
+    summary
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignatureHelpTriggerReason {
-    pub kind: SignatureHelpTriggerKind,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trigger_character: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetCompletionDetailsArgs {
-    pub specifier: ModuleSpecifier,
-    pub position: u32,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<Value>,
-}
-
-impl From<CompletionItemData> for GetCompletionDetailsArgs {
-    fn from(item_data: CompletionItemData) -> Self {
-        Self {
-            specifier: item_data.specifier,
-            position: item_data.position,
-            name: item_data.name,
-            source: item_data.source,
-            data: item_data.data,
+pub fn parse_max_mem(output: &str) -> Option<u64> {
+    // Takes the output from "time -v" as input and extracts the 'maximum
+    // resident set size' and returns it in bytes.
+    for line in output.lines() {
+        if line
+            .to_lowercase()
+            .contains("maximum resident set size (kbytes)")
+        {
+            let value = line.split(": ").nth(1).unwrap();
+            return Some(str::parse::<u64>(value).unwrap() * 1024);
         }
     }
-}
 
-/// Methods that are supported by the Language Service in the compiler isolate.
-#[derive(Debug)]
-pub enum RequestMethod {
-    /// Configure the compilation settings for the server.
-    Configure(TsConfig),
-    /// Get rename locations at a given position.
-    FindRenameLocations((ModuleSpecifier, u32, bool, bool, bool)),
-    /// Retrieve the text of an assets that exists in memory in the isolate.
-    GetAsset(ModuleSpecifier),
-    /// Retrieve code fixes for a range of a file with the provided error codes.
-    GetCodeFixes((ModuleSpecifier, u32, u32, Vec<String>)),
-    /// Get completion information at a given position (IntelliSense).
-    GetCompletions((ModuleSpecifier, u32, GetCompletionsAtPositionOptions)),
-    /// Get details about a specific completion entry.
-    GetCompletionDetails(GetCompletionDetailsArgs),
-    /// Retrieve the combined code fixes for a fix id for a module.
-    GetCombinedCodeFix((ModuleSpecifier, Value)),
-    /// Get declaration information for a specific position.
-    GetDefinition((ModuleSpecifier, u32)),
-    /// Return diagnostics for given file.
-    GetDiagnostics(Vec<ModuleSpecifier>),
-    /// Return document highlights at position.
-    GetDocumentHighlights((ModuleSpecifier, u32, Vec<ModuleSpecifier>)),
-    /// Get semantic highlights information for a particular file.
-    GetEncodedSemanticClassifications((ModuleSpecifier, TextSpan)),
-    /// Get implementation information for a specific position.
-    GetImplementation((ModuleSpecifier, u32)),
-    /// Get a "navigation tree" for a specifier.
-    GetNavigationTree(ModuleSpecifier),
-    /// Get outlining spans for a specifier.
-    GetOutliningSpans(ModuleSpecifier),
-    /// Return quick info at position (hover information).
-    GetQuickInfo((ModuleSpecifier, u32)),
-    /// Get document references for a specific position.
-    GetReferences((ModuleSpecifier, u32)),
-    /// Get signature help items for a specific position.
-    GetSignatureHelpItems((ModuleSpecifier, u32, SignatureHelpItemsOptions)),
-    /// Get a selection range for a specific position.
-    GetSmartSelectionRange((ModuleSpecifier, u32)),
-    /// Get the diagnostic codes that support some form of code fix.
-    GetSupportedCodeFixes,
-    /// Resolve a call hierarchy item for a specific position.
-    PrepareCallHierarchy((ModuleSpecifier, u32)),
-    /// Resolve incoming call hierarchy items for a specific position.
-    ProvideCallHierarchyIncomingCalls((ModuleSpecifier, u32)),
-    /// Resolve outgoing call hierarchy items for a specific position.
-    ProvideCallHierarchyOutgoingCalls((ModuleSpecifier, u32)),
-}
-
-impl RequestMethod {
-    pub fn to_value(&self, id: usize) -> Value {
-        match self {
-            RequestMethod::Configure(config) => json!({
-        "id": id,
-        "method": "configure",
-        "compilerOptions": config,
-      }),
-            RequestMethod::FindRenameLocations((
-                                                   specifier,
-                                                   position,
-                                                   find_in_strings,
-                                                   find_in_comments,
-                                                   provide_prefix_and_suffix_text_for_rename,
-                                               )) => {
-                json!({
-          "id": id,
-          "method": "findRenameLocations",
-          "specifier": specifier,
-          "position": position,
-          "findInStrings": find_in_strings,
-          "findInComments": find_in_comments,
-          "providePrefixAndSuffixTextForRename": provide_prefix_and_suffix_text_for_rename
-        })
-            }
-            RequestMethod::GetAsset(specifier) => json!({
-        "id": id,
-        "method": "getAsset",
-        "specifier": specifier,
-      }),
-            RequestMethod::GetCodeFixes((
-                                            specifier,
-                                            start_pos,
-                                            end_pos,
-                                            error_codes,
-                                        )) => json!({
-        "id": id,
-        "method": "getCodeFixes",
-        "specifier": specifier,
-        "startPosition": start_pos,
-        "endPosition": end_pos,
-        "errorCodes": error_codes,
-      }),
-            RequestMethod::GetCombinedCodeFix((specifier, fix_id)) => json!({
-        "id": id,
-        "method": "getCombinedCodeFix",
-        "specifier": specifier,
-        "fixId": fix_id,
-      }),
-            RequestMethod::GetCompletionDetails(args) => json!({
-        "id": id,
-        "method": "getCompletionDetails",
-        "args": args
-      }),
-            RequestMethod::GetCompletions((specifier, position, preferences)) => {
-                json!({
-          "id": id,
-          "method": "getCompletions",
-          "specifier": specifier,
-          "position": position,
-          "preferences": preferences,
-        })
-            }
-            RequestMethod::GetDefinition((specifier, position)) => json!({
-        "id": id,
-        "method": "getDefinition",
-        "specifier": specifier,
-        "position": position,
-      }),
-            RequestMethod::GetDiagnostics(specifiers) => json!({
-        "id": id,
-        "method": "getDiagnostics",
-        "specifiers": specifiers,
-      }),
-            RequestMethod::GetDocumentHighlights((
-                                                     specifier,
-                                                     position,
-                                                     files_to_search,
-                                                 )) => json!({
-        "id": id,
-        "method": "getDocumentHighlights",
-        "specifier": specifier,
-        "position": position,
-        "filesToSearch": files_to_search,
-      }),
-            RequestMethod::GetEncodedSemanticClassifications((specifier, span)) => {
-                json!({
-          "id": id,
-          "method": "getEncodedSemanticClassifications",
-          "specifier": specifier,
-          "span": span,
-        })
-            }
-            RequestMethod::GetImplementation((specifier, position)) => json!({
-        "id": id,
-        "method": "getImplementation",
-        "specifier": specifier,
-        "position": position,
-      }),
-            RequestMethod::GetNavigationTree(specifier) => json!({
-        "id": id,
-        "method": "getNavigationTree",
-        "specifier": specifier,
-      }),
-            RequestMethod::GetOutliningSpans(specifier) => json!({
-        "id": id,
-        "method": "getOutliningSpans",
-        "specifier": specifier,
-      }),
-            RequestMethod::GetQuickInfo((specifier, position)) => json!({
-        "id": id,
-        "method": "getQuickInfo",
-        "specifier": specifier,
-        "position": position,
-      }),
-            RequestMethod::GetReferences((specifier, position)) => json!({
-        "id": id,
-        "method": "getReferences",
-        "specifier": specifier,
-        "position": position,
-      }),
-            RequestMethod::GetSignatureHelpItems((specifier, position, options)) => {
-                json!({
-          "id": id,
-          "method": "getSignatureHelpItems",
-          "specifier": specifier,
-          "position": position,
-          "options": options,
-        })
-            }
-            RequestMethod::GetSmartSelectionRange((specifier, position)) => {
-                json!({
-          "id": id,
-          "method": "getSmartSelectionRange",
-          "specifier": specifier,
-          "position": position
-        })
-            }
-            RequestMethod::GetSupportedCodeFixes => json!({
-        "id": id,
-        "method": "getSupportedCodeFixes",
-      }),
-            RequestMethod::PrepareCallHierarchy((specifier, position)) => {
-                json!({
-          "id": id,
-          "method": "prepareCallHierarchy",
-          "specifier": specifier,
-          "position": position
-        })
-            }
-            RequestMethod::ProvideCallHierarchyIncomingCalls((
-                                                                 specifier,
-                                                                 position,
-                                                             )) => {
-                json!({
-          "id": id,
-          "method": "provideCallHierarchyIncomingCalls",
-          "specifier": specifier,
-          "position": position
-        })
-            }
-            RequestMethod::ProvideCallHierarchyOutgoingCalls((
-                                                                 specifier,
-                                                                 position,
-                                                             )) => {
-                json!({
-          "id": id,
-          "method": "provideCallHierarchyOutgoingCalls",
-          "specifier": specifier,
-          "position": position
-        })
-            }
-        }
-    }
-}
-
-/// Send a request into a runtime and return the JSON value of the response.
-pub fn request(
-    runtime: &mut JsRuntime,
-    state_snapshot: StateSnapshot,
-    method: RequestMethod,
-) -> Result<Value, AnyError> {
-    let id = {
-        let op_state = runtime.op_state();
-        let mut op_state = op_state.borrow_mut();
-        let state = op_state.borrow_mut::<State>();
-        state.state_snapshot = state_snapshot;
-        state.last_id += 1;
-        state.last_id
-    };
-    let request_params = method.to_value(id);
-    let request_src = format!("globalThis.serverRequest({});", request_params);
-    runtime.execute("[native_code]", &request_src)?;
-
-    let op_state = runtime.op_state();
-    let mut op_state = op_state.borrow_mut();
-    let state = op_state.borrow_mut::<State>();
-
-    if let Some(response) = state.response.clone() {
-        state.response = None;
-        Ok(response.data)
-    } else {
-        Err(custom_error(
-            "RequestError",
-            "The response was not received for the request.",
-        ))
-    }
+    None
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::http_cache::HttpCache;
-    use crate::http_util::HeadersMap;
-    use crate::lsp::analysis;
-    use crate::lsp::documents::DocumentCache;
-    use crate::lsp::sources::Sources;
-    use crate::lsp::text::LineIndex;
-    use std::path::Path;
-    use std::path::PathBuf;
-    use tempfile::TempDir;
 
-    fn mock_state_snapshot(
-        fixtures: &[(&str, &str, i32)],
-        location: &Path,
-    ) -> StateSnapshot {
-        let mut documents = DocumentCache::default();
-        for (specifier, source, version) in fixtures {
-            let specifier =
-                resolve_url(specifier).expect("failed to create specifier");
-            documents.open(specifier.clone(), *version, source);
-            let media_type = MediaType::from(&specifier);
-            if let Ok(parsed_module) =
-            analysis::parse_module(&specifier, source, &media_type)
-            {
-                let (deps, _) = analysis::analyze_dependencies(
-                    &specifier,
-                    &media_type,
-                    &parsed_module,
-                    &None,
-                );
-                documents.set_dependencies(&specifier, Some(deps)).unwrap();
-            }
+    #[test]
+    fn parse_wrk_output_1() {
+        const TEXT: &str = include_str!("./testdata/wrk1.txt");
+        let wrk = parse_wrk_output(TEXT);
+        assert_eq!(wrk.requests, 1837);
+        assert!((wrk.latency - 6.25).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn parse_wrk_output_2() {
+        const TEXT: &str = include_str!("./testdata/wrk2.txt");
+        let wrk = parse_wrk_output(TEXT);
+        assert_eq!(wrk.requests, 53435);
+        assert!((wrk.latency - 6.22).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn parse_wrk_output_3() {
+        const TEXT: &str = include_str!("./testdata/wrk3.txt");
+        let wrk = parse_wrk_output(TEXT);
+        assert_eq!(wrk.requests, 96037);
+        assert!((wrk.latency - 6.36).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn strace_parse_1() {
+        const TEXT: &str = include_str!("./testdata/strace_summary.out");
+        let strace = parse_strace_output(TEXT);
+
+        // first syscall line
+        let munmap = strace.get("munmap").unwrap();
+        assert_eq!(munmap.calls, 60);
+        assert_eq!(munmap.errors, 0);
+
+        // line with errors
+        assert_eq!(strace.get("mkdir").unwrap().errors, 2);
+
+        // last syscall line
+        let prlimit = strace.get("prlimit64").unwrap();
+        assert_eq!(prlimit.calls, 2);
+        assert!((prlimit.percent_time - 0.0).abs() < f64::EPSILON);
+
+        // summary line
+        assert_eq!(strace.get("total").unwrap().calls, 704);
+        assert_eq!(strace.get("total").unwrap().errors, 5);
+    }
+
+    #[test]
+    fn strace_parse_2() {
+        const TEXT: &str = include_str!("./testdata/strace_summary2.out");
+        let strace = parse_strace_output(TEXT);
+
+        // first syscall line
+        let futex = strace.get("futex").unwrap();
+        assert_eq!(futex.calls, 449);
+        assert_eq!(futex.errors, 94);
+
+        // summary line
+        assert_eq!(strace.get("total").unwrap().calls, 821);
+        assert_eq!(strace.get("total").unwrap().errors, 107);
+    }
+
+    #[test]
+    fn test_wildcard_match() {
+        let fixtures = vec![
+            ("foobarbaz", "foobarbaz", true),
+            ("[WILDCARD]", "foobarbaz", true),
+            ("foobar", "foobarbaz", false),
+            ("foo[WILDCARD]baz", "foobarbaz", true),
+            ("foo[WILDCARD]baz", "foobazbar", false),
+            ("foo[WILDCARD]baz[WILDCARD]qux", "foobarbazqatqux", true),
+            ("foo[WILDCARD]", "foobar", true),
+            ("foo[WILDCARD]baz[WILDCARD]", "foobarbazqat", true),
+            // check with different line endings
+            ("foo[WILDCARD]\nbaz[WILDCARD]\n", "foobar\nbazqat\n", true),
+            (
+                "foo[WILDCARD]\nbaz[WILDCARD]\n",
+                "foobar\r\nbazqat\r\n",
+                true,
+            ),
+            (
+                "foo[WILDCARD]\r\nbaz[WILDCARD]\n",
+                "foobar\nbazqat\r\n",
+                true,
+            ),
+            (
+                "foo[WILDCARD]\r\nbaz[WILDCARD]\r\n",
+                "foobar\nbazqat\n",
+                true,
+            ),
+            (
+                "foo[WILDCARD]\r\nbaz[WILDCARD]\r\n",
+                "foobar\r\nbazqat\r\n",
+                true,
+            ),
+        ];
+
+        // Iterate through the fixture lists, testing each one
+        for (pattern, string, expected) in fixtures {
+            let actual = wildcard_match(pattern, string);
+            dbg!(pattern, string, expected);
+            assert_eq!(actual, expected);
         }
-        let sources = Sources::new(location);
-        StateSnapshot {
-            documents,
-            sources,
-            ..Default::default()
+    }
+
+    #[test]
+    fn test_pattern_match() {
+        // foo, bar, baz, qux, quux, quuz, corge, grault, garply, waldo, fred, plugh, xyzzy
+
+        let wildcard = "[BAR]";
+        assert!(pattern_match("foo[BAR]baz", "foobarbaz", wildcard));
+        assert!(!pattern_match("foo[BAR]baz", "foobazbar", wildcard));
+
+        let multiline_pattern = "[BAR]
+foo:
+[BAR]baz[BAR]";
+
+        fn multi_line_builder(input: &str, leading_text: Option<&str>) -> String {
+            // If there is leading text add a newline so it's on it's own line
+            let head = match leading_text {
+                Some(v) => format!("{}\n", v),
+                None => "".to_string(),
+            };
+            format!(
+                "{}foo:
+quuz {} corge
+grault",
+                head, input
+            )
         }
-    }
 
-    fn setup(
-        debug: bool,
-        config: Value,
-        sources: &[(&str, &str, i32)],
-    ) -> (JsRuntime, StateSnapshot, PathBuf) {
-        let temp_dir = TempDir::new().expect("could not create temp dir");
-        let location = temp_dir.path().join("deps");
-        let state_snapshot = mock_state_snapshot(sources, &location);
-        let mut runtime = start(debug).expect("could not start server");
-        let ts_config = TsConfig::new(config);
+        // Validate multi-line string builder
         assert_eq!(
-            request(
-                &mut runtime,
-                state_snapshot.clone(),
-                RequestMethod::Configure(ts_config)
-            )
-                .expect("failed request"),
-            json!(true)
+            "QUUX=qux
+foo:
+quuz BAZ corge
+grault",
+            multi_line_builder("BAZ", Some("QUUX=qux"))
         );
-        (runtime, state_snapshot, location)
+
+        // Correct input & leading line
+        assert!(pattern_match(
+            multiline_pattern,
+            &multi_line_builder("baz", Some("QUX=quux")),
+            wildcard
+        ));
+
+        // Correct input & no leading line
+        assert!(pattern_match(
+            multiline_pattern,
+            &multi_line_builder("baz", None),
+            wildcard
+        ));
+
+        // Incorrect input & leading line
+        assert!(!pattern_match(
+            multiline_pattern,
+            &multi_line_builder("garply", Some("QUX=quux")),
+            wildcard
+        ));
+
+        // Incorrect input & no leading line
+        assert!(!pattern_match(
+            multiline_pattern,
+            &multi_line_builder("garply", None),
+            wildcard
+        ));
     }
 
     #[test]
-    fn test_replace_links() {
-        let actual = replace_links(r"test {@link http://deno.land/x/mod.ts} test");
-        assert_eq!(
-            actual,
-            r"test [http://deno.land/x/mod.ts](http://deno.land/x/mod.ts) test"
-        );
-        let actual =
-            replace_links(r"test {@link http://deno.land/x/mod.ts a link} test");
-        assert_eq!(actual, r"test [a link](http://deno.land/x/mod.ts) test");
-        let actual =
-            replace_links(r"test {@linkcode http://deno.land/x/mod.ts a link} test");
-        assert_eq!(actual, r"test [`a link`](http://deno.land/x/mod.ts) test");
-    }
+    fn max_mem_parse() {
+        const TEXT: &str = include_str!("./testdata/time.out");
+        let size = parse_max_mem(TEXT);
 
-    #[test]
-    fn test_project_configure() {
-        setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "noEmit": true,
-      }),
-            &[],
-        );
-    }
-
-    #[test]
-    fn test_project_reconfigure() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "noEmit": true,
-      }),
-            &[],
-        );
-        let ts_config = TsConfig::new(json!({
-      "target": "esnext",
-      "module": "esnext",
-      "noEmit": true,
-      "lib": ["deno.ns", "deno.worker"]
-    }));
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::Configure(ts_config),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response, json!(true));
-    }
-
-    #[test]
-    fn test_get_diagnostics() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "noEmit": true,
-      }),
-            &[("file:///a.ts", r#"console.log("hello deno");"#, 1)],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(
-            response,
-            json!({
-        "file:///a.ts": [
-          {
-            "start": {
-              "line": 0,
-              "character": 0,
-            },
-            "end": {
-              "line": 0,
-              "character": 7
-            },
-            "fileName": "file:///a.ts",
-            "messageText": "Cannot find name 'console'. Do you need to change your target library? Try changing the `lib` compiler option to include 'dom'.",
-            "sourceLine": "console.log(\"hello deno\");",
-            "category": 1,
-            "code": 2584
-          }
-        ]
-      })
-        );
-    }
-
-    #[test]
-    fn test_get_diagnostics_lib() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "jsx": "react",
-        "lib": ["esnext", "dom", "deno.ns"],
-        "noEmit": true,
-      }),
-            &[("file:///a.ts", r#"console.log(document.location);"#, 1)],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response, json!({ "file:///a.ts": [] }));
-    }
-
-    #[test]
-    fn test_module_resolution() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[(
-                "file:///a.ts",
-                r#"
-        import { B } from "https://deno.land/x/b/mod.ts";
-
-        const b = new B();
-
-        console.log(b);
-      "#,
-                1,
-            )],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response, json!({ "file:///a.ts": [] }));
-    }
-
-    #[test]
-    fn test_bad_module_specifiers() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[(
-                "file:///a.ts",
-                r#"
-        import { A } from ".";
-        "#,
-                1,
-            )],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(
-            response,
-            json!({
-        "file:///a.ts": [{
-          "start": {
-            "line": 1,
-            "character": 8
-          },
-          "end": {
-            "line": 1,
-            "character": 30
-          },
-          "fileName": "file:///a.ts",
-          "messageText": "\'A\' is declared but its value is never read.",
-          "sourceLine": "        import { A } from \".\";",
-          "category": 2,
-          "code": 6133,
-          "reportsUnnecessary": true,
-        }]
-      })
-        );
-    }
-
-    #[test]
-    fn test_remote_modules() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[(
-                "file:///a.ts",
-                r#"
-        import { B } from "https://deno.land/x/b/mod.ts";
-
-        const b = new B();
-
-        console.log(b);
-      "#,
-                1,
-            )],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response, json!({ "file:///a.ts": [] }));
-    }
-
-    #[test]
-    fn test_partial_modules() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[(
-                "file:///a.ts",
-                r#"
-        import {
-          Application,
-          Context,
-          Router,
-          Status,
-        } from "https://deno.land/x/oak@v6.3.2/mod.ts";
-
-        import * as test from
-      "#,
-                1,
-            )],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(
-            response,
-            json!({
-        "file:///a.ts": [{
-          "start": {
-            "line": 1,
-            "character": 8
-          },
-          "end": {
-            "line": 6,
-            "character": 55,
-          },
-          "fileName": "file:///a.ts",
-          "messageText": "All imports in import declaration are unused.",
-          "sourceLine": "        import {",
-          "category": 2,
-          "code": 6192,
-          "reportsUnnecessary": true
-        }, {
-          "start": {
-            "line": 8,
-            "character": 29
-          },
-          "end": {
-            "line": 8,
-            "character": 29
-          },
-          "fileName": "file:///a.ts",
-          "messageText": "Expression expected.",
-          "sourceLine": "        import * as test from",
-          "category": 1,
-          "code": 1109
-        }]
-      })
-        );
-    }
-
-    #[test]
-    fn test_no_debug_failure() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[("file:///a.ts", r#"const url = new URL("b.js", import."#, 1)],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response, json!({}));
-    }
-
-    #[test]
-    fn test_request_asset() {
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[],
-        );
-        let specifier =
-            resolve_url("asset:///lib.esnext.d.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetAsset(specifier),
-        );
-        assert!(result.is_ok());
-        let response: Option<String> =
-            serde_json::from_value(result.unwrap()).unwrap();
-        assert!(response.is_some());
-    }
-
-    #[test]
-    fn test_modify_sources() {
-        let (mut runtime, state_snapshot, location) = setup(
-            true,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[(
-                "file:///a.ts",
-                r#"
-          import * as a from "https://deno.land/x/example/a.ts";
-          if (a.a === "b") {
-            console.log("fail");
-          }
-        "#,
-                1,
-            )],
-        );
-        let cache = HttpCache::new(&location);
-        let specifier_dep =
-            resolve_url("https://deno.land/x/example/a.ts").unwrap();
-        cache
-            .set(
-                &specifier_dep,
-                HeadersMap::default(),
-                b"export const b = \"b\";\n",
-            )
-            .unwrap();
-        let specifier = resolve_url("file:///a.ts").unwrap();
-        let result = request(
-            &mut runtime,
-            state_snapshot.clone(),
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(
-            response,
-            json!({
-        "file:///a.ts": [
-          {
-            "start": {
-              "line": 2,
-              "character": 16,
-            },
-            "end": {
-              "line": 2,
-              "character": 17
-            },
-            "fileName": "file:///a.ts",
-            "messageText": "Property \'a\' does not exist on type \'typeof import(\"https://deno.land/x/example/a\")\'.",
-            "sourceLine": "          if (a.a === \"b\") {",
-            "code": 2339,
-            "category": 1,
-          }
-        ]
-      })
-        );
-        cache
-            .set(
-                &specifier_dep,
-                HeadersMap::default(),
-                b"export const b = \"b\";\n\nexport const a = \"b\";\n",
-            )
-            .unwrap();
-        let specifier = resolve_url("file:///a.ts").unwrap();
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetDiagnostics(vec![specifier]),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(
-            response,
-            json!({
-        "file:///a.ts": []
-      })
-        );
-    }
-
-    #[test]
-    fn test_completion_entry_filter_text() {
-        let fixture = CompletionEntry {
-            kind: ScriptElementKind::MemberVariableElement,
-            name: "['foo']".to_string(),
-            insert_text: Some("['foo']".to_string()),
-            ..Default::default()
-        };
-        let actual = fixture.get_filter_text();
-        assert_eq!(actual, Some(".foo".to_string()));
-    }
-
-    #[test]
-    fn test_completions() {
-        let fixture = r#"
-      import { B } from "https://deno.land/x/b/mod.ts";
-
-      const b = new B();
-
-      console.
-    "#;
-        let line_index = LineIndex::new(fixture);
-        let position = line_index
-            .offset_tsc(lsp::Position {
-                line: 5,
-                character: 16,
-            })
-            .unwrap();
-        let (mut runtime, state_snapshot, _) = setup(
-            false,
-            json!({
-        "target": "esnext",
-        "module": "esnext",
-        "lib": ["deno.ns", "deno.window"],
-        "noEmit": true,
-      }),
-            &[("file:///a.ts", fixture, 1)],
-        );
-        let specifier = resolve_url("file:///a.ts").expect("could not resolve url");
-        let result = request(
-            &mut runtime,
-            state_snapshot.clone(),
-            RequestMethod::GetDiagnostics(vec![specifier.clone()]),
-        );
-        assert!(result.is_ok());
-        let result = request(
-            &mut runtime,
-            state_snapshot.clone(),
-            RequestMethod::GetCompletions((
-                specifier.clone(),
-                position,
-                GetCompletionsAtPositionOptions {
-                    user_preferences: UserPreferences {
-                        include_completions_with_insert_text: Some(true),
-                        ..Default::default()
-                    },
-                    trigger_character: Some(".".to_string()),
-                },
-            )),
-        );
-        assert!(result.is_ok());
-        let response: CompletionInfo =
-            serde_json::from_value(result.unwrap()).unwrap();
-        assert_eq!(response.entries.len(), 20);
-        let result = request(
-            &mut runtime,
-            state_snapshot,
-            RequestMethod::GetCompletionDetails(GetCompletionDetailsArgs {
-                specifier,
-                position,
-                name: "log".to_string(),
-                source: None,
-                data: None,
-            }),
-        );
-        assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(
-            response,
-            json!({
-        "name": "log",
-        "kindModifiers": "declare",
-        "kind": "method",
-        "displayParts": [
-          {
-            "text": "(",
-            "kind": "punctuation"
-          },
-          {
-            "text": "method",
-            "kind": "text"
-          },
-          {
-            "text": ")",
-            "kind": "punctuation"
-          },
-          {
-            "text": " ",
-            "kind": "space"
-          },
-          {
-            "text": "Console",
-            "kind": "interfaceName"
-          },
-          {
-            "text": ".",
-            "kind": "punctuation"
-          },
-          {
-            "text": "log",
-            "kind": "methodName"
-          },
-          {
-            "text": "(",
-            "kind": "punctuation"
-          },
-          {
-            "text": "...",
-            "kind": "punctuation"
-          },
-          {
-            "text": "data",
-            "kind": "parameterName"
-          },
-          {
-            "text": ":",
-            "kind": "punctuation"
-          },
-          {
-            "text": " ",
-            "kind": "space"
-          },
-          {
-            "text": "any",
-            "kind": "keyword"
-          },
-          {
-            "text": "[",
-            "kind": "punctuation"
-          },
-          {
-            "text": "]",
-            "kind": "punctuation"
-          },
-          {
-            "text": ")",
-            "kind": "punctuation"
-          },
-          {
-            "text": ":",
-            "kind": "punctuation"
-          },
-          {
-            "text": " ",
-            "kind": "space"
-          },
-          {
-            "text": "void",
-            "kind": "keyword"
-          }
-        ],
-        "documentation": []
-      })
-        );
+        assert_eq!(size, Some(120380 * 1024));
     }
 }

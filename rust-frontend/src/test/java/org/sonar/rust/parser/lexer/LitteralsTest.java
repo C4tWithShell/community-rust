@@ -186,9 +186,21 @@ public class LitteralsTest {
                 .matches("b\"a\"")
                 .matches("b\"5\"")
                 .matches("b\"a string\"")
+                .matches("b\"a \n" +
+                        "multiline string\"")
                 .matches("b\"\\xff\"")
                 .matches("b\"\"")
                 .matches("b\"\\xEF\\xBB\\xBFconsole.log(\\\"Hello World\\\");\\x0A\"")
+                .matches("b\"--\"")
+                .matches("b\"--boundary\\t \\r\\n\\\n" +
+                        "                    Content-Disposition: form-data; name=\\\"field_1\\\"\\r\\n\\\n" +
+                        "                    \\r\\n\\\n" +
+                        "                    value_1 \\r\\n\\\n" +
+                        "                    \\r\\n--boundary\\r\\n\\\n" +
+                        "                    Content-Disposition: form-data; name=\\\"file\\\"; \\\n" +
+                        "                    filename=\\\"file.bin\\\"\\r\\n\\\n" +
+                        "                    Content-Type: application/octet-stream\\r\\n\\\n" +
+                        "                    \\r\\n\"")
         ;
 
     }
