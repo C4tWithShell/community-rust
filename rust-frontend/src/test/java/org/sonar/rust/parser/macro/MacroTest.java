@@ -244,6 +244,19 @@ public class MacroTest {
                         "      }\n" +
                         "    };\n" +
                         "  );")
+                .matches("macro_rules! itest(\n" +
+                        "  ($name:ident {$( $key:ident: $value:expr,)*})  => {\n" +
+                        "    #[test]\n" +
+                        "    fn $name() {\n" +
+                        "      (util::CheckOutputIntegrationTest {\n" +
+                        "        $(\n" +
+                        "          $key: $value,\n" +
+                        "         )*\n" +
+                        "        .. Default::default()\n" +
+                        "      }).run()\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        ");")
 
 
         ;
