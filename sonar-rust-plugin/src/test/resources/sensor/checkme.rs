@@ -1,1691 +1,752 @@
 // Copyright 2018-2021 the Deno authors. All rights reserved. MIT license.
-// Usage: provide a port as argument to run hyper_hello benchmark server
-// otherwise this starts multiple servers on many ports for test endpoints.
-use futures::FutureExt;
-use futures::Stream;
-use futures::StreamExt;
-use hyper::header::HeaderValue;
-use hyper::server::Server;
-use hyper::service::make_service_fn;
-use hyper::service::service_fn;
-use hyper::Body;
-use hyper::Request;
-use hyper::Response;
-use hyper::StatusCode;
-use lazy_static::lazy_static;
-use os_pipe::pipe;
-use regex::Regex;
-use serde::Serialize;
-use std::collections::HashMap;
-use std::convert::Infallible;
-use std::env;
-use std::io;
-use std::io::Read;
-use std::io::Write;
-use std::mem::replace;
-use std::net::SocketAddr;
-use std::path::PathBuf;
-use std::pin::Pin;
-use std::process::Child;
-use std::process::Command;
-use std::process::Output;
-use std::process::Stdio;
-use std::result::Result;
+
+use crate::media_type::MediaType;
+use crate::tsc_config;
+
+use deno_core::error::AnyError;
+use deno_core::resolve_url_or_path;
+use deno_core::serde_json;
+use deno_core::ModuleSpecifier;
+use std::error::Error;
+use std::fmt;
+use std::ops::Range;
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::sync::MutexGuard;
-use std::task::Context;
-use std::task::Poll;
-use tempfile::TempDir;
-use tokio::net::TcpListener;
-use tokio::net::TcpStream;
-use tokio_rustls::rustls;
-use tokio_rustls::TlsAcceptor;
-use tokio_tungstenite::accept_async;
+use swc_common::chain;
+use swc_common::comments::Comment;
+use swc_common::comments::CommentKind;
+use swc_common::comments::SingleThreadedComments;
+use swc_common::errors::Diagnostic;
+use swc_common::errors::DiagnosticBuilder;
+use swc_common::errors::Emitter;
+use swc_common::errors::Handler;
+use swc_common::errors::HandlerFlags;
+use swc_common::FileName;
+use swc_common::Globals;
+use swc_common::Loc;
+use swc_common::SourceFile;
+use swc_common::SourceMap;
+use swc_common::Span;
+use swc_ecmascript::ast::Module;
+use swc_ecmascript::ast::Program;
+use swc_ecmascript::codegen::text_writer::JsWriter;
+use swc_ecmascript::codegen::Node;
+use swc_ecmascript::dep_graph::analyze_dependencies;
+use swc_ecmascript::dep_graph::DependencyDescriptor;
+use swc_ecmascript::parser::lexer::Lexer;
+use swc_ecmascript::parser::token::Token;
+use swc_ecmascript::parser::EsConfig;
+use swc_ecmascript::parser::JscTarget;
+use swc_ecmascript::parser::StringInput;
+use swc_ecmascript::parser::Syntax;
+use swc_ecmascript::parser::TsConfig;
+use swc_ecmascript::transforms::fixer;
+use swc_ecmascript::transforms::helpers;
+use swc_ecmascript::transforms::hygiene;
+use swc_ecmascript::transforms::pass::Optional;
+use swc_ecmascript::transforms::proposals;
+use swc_ecmascript::transforms::react;
+use swc_ecmascript::transforms::typescript;
+use swc_ecmascript::visit::FoldWith;
 
-#[cfg(unix)]
-pub use pty;
+static TARGET: JscTarget = JscTarget::Es2020;
 
-const PORT: u16 = 4545;
-const TEST_AUTH_TOKEN: &str = "abcdef123456789";
-const REDIRECT_PORT: u16 = 4546;
-const ANOTHER_REDIRECT_PORT: u16 = 4547;
-const DOUBLE_REDIRECTS_PORT: u16 = 4548;
-const INF_REDIRECTS_PORT: u16 = 4549;
-const REDIRECT_ABSOLUTE_PORT: u16 = 4550;
-const AUTH_REDIRECT_PORT: u16 = 4551;
-const HTTPS_PORT: u16 = 5545;
-const WS_PORT: u16 = 4242;
-const WSS_PORT: u16 = 4243;
-const WS_CLOSE_PORT: u16 = 4244;
-
-pub const PERMISSION_VARIANTS: [&str; 5] =
-    ["read", "write", "env", "net", "run"];
-pub const PERMISSION_DENIED_PATTERN: &str = "PermissionDenied";
-
-lazy_static! {
-  // STRIP_ANSI_RE and strip_ansi_codes are lifted from the "console" crate.
-  // Copyright 2017 Armin Ronacher <armin.ronacher@active-4.com>. MIT License.
-  static ref STRIP_ANSI_RE: Regex = Regex::new(
-          r"[\x1b\x9b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]"
-  ).unwrap();
-
-  static ref GUARD: Mutex<HttpServerCount> = Mutex::new(HttpServerCount::default());
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Location {
+    pub filename: String,
+    pub line: usize,
+    pub col: usize,
 }
 
-pub fn root_path() -> PathBuf {
-    PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/.."))
-}
-
-pub fn prebuilt_path() -> PathBuf {
-    third_party_path().join("prebuilt")
-}
-
-pub fn tests_path() -> PathBuf {
-    root_path().join("cli").join("tests")
-}
-
-pub fn wpt_path() -> PathBuf {
-    root_path().join("test_util").join("wpt")
-}
-
-pub fn third_party_path() -> PathBuf {
-    root_path().join("third_party")
-}
-
-pub fn target_dir() -> PathBuf {
-    let current_exe = std::env::current_exe().unwrap();
-    let target_dir = current_exe.parent().unwrap().parent().unwrap();
-    target_dir.into()
-}
-
-pub fn deno_exe_path() -> PathBuf {
-    // Something like /Users/rld/src/deno/target/debug/deps/deno
-    let mut p = target_dir().join("deno");
-    if cfg!(windows) {
-        p.set_extension("exe");
-    }
-    p
-}
-
-pub fn prebuilt_tool_path(tool: &str) -> PathBuf {
-    let mut exe = tool.to_string();
-    exe.push_str(if cfg!(windows) { ".exe" } else { "" });
-    prebuilt_path().join(platform_dir_name()).join(exe)
-}
-
-fn platform_dir_name() -> &'static str {
-    if cfg!(target_os = "linux") {
-        "linux64"
-    } else if cfg!(target_os = "macos") {
-        "mac"
-    } else if cfg!(target_os = "windows") {
-        "win"
-    } else {
-        unreachable!()
-    }
-}
-
-pub fn test_server_path() -> PathBuf {
-    let mut p = target_dir().join("test_server");
-    if cfg!(windows) {
-        p.set_extension("exe");
-    }
-    p
-}
-
-/// Benchmark server that just serves "hello world" responses.
-async fn hyper_hello(port: u16) {
-    println!("hyper hello");
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    let hello_svc = make_service_fn(|_| async move {
-        Ok::<_, Infallible>(service_fn(move |_: Request<Body>| async move {
-            Ok::<_, Infallible>(Response::new(Body::from("Hello World!")))
-        }))
-    });
-
-    let server = Server::bind(&addr).serve(hello_svc);
-    if let Err(e) = server.await {
-        eprintln!("server error: {}", e);
-    }
-}
-
-fn redirect_resp(url: String) -> Response<Body> {
-    let mut redirect_resp = Response::new(Body::empty());
-    *redirect_resp.status_mut() = StatusCode::MOVED_PERMANENTLY;
-    redirect_resp.headers_mut().insert(
-        hyper::header::LOCATION,
-        HeaderValue::from_str(&url[..]).unwrap(),
-    );
-
-    redirect_resp
-}
-
-async fn redirect(req: Request<Body>) -> hyper::Result<Response<Body>> {
-    let p = req.uri().path();
-    assert_eq!(&p[0..1], "/");
-    let url = format!("http://localhost:{}{}", PORT, p);
-
-    Ok(redirect_resp(url))
-}
-
-async fn double_redirects(req: Request<Body>) -> hyper::Result<Response<Body>> {
-    let p = req.uri().path();
-    assert_eq!(&p[0..1], "/");
-    let url = format!("http://localhost:{}{}", REDIRECT_PORT, p);
-
-    Ok(redirect_resp(url))
-}
-
-async fn inf_redirects(req: Request<Body>) -> hyper::Result<Response<Body>> {
-    let p = req.uri().path();
-    assert_eq!(&p[0..1], "/");
-    let url = format!("http://localhost:{}{}", INF_REDIRECTS_PORT, p);
-
-    Ok(redirect_resp(url))
-}
-
-async fn another_redirect(req: Request<Body>) -> hyper::Result<Response<Body>> {
-    let p = req.uri().path();
-    assert_eq!(&p[0..1], "/");
-    let url = format!("http://localhost:{}/cli/tests/subdir{}", PORT, p);
-
-    Ok(redirect_resp(url))
-}
-
-async fn auth_redirect(req: Request<Body>) -> hyper::Result<Response<Body>> {
-    if let Some(auth) = req
-        .headers()
-        .get("authorization")
-        .map(|v| v.to_str().unwrap())
-    {
-        if auth.to_lowercase() == format!("bearer {}", TEST_AUTH_TOKEN) {
-            let p = req.uri().path();
-            assert_eq!(&p[0..1], "/");
-            let url = format!("http://localhost:{}{}", PORT, p);
-            return Ok(redirect_resp(url));
-        }
-    }
-
-    let mut resp = Response::new(Body::empty());
-    *resp.status_mut() = StatusCode::NOT_FOUND;
-    Ok(resp)
-}
-
-async fn run_ws_server(addr: &SocketAddr) {
-    let listener = TcpListener::bind(addr).await.unwrap();
-    while let Ok((stream, _addr)) = listener.accept().await {
-        tokio::spawn(async move {
-            let ws_stream_fut = accept_async(stream);
-
-            let ws_stream = ws_stream_fut.await;
-            if let Ok(ws_stream) = ws_stream {
-                let (tx, rx) = ws_stream.split();
-                rx.forward(tx)
-                    .map(|result| {
-                        if let Err(e) = result {
-                            println!("websocket server error: {:?}", e);
-                        }
-                    })
-                    .await;
-            }
-        });
-    }
-}
-
-async fn run_ws_close_server(addr: &SocketAddr) {
-    let listener = TcpListener::bind(addr).await.unwrap();
-    while let Ok((stream, _addr)) = listener.accept().await {
-        tokio::spawn(async move {
-            let ws_stream_fut = accept_async(stream);
-
-            let ws_stream = ws_stream_fut.await;
-            if let Ok(mut ws_stream) = ws_stream {
-                ws_stream.close(None).await.unwrap();
-            }
-        });
-    }
-}
-
-async fn get_tls_config(
-    cert: &str,
-    key: &str,
-) -> io::Result<Arc<rustls::ServerConfig>> {
-    let mut cert_path = root_path();
-    let mut key_path = root_path();
-    cert_path.push(cert);
-    key_path.push(key);
-
-    let cert_file = std::fs::File::open(cert_path)?;
-    let key_file = std::fs::File::open(key_path)?;
-
-    let mut cert_reader = io::BufReader::new(cert_file);
-    let cert = rustls::internal::pemfile::certs(&mut cert_reader)
-        .expect("Cannot load certificate");
-    let mut key_reader = io::BufReader::new(key_file);
-    let key = {
-        let pkcs8_key =
-            rustls::internal::pemfile::pkcs8_private_keys(&mut key_reader)
-                .expect("Cannot load key file");
-        let rsa_key = rustls::internal::pemfile::rsa_private_keys(&mut key_reader)
-            .expect("Cannot load key file");
-        if !pkcs8_key.is_empty() {
-            Some(pkcs8_key[0].clone())
-        } else if !rsa_key.is_empty() {
-            Some(rsa_key[0].clone())
-        } else {
-            None
-        }
-    };
-
-    match key {
-        Some(key) => {
-            let mut config = rustls::ServerConfig::new(rustls::NoClientAuth::new());
-            config
-                .set_single_cert(cert, key)
-                .map_err(|e| {
-                    eprintln!("Error setting cert: {:?}", e);
-                })
-                .unwrap();
-
-            return Ok(Arc::new(config));
-        }
-        None => {
-            return Err(io::Error::new(io::ErrorKind::Other, "Cannot find key"));
-        }
-    }
-}
-
-async fn run_wss_server(addr: &SocketAddr) {
-    let cert_file = "cli/tests/tls/localhost.crt";
-    let key_file = "cli/tests/tls/localhost.key";
-
-    let tls_config = get_tls_config(cert_file, key_file).await.unwrap();
-    let tls_acceptor = TlsAcceptor::from(tls_config);
-    let listener = TcpListener::bind(addr).await.unwrap();
-
-    while let Ok((stream, _addr)) = listener.accept().await {
-        let acceptor = tls_acceptor.clone();
-        tokio::spawn(async move {
-            match acceptor.accept(stream).await {
-                Ok(tls_stream) => {
-                    let ws_stream_fut = accept_async(tls_stream);
-                    let ws_stream = ws_stream_fut.await;
-                    if let Ok(ws_stream) = ws_stream {
-                        let (tx, rx) = ws_stream.split();
-                        rx.forward(tx)
-                            .map(|result| {
-                                if let Err(e) = result {
-                                    println!("Websocket server error: {:?}", e);
-                                }
-                            })
-                            .await;
-                    }
-                }
-                Err(e) => {
-                    eprintln!("TLS accept error: {:?}", e);
-                }
-            }
-        });
-    }
-}
-
-async fn absolute_redirect(
-    req: Request<Body>,
-) -> hyper::Result<Response<Body>> {
-    let path = req.uri().path();
-
-    if path.starts_with("/REDIRECT") {
-        let url = &req.uri().path()[9..];
-        println!("URL: {:?}", url);
-        let redirect = redirect_resp(url.to_string());
-        return Ok(redirect);
-    }
-
-    if path.starts_with("/a/b/c") {
-        if let Some(x_loc) = req.headers().get("x-location") {
-            let loc = x_loc.to_str().unwrap();
-            return Ok(redirect_resp(loc.to_string()));
-        }
-    }
-
-    let mut file_path = root_path();
-    file_path.push(&req.uri().path()[1..]);
-    if file_path.is_dir() || !file_path.exists() {
-        let mut not_found_resp = Response::new(Body::empty());
-        *not_found_resp.status_mut() = StatusCode::NOT_FOUND;
-        return Ok(not_found_resp);
-    }
-
-    let file = tokio::fs::read(file_path).await.unwrap();
-    let file_resp = custom_headers(req.uri().path(), file);
-    return Ok(file_resp);
-}
-
-async fn main_server(req: Request<Body>) -> hyper::Result<Response<Body>> {
-    return match (req.method(), req.uri().path()) {
-        (&hyper::Method::POST, "/echo_server") => {
-            let (parts, body) = req.into_parts();
-            let mut response = Response::new(body);
-
-            if let Some(status) = parts.headers.get("x-status") {
-                *response.status_mut() =
-                    StatusCode::from_bytes(status.as_bytes()).unwrap();
-            }
-            if let Some(content_type) = parts.headers.get("content-type") {
-                response
-                    .headers_mut()
-                    .insert("content-type", content_type.clone());
-            }
-            if let Some(user_agent) = parts.headers.get("user-agent") {
-                response
-                    .headers_mut()
-                    .insert("user-agent", user_agent.clone());
-            }
-            Ok(response)
-        }
-        (&hyper::Method::POST, "/echo_multipart_file") => {
-            let body = req.into_body();
-            let bytes = &hyper::body::to_bytes(body).await.unwrap()[0..];
-            let start = b"--boundary\t \r\n\
-                    Content-Disposition: form-data; name=\"field_1\"\r\n\
-                    \r\n\
-                    value_1 \r\n\
-                    \r\n--boundary\r\n\
-                    Content-Disposition: form-data; name=\"file\"; \
-                    filename=\"file.bin\"\r\n\
-                    Content-Type: application/octet-stream\r\n\
-                    \r\n";
-            let end = b"\r\n--boundary--\r\n";
-            let b = [start as &[u8], bytes, end].concat();
-
-            let mut response = Response::new(Body::from(b));
-            response.headers_mut().insert(
-                "content-type",
-                HeaderValue::from_static("multipart/form-data;boundary=boundary"),
-            );
-            Ok(response)
-        }
-        (_, "/multipart_form_data.txt") => {
-            let b = "Preamble\r\n\
-             --boundary\t \r\n\
-             Content-Disposition: form-data; name=\"field_1\"\r\n\
-             \r\n\
-             value_1 \r\n\
-             \r\n--boundary\r\n\
-             Content-Disposition: form-data; name=\"field_2\";\
-             filename=\"file.js\"\r\n\
-             Content-Type: text/javascript\r\n\
-             \r\n\
-             console.log(\"Hi\")\
-             \r\n--boundary--\r\n\
-             Epilogue";
-            let mut res = Response::new(Body::from(b));
-            res.headers_mut().insert(
-                "content-type",
-                HeaderValue::from_static("multipart/form-data;boundary=boundary"),
-            );
-            Ok(res)
-        }
-        (_, "/multipart_form_bad_content_type") => {
-            let b = "Preamble\r\n\
-             --boundary\t \r\n\
-             Content-Disposition: form-data; name=\"field_1\"\r\n\
-             \r\n\
-             value_1 \r\n\
-             \r\n--boundary\r\n\
-             Content-Disposition: form-data; name=\"field_2\";\
-             filename=\"file.js\"\r\n\
-             Content-Type: text/javascript\r\n\
-             \r\n\
-             console.log(\"Hi\")\
-             \r\n--boundary--\r\n\
-             Epilogue";
-            let mut res = Response::new(Body::from(b));
-            res.headers_mut().insert(
-                "content-type",
-                HeaderValue::from_static("multipart/form-datatststs;boundary=boundary"),
-            );
-            Ok(res)
-        }
-        (_, "/bad_redirect") => {
-            let mut res = Response::new(Body::empty());
-            *res.status_mut() = StatusCode::FOUND;
-            Ok(res)
-        }
-        (_, "/non_ascii_redirect") => {
-            let mut res = Response::new(Body::empty());
-            *res.status_mut() = StatusCode::MOVED_PERMANENTLY;
-            res.headers_mut().insert(
-                "location",
-                HeaderValue::from_bytes(b"/redirect\xae").unwrap(),
-            );
-            Ok(res)
-        }
-        (_, "/etag_script.ts") => {
-            let if_none_match = req.headers().get("if-none-match");
-            if if_none_match == Some(&HeaderValue::from_static("33a64df551425fcc55e"))
-            {
-                let mut resp = Response::new(Body::empty());
-                *resp.status_mut() = StatusCode::NOT_MODIFIED;
-                resp.headers_mut().insert(
-                    "Content-type",
-                    HeaderValue::from_static("application/typescript"),
-                );
-                resp
-                    .headers_mut()
-                    .insert("ETag", HeaderValue::from_static("33a64df551425fcc55e"));
-
-                Ok(resp)
-            } else {
-                let mut resp = Response::new(Body::from("console.log('etag')"));
-                resp.headers_mut().insert(
-                    "Content-type",
-                    HeaderValue::from_static("application/typescript"),
-                );
-                resp
-                    .headers_mut()
-                    .insert("ETag", HeaderValue::from_static("33a64df551425fcc55e"));
-                Ok(resp)
-            }
-        }
-        (_, "/xTypeScriptTypes.js") => {
-            let mut res = Response::new(Body::from("export const foo = 'foo';"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/javascript"),
-            );
-            res.headers_mut().insert(
-                "X-TypeScript-Types",
-                HeaderValue::from_static("./xTypeScriptTypes.d.ts"),
-            );
-            Ok(res)
-        }
-        (_, "/xTypeScriptTypes.d.ts") => {
-            let mut res = Response::new(Body::from("export const foo: 'foo';"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/typescript"),
-            );
-            Ok(res)
-        }
-        (_, "/type_directives_redirect.js") => {
-            let mut res = Response::new(Body::from("export const foo = 'foo';"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/javascript"),
-            );
-            res.headers_mut().insert(
-                "X-TypeScript-Types",
-                HeaderValue::from_static(
-                    "http://localhost:4547/xTypeScriptTypesRedirect.d.ts",
-                ),
-            );
-            Ok(res)
-        }
-        (_, "/type_headers_deno_types.foo.js") => {
-            let mut res = Response::new(Body::from(
-                "export function foo(text) { console.log(text); }",
-            ));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/javascript"),
-            );
-            res.headers_mut().insert(
-                "X-TypeScript-Types",
-                HeaderValue::from_static(
-                    "http://localhost:4545/type_headers_deno_types.d.ts",
-                ),
-            );
-            Ok(res)
-        }
-        (_, "/type_headers_deno_types.d.ts") => {
-            let mut res =
-                Response::new(Body::from("export function foo(text: number): void;"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/typescript"),
-            );
-            Ok(res)
-        }
-        (_, "/type_headers_deno_types.foo.d.ts") => {
-            let mut res =
-                Response::new(Body::from("export function foo(text: string): void;"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/typescript"),
-            );
-            Ok(res)
-        }
-        (_, "/cli/tests/subdir/xTypeScriptTypesRedirect.d.ts") => {
-            let mut res = Response::new(Body::from(
-                "import './xTypeScriptTypesRedirected.d.ts';",
-            ));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/typescript"),
-            );
-            Ok(res)
-        }
-        (_, "/cli/tests/subdir/xTypeScriptTypesRedirected.d.ts") => {
-            let mut res = Response::new(Body::from("export const foo: 'foo';"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/typescript"),
-            );
-            Ok(res)
-        }
-        (_, "/referenceTypes.js") => {
-            let mut res = Response::new(Body::from("/// <reference types=\"./xTypeScriptTypes.d.ts\" />\r\nexport const foo = \"foo\";\r\n"));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/javascript"),
-            );
-            Ok(res)
-        }
-        (_, "/cli/tests/subdir/file_with_:_in_name.ts") => {
-            let mut res = Response::new(Body::from(
-                "console.log('Hello from file_with_:_in_name.ts');",
-            ));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/typescript"),
-            );
-            Ok(res)
-        }
-        (_, "/cli/tests/subdir/no_js_ext@1.0.0") => {
-            let mut res = Response::new(Body::from(
-                r#"import { printHello } from "./mod2.ts";
-        printHello();
-        "#,
-            ));
-            res.headers_mut().insert(
-                "Content-type",
-                HeaderValue::from_static("application/javascript"),
-            );
-            Ok(res)
-        }
-        (_, "/.well-known/deno-import-intellisense.json") => {
-            let file_path = root_path()
-                .join("cli/tests/lsp/registries/deno-import-intellisense.json");
-            if let Ok(body) = tokio::fs::read(file_path).await {
-                Ok(custom_headers(
-                    "/.well-known/deno-import-intellisense.json",
-                    body,
-                ))
-            } else {
-                Ok(Response::new(Body::empty()))
-            }
-        }
-        _ => {
-            let mut file_path = root_path();
-            file_path.push(&req.uri().path()[1..]);
-            if let Ok(file) = tokio::fs::read(file_path).await {
-                let file_resp = custom_headers(&req.uri().path()[1..], file);
-                return Ok(file_resp);
-            }
-
-            return Ok(Response::new(Body::empty()));
-        }
-    };
-}
-
-/// Taken from example in https://github.com/ctz/hyper-rustls/blob/a02ef72a227dcdf102f86e905baa7415c992e8b3/examples/server.rs
-struct HyperAcceptor<'a> {
-    acceptor: Pin<
-        Box<
-            dyn Stream<Item = io::Result<tokio_rustls::server::TlsStream<TcpStream>>>
-            + 'a,
-        >,
-    >,
-}
-
-impl hyper::server::accept::Accept for HyperAcceptor<'_> {
-    type Conn = tokio_rustls::server::TlsStream<TcpStream>;
-    type Error = io::Error;
-
-    fn poll_accept(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context,
-    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
-        Pin::new(&mut self.acceptor).poll_next(cx)
-    }
-}
-
-unsafe impl std::marker::Send for HyperAcceptor<'_> {}
-
-async fn wrap_redirect_server() {
-    let redirect_svc =
-        make_service_fn(|_| async { Ok::<_, Infallible>(service_fn(redirect)) });
-    let redirect_addr = SocketAddr::from(([127, 0, 0, 1], REDIRECT_PORT));
-    let redirect_server = Server::bind(&redirect_addr).serve(redirect_svc);
-    if let Err(e) = redirect_server.await {
-        eprintln!("Redirect error: {:?}", e);
-    }
-}
-
-async fn wrap_double_redirect_server() {
-    let double_redirects_svc = make_service_fn(|_| async {
-        Ok::<_, Infallible>(service_fn(double_redirects))
-    });
-    let double_redirects_addr =
-        SocketAddr::from(([127, 0, 0, 1], DOUBLE_REDIRECTS_PORT));
-    let double_redirects_server =
-        Server::bind(&double_redirects_addr).serve(double_redirects_svc);
-    if let Err(e) = double_redirects_server.await {
-        eprintln!("Double redirect error: {:?}", e);
-    }
-}
-
-async fn wrap_inf_redirect_server() {
-    let inf_redirects_svc = make_service_fn(|_| async {
-        Ok::<_, Infallible>(service_fn(inf_redirects))
-    });
-    let inf_redirects_addr =
-        SocketAddr::from(([127, 0, 0, 1], INF_REDIRECTS_PORT));
-    let inf_redirects_server =
-        Server::bind(&inf_redirects_addr).serve(inf_redirects_svc);
-    if let Err(e) = inf_redirects_server.await {
-        eprintln!("Inf redirect error: {:?}", e);
-    }
-}
-
-async fn wrap_another_redirect_server() {
-    let another_redirect_svc = make_service_fn(|_| async {
-        Ok::<_, Infallible>(service_fn(another_redirect))
-    });
-    let another_redirect_addr =
-        SocketAddr::from(([127, 0, 0, 1], ANOTHER_REDIRECT_PORT));
-    let another_redirect_server =
-        Server::bind(&another_redirect_addr).serve(another_redirect_svc);
-    if let Err(e) = another_redirect_server.await {
-        eprintln!("Another redirect error: {:?}", e);
-    }
-}
-
-async fn wrap_auth_redirect_server() {
-    let auth_redirect_svc = make_service_fn(|_| async {
-        Ok::<_, Infallible>(service_fn(auth_redirect))
-    });
-    let auth_redirect_addr =
-        SocketAddr::from(([127, 0, 0, 1], AUTH_REDIRECT_PORT));
-    let auth_redirect_server =
-        Server::bind(&auth_redirect_addr).serve(auth_redirect_svc);
-    if let Err(e) = auth_redirect_server.await {
-        eprintln!("Auth redirect error: {:?}", e);
-    }
-}
-
-async fn wrap_abs_redirect_server() {
-    let abs_redirect_svc = make_service_fn(|_| async {
-        Ok::<_, Infallible>(service_fn(absolute_redirect))
-    });
-    let abs_redirect_addr =
-        SocketAddr::from(([127, 0, 0, 1], REDIRECT_ABSOLUTE_PORT));
-    let abs_redirect_server =
-        Server::bind(&abs_redirect_addr).serve(abs_redirect_svc);
-    if let Err(e) = abs_redirect_server.await {
-        eprintln!("Absolute redirect error: {:?}", e);
-    }
-}
-
-async fn wrap_main_server() {
-    let main_server_svc =
-        make_service_fn(|_| async { Ok::<_, Infallible>(service_fn(main_server)) });
-    let main_server_addr = SocketAddr::from(([127, 0, 0, 1], PORT));
-    let main_server = Server::bind(&main_server_addr).serve(main_server_svc);
-    if let Err(e) = main_server.await {
-        eprintln!("HTTP server error: {:?}", e);
-    }
-}
-
-async fn wrap_main_https_server() {
-    let main_server_https_addr = SocketAddr::from(([127, 0, 0, 1], HTTPS_PORT));
-    let cert_file = "cli/tests/tls/localhost.crt";
-    let key_file = "cli/tests/tls/localhost.key";
-    let tls_config = get_tls_config(cert_file, key_file)
-        .await
-        .expect("Cannot get TLS config");
-    loop {
-        let tcp = TcpListener::bind(&main_server_https_addr)
-            .await
-            .expect("Cannot bind TCP");
-        println!("tls ready");
-        let tls_acceptor = TlsAcceptor::from(tls_config.clone());
-        // Prepare a long-running future stream to accept and serve cients.
-        let incoming_tls_stream = async_stream::stream! {
-      loop {
-          let (socket, _) = tcp.accept().await?;
-          let stream = tls_acceptor.accept(socket);
-          yield stream.await;
-      }
-    }
-            .boxed();
-
-        let main_server_https_svc = make_service_fn(|_| async {
-            Ok::<_, Infallible>(service_fn(main_server))
-        });
-        let main_server_https = Server::builder(HyperAcceptor {
-            acceptor: incoming_tls_stream,
-        })
-            .serve(main_server_https_svc);
-
-        //continue to prevent TLS error stopping the server
-        if main_server_https.await.is_err() {
-            continue;
-        }
-    }
-}
-
-// Use the single-threaded scheduler. The hyper server is used as a point of
-// comparison for the (single-threaded!) benchmarks in cli/bench. We're not
-// comparing apples to apples if we use the default multi-threaded scheduler.
-#[tokio::main(flavor = "current_thread")]
-pub async fn run_all_servers() {
-    if let Some(port) = env::args().nth(1) {
-        return hyper_hello(port.parse::<u16>().unwrap()).await;
-    }
-
-    let redirect_server_fut = wrap_redirect_server();
-    let double_redirects_server_fut = wrap_double_redirect_server();
-    let inf_redirects_server_fut = wrap_inf_redirect_server();
-    let another_redirect_server_fut = wrap_another_redirect_server();
-    let auth_redirect_server_fut = wrap_auth_redirect_server();
-    let abs_redirect_server_fut = wrap_abs_redirect_server();
-
-    let ws_addr = SocketAddr::from(([127, 0, 0, 1], WS_PORT));
-    let ws_server_fut = run_ws_server(&ws_addr);
-    let wss_addr = SocketAddr::from(([127, 0, 0, 1], WSS_PORT));
-    let wss_server_fut = run_wss_server(&wss_addr);
-    let ws_close_addr = SocketAddr::from(([127, 0, 0, 1], WS_CLOSE_PORT));
-    let ws_close_server_fut = run_ws_close_server(&ws_close_addr);
-
-    let main_server_fut = wrap_main_server();
-    let main_server_https_fut = wrap_main_https_server();
-
-    let mut server_fut = async {
-        futures::join!(
-      redirect_server_fut,
-      ws_server_fut,
-      wss_server_fut,
-      ws_close_server_fut,
-      another_redirect_server_fut,
-      auth_redirect_server_fut,
-      inf_redirects_server_fut,
-      double_redirects_server_fut,
-      abs_redirect_server_fut,
-      main_server_fut,
-      main_server_https_fut,
-    )
-    }
-        .boxed();
-
-    let mut did_print_ready = false;
-    futures::future::poll_fn(move |cx| {
-        let poll_result = server_fut.poll_unpin(cx);
-        if !replace(&mut did_print_ready, true) {
-            println!("ready");
-        }
-        poll_result
-    })
-        .await;
-}
-
-fn custom_headers(p: &str, body: Vec<u8>) -> Response<Body> {
-    let mut response = Response::new(Body::from(body));
-
-    if p.ends_with("cli/tests/x_deno_warning.js") {
-        response.headers_mut().insert(
-            "Content-Type",
-            HeaderValue::from_static("application/javascript"),
-        );
-        response
-            .headers_mut()
-            .insert("X-Deno-Warning", HeaderValue::from_static("foobar"));
-        return response;
-    }
-    if p.ends_with("cli/tests/053_import_compression/brotli") {
-        response
-            .headers_mut()
-            .insert("Content-Encoding", HeaderValue::from_static("br"));
-        response.headers_mut().insert(
-            "Content-Type",
-            HeaderValue::from_static("application/javascript"),
-        );
-        response
-            .headers_mut()
-            .insert("Content-Length", HeaderValue::from_static("26"));
-        return response;
-    }
-    if p.ends_with("cli/tests/053_import_compression/gziped") {
-        response
-            .headers_mut()
-            .insert("Content-Encoding", HeaderValue::from_static("gzip"));
-        response.headers_mut().insert(
-            "Content-Type",
-            HeaderValue::from_static("application/javascript"),
-        );
-        response
-            .headers_mut()
-            .insert("Content-Length", HeaderValue::from_static("39"));
-        return response;
-    }
-
-    if p.contains("cli/tests/encoding/") {
-        let charset = p
-            .split_terminator('/')
-            .last()
-            .unwrap()
-            .trim_end_matches(".ts");
-
-        response.headers_mut().insert(
-            "Content-Type",
-            HeaderValue::from_str(
-                &format!("application/typescript;charset={}", charset)[..],
-            )
-                .unwrap(),
-        );
-        return response;
-    }
-
-    let content_type = if p.contains(".t1.") {
-        Some("text/typescript")
-    } else if p.contains(".t2.") {
-        Some("video/vnd.dlna.mpeg-tts")
-    } else if p.contains(".t3.") {
-        Some("video/mp2t")
-    } else if p.contains(".t4.") {
-        Some("application/x-typescript")
-    } else if p.contains(".j1.") {
-        Some("text/javascript")
-    } else if p.contains(".j2.") {
-        Some("application/ecmascript")
-    } else if p.contains(".j3.") {
-        Some("text/ecmascript")
-    } else if p.contains(".j4.") {
-        Some("application/x-javascript")
-    } else if p.contains("form_urlencoded") {
-        Some("application/x-www-form-urlencoded")
-    } else if p.contains("unknown_ext") || p.contains("no_ext") {
-        Some("text/typescript")
-    } else if p.contains("mismatch_ext") || p.contains("no_js_ext") {
-        Some("text/javascript")
-    } else if p.ends_with(".ts") || p.ends_with(".tsx") {
-        Some("application/typescript")
-    } else if p.ends_with(".js") || p.ends_with(".jsx") {
-        Some("application/javascript")
-    } else if p.ends_with(".json") {
-        Some("application/json")
-    } else {
-        None
-    };
-
-    if let Some(t) = content_type {
-        response
-            .headers_mut()
-            .insert("Content-Type", HeaderValue::from_str(t).unwrap());
-        return response;
-    }
-
-    response
-}
-
-#[derive(Default)]
-struct HttpServerCount {
-    count: usize,
-    test_server: Option<Child>,
-}
-
-impl HttpServerCount {
-    fn inc(&mut self) {
-        self.count += 1;
-        if self.test_server.is_none() {
-            assert_eq!(self.count, 1);
-
-            println!("test_server starting...");
-            let mut test_server = Command::new(test_server_path())
-                .current_dir(root_path())
-                .stdout(Stdio::piped())
-                .spawn()
-                .expect("failed to execute test_server");
-            let stdout = test_server.stdout.as_mut().unwrap();
-            use std::io::{BufRead, BufReader};
-            let lines = BufReader::new(stdout).lines();
-            let mut ready = false;
-            let mut tls_ready = false;
-            for maybe_line in lines {
-                if let Ok(line) = maybe_line {
-                    if line.starts_with("ready") {
-                        ready = true;
-                    }
-                    if line.starts_with("tls ready") {
-                        tls_ready = true;
-                    }
-                    if ready && tls_ready {
-                        break;
-                    }
-                } else {
-                    panic!("{}", maybe_line.unwrap_err());
-                }
-            }
-            self.test_server = Some(test_server);
-        }
-    }
-
-    fn dec(&mut self) {
-        assert!(self.count > 0);
-        self.count -= 1;
-        if self.count == 0 {
-            let mut test_server = self.test_server.take().unwrap();
-            match test_server.try_wait() {
-                Ok(None) => {
-                    test_server.kill().expect("failed to kill test_server");
-                    let _ = test_server.wait();
-                }
-                Ok(Some(status)) => {
-                    panic!("test_server exited unexpectedly {}", status)
-                }
-                Err(e) => panic!("test_server error: {}", e),
-            }
-        }
-    }
-}
-
-impl Drop for HttpServerCount {
-    fn drop(&mut self) {
-        assert_eq!(self.count, 0);
-        assert!(self.test_server.is_none());
-    }
-}
-
-fn lock_http_server<'a>() -> MutexGuard<'a, HttpServerCount> {
-    let r = GUARD.lock();
-    if let Err(poison_err) = r {
-        // If panics happened, ignore it. This is for tests.
-        poison_err.into_inner()
-    } else {
-        r.unwrap()
-    }
-}
-
-pub struct HttpServerGuard {}
-
-impl Drop for HttpServerGuard {
-    fn drop(&mut self) {
-        let mut g = lock_http_server();
-        g.dec();
-    }
-}
-
-/// Adds a reference to a shared target/debug/test_server subprocess. When the
-/// last instance of the HttpServerGuard is dropped, the subprocess will be
-/// killed.
-pub fn http_server() -> HttpServerGuard {
-    let mut g = lock_http_server();
-    g.inc();
-    HttpServerGuard {}
-}
-
-/// Helper function to strip ansi codes.
-pub fn strip_ansi_codes(s: &str) -> std::borrow::Cow<str> {
-    STRIP_ANSI_RE.replace_all(s, "")
-}
-
-pub fn run(
-    cmd: &[&str],
-    input: Option<&[&str]>,
-    envs: Option<Vec<(String, String)>>,
-    current_dir: Option<&str>,
-    expect_success: bool,
-) {
-    let mut process_builder = Command::new(cmd[0]);
-    process_builder.args(&cmd[1..]).stdin(Stdio::piped());
-
-    if let Some(dir) = current_dir {
-        process_builder.current_dir(dir);
-    }
-    if let Some(envs) = envs {
-        process_builder.envs(envs);
-    }
-    let mut prog = process_builder.spawn().expect("failed to spawn script");
-    if let Some(lines) = input {
-        let stdin = prog.stdin.as_mut().expect("failed to get stdin");
-        stdin
-            .write_all(lines.join("\n").as_bytes())
-            .expect("failed to write to stdin");
-    }
-    let status = prog.wait().expect("failed to wait on child");
-    if expect_success != status.success() {
-        panic!("Unexpected exit code: {:?}", status.code());
-    }
-}
-
-pub fn run_collect(
-    cmd: &[&str],
-    input: Option<&[&str]>,
-    envs: Option<Vec<(String, String)>>,
-    current_dir: Option<&str>,
-    expect_success: bool,
-) -> (String, String) {
-    let mut process_builder = Command::new(cmd[0]);
-    process_builder
-        .args(&cmd[1..])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    if let Some(dir) = current_dir {
-        process_builder.current_dir(dir);
-    }
-    if let Some(envs) = envs {
-        process_builder.envs(envs);
-    }
-    let mut prog = process_builder.spawn().expect("failed to spawn script");
-    if let Some(lines) = input {
-        let stdin = prog.stdin.as_mut().expect("failed to get stdin");
-        stdin
-            .write_all(lines.join("\n").as_bytes())
-            .expect("failed to write to stdin");
-    }
-    let Output {
-        stdout,
-        stderr,
-        status,
-    } = prog.wait_with_output().expect("failed to wait on child");
-    let stdout = String::from_utf8(stdout).unwrap();
-    let stderr = String::from_utf8(stderr).unwrap();
-    if expect_success != status.success() {
-        eprintln!("stdout: <<<{}>>>", stdout);
-        eprintln!("stderr: <<<{}>>>", stderr);
-        panic!("Unexpected exit code: {:?}", status.code());
-    }
-    (stdout, stderr)
-}
-
-pub fn run_and_collect_output(
-    expect_success: bool,
-    args: &str,
-    input: Option<Vec<&str>>,
-    envs: Option<Vec<(String, String)>>,
-    need_http_server: bool,
-) -> (String, String) {
-    let mut deno_process_builder = deno_cmd();
-    deno_process_builder
-        .args(args.split_whitespace())
-        .current_dir(&tests_path())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    if let Some(envs) = envs {
-        deno_process_builder.envs(envs);
-    }
-    let _http_guard = if need_http_server {
-        Some(http_server())
-    } else {
-        None
-    };
-    let mut deno = deno_process_builder
-        .spawn()
-        .expect("failed to spawn script");
-    if let Some(lines) = input {
-        let stdin = deno.stdin.as_mut().expect("failed to get stdin");
-        stdin
-            .write_all(lines.join("\n").as_bytes())
-            .expect("failed to write to stdin");
-    }
-    let Output {
-        stdout,
-        stderr,
-        status,
-    } = deno.wait_with_output().expect("failed to wait on child");
-    let stdout = String::from_utf8(stdout).unwrap();
-    let stderr = String::from_utf8(stderr).unwrap();
-    if expect_success != status.success() {
-        eprintln!("stdout: <<<{}>>>", stdout);
-        eprintln!("stderr: <<<{}>>>", stderr);
-        panic!("Unexpected exit code: {:?}", status.code());
-    }
-    (stdout, stderr)
-}
-
-pub fn new_deno_dir() -> TempDir {
-    TempDir::new().expect("tempdir fail")
-}
-
-pub fn deno_cmd() -> Command {
-    let deno_dir = new_deno_dir();
-    deno_cmd_with_deno_dir(deno_dir.path())
-}
-
-pub fn deno_cmd_with_deno_dir(deno_dir: &std::path::Path) -> Command {
-    let e = deno_exe_path();
-    assert!(e.exists());
-    let mut c = Command::new(e);
-    c.env("DENO_DIR", deno_dir);
-    c
-}
-
-pub fn run_powershell_script_file(
-    script_file_path: &str,
-    args: Vec<&str>,
-) -> std::result::Result<(), i64> {
-    let deno_dir = new_deno_dir();
-    let mut command = Command::new("powershell.exe");
-
-    command
-        .env("DENO_DIR", deno_dir.path())
-        .current_dir(root_path())
-        .arg("-file")
-        .arg(script_file_path);
-
-    for arg in args {
-        command.arg(arg);
-    }
-
-    let output = command.output().expect("failed to spawn script");
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    let stderr = String::from_utf8(output.stderr).unwrap();
-    println!("{}", stdout);
-    if !output.status.success() {
-        panic!(
-            "{} executed with failing error code\n{}{}",
-            script_file_path, stdout, stderr
-        );
-    }
-
-    Ok(())
-}
-
-#[derive(Debug, Default)]
-pub struct CheckOutputIntegrationTest {
-    pub args: &'static str,
-    pub output: &'static str,
-    pub input: Option<&'static str>,
-    pub output_str: Option<&'static str>,
-    pub exit_code: i32,
-    pub http_server: bool,
-}
-
-impl CheckOutputIntegrationTest {
-    pub fn run(&self) {
-        let args = self.args.split_whitespace();
-        let root = root_path();
-        let deno_exe = deno_exe_path();
-        println!("root path {}", root.display());
-        println!("deno_exe path {}", deno_exe.display());
-
-        let _http_server_guard = if self.http_server {
-            Some(http_server())
-        } else {
-            None
+impl From<swc_common::Loc> for Location {
+    fn from(swc_loc: swc_common::Loc) -> Self {
+        use swc_common::FileName::*;
+
+        let filename = match &swc_loc.file.name {
+            Real(path_buf) => path_buf.to_string_lossy().to_string(),
+            Custom(str_) => str_.to_string(),
+            _ => panic!("invalid filename"),
         };
 
-        let (mut reader, writer) = pipe().unwrap();
-        let tests_dir = root.join("cli").join("tests");
-        let mut command = deno_cmd();
-        println!("deno_exe args {}", self.args);
-        println!("deno_exe tests path {:?}", &tests_dir);
-        command.args(args);
-        command.current_dir(&tests_dir);
-        command.stdin(Stdio::piped());
-        let writer_clone = writer.try_clone().unwrap();
-        command.stderr(writer_clone);
-        command.stdout(writer);
-
-        let mut process = command.spawn().expect("failed to execute process");
-
-        if let Some(input) = self.input {
-            let mut p_stdin = process.stdin.take().unwrap();
-            write!(p_stdin, "{}", input).unwrap();
+        Location {
+            filename,
+            line: swc_loc.line,
+            col: swc_loc.col_display,
         }
+    }
+}
 
-        // Very important when using pipes: This parent process is still
-        // holding its copies of the write ends, and we have to close them
-        // before we read, otherwise the read end will never report EOF. The
-        // Command object owns the writers now, and dropping it closes them.
-        drop(command);
+impl From<Location> for ModuleSpecifier {
+    fn from(loc: Location) -> Self {
+        resolve_url_or_path(&loc.filename).unwrap()
+    }
+}
 
-        let mut actual = String::new();
-        reader.read_to_string(&mut actual).unwrap();
+impl std::fmt::Display for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}:{}:{}", self.filename, self.line, self.col)
+    }
+}
 
-        let status = process.wait().expect("failed to finish process");
+/// A buffer for collecting diagnostic messages from the AST parser.
+#[derive(Debug)]
+pub struct DiagnosticBuffer(Vec<String>);
 
-        if let Some(exit_code) = status.code() {
-            if self.exit_code != exit_code {
-                println!("OUTPUT\n{}\nOUTPUT", actual);
-                panic!(
-                    "bad exit code, expected: {:?}, actual: {:?}",
-                    self.exit_code, exit_code
-                );
-            }
-        } else {
-            #[cfg(unix)]
-                {
-                    use std::os::unix::process::ExitStatusExt;
-                    let signal = status.signal().unwrap();
-                    println!("OUTPUT\n{}\nOUTPUT", actual);
-                    panic!(
-                        "process terminated by signal, expected exit code: {:?}, actual signal: {:?}",
-                        self.exit_code, signal
+impl Error for DiagnosticBuffer {}
+
+impl fmt::Display for DiagnosticBuffer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = self.0.join(",");
+        f.pad(&s)
+    }
+}
+
+impl DiagnosticBuffer {
+    pub fn from_error_buffer<F>(error_buffer: ErrorBuffer, get_loc: F) -> Self
+        where
+            F: Fn(Span) -> Loc,
+    {
+        let s = error_buffer.0.lock().unwrap().clone();
+        let diagnostics = s
+            .iter()
+            .map(|d| {
+                let mut msg = d.message();
+
+                if let Some(span) = d.span.primary_span() {
+                    let loc = get_loc(span);
+                    let file_name = match &loc.file.name {
+                        FileName::Custom(n) => n,
+                        _ => unreachable!(),
+                    };
+                    msg = format!(
+                        "{} at {}:{}:{}",
+                        msg, file_name, loc.line, loc.col_display
                     );
                 }
-            #[cfg(not(unix))]
-                {
-                    println!("OUTPUT\n{}\nOUTPUT", actual);
-                    panic!("process terminated without status code on non unix platform, expected exit code: {:?}", self.exit_code);
-                }
-        }
 
-        actual = strip_ansi_codes(&actual).to_string();
+                msg
+            })
+            .collect::<Vec<String>>();
 
-        let expected = if let Some(s) = self.output_str {
-            s.to_owned()
-        } else {
-            let output_path = tests_dir.join(self.output);
-            println!("output path {}", output_path.display());
-            std::fs::read_to_string(output_path).expect("cannot read output")
-        };
+        Self(diagnostics)
+    }
+}
 
-        if !wildcard_match(&expected, &actual) {
-            println!("OUTPUT\n{}\nOUTPUT", actual);
-            println!("EXPECTED\n{}\nEXPECTED", expected);
-            panic!("pattern match failed");
+/// A buffer for collecting errors from the AST parser.
+#[derive(Debug, Clone, Default)]
+pub struct ErrorBuffer(Arc<Mutex<Vec<Diagnostic>>>);
+
+impl Emitter for ErrorBuffer {
+    fn emit(&mut self, db: &DiagnosticBuilder) {
+        self.0.lock().unwrap().push((**db).clone());
+    }
+}
+
+fn get_es_config(jsx: bool) -> EsConfig {
+    EsConfig {
+        class_private_methods: true,
+        class_private_props: true,
+        class_props: true,
+        dynamic_import: true,
+        export_default_from: true,
+        export_namespace_from: true,
+        import_meta: true,
+        jsx,
+        nullish_coalescing: true,
+        num_sep: true,
+        optional_chaining: true,
+        top_level_await: true,
+        ..EsConfig::default()
+    }
+}
+
+fn get_ts_config(tsx: bool, dts: bool) -> TsConfig {
+    TsConfig {
+        decorators: true,
+        dts,
+        dynamic_import: true,
+        tsx,
+        ..TsConfig::default()
+    }
+}
+
+pub fn get_syntax(media_type: &MediaType) -> Syntax {
+    match media_type {
+        MediaType::JavaScript => Syntax::Es(get_es_config(false)),
+        MediaType::Jsx => Syntax::Es(get_es_config(true)),
+        MediaType::TypeScript => Syntax::Typescript(get_ts_config(false, false)),
+        MediaType::Dts => Syntax::Typescript(get_ts_config(false, true)),
+        MediaType::Tsx => Syntax::Typescript(get_ts_config(true, false)),
+        _ => Syntax::Es(get_es_config(false)),
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ImportsNotUsedAsValues {
+    Remove,
+    Preserve,
+    Error,
+}
+
+/// Options which can be adjusted when transpiling a module.
+#[derive(Debug, Clone)]
+pub struct EmitOptions {
+    /// Indicate if JavaScript is being checked/transformed as well, or if it is
+    /// only TypeScript.
+    pub check_js: bool,
+    /// When emitting a legacy decorator, also emit experimental decorator meta
+    /// data.  Defaults to `false`.
+    pub emit_metadata: bool,
+    /// What to do with import statements that only import types i.e. whether to
+    /// remove them (`Remove`), keep them as side-effect imports (`Preserve`)
+    /// or error (`Error`). Defaults to `Remove`.
+    pub imports_not_used_as_values: ImportsNotUsedAsValues,
+    /// Should the source map be inlined in the emitted code file, or provided
+    /// as a separate file.  Defaults to `true`.
+    pub inline_source_map: bool,
+    /// When transforming JSX, what value should be used for the JSX factory.
+    /// Defaults to `React.createElement`.
+    pub jsx_factory: String,
+    /// When transforming JSX, what value should be used for the JSX fragment
+    /// factory.  Defaults to `React.Fragment`.
+    pub jsx_fragment_factory: String,
+    /// Should JSX be transformed or preserved.  Defaults to `true`.
+    pub transform_jsx: bool,
+}
+
+impl Default for EmitOptions {
+    fn default() -> Self {
+        EmitOptions {
+            check_js: false,
+            emit_metadata: false,
+            imports_not_used_as_values: ImportsNotUsedAsValues::Remove,
+            inline_source_map: true,
+            jsx_factory: "React.createElement".into(),
+            jsx_fragment_factory: "React.Fragment".into(),
+            transform_jsx: true,
         }
     }
 }
 
-pub fn wildcard_match(pattern: &str, s: &str) -> bool {
-    pattern_match(pattern, s, "[WILDCARD]")
-}
-
-pub fn pattern_match(pattern: &str, s: &str, wildcard: &str) -> bool {
-    // Normalize line endings
-    let mut s = s.replace("\r\n", "\n");
-    let pattern = pattern.replace("\r\n", "\n");
-
-    if pattern == wildcard {
-        return true;
-    }
-
-    let parts = pattern.split(wildcard).collect::<Vec<&str>>();
-    if parts.len() == 1 {
-        return pattern == s;
-    }
-
-    if !s.starts_with(parts[0]) {
-        return false;
-    }
-
-    // If the first line of the pattern is just a wildcard the newline character
-    // needs to be pre-pended so it can safely match anything or nothing and
-    // continue matching.
-    if pattern.lines().next() == Some(wildcard) {
-        s.insert(0, '\n');
-    }
-
-    let mut t = s.split_at(parts[0].len());
-
-    for (i, part) in parts.iter().enumerate() {
-        if i == 0 {
-            continue;
+impl From<tsc_config::TsConfig> for EmitOptions {
+    fn from(config: tsc_config::TsConfig) -> Self {
+        let options: tsc_config::EmitConfigOptions =
+            serde_json::from_value(config.0).unwrap();
+        let imports_not_used_as_values =
+            match options.imports_not_used_as_values.as_str() {
+                "preserve" => ImportsNotUsedAsValues::Preserve,
+                "error" => ImportsNotUsedAsValues::Error,
+                _ => ImportsNotUsedAsValues::Remove,
+            };
+        EmitOptions {
+            check_js: options.check_js,
+            emit_metadata: options.emit_decorator_metadata,
+            imports_not_used_as_values,
+            inline_source_map: options.inline_source_map,
+            jsx_factory: options.jsx_factory,
+            jsx_fragment_factory: options.jsx_fragment_factory,
+            transform_jsx: options.jsx == "react",
         }
-        dbg!(part, i);
-        if i == parts.len() - 1 && (part.is_empty() || *part == "\n") {
-            dbg!("exit 1 true", i);
-            return true;
-        }
-        if let Some(found) = t.1.find(*part) {
-            dbg!("found ", found);
-            t = t.1.split_at(found + part.len());
-        } else {
-            dbg!("exit false ", i);
-            return false;
-        }
-    }
-
-    dbg!("end ", t.1.len());
-    t.1.is_empty()
-}
-
-/// Kind of reflects `itest!()`. Note that the pty's output (which also contains
-/// stdin content) is compared against the content of the `output` path.
-#[cfg(unix)]
-pub fn test_pty(args: &str, output_path: &str, input: &[u8]) {
-    use pty::fork::Fork;
-
-    let tests_path = tests_path();
-    let fork = Fork::from_ptmx().unwrap();
-    if let Ok(mut master) = fork.is_parent() {
-        let mut output_actual = String::new();
-        master.write_all(input).unwrap();
-        master.read_to_string(&mut output_actual).unwrap();
-        fork.wait().unwrap();
-
-        let output_expected =
-            std::fs::read_to_string(tests_path.join(output_path)).unwrap();
-        if !wildcard_match(&output_expected, &output_actual) {
-            println!("OUTPUT\n{}\nOUTPUT", output_actual);
-            println!("EXPECTED\n{}\nEXPECTED", output_expected);
-            panic!("pattern match failed");
-        }
-    } else {
-        deno_cmd()
-            .current_dir(tests_path)
-            .env("NO_COLOR", "1")
-            .args(args.split_whitespace())
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap();
     }
 }
 
-pub struct WrkOutput {
-    pub latency: f64,
-    pub requests: u64,
+fn strip_config_from_emit_options(
+    options: &EmitOptions,
+) -> typescript::strip::Config {
+    typescript::strip::Config {
+        import_not_used_as_values: match options.imports_not_used_as_values {
+            ImportsNotUsedAsValues::Remove => {
+                typescript::strip::ImportsNotUsedAsValues::Remove
+            }
+            ImportsNotUsedAsValues::Preserve => {
+                typescript::strip::ImportsNotUsedAsValues::Preserve
+            }
+            // `Error` only affects the type-checking stage. Fall back to `Remove` here.
+            ImportsNotUsedAsValues::Error => {
+                typescript::strip::ImportsNotUsedAsValues::Remove
+            }
+        },
+        use_define_for_class_fields: true,
+    }
 }
 
-pub fn parse_wrk_output(output: &str) -> WrkOutput {
-    lazy_static! {
-    static ref REQUESTS_RX: Regex =
-      Regex::new(r"Requests/sec:\s+(\d+)").unwrap();
-    static ref LATENCY_RX: Regex =
-      Regex::new(r"\s+99%(?:\s+(\d+.\d+)([a-z]+))").unwrap();
-  }
+/// A logical structure to hold the value of a parsed module for further
+/// processing.
+#[derive(Clone)]
+pub struct ParsedModule {
+    comments: SingleThreadedComments,
+    leading_comments: Vec<Comment>,
+    pub module: Module,
+    pub source_map: Rc<SourceMap>,
+    source_file: Rc<SourceFile>,
+}
 
-    let mut requests = None;
-    let mut latency = None;
+impl fmt::Debug for ParsedModule {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("ParsedModule")
+            .field("comments", &self.comments)
+            .field("leading_comments", &self.leading_comments)
+            .field("module", &self.module)
+            .finish()
+    }
+}
 
-    for line in output.lines() {
-        if requests == None {
-            if let Some(cap) = REQUESTS_RX.captures(line) {
-                requests =
-                    Some(str::parse::<u64>(cap.get(1).unwrap().as_str()).unwrap());
+impl ParsedModule {
+    /// Return a vector of dependencies for the module.
+    pub fn analyze_dependencies(&self) -> Vec<DependencyDescriptor> {
+        analyze_dependencies(&self.module, &self.source_map, &self.comments)
+    }
+
+    /// Get the module's leading comments, where triple slash directives might
+    /// be located.
+    pub fn get_leading_comments(&self) -> Vec<Comment> {
+        self.leading_comments.clone()
+    }
+
+    /// Get a location for a given span within the module.
+    pub fn get_location(&self, span: &Span) -> Location {
+        self.source_map.lookup_char_pos(span.lo).into()
+    }
+
+    /// Transform a TypeScript file into a JavaScript file, based on the supplied
+    /// options.
+    ///
+    /// The result is a tuple of the code and optional source map as strings.
+    pub fn transpile(
+        self,
+        options: &EmitOptions,
+    ) -> Result<(String, Option<String>), AnyError> {
+        let program = Program::Module(self.module);
+
+        let jsx_pass = react::react(
+            self.source_map.clone(),
+            Some(&self.comments),
+            react::Options {
+                pragma: options.jsx_factory.clone(),
+                pragma_frag: options.jsx_fragment_factory.clone(),
+                // this will use `Object.assign()` instead of the `_extends` helper
+                // when spreading props.
+                use_builtins: true,
+                ..Default::default()
+            },
+        );
+        let mut passes = chain!(
+      Optional::new(jsx_pass, options.transform_jsx),
+      proposals::decorators::decorators(proposals::decorators::Config {
+        legacy: true,
+        emit_metadata: options.emit_metadata
+      }),
+      helpers::inject_helpers(),
+      typescript::strip::strip_with_config(strip_config_from_emit_options(
+        options
+      )),
+      fixer(Some(&self.comments)),
+      hygiene(),
+    );
+
+        let program = swc_common::GLOBALS.set(&Globals::new(), || {
+            helpers::HELPERS.set(&helpers::Helpers::new(false), || {
+                program.fold_with(&mut passes)
+            })
+        });
+
+        let mut src_map_buf = vec![];
+        let mut buf = vec![];
+        {
+            let writer = Box::new(JsWriter::new(
+                self.source_map.clone(),
+                "\n",
+                &mut buf,
+                Some(&mut src_map_buf),
+            ));
+            let config = swc_ecmascript::codegen::Config { minify: false };
+            let mut emitter = swc_ecmascript::codegen::Emitter {
+                cfg: config,
+                comments: Some(&self.comments),
+                cm: self.source_map.clone(),
+                wr: writer,
+            };
+            program.emit_with(&mut emitter)?;
+        }
+        let mut src = String::from_utf8(buf)?;
+        let mut map: Option<String> = None;
+        {
+            let mut buf = Vec::new();
+            self
+                .source_map
+                .build_source_map_from(&mut src_map_buf, None)
+                .to_writer(&mut buf)?;
+
+            if options.inline_source_map {
+                src.push_str("//# sourceMappingURL=data:application/json;base64,");
+                let encoded_map = base64::encode(buf);
+                src.push_str(&encoded_map);
+            } else {
+                map = Some(String::from_utf8(buf)?);
             }
         }
-        if latency == None {
-            if let Some(cap) = LATENCY_RX.captures(line) {
-                let time = cap.get(1).unwrap();
-                let unit = cap.get(2).unwrap();
-
-                latency = Some(
-                    str::parse::<f64>(time.as_str()).unwrap()
-                        * match unit.as_str() {
-                        "ms" => 1.0,
-                        "us" => 0.001,
-                        "s" => 1000.0,
-                        _ => unreachable!(),
-                    },
-                );
-            }
-        }
-    }
-
-    WrkOutput {
-        requests: requests.unwrap(),
-        latency: latency.unwrap(),
+        Ok((src, map))
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct StraceOutput {
-    pub percent_time: f64,
-    pub seconds: f64,
-    pub usecs_per_call: Option<u64>,
-    pub calls: u64,
-    pub errors: u64,
-}
+pub fn parse_with_source_map(
+    specifier: &str,
+    source: &str,
+    media_type: &MediaType,
+    source_map: Rc<SourceMap>,
+) -> Result<ParsedModule, AnyError> {
+    let source_file = source_map.new_source_file(
+        FileName::Custom(specifier.to_string()),
+        source.to_string(),
+    );
+    let error_buffer = ErrorBuffer::default();
+    let syntax = get_syntax(media_type);
+    let input = StringInput::from(&*source_file);
+    let comments = SingleThreadedComments::default();
 
-pub fn parse_strace_output(output: &str) -> HashMap<String, StraceOutput> {
-    let mut summary = HashMap::new();
-
-    // Filter out non-relevant lines. See the error log at
-    // https://github.com/denoland/deno/pull/3715/checks?check_run_id=397365887
-    // This is checked in testdata/strace_summary2.out
-    let mut lines = output
-        .lines()
-        .filter(|line| !line.is_empty() && !line.contains("detached ..."));
-    let count = lines.clone().count();
-
-    if count < 4 {
-        return summary;
-    }
-
-    let total_line = lines.next_back().unwrap();
-    lines.next_back(); // Drop separator
-    let data_lines = lines.skip(2);
-
-    for line in data_lines {
-        let syscall_fields = line.split_whitespace().collect::<Vec<_>>();
-        let len = syscall_fields.len();
-        let syscall_name = syscall_fields.last().unwrap();
-
-        if (5..=6).contains(&len) {
-            summary.insert(
-                syscall_name.to_string(),
-                StraceOutput {
-                    percent_time: str::parse::<f64>(syscall_fields[0]).unwrap(),
-                    seconds: str::parse::<f64>(syscall_fields[1]).unwrap(),
-                    usecs_per_call: Some(str::parse::<u64>(syscall_fields[2]).unwrap()),
-                    calls: str::parse::<u64>(syscall_fields[3]).unwrap(),
-                    errors: if syscall_fields.len() < 6 {
-                        0
-                    } else {
-                        str::parse::<u64>(syscall_fields[4]).unwrap()
-                    },
-                },
-            );
-        }
-    }
-
-    let total_fields = total_line.split_whitespace().collect::<Vec<_>>();
-    summary.insert(
-        "total".to_string(),
-        StraceOutput {
-            percent_time: str::parse::<f64>(total_fields[0]).unwrap(),
-            seconds: str::parse::<f64>(total_fields[1]).unwrap(),
-            usecs_per_call: None,
-            calls: str::parse::<u64>(total_fields[2]).unwrap(),
-            errors: str::parse::<u64>(total_fields[3]).unwrap(),
+    let handler = Handler::with_emitter_and_flags(
+        Box::new(error_buffer.clone()),
+        HandlerFlags {
+            can_emit_warnings: true,
+            dont_buffer_diagnostics: true,
+            ..HandlerFlags::default()
         },
     );
 
-    summary
+    let lexer = Lexer::new(syntax, TARGET, input, Some(&comments));
+    let mut parser = swc_ecmascript::parser::Parser::new_from(lexer);
+
+    let sm = &source_map;
+    let module = parser.parse_module().map_err(move |err| {
+        let mut diagnostic = err.into_diagnostic(&handler);
+        diagnostic.emit();
+
+        DiagnosticBuffer::from_error_buffer(error_buffer, |span| {
+            sm.lookup_char_pos(span.lo)
+        })
+    })?;
+    let leading_comments =
+        comments.with_leading(module.span.lo, |comments| comments.to_vec());
+
+    Ok(ParsedModule {
+        comments,
+        leading_comments,
+        module,
+        source_map,
+        source_file,
+    })
 }
 
-pub fn parse_max_mem(output: &str) -> Option<u64> {
-    // Takes the output from "time -v" as input and extracts the 'maximum
-    // resident set size' and returns it in bytes.
-    for line in output.lines() {
-        if line
-            .to_lowercase()
-            .contains("maximum resident set size (kbytes)")
-        {
-            let value = line.split(": ").nth(1).unwrap();
-            return Some(str::parse::<u64>(value).unwrap() * 1024);
-        }
-    }
+/// For a given specifier, source, and media type, parse the source of the
+/// module and return a representation which can be further processed.
+///
+/// # Arguments
+///
+/// - `specifier` - The module specifier for the module.
+/// - `source` - The source code for the module.
+/// - `media_type` - The media type for the module.
+///
+// NOTE(bartlomieju): `specifier` has `&str` type instead of
+// `&ModuleSpecifier` because runtime compiler APIs don't
+// require valid module specifiers
+pub fn parse(
+    specifier: &str,
+    source: &str,
+    media_type: &MediaType,
+) -> Result<ParsedModule, AnyError> {
+    let source_map = Rc::new(SourceMap::default());
+    parse_with_source_map(specifier, source, media_type, source_map)
+}
 
-    None
+pub enum TokenOrComment {
+    Token(Token),
+    Comment { kind: CommentKind, text: String },
+}
+
+pub struct LexedItem {
+    pub span: Span,
+    pub inner: TokenOrComment,
+}
+
+impl LexedItem {
+    pub fn span_as_range(&self) -> Range<usize> {
+        self.span.lo.0 as usize..self.span.hi.0 as usize
+    }
+}
+
+fn flatten_comments(
+    comments: SingleThreadedComments,
+) -> impl Iterator<Item = Comment> {
+    let (leading, trailing) = comments.take_all();
+    let mut comments = (*leading).clone().into_inner();
+    comments.extend((*trailing).clone().into_inner());
+    comments.into_iter().flat_map(|el| el.1)
+}
+
+pub fn lex(
+    specifier: &str,
+    source: &str,
+    media_type: &MediaType,
+) -> Vec<LexedItem> {
+    let source_map = SourceMap::default();
+    let source_file = source_map.new_source_file(
+        FileName::Custom(specifier.to_string()),
+        source.to_string(),
+    );
+    let comments = SingleThreadedComments::default();
+    let lexer = Lexer::new(
+        get_syntax(media_type),
+        TARGET,
+        StringInput::from(source_file.as_ref()),
+        Some(&comments),
+    );
+
+    let mut tokens: Vec<LexedItem> = lexer
+        .map(|token| LexedItem {
+            span: token.span,
+            inner: TokenOrComment::Token(token.token),
+        })
+        .collect();
+
+    tokens.extend(flatten_comments(comments).map(|comment| LexedItem {
+        span: comment.span,
+        inner: TokenOrComment::Comment {
+            kind: comment.kind,
+            text: comment.text,
+        },
+    }));
+
+    tokens.sort_by_key(|item| item.span.lo.0);
+
+    tokens
+}
+
+/// A low level function which transpiles a source module into an swc
+/// SourceFile.
+pub fn transpile_module(
+    filename: &str,
+    src: &str,
+    media_type: &MediaType,
+    emit_options: &EmitOptions,
+    globals: &Globals,
+    cm: Rc<SourceMap>,
+) -> Result<(Rc<SourceFile>, Module), AnyError> {
+    let parsed_module =
+        parse_with_source_map(filename, src, media_type, cm.clone())?;
+
+    let jsx_pass = react::react(
+        cm,
+        Some(&parsed_module.comments),
+        react::Options {
+            pragma: emit_options.jsx_factory.clone(),
+            pragma_frag: emit_options.jsx_fragment_factory.clone(),
+            // this will use `Object.assign()` instead of the `_extends` helper
+            // when spreading props.
+            use_builtins: true,
+            ..Default::default()
+        },
+    );
+    let mut passes = chain!(
+    Optional::new(jsx_pass, emit_options.transform_jsx),
+    proposals::decorators::decorators(proposals::decorators::Config {
+      legacy: true,
+      emit_metadata: emit_options.emit_metadata
+    }),
+    helpers::inject_helpers(),
+    typescript::strip::strip_with_config(strip_config_from_emit_options(
+      emit_options
+    )),
+    fixer(Some(&parsed_module.comments)),
+  );
+
+    let source_file = parsed_module.source_file.clone();
+    let module = parsed_module.module;
+
+    let module = swc_common::GLOBALS.set(globals, || {
+        helpers::HELPERS.set(&helpers::Helpers::new(false), || {
+            module.fold_with(&mut passes)
+        })
+    });
+
+    Ok((source_file, module))
+}
+
+pub struct BundleHook;
+
+impl swc_bundler::Hook for BundleHook {
+    fn get_import_meta_props(
+        &self,
+        span: swc_common::Span,
+        module_record: &swc_bundler::ModuleRecord,
+    ) -> Result<Vec<swc_ecmascript::ast::KeyValueProp>, AnyError> {
+        use swc_ecmascript::ast;
+
+        // we use custom file names, and swc "wraps" these in `<` and `>` so, we
+        // want to strip those back out.
+        let mut value = module_record.file_name.to_string();
+        value.pop();
+        value.remove(0);
+
+        Ok(vec![
+            ast::KeyValueProp {
+                key: ast::PropName::Ident(ast::Ident::new("url".into(), span)),
+                value: Box::new(ast::Expr::Lit(ast::Lit::Str(ast::Str {
+                    span,
+                    value: value.into(),
+                    kind: ast::StrKind::Synthesized,
+                    has_escape: false,
+                }))),
+            },
+            ast::KeyValueProp {
+                key: ast::PropName::Ident(ast::Ident::new("main".into(), span)),
+                value: Box::new(if module_record.is_entry {
+                    ast::Expr::Member(ast::MemberExpr {
+                        span,
+                        obj: ast::ExprOrSuper::Expr(Box::new(ast::Expr::MetaProp(
+                            ast::MetaPropExpr {
+                                meta: ast::Ident::new("import".into(), span),
+                                prop: ast::Ident::new("meta".into(), span),
+                            },
+                        ))),
+                        prop: Box::new(ast::Expr::Ident(ast::Ident::new(
+                            "main".into(),
+                            span,
+                        ))),
+                        computed: false,
+                    })
+                } else {
+                    ast::Expr::Lit(ast::Lit::Bool(ast::Bool { span, value: false }))
+                }),
+            },
+        ])
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use swc_ecmascript::dep_graph::DependencyKind;
 
     #[test]
-    fn parse_wrk_output_1() {
-        const TEXT: &str = include_str!("./testdata/wrk1.txt");
-        let wrk = parse_wrk_output(TEXT);
-        assert_eq!(wrk.requests, 1837);
-        assert!((wrk.latency - 6.25).abs() < f64::EPSILON);
-    }
-
-    #[test]
-    fn parse_wrk_output_2() {
-        const TEXT: &str = include_str!("./testdata/wrk2.txt");
-        let wrk = parse_wrk_output(TEXT);
-        assert_eq!(wrk.requests, 53435);
-        assert!((wrk.latency - 6.22).abs() < f64::EPSILON);
-    }
-
-    #[test]
-    fn parse_wrk_output_3() {
-        const TEXT: &str = include_str!("./testdata/wrk3.txt");
-        let wrk = parse_wrk_output(TEXT);
-        assert_eq!(wrk.requests, 96037);
-        assert!((wrk.latency - 6.36).abs() < f64::EPSILON);
-    }
-
-    #[test]
-    fn strace_parse_1() {
-        const TEXT: &str = include_str!("./testdata/strace_summary.out");
-        let strace = parse_strace_output(TEXT);
-
-        // first syscall line
-        let munmap = strace.get("munmap").unwrap();
-        assert_eq!(munmap.calls, 60);
-        assert_eq!(munmap.errors, 0);
-
-        // line with errors
-        assert_eq!(strace.get("mkdir").unwrap().errors, 2);
-
-        // last syscall line
-        let prlimit = strace.get("prlimit64").unwrap();
-        assert_eq!(prlimit.calls, 2);
-        assert!((prlimit.percent_time - 0.0).abs() < f64::EPSILON);
-
-        // summary line
-        assert_eq!(strace.get("total").unwrap().calls, 704);
-        assert_eq!(strace.get("total").unwrap().errors, 5);
-    }
-
-    #[test]
-    fn strace_parse_2() {
-        const TEXT: &str = include_str!("./testdata/strace_summary2.out");
-        let strace = parse_strace_output(TEXT);
-
-        // first syscall line
-        let futex = strace.get("futex").unwrap();
-        assert_eq!(futex.calls, 449);
-        assert_eq!(futex.errors, 94);
-
-        // summary line
-        assert_eq!(strace.get("total").unwrap().calls, 821);
-        assert_eq!(strace.get("total").unwrap().errors, 107);
-    }
-
-    #[test]
-    fn test_wildcard_match() {
-        let fixtures = vec![
-            ("foobarbaz", "foobarbaz", true),
-            ("[WILDCARD]", "foobarbaz", true),
-            ("foobar", "foobarbaz", false),
-            ("foo[WILDCARD]baz", "foobarbaz", true),
-            ("foo[WILDCARD]baz", "foobazbar", false),
-            ("foo[WILDCARD]baz[WILDCARD]qux", "foobarbazqatqux", true),
-            ("foo[WILDCARD]", "foobar", true),
-            ("foo[WILDCARD]baz[WILDCARD]", "foobarbazqat", true),
-            // check with different line endings
-            ("foo[WILDCARD]\nbaz[WILDCARD]\n", "foobar\nbazqat\n", true),
-            (
-                "foo[WILDCARD]\nbaz[WILDCARD]\n",
-                "foobar\r\nbazqat\r\n",
-                true,
-            ),
-            (
-                "foo[WILDCARD]\r\nbaz[WILDCARD]\n",
-                "foobar\nbazqat\r\n",
-                true,
-            ),
-            (
-                "foo[WILDCARD]\r\nbaz[WILDCARD]\r\n",
-                "foobar\nbazqat\n",
-                true,
-            ),
-            (
-                "foo[WILDCARD]\r\nbaz[WILDCARD]\r\n",
-                "foobar\r\nbazqat\r\n",
-                true,
-            ),
-        ];
-
-        // Iterate through the fixture lists, testing each one
-        for (pattern, string, expected) in fixtures {
-            let actual = wildcard_match(pattern, string);
-            dbg!(pattern, string, expected);
-            assert_eq!(actual, expected);
-        }
-    }
-
-    #[test]
-    fn test_pattern_match() {
-        // foo, bar, baz, qux, quux, quuz, corge, grault, garply, waldo, fred, plugh, xyzzy
-
-        let wildcard = "[BAR]";
-        assert!(pattern_match("foo[BAR]baz", "foobarbaz", wildcard));
-        assert!(!pattern_match("foo[BAR]baz", "foobazbar", wildcard));
-
-        let multiline_pattern = "[BAR]
-foo:
-[BAR]baz[BAR]";
-
-        fn multi_line_builder(input: &str, leading_text: Option<&str>) -> String {
-            // If there is leading text add a newline so it's on it's own line
-            let head = match leading_text {
-                Some(v) => format!("{}\n", v),
-                None => "".to_string(),
-            };
-            format!(
-                "{}foo:
-quuz {} corge
-grault",
-                head, input
-            )
-        }
-
-        // Validate multi-line string builder
+    fn test_parsed_module_analyze_dependencies() {
+        let specifier = resolve_url_or_path("https://deno.land/x/mod.js").unwrap();
+        let source = r#"import * as bar from "./test.ts";
+    const foo = await import("./foo.ts");
+    "#;
+        let parsed_module =
+            parse(specifier.as_str(), source, &MediaType::JavaScript)
+                .expect("could not parse module");
+        let actual = parsed_module.analyze_dependencies();
         assert_eq!(
-            "QUUX=qux
-foo:
-quuz BAZ corge
-grault",
-            multi_line_builder("BAZ", Some("QUUX=qux"))
+            actual,
+            vec![
+                DependencyDescriptor {
+                    kind: DependencyKind::Import,
+                    is_dynamic: false,
+                    leading_comments: Vec::new(),
+                    col: 0,
+                    line: 1,
+                    specifier: "./test.ts".into(),
+                    specifier_col: 21,
+                    specifier_line: 1,
+                    import_assertions: HashMap::default(),
+                },
+                DependencyDescriptor {
+                    kind: DependencyKind::Import,
+                    is_dynamic: true,
+                    leading_comments: Vec::new(),
+                    col: 22,
+                    line: 2,
+                    specifier: "./foo.ts".into(),
+                    specifier_col: 29,
+                    specifier_line: 2,
+                    import_assertions: HashMap::default(),
+                }
+            ]
         );
-
-        // Correct input & leading line
-        assert!(pattern_match(
-            multiline_pattern,
-            &multi_line_builder("baz", Some("QUX=quux")),
-            wildcard
-        ));
-
-        // Correct input & no leading line
-        assert!(pattern_match(
-            multiline_pattern,
-            &multi_line_builder("baz", None),
-            wildcard
-        ));
-
-        // Incorrect input & leading line
-        assert!(!pattern_match(
-            multiline_pattern,
-            &multi_line_builder("garply", Some("QUX=quux")),
-            wildcard
-        ));
-
-        // Incorrect input & no leading line
-        assert!(!pattern_match(
-            multiline_pattern,
-            &multi_line_builder("garply", None),
-            wildcard
-        ));
     }
 
     #[test]
-    fn max_mem_parse() {
-        const TEXT: &str = include_str!("./testdata/time.out");
-        let size = parse_max_mem(TEXT);
+    fn test_transpile() {
+        let specifier = resolve_url_or_path("https://deno.land/x/mod.ts")
+            .expect("could not resolve specifier");
+        let source = r#"
+    enum D {
+      A,
+      B,
+      C,
+    }
 
-        assert_eq!(size, Some(120380 * 1024));
+    export class A {
+      private b: string;
+      protected c: number = 1;
+      e: "foo";
+      constructor (public d = D.A) {
+        const e = "foo" as const;
+        this.e = e;
+      }
+    }
+    "#;
+        let module = parse(specifier.as_str(), source, &MediaType::TypeScript)
+            .expect("could not parse module");
+        let (code, maybe_map) = module
+            .transpile(&EmitOptions::default())
+            .expect("could not strip types");
+        assert!(code.starts_with("var D;\n(function(D) {\n"));
+        assert!(
+            code.contains("\n//# sourceMappingURL=data:application/json;base64,")
+        );
+        assert!(maybe_map.is_none());
+    }
+
+    #[test]
+    fn test_transpile_tsx() {
+        let specifier = resolve_url_or_path("https://deno.land/x/mod.ts")
+            .expect("could not resolve specifier");
+        let source = r#"
+    export class A {
+      render() {
+        return <div><span></span></div>
+      }
+    }
+    "#;
+        let module = parse(specifier.as_str(), source, &MediaType::Tsx)
+            .expect("could not parse module");
+        let (code, _) = module
+            .transpile(&EmitOptions::default())
+            .expect("could not strip types");
+        assert!(code.contains("React.createElement(\"div\", null"));
+    }
+
+    #[test]
+    fn test_transpile_decorators() {
+        let specifier = resolve_url_or_path("https://deno.land/x/mod.ts")
+            .expect("could not resolve specifier");
+        let source = r#"
+    function enumerable(value: boolean) {
+      return function (
+        _target: any,
+        _propertyKey: string,
+        descriptor: PropertyDescriptor,
+      ) {
+        descriptor.enumerable = value;
+      };
+    }
+
+    export class A {
+      @enumerable(false)
+      a() {
+        Test.value;
+      }
+    }
+    "#;
+        let module = parse(specifier.as_str(), source, &MediaType::TypeScript)
+            .expect("could not parse module");
+        let (code, _) = module
+            .transpile(&EmitOptions::default())
+            .expect("could not strip types");
+        assert!(code.contains("_applyDecoratedDescriptor("));
     }
 }

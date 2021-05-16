@@ -107,6 +107,10 @@ public class LitteralsTest {
                 .notMatches("\"\\\"")
                 .notMatches("\"hello\")")
                 .matches("\"\\n    - \"")
+                .matches("\"  //comment \"")
+                .matches("\"  a//comment \"")
+                .matches("\"  \\n//comment \"")
+
 
 
 

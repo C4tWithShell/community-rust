@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "const TEXT: &str = include_str!(\"./testdata/time.out\");";
+        String sexpr = "code.contains(\"//# sourceMappingURL=data:application/json;base64,\");";
 
 
         //Print out Ast node content for debugging purpose
