@@ -963,8 +963,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 )
         );
         b.rule(IDENTIFIER_PATTERN).is(
-                b.optional("ref", SPC),
-                b.optional(RustKeyword.KW_MUT, SPC),
+                b.optional(RustKeyword.KW_REF, b.nextNot(DEC_LITERAL)),
+                b.optional(RustKeyword.KW_MUT,  b.nextNot(DEC_LITERAL)),
                 IDENTIFIER, SPC,
                 b.optional(b.sequence("@", SPC, PATTERN))
         );

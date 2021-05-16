@@ -54,6 +54,11 @@ public class StatementTest {
                         "      frames: vec![],\n" +
                         "      stack: None,\n" +
                         "    };")
+                .matches("let ref5 = fut5.await;")
+                .matches("let mut6 = fut6.await;")
+                .matches("let ref ref5 = fut5.await;")
+                .matches("let mut mut6 = fut6.await;")
+                .matches("let ref mut refmut = fut.await;")
 
 
         ;
