@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let a = 9898.10;";
+        String sexpr = "const TEXT: &str = include_str!(\"./testdata/time.out\");";
 
 
         //Print out Ast node content for debugging purpose

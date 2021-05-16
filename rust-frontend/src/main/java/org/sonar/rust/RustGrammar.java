@@ -2082,14 +2082,17 @@ public enum RustGrammar implements GrammarRuleKey {
                 )));
 
         b.rule(ASCII_FOR_CHAR).is(b.regexp("[^\\'\\n\\r\\t\\\\].*"));
-        b.rule(ASCII_FOR_STRING).is(b.regexp("[^\"\\r\\\\].*"));// except ", \ and IsolatedCR (lookahead? (?![m-o])[a-z])
+        b.rule(ASCII_FOR_STRING).is(b.regexp("[\\x00-\\x21\\x23-\\x5b\\x5d-\\x7f]"));// except ", \ and IsolatedCR (lookahead? (?![m-o])[a-z])
 
         b.rule(BYTE_STRING_LITERAL).is(b.token(RustTokenType.BYTE_STRING_LITERAL,
+                b.sequence(
+                "b\"",
+                b.zeroOrMore(
                 b.firstOf(
-                        "b\"\"",
-                        b.regexp("^b\"[\\x00-\\x7F]*\""),
-                        b.sequence("b\"", BYTE_ESCAPE, "\"")
-                )));
+                     "\\\"", ASCII_FOR_STRING, BYTE_ESCAPE, STRING_CONTINUE
+                )),
+                "\""
+        )));
 
 
         b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\\\", "\\0"));

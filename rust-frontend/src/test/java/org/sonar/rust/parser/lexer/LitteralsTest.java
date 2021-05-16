@@ -181,6 +181,17 @@ public class LitteralsTest {
 
 
     @Test
+    public void testAsciiForString() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.ASCII_FOR_STRING))
+                .matches("a")
+                .matches("y")
+                .notMatches("\"")
+                .notMatches("\\")
+                ;
+
+    }
+
+    @Test
     public void testByteStringLiteral() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_STRING_LITERAL))
                 .matches("b\"a\"")
@@ -191,7 +202,6 @@ public class LitteralsTest {
                 .matches("b\"\\xff\"")
                 .matches("b\"\"")
                 .matches("b\"\\xEF\\xBB\\xBFconsole.log(\\\"Hello World\\\");\\x0A\"")
-                .matches("b\"--\"")
                 .matches("b\"--boundary\\t \\r\\n\\\n" +
                         "                    Content-Disposition: form-data; name=\\\"field_1\\\"\\r\\n\\\n" +
                         "                    \\r\\n\\\n" +
