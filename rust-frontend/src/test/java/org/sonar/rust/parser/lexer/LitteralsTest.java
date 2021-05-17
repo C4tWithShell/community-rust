@@ -110,8 +110,9 @@ public class LitteralsTest {
                 .matches("\"  //comment \"")
                 .matches("\"  a//comment \"")
                 .matches("\"  \\n//comment \"")
-
-
+                .matches("\"\\u1f600\"")
+                .matches("\"😃\"")
+                .matches("\"🦕😃\"")
 
 
         ;
@@ -191,7 +192,7 @@ public class LitteralsTest {
                 .matches("y")
                 .notMatches("\"")
                 .notMatches("\\")
-                ;
+        ;
 
     }
 
