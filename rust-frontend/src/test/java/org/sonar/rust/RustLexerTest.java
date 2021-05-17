@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "l;";
+        String sexpr = "type Snapshot : Snapshot;";
 
 
         //Print out Ast node content for debugging purpose

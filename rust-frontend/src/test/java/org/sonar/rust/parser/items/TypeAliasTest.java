@@ -31,6 +31,7 @@ public class TypeAliasTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_ALIAS))
                 .matches("type Point = (u8, u8);")
                 .matches("type Ok = JsValue<'a>;")
+                .matches("type Snapshot: Snapshot;")
 
 
         ;

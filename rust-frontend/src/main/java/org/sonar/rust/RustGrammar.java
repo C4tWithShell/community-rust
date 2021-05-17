@@ -563,8 +563,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 RustKeyword.KW_TRAIT, SPC, IDENTIFIER, SPC,
                 b.optional(GENERIC_PARAMS, SPC),
                 b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)),
-                b.optional(WHERE_CLAUSE), "{", b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-                b.zeroOrMore(ASSOCIATED_ITEM, SPC), "}"
+                b.optional(WHERE_CLAUSE), "{",SPC,  b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+                b.zeroOrMore(ASSOCIATED_ITEM, SPC), SPC, "}"
         );
 
     }
@@ -586,10 +586,14 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* https://doc.rust-lang.org/reference/items/type-aliases.html */
     private static void aliasItem(LexerlessGrammarBuilder b) {
+
+
         b.rule(TYPE_ALIAS).is(
                 RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS), SPC,
-                b.optional(WHERE_CLAUSE),
-                RustPunctuator.EQ, SPC, TYPE, SPC, ";"
+                b.optional(WHERE_CLAUSE,SPC),
+                b.optional(RustPunctuator.EQ, SPC, TYPE, SPC),
+                b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)),
+                RustPunctuator.SEMI
         );
     }
 
