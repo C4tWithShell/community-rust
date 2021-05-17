@@ -108,6 +108,9 @@ public class IfExpressionTest {
                         "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
                         "                return Poll::Ready(Err(generic_error(msg)));\n" +
                         "            }")
+                .matches("if a && b { None }")
+                .matches("if !c { None }")
+                .matches("if a && !b { None }")
 
 
         ;

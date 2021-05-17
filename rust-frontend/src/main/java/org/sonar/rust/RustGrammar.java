@@ -202,6 +202,7 @@ public enum RustGrammar implements GrammarRuleKey {
     MODULE,
     MULTIPLICATION_EXPRESSION,
     NEGATION_EXPRESSION,
+    NEGATION_EXPRESSION_EXCEPT_STRUCT,
     NEQ_EXPRESSION,
     NEVER_TYPE,
     NON_KEYWORD_IDENTIFIER,
@@ -1181,7 +1182,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(CLOSURE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(BORROW_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(DEREFERENCE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-                        b.sequence(NEGATION_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(NEGATION_EXPRESSION_EXCEPT_STRUCT, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
@@ -1609,7 +1610,11 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(ERROR_PROPAGATION_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.QUESTION);
 
         b.rule(NEGATION_EXPRESSION).is(b.firstOf(
-                b.sequence("-", SPC, EXPRESSION), b.sequence(RustPunctuator.NOT, SPC, EXPRESSION)
+                 b.sequence(RustPunctuator.NOT, SPC, EXPRESSION),b.sequence("-", SPC, EXPRESSION)
+        ));
+
+        b.rule(NEGATION_EXPRESSION_EXCEPT_STRUCT).is(b.firstOf(
+                b.sequence(RustPunctuator.NOT, SPC, EXPRESSION_EXCEPT_STRUCT),b.sequence("-", SPC, EXPRESSION_EXCEPT_STRUCT)
         ));
 
         b.rule(ARITHMETIC_OR_LOGICAL_EXPRESSION).is(b.firstOf(

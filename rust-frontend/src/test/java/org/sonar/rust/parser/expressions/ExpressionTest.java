@@ -31,11 +31,19 @@ public class ExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
                 .matches("a")
                 .matches("a || b")
+                .matches("a() || b")
+                .matches("a() || b()")
                 .matches("a || b && c")
                 .notMatches("my_struct{}")
                 .notMatches("my_struct{}.field")
                 .notMatches("a || not_struct {}")
                 .matches("matches.value_of(\"log-level\").unwrap()")
+                .matches("!a || b")
+                .matches("a || !b")
+                .matches("completions.is_empty() && !did_match")
+                .notMatches("completions.is_empty() && !did_match { None } ")
+                .matches("!c")
+                .notMatches("!c { None }")
 
         ;
     }

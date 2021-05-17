@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "code.contains(\"//# sourceMappingURL=data:application/json;base64,\");";
+        String sexpr = "!c;";
 
 
         //Print out Ast node content for debugging purpose
