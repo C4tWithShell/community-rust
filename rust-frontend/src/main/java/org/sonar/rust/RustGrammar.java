@@ -60,6 +60,7 @@ public enum RustGrammar implements GrammarRuleKey {
     BLOCK_EXPRESSION,
     BOOLEAN_LITERAL,
     BORROW_EXPRESSION,
+    BOX_EXPRESSION,
     BREAK_EXPRESSION,
     BYTE_ESCAPE,
     BYTE_LITERAL,
@@ -1016,7 +1017,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOT);
 
         b.rule(TUPLE_STRUCT_PATTERN).is(
-                PATH_IN_EXPRESSION, "(", b.optional(TUPLE_STRUCT_ITEMS), ")"
+                PATH_IN_EXPRESSION, "(",SPC, b.optional(RustKeyword.KW_BOX, SPC), b.optional(TUPLE_STRUCT_ITEMS), ")"
         );
         b.rule(TUPLE_STRUCT_ITEMS).is(seq(b, PATTERN, RustPunctuator.COMMA));
 
@@ -1137,6 +1138,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(
                         b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(BOX_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.next(b.firstOf(")", "]", "}"))),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
@@ -1169,6 +1171,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(BOX_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(RustPunctuator.DOTDOT, b.next(")")),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
@@ -1362,6 +1365,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(BOX_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(EXPRESSION_WITH_BLOCK, b.oneOrMore(SPC, EXPRESSION_TERM)),
 
@@ -1502,6 +1506,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(LOOP_LABEL).is(LIFETIME_OR_LABEL, SPC, RustPunctuator.COLON);
         b.rule(BREAK_EXPRESSION).is(RustKeyword.KW_BREAK, SPC, b.optional(LIFETIME_OR_LABEL, SPC), b.optional(EXPRESSION, SPC));
+        b.rule(BOX_EXPRESSION).is(RustKeyword.KW_BOX, SPC,  EXPRESSION);
         b.rule(CONTINUE_EXPRESSION).is(
                 RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL));
 

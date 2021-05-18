@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "#![feature(const_fn_fn_ptr_basics)]";
+        String sexpr = "Error::Engine(EngineError(box EngineErrorInner::Request(e)));";
 
 
         //Print out Ast node content for debugging purpose

@@ -28,6 +28,17 @@ public class OperatorExpressionTest {
 
 
     @Test
+    public void testBoxExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BOX_EXPRESSION))
+                .matches("box 42")
+                .matches("box foo")
+                .matches("box a.method()")
+                .matches("box Ok(Poll::Pending)")
+        ;
+    }
+
+
+    @Test
     public void testBorrowExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BORROW_EXPRESSION))
                 .matches("&7")

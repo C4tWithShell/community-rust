@@ -156,6 +156,9 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
+                .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
+                .matches("Error::Engine(box EngineError(EngineErrorInner::Request(e)))")
+
 
 
 
@@ -189,6 +192,7 @@ public class PatternTest {
                 .matches("(\"bacon\",42)")
                 .matches("( field_1, )")
 
+
         ;
 
     }
@@ -198,6 +202,7 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GROUPED_PATTERN))
                 .matches("(42)")
                 .matches("( foo )")
+
 
         ;
 
@@ -211,6 +216,7 @@ public class PatternTest {
                 .matches("[42,foo, bar,]")
 
 
+
         ;
 
     }
@@ -221,6 +227,8 @@ public class PatternTest {
                 .matches("Vec::<u8>::with_capacity")
                 .matches("<S as T1>::f")
                 .matches("Token::BackQuote")
+
+
 
         ;
 
@@ -277,6 +285,8 @@ public class PatternTest {
                         "          find_in_comments,\n" +
                         "          provide_prefix_and_suffix_text_for_rename,\n" +
                         "))")
+                .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
+                .matches("Error::Engine(EngineError(box EngineErrorInner::Request(e)))")
 
 
 
