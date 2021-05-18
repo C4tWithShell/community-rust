@@ -44,6 +44,7 @@ public class ExpressionTest {
                 .notMatches("completions.is_empty() && !did_match { None } ")
                 .matches("!c")
                 .notMatches("!c { None }")
+                .matches("continue 'outer")
 
         ;
     }

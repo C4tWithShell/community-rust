@@ -111,6 +111,9 @@ public class IfExpressionTest {
                 .matches("if a && b { None }")
                 .matches("if !c { None }")
                 .matches("if a && !b { None }")
+                .matches("if state.get_state() == MyState::KO {\n" +
+                        "                continue 'outer;\n" +
+                        "            }")
 
 
         ;

@@ -108,6 +108,9 @@ Statements :
                 .matches("{\n" +
                         "    JsError {}     \n" +
                         "}")
+                .matches("{\n" +
+                        "  continue 'outer;\n" +
+                        "}")
 
 
 

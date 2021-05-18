@@ -97,7 +97,8 @@ public class ExpressionWithoutBlockTest {
                 //FieldExpression
                 .matches("other.major")
                 //TODO ClosureExpression
-                //TODO ContinueExpression
+                //ContinueExpression
+                .matches("continue 'outer")
                 //TODO BreakExpression
                 //TODO RangeExpression
                 //ReturnExpression

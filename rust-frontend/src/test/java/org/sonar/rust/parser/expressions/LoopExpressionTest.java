@@ -39,6 +39,14 @@ public class LoopExpressionTest {
     }
 
     @Test
+    public void testContinueExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CONTINUE_EXPRESSION))
+                .matches("continue 'outer")
+
+        ;
+    }
+
+    @Test
     public void testLoopExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LOOP_EXPRESSION))
                 .matches("while i < 10 {\n" +

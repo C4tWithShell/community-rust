@@ -1172,6 +1172,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(RustPunctuator.DOTDOT, b.next(")")),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
@@ -1196,8 +1197,8 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-                        b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT))
+                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT))
+
 
 
                 ));
@@ -1365,6 +1366,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(EXPRESSION_WITH_BLOCK, b.oneOrMore(SPC, EXPRESSION_TERM)),
 
                         b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
@@ -1383,8 +1385,8 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
+                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
+
 
 
 
