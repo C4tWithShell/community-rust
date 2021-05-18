@@ -29,7 +29,7 @@ public class CallExpressionTest {
     @Test
     public void testCallParams() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_PARAMS))
-                //.matches("")
+                .matches("..")
                 .matches("1i32")
                 .matches("{let y=42;}")
                 .matches("{;}")

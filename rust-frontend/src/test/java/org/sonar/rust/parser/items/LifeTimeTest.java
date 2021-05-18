@@ -249,7 +249,7 @@ public class LifeTimeTest {
     }
 
     @Test
-    public void testGenericParams(){
+    public void testGenericParam(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAM))
                 .matches("T")
                 .matches("'de")
@@ -258,6 +258,15 @@ public class LifeTimeTest {
                 .matches("#[outer] 'ABC")
                 .matches("#[outer] id = f64")
                 .matches("#[outer] const AAA : i32")
+                .matches("r = Result<T>")
+                .matches("r = Result<T,U>")
+                .matches("r = Result<(T,U)>")
+                .matches("r = Result<(T,U),V>")
+                .matches("Output = Result<CachedModule,(ModuleSpecifier,AnyError)>")
+                .matches("r = Result<T,(U,V)>")
+                .matches("r = Result<T, (U, V)>")
+                .matches("Output = Result<CachedModule, (ModuleSpecifier, AnyError)>")
+
 
 
         ;
@@ -265,7 +274,7 @@ public class LifeTimeTest {
 
 
     @Test
-    public void testGenerics() {
+    public void testGenericParams() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAMS))
                 .matches("<>")
                 .matches("< >")
@@ -273,10 +282,9 @@ public class LifeTimeTest {
                 .matches("<'a,T>")
                 .matches("<'a>")
                 .matches("<'de>")
-
-
-
-        ;
+                .matches("<CachedModule>")
+                .matches("< A, B >")
+      ;
 
     }
 }

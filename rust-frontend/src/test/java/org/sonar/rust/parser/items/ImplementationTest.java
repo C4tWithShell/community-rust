@@ -65,8 +65,6 @@ public class ImplementationTest {
                 .matches("pub const BIT2: u32 = 1 << 1;") //constant
 
 
-
-
         ;
 
     }
@@ -187,6 +185,7 @@ public class ImplementationTest {
                         "}")
 
 
+
         ;
 
     }
@@ -215,6 +214,7 @@ public class ImplementationTest {
         ;
 
     }
+
     @Test
     public void testImplementation() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.IMPLEMENTATION))
@@ -282,8 +282,25 @@ public class ImplementationTest {
                         "        MediaElementAudioSourceNode::new(window, context, &*options.mediaElement)\n" +
                         "    }\n" +
                         "}")
-
-
+                .matches("impl<'a, 'b, 'c, S> ser::SerializeTupleVariant\n" +
+                        "  for VariantSerializer<'a, 'b, 'c, S>\n" +
+                        "where\n" +
+                        "  S: ser::SerializeTupleStruct<Ok = JsValue<'a>, Error = Error>,\n" +
+                        "{\n" +
+                        "  type Ok = JsValue<'a>;\n" +
+                        "  type Error = Error;\n" +
+                        "\n" +
+                        "  fn serialize_field<T: ?Sized + Serialize>(\n" +
+                        "    &mut self,\n" +
+                        "    value: &T,\n" +
+                        "  ) -> Result<()> {\n" +
+                        "    self.inner.serialize_field(value)\n" +
+                        "  }\n" +
+                        "\n" +
+                        "  fn end(self) -> JsResult<'a> {\n" +
+                        "    self.end(S::end)\n" +
+                        "  }\n" +
+                        "}")
 
 
         ;

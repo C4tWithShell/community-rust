@@ -55,6 +55,8 @@ public class MatchExpressionTest {
                 .matches("a|b|c")
                 .matches("_")
                 .matches("1 | _ if { i.set(i.get() + 1); false }")
+                .matches("(a,_)")
+                .matches("(a,b)")
 
         ;
     }
@@ -72,15 +74,17 @@ public class MatchExpressionTest {
                 .matches("1 => println!(\"one\")," +
                         "2 => println!(\"two\")," +
                         "_ => println!(\"other\")")
-                .matches("1 => println!(\"one\")," +
+                .matches("1 => println!(\"one\"),\n" +
                         "2 => println!(\"two\"),\n" +
                         "3 => println!(\"three\"),\n" +
                         "4 => println!(\"four\"),\n" +
                         "_ => println!(\"other\")")
                 .matches("S(z @ 1, _) => assert_eq!(z, 1)")
                 .matches("S(z @ 1, _) | S(_, z @ 2) => assert_eq!(z, 1)")
-                .matches("_ => {}")
+                .matches("_ => 42")
                 .matches("_ => {},")
+                 .matches("_ => {}")
+
                 .matches("1 | _ if { i.set(i.get() + 1); false } => {}" )
                 .matches("1 | _ if { i.set(i.get() + 1); false } => {}\n" +
                         "_ => {}")
@@ -92,6 +96,12 @@ public class MatchExpressionTest {
                 .matches("semver_parser::version::Identifier::Numeric(n) => Identifier.Numeric('n'),")
                 .matches("semver_parser::version::Identifier::Numeric(n) => Identifier::Numeric('n'),")
                 .matches("semver_parser::version::Identifier::Numeric(n) => Identifier::Numeric(n),")
+                .matches("(&http::Method::GET, \"/json/version\") => {\n" +
+                        "              handle_json_version_request(json_version_response.clone())\n" +
+                        "            }")
+                .matches("(&http::Method::GET, \"/json\") => {\n" +
+                        "              handle_json_request(inspector_map.clone())\n" +
+                        "            }")
 
                 ;
 
@@ -108,6 +118,14 @@ public class MatchExpressionTest {
                         "    3 => println!(\"three\"),\n" +
                         "    4 => println!(\"four\"),\n" +
                         "    5 => println!(\"five\"),\n" +
+                        "    _ => println!(\"something else\")" +
+                        "}")
+                .matches("match matches.value {\n" +
+                        "    1 => println!(\"one\"),\n" +
+                        "    _ => println!(\"something else\")" +
+                        "}")
+                .matches("match if_prefix {\n" +
+                        "    1 => println!(\"one\"),\n" +
                         "    _ => println!(\"something else\")" +
                         "}")
                 .matches("match S(1, 2) {\n" +
@@ -184,6 +202,51 @@ public class MatchExpressionTest {
                         "                return Ok(ValidationResult::Valid(None));\n" +
                         "              }\n" +
                         "            }")
+                .matches("match f {\n" +
+                        "            a  => {\n" +
+                        "              handle.a()\n" +
+                        "            }\n" +
+                        "            b  => {\n" +
+                        "              handle.b(c)\n" +
+                        "            }\n" +
+                        "            _ => 42\n" +
+                        "          }")
+                .matches("match f {\n" +
+                        "            a  => {\n" +
+                        "              handle.a()\n" +
+                        "            }\n" +
+                        "            (b,c)  => {\n" +
+                        "              handle.b(c)\n" +
+                        "            }\n" +
+                        "            _ => 42\n" +
+                        "          }")
+                .matches("match new_state {\n" +
+                        "      PollState::Polling => 42,\n" +
+                        "            }")
+                .matches("match new_state {\n" +
+
+                        "      PollState::Polling => {} // Poll the session handler again.\n" +
+
+                        "            }")
+                .matches("match new_state {\n" +
+
+                        "        PollState::Parked => thread::park(), // Park the thread.\n" +
+
+                        "            }")
+                .matches("match new_state {\n" +
+                        "         42 => break foo\n" +
+                        "            }")
+                .matches("match new_state {\n" +
+                        "         PollState::Idle => break Ok(Poll::Pending),\n" +
+                        "            }")
+
+                .matches("match new_state {\n" +
+                        "         PollState::Idle => break Ok(Poll::Pending), // Yield to task.\n" +
+                        "      PollState::Polling => {} // Poll the session handler again.\n" +
+                        "        PollState::Parked => thread::park(), // Park the thread.\n" +
+                        "          _ => unreachable!(),\n" +
+                        "            }")
+
 
 
         ;

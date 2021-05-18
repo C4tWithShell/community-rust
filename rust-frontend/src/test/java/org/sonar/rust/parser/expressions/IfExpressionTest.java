@@ -39,6 +39,20 @@ public class IfExpressionTest {
                 .matches("if run_coverage {\n" +
                         "        println!(\"Coverage is running\");" +
                         " } ")
+                .matches("if is_ok {} ")
+                .matches("if if_ok {} ")
+                .matches("if match_ok {} ")
+                .matches("if async_ok {} ")
+                .matches("if is_red || is_black {let cpt = 1 ;} else  {let cpt = 0 ;}")
+                .matches("if is_red || is_black {}")
+                .matches("if is_red || is_black {} else  {let cpt = 0 ;}")
+                .matches("if is_ok {\n" +
+                        "        // empty block\n" +
+                        " } ")
+                .matches("if is_ok {} else {let x = 42;}")
+                .matches("if is_ok {\n" +
+                        "        // empty block\n" +
+                        " } else {let x = 42;}")
                 .matches("if bytes.len() < 3 * 4 {\n" +
                         "        println!(\"Too short\");" +
                         "        }")
@@ -68,6 +82,38 @@ public class IfExpressionTest {
                         "                        }\n" +
                         "                    }\n" +
                         "                }")
+                .matches("if is_ok \n" +
+                        "            {} else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if is_ops || has_pending_dyn_imports || has_pending_dyn_module_evaluation\n" +
+                        "            {} else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if has_ops\n" +
+                        "                || has_pending_dyn_imports\n" +
+                        "                || has_pending_dyn_module_evaluation\n" +
+                        "            {} else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if has_pending_ops\n" +
+                        "                || has_pending_dyn_imports\n" +
+                        "                || has_pending_dyn_module_evaluation\n" +
+                        "            {\n" +
+                        "                // pass, will be polled again\n" +
+                        "            } else {\n" +
+                        "                let msg = \"Module evaluation is still pending but there are no pending ops or dynamic imports. This situation is often caused by unresolved promise.\";\n" +
+                        "                return Poll::Ready(Err(generic_error(msg)));\n" +
+                        "            }")
+                .matches("if a && b { None }")
+                .matches("if !c { None }")
+                .matches("if a && !b { None }")
+                .matches("if state.get_state() == MyState::KO {\n" +
+                        "                continue 'outer;\n" +
+                        "            }")
 
 
         ;

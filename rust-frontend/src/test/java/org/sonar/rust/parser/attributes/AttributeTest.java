@@ -43,6 +43,7 @@ public class AttributeTest {
     public void testInnerAttribute() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.INNER_ATTRIBUTE))
                 .matches("#![crate_type = \"lib\"]")
+                .matches("#![feature(const_fn_fn_ptr_basics)]")
         ;
     }
 

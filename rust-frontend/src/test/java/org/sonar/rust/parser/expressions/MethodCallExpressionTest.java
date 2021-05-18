@@ -28,7 +28,6 @@ public class MethodCallExpressionTest {
 
     @Test
     public void testMethodCallExpression() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.METHOD_CALL_EXPRESSION))
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("\"Some string\".to_string()")
                 .matches("\"3.14\".parse()")
@@ -64,11 +63,117 @@ public class MethodCallExpressionTest {
                 .matches("(disk_byte as char).to_string()")
                 .matches("async move {}.local()")
                 .matches("self.state")
+                .matches("async move {\n" +
+                        "      let source_file = file_fetcher\n" +
+                        "        .fetch(&requested_specifier, &mut permissions)\n" +
+                        "        .await\n" +
+                        "        .map_err(|err| {\n" +
+                        "          let err = if let Some(e) = err.downcast_ref::<std::io::Error>() {\n" +
+                        "            if e.kind() == std::io::ErrorKind::NotFound {\n" +
+                        "              let message = if let Some(location) = &maybe_location {\n" +
+                        "                format!(\n" +
+                        "                  \"Cannot resolve module \\\"{}\\\" from \\\"{}\\\".\",\n" +
+                        "                  requested_specifier, location.filename\n" +
+                        "                )\n" +
+                        "              } else {\n" +
+                        "                format!(\"Cannot resolve module \\\"{}\\\".\", requested_specifier)\n" +
+                        "              };\n" +
+                        "              custom_error(\"NotFound\", message)\n" +
+                        "            } else {\n" +
+                        "              err\n" +
+                        "            }\n" +
+                        "          } else {\n" +
+                        "            err\n" +
+                        "          };\n" +
+                        "          if let Some(location) = maybe_location {\n" +
+                        "            // Injected modules (like test and eval) come with locations, but\n" +
+                        "            // they are confusing to the user to print out the location because\n" +
+                        "            // they cannot actually get to the source code that is quoted, as\n" +
+                        "            // it only exists in the runtime memory of Deno.\n" +
+                        "            if !location.filename.contains(\"$deno$\") {\n" +
+                        "              (\n" +
+                        "                requested_specifier.clone(),\n" +
+                        "                HandlerError::FetchErrorWithLocation(err.to_string(), location)\n" +
+                        "                  .into(),\n" +
+                        "              )\n" +
+                        "            } else {\n" +
+                        "              (requested_specifier.clone(), err)\n" +
+                        "            }\n" +
+                        "          } else {\n" +
+                        "            (requested_specifier.clone(), err)\n" +
+                        "          }\n" +
+                        "        })?;\n" +
+                        "      let url = &source_file.specifier;\n" +
+                        "      let is_remote = !(url.scheme() == \"file\"\n" +
+                        "        || url.scheme() == \"data\"\n" +
+                        "        || url.scheme() == \"blob\");\n" +
+                        "      let filename = disk_cache.get_cache_filename_with_extension(url, \"meta\");\n" +
+                        "      let maybe_version = if let Some(filename) = filename {\n" +
+                        "        if let Ok(bytes) = disk_cache.get(&filename) {\n" +
+                        "          if let Ok(compiled_file_metadata) =\n" +
+                        "            CompiledFileMetadata::from_bytes(&bytes)\n" +
+                        "          {\n" +
+                        "            Some(compiled_file_metadata.version_hash)\n" +
+                        "          } else {\n" +
+                        "            None\n" +
+                        "          }\n" +
+                        "        } else {\n" +
+                        "          None\n" +
+                        "        }\n" +
+                        "      } else {\n" +
+                        "        None\n" +
+                        "      };\n" +
+                        "\n" +
+                        "      let mut maybe_map_path = None;\n" +
+                        "      let map_path =\n" +
+                        "        disk_cache.get_cache_filename_with_extension(&url, \"js.map\");\n" +
+                        "      let maybe_map = if let Some(map_path) = map_path {\n" +
+                        "        if let Ok(map) = disk_cache.get(&map_path) {\n" +
+                        "          maybe_map_path = Some(disk_cache.location.join(map_path));\n" +
+                        "          Some(String::from_utf8(map).unwrap())\n" +
+                        "        } else {\n" +
+                        "          None\n" +
+                        "        }\n" +
+                        "      } else {\n" +
+                        "        None\n" +
+                        "      };\n" +
+                        "      let mut maybe_emit = None;\n" +
+                        "      let mut maybe_emit_path = None;\n" +
+                        "      let emit_path = disk_cache.get_cache_filename_with_extension(&url, \"js\");\n" +
+                        "      if let Some(emit_path) = emit_path {\n" +
+                        "        if let Ok(code) = disk_cache.get(&emit_path) {\n" +
+                        "          maybe_emit =\n" +
+                        "            Some(Emit::Cli((String::from_utf8(code).unwrap(), maybe_map)));\n" +
+                        "          maybe_emit_path =\n" +
+                        "            Some((disk_cache.location.join(emit_path), maybe_map_path));\n" +
+                        "        }\n" +
+                        "      };\n" +
+                        "\n" +
+                        "      Ok(CachedModule {\n" +
+                        "        is_remote,\n" +
+                        "        maybe_dependencies: None,\n" +
+                        "        maybe_emit,\n" +
+                        "        maybe_emit_path,\n" +
+                        "        maybe_types: source_file.maybe_types,\n" +
+                        "        maybe_version,\n" +
+                        "        media_type: source_file.media_type,\n" +
+                        "        requested_specifier,\n" +
+                        "        source: source_file.source,\n" +
+                        "        source_path: source_file.local,\n" +
+                        "        specifier: source_file.specifier,\n" +
+                        "      })\n" +
+                        "    }\n" +
+                        "    .boxed()")
+                .matches("runtime.execute(\"foo\", r#\"raw\"#)")
+                .matches("keys.drain(..)")
+                .matches("a321.into()")
+                .matches("321.await")
+                .matches("321.into()")
 
 
-
-
-                ;
+        ;
 
     }
+
+
 }

@@ -32,6 +32,7 @@ public class TupleTest {
                 .matches("()")
                 .matches("(i32,i32)")
                 .matches("(i32, u8)")
+                .matches("(ModuleSpecifier, AnyError)")
 
         ;
     }

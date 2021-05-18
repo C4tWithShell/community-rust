@@ -26,7 +26,28 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class ExpressionTest {
 
+    @Test
+    public void testExpressionExceptStruct() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
+                .matches("a")
+                .matches("a || b")
+                .matches("a() || b")
+                .matches("a() || b()")
+                .matches("a || b && c")
+                .notMatches("my_struct{}")
+                .notMatches("my_struct{}.field")
+                .notMatches("a || not_struct {}")
+                .matches("matches.value_of(\"log-level\").unwrap()")
+                .matches("!a || b")
+                .matches("a || !b")
+                .matches("completions.is_empty() && !did_match")
+                .notMatches("completions.is_empty() && !did_match { None } ")
+                .matches("!c")
+                .notMatches("!c { None }")
+                .matches("continue 'outer")
 
+        ;
+    }
 
     @Test
     public void testExpression() {
@@ -85,6 +106,13 @@ public class ExpressionTest {
                         "            Ok(())\n" +
                         "        }\n" +
                         "            .boxed_local()")
+                .notMatches("is_ok {\n" +
+                "        // empty block" +
+                " } ")
+                .matches("..")
+                .matches("break 42")
+                .matches("break Ok(Poll::Pending)")
+
      ;
     }
 }

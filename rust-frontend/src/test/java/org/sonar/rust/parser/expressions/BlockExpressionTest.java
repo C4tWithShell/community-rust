@@ -40,18 +40,7 @@ Statements :
      */
 
 
-    @Test
-    public void testStatements() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENTS))
-                .matches("println!(\"hi there\");")
-                .matches("println!(\"hi there\");\n" +
-                        "println!(\"how are you today ?\");")
 
-                .matches("j.set(i.get()); false")
-                .matches("j.set(i.get() + 1); false")
-                .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
-                ;
-    }
 
     @Test
     public void testAsyncBlockExpression() {
@@ -65,6 +54,9 @@ Statements :
     public void testBlockExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_EXPRESSION))
                 .matches("{}")
+                .matches("{\n" +
+                        "    // comment\n" +
+                        "}")
                 .matches("{let y=42;}")
                 .matches("{println!(\"hi there\");}")
                 .matches("{abc()}")
@@ -93,11 +85,9 @@ Statements :
                 .matches("{\n" +
                         "        self.len() as u32\n" +
                         "    }")
-                /* FIXME
                 .matches("{\n" +
                         "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
                         "}")
-                        */
 
                 .matches("{ Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
                         "        let mut b = 42;\n" +
@@ -106,7 +96,7 @@ Statements :
                 .matches("{\n" +
                         "            PathBuf::from(\"/demo_dir/\")\n" +
                         "        }")
-                .matches("{PathBuf::from(r\"C:\\demo_dir\\\")}")
+                .matches("{PathBuf::from(r\"C:\\demodir\\\")}")
                 .matches("{\n" +
                         "            if check {\n" +
                         "                check_source_files(config, paths).res1;\n" +
@@ -115,6 +105,12 @@ Statements :
                         "            }\n" +
                         "            Ok(())\n" +
                         "        }")
+                .matches("{\n" +
+                        "    JsError {}     \n" +
+                        "}")
+                .matches("{\n" +
+                        "  continue 'outer;\n" +
+                        "}")
 
 
 

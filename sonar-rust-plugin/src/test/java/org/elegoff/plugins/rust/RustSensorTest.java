@@ -81,14 +81,15 @@ public class RustSensorTest {
     public void analyseSimple() throws IOException {
         DefaultInputFile inputFile = executeSensorOnSingleFile(SIMPLE);
 
-        assertEquals((Integer) 9, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
-        assertEquals((Integer) 7, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
-        assertEquals((Integer) 7, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
+        assertEquals((Integer) 10, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
+        assertEquals((Integer) 4, tester.measure(inputFile.key(), CoreMetrics.STATEMENTS).value());
+        assertEquals((Integer) 4, tester.measure(inputFile.key(), CoreMetrics.COMPLEXITY).value());
         assertEquals((Integer) 1, tester.measure(inputFile.key(), CoreMetrics.COMMENT_LINES).value());
         assertEquals((Integer) 2, tester.measure(inputFile.key(), CoreMetrics.FUNCTIONS).value());
-        assertEquals(9, tester.cpdTokens(inputFile.key()).size());
+        assertEquals(10, tester.cpdTokens(inputFile.key()).size());
         assertEquals(Collections.singletonList(TypeOfText.KEYWORD), tester.highlightingTypeAt(inputFile.key(), 1, 1));
         assertEquals(Collections.singletonList(TypeOfText.COMMENT), tester.highlightingTypeAt(inputFile.key(), 8, 5));
+        assertEquals(Collections.singletonList(TypeOfText.CONSTANT), tester.highlightingTypeAt(inputFile.key(), 11, 13));
         assertEquals(Collections.singletonList(TypeOfText.STRING), tester.highlightingTypeAt(inputFile.key(), 6, 13));
 
         assertEquals(0, tester.allIssues().size());

@@ -112,6 +112,11 @@ public class PatternTest {
     public void testStructPatternElements(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_ELEMENTS))
                 .matches("..")
+                .matches("x: 10")
+                .matches("x: 10, y : 20")
+                .matches("x")
+                .matches("x,y")
+                .matches("x,y")
 
 
         ;
@@ -121,11 +126,12 @@ public class PatternTest {
     @Test
     public void testStructPatternField(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_FIELD))
-                .matches("(1:42)")
-                .matches("#[outer](1:42)")
-                .matches("(foo:42)")
-                .matches("(bar)")
-                .matches("(ref mut bar)")
+                .matches("1:42")
+                .matches("#[outer]1:42")
+                .matches("foo:42")
+                .matches("bar")
+                .matches("ref mut bar")
+                .matches("x:10")
 
 
         ;
@@ -139,6 +145,8 @@ public class PatternTest {
                 .matches("Point{..}")
                 .matches("TokenOrComment::Comment{..}")
                 .matches("TokenOrComment::Comment { .. }")
+                .matches("ModuleSource{code,module_url_specified,module_url_found,}")
+
 
         ;
 
@@ -148,6 +156,7 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
+
 
 
         ;
@@ -164,7 +173,6 @@ public class PatternTest {
                 .matches("\"bacon\", foo")
                 .matches("\"bacon\" , foo")
 
-
         ;
 
     }
@@ -179,6 +187,7 @@ public class PatternTest {
                 .matches("(..)")
                 .matches("(\"bacon\" ,)")
                 .matches("(\"bacon\",42)")
+                .matches("( field_1, )")
 
         ;
 
@@ -243,10 +252,32 @@ public class PatternTest {
                 .matches("&[u8]")
                 //struct
                 .matches("Point{..}")
+                .matches("ModuleSource{code,module_url_specified,module_url_found,}")
                 //tuple struct
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
                 .matches("(\"Bacon\", b)")
+                .matches("(\n" +
+                        "          field_1,\n" +
+                        ")")
+                .matches("p((\n" +
+                        "          field_2,\n" +
+                        "))")
+                .matches("(\n" +
+                        "          specifier,\n" +
+                        "          position,\n" +
+                        "          find_in_strings,\n" +
+                        "          find_in_comments,\n" +
+                        "          provide_prefix_and_suffix_text_for_rename,\n" +
+                        ")")
+                .matches("RequestMethod::FindRenameLocations((\n" +
+                        "          specifier,\n" +
+                        "          position,\n" +
+                        "          find_in_strings,\n" +
+                        "          find_in_comments,\n" +
+                        "          provide_prefix_and_suffix_text_for_rename,\n" +
+                        "))")
+
 
 
 
