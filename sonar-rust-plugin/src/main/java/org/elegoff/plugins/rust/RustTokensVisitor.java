@@ -77,11 +77,25 @@ public class RustTokensVisitor{
                 final String tokenImage = getTokenImage(token);
                 final TokenLocation tokenLocation = tokenLocation(token);
 
-                if (token.getType().equals(RustTokenType.CHARACTER_LITERAL)||token.getType().equals(RustTokenType.STRING_LITERAL)) {
+                if (token.getType().equals(RustTokenType.CHARACTER_LITERAL)
+                        ||token.getType().equals(RustTokenType.STRING_LITERAL)
+                        ||token.getType().equals(RustTokenType.RAW_STRING_LITERAL)
+                        ||token.getType().equals(RustTokenType.RAW_BYTE_STRING_LITERAL)
+
+                ) {
                     highlight(highlighting, tokenLocation, TypeOfText.STRING);
 
                 } else if (keywords.contains(tokenImage)) {
                     highlight(highlighting, tokenLocation, TypeOfText.KEYWORD);
+                }
+
+                if (token.getType().equals(RustTokenType.FLOAT_LITERAL)
+                        ||token.getType().equals(RustTokenType.BOOLEAN_LITERAL)
+                        ||token.getType().equals(RustTokenType.INTEGER_LITERAL)
+
+                ) {
+                    highlight(highlighting, tokenLocation, TypeOfText.CONSTANT);
+
                 }
 
                 for (Trivia trivia : token.getTrivia()) {

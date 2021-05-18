@@ -8,7 +8,7 @@ fn main() {
     // add a second line
 
     println!("How are you today ?");
-
+    let x = 42;
 }
 
 fn other() {

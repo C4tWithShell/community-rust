@@ -20,10 +20,15 @@
 package org.sonar.rust;
 
 import com.google.common.base.Charsets;
+import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
+import com.sonar.sslr.impl.ast.AstXmlPrinter;
 import org.junit.Test;
+import org.sonar.sslr.parser.LexerlessGrammar;
+import org.sonar.sslr.parser.ParserAdapter;
 import org.sonar.sslr.tests.Assertions;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -58,5 +63,24 @@ public class RustLexerTest {
 
 
         ;
+    }
+
+    @Test
+    public void testParsing() {
+
+
+        String sexpr = "#![feature(const_fn_fn_ptr_basics)]";
+
+
+        //Print out Ast node content for debugging purpose
+
+        ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
+        AstNode rootNode = parser.parse(sexpr);
+        org.fest.assertions.Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
+        AstNode astNode = rootNode;
+        //org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
+        System.out.println(AstXmlPrinter.print(astNode));
+
+
     }
 }

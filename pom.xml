@@ -54,7 +54,7 @@
         <sonar.version>7.9</sonar.version>
         <java.version>8</java.version>
         <sslr.version>1.24.0.633</sslr.version>
-        <sslr-squid-bridge.version>2.7.0.377</sslr-squid-bridge.version>
+        <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
         <mockito.version>3.6.28</mockito.version>
         <assertj-core.version>3.19.0</assertj-core.version>
         <jacoco.version>0.8.6</jacoco.version>

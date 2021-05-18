@@ -79,6 +79,7 @@ public class MacroTest {
                 .matches("println!(\"hello,{}\", j);")
                 .matches("println!(\"{}, {}\", word, j);")
                 .notMatches("")
+                .matches("assert_eq!(state.borrow::<MyStruct>().value, 110);")
         ;
     }
 
@@ -132,7 +133,10 @@ public class MacroTest {
                 .matches("($(token)*)")
                 .matches("[$i:ident]")
                 .matches("[($i:ident)]")
-                .matches("($($i:ident)*)");
+                .matches("($($i:ident)*)")
+                .matches("$($key:expr => $value:expr)+")
+                .matches("$($key:expr => $value:expr),+")
+                ;
     }
 
     @Test
@@ -150,7 +154,58 @@ public class MacroTest {
                 .matches("{[($i:ident)]}")
                 .matches("(($($i:ident)*))")
                 .matches("($l:tt)")
+                .matches("{ $($key:expr => $value:expr)+ }")
+                .matches("{ $($key:expr => $value:expr),+ }")
                 ;
+    }
+
+
+    @Test
+    public void testMacroRules() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES))
+                .matches("($l:tt) => { bar!($l); }" )
+                .matches("($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
+                        "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
+                        "            self.$to(v as _)\n" +
+                        "        })*\n" +
+                        "    };")
+                .matches("{ $($key:expr => $value:expr),+ } => {\n" +
+                        "      {\n" +
+                        "        let mut m = ::std::collections::HashMap::new();\n" +
+                        "        $(\n" +
+                        "          m.insert($key, $value);\n" +
+                        "        )+\n" +
+                        "        m\n" +
+                        "      }\n" +
+                        "    };")
+
+        ;
+    }
+
+    @Test
+    public void testMacroRulesDef() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEF))
+                .matches("{($l:tt) => { bar!($l); }}" )
+                .matches("{($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
+                        "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
+                        "            self.$to(v as _)\n" +
+                        "        })*\n" +
+                        "    };\n" +
+                        "}")
+                .matches("(\n" +
+                        "    { $($key:expr => $value:expr),+ } => {\n" +
+                        "      {\n" +
+                        "        let mut m = ::std::collections::HashMap::new();\n" +
+                        "        $(\n" +
+                        "          m.insert($key, $value);\n" +
+                        "        )+\n" +
+                        "        m\n" +
+                        "      }\n" +
+                        "    };\n" +
+                        "  );")
+
+
+        ;
     }
 
     @Test
@@ -159,6 +214,50 @@ public class MacroTest {
                 .matches("macro_rules! foo {\n" +
                         "    ($l:tt) => { bar!($l); }\n" +
                         "}")
+                .matches("macro_rules! pat {\n" +
+                        "    ($i:ident) => (Some($i))\n" +
+                        "}")
+                .matches("macro_rules! Tuple {\n" +
+                        "    { $A:ty, $B:ty } => { ($A, $B) };\n" +
+                        "}")
+                .matches("macro_rules! const_maker {\n" +
+                        "    ($t:ty, $v:tt) => { const CONST: $t = $v; };\n" +
+                        "}")
+                .matches("macro_rules! example {\n" +
+                        "    () => { println!(\"Macro call in a macro!\") };\n" +
+                        "}")
+                .matches("macro_rules! forward_to {\n" +
+                        "    ($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
+                        "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
+                        "            self.$to(v as _)\n" +
+                        "        })*\n" +
+                        "    };\n" +
+                        "}")
+                .matches("macro_rules! map (\n" +
+                        "    { $($key:expr => $value:expr),+ } => {\n" +
+                        "      {\n" +
+                        "        let mut m = ::std::collections::HashMap::new();\n" +
+                        "        $(\n" +
+                        "          m.insert($key, $value);\n" +
+                        "        )+\n" +
+                        "        m\n" +
+                        "      }\n" +
+                        "    };\n" +
+                        "  );")
+                .matches("macro_rules! itest(\n" +
+                        "  ($name:ident {$( $key:ident: $value:expr,)*})  => {\n" +
+                        "    #[test]\n" +
+                        "    fn $name() {\n" +
+                        "      (util::CheckOutputIntegrationTest {\n" +
+                        "        $(\n" +
+                        "          $key: $value,\n" +
+                        "         )*\n" +
+                        "        .. Default::default()\n" +
+                        "      }).run()\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        ");")
+
 
         ;
     }

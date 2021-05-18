@@ -27,6 +27,26 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class LoopExpressionTest {
 
     @Test
+    public void testBreakExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BREAK_EXPRESSION))
+                .matches("break")
+                .matches("break 42")
+                .matches("break foo")
+                .matches("break a.method()")
+                .matches("break 'a b.method()")
+                .matches("break Ok(Poll::Pending)")
+                ;
+    }
+
+    @Test
+    public void testContinueExpression() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CONTINUE_EXPRESSION))
+                .matches("continue 'outer")
+
+        ;
+    }
+
+    @Test
     public void testLoopExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LOOP_EXPRESSION))
                 .matches("while i < 10 {\n" +
@@ -49,6 +69,10 @@ public class LoopExpressionTest {
                         "}")
                 .matches("for n in 1..11 {\n" +
                         "    sum += n;\n" +
+                        "}")
+                .matches("while i < j {\n" +
+                        "    println!(\"hello\");\n" +
+                        "    i = i + 1;\n" +
                         "}")
         ;
     }
