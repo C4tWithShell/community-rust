@@ -330,7 +330,7 @@ public enum RustGrammar implements GrammarRuleKey {
     USE_DECLARATION,
     USE_TREE,
     VISIBILITY,
-    VISIT_ITEM,
+    VIS_ITEM,
     WHERE_CLAUSE,
     WHERE_CLAUSE_ITEM,
     WILDCARD_PATTERN;
@@ -344,7 +344,7 @@ public enum RustGrammar implements GrammarRuleKey {
         LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
 
-        b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(STATEMENT, SPC), EOF);
+        b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(INNER_ATTRIBUTE),SPC, b.zeroOrMore(STATEMENT, SPC), EOF);
 
         punctuators(b);
         keywords(b);
@@ -521,8 +521,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void items(LexerlessGrammarBuilder b) {
         b.rule(ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
-                b.firstOf(VISIT_ITEM, MACRO_ITEM));
-        b.rule(VISIT_ITEM).is(b.optional(VISIBILITY, SPC), b.firstOf(
+                b.firstOf(VIS_ITEM, MACRO_ITEM));
+        b.rule(VIS_ITEM).is(b.optional(VISIBILITY, SPC), b.firstOf(
                 MODULE,
                 EXTERN_CRATE,
                 USE_DECLARATION,

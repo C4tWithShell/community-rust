@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "type Snapshot : Snapshot;";
+        String sexpr = "#![feature(const_fn_fn_ptr_basics)]";
 
 
         //Print out Ast node content for debugging purpose

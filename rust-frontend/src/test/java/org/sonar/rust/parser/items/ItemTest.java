@@ -62,7 +62,7 @@ MacroItem:
     @Test
     public void VisItem() {
 
-        assertThat(RustGrammar.create().build().rule(RustGrammar.VISIT_ITEM))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.VIS_ITEM))
                 //MODULE,
 
 
