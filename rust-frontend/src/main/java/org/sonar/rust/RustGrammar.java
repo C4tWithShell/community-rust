@@ -1483,7 +1483,7 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void loops(LexerlessGrammarBuilder b) {
-        b.rule(LOOP_EXPRESSION).is(b.optional(LOOP_LABEL),
+        b.rule(LOOP_EXPRESSION).is(b.optional(LOOP_LABEL,SPC),
                 b.firstOf(
                         INFINITE_LOOP_EXPRESSION,
                         PREDICATE_LOOP_EXPRESSION,
