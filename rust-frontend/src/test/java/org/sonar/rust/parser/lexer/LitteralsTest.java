@@ -181,6 +181,7 @@ public class LitteralsTest {
                 .notMatches("b''\\t")
                 .matches("b'\\xff'")
                 .matches("b'\\\\'")
+                .matches("b'\\''")
         ;
 
     }
