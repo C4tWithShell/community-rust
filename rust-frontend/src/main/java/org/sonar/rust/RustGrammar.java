@@ -929,6 +929,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 TUPLE_STRUCT_PATTERN,
                 STRUCT_PATTERN,
                 MACRO_INVOCATION,
+                b.sequence(LITERAL_PATTERN,b.nextNot(RustPunctuator.DOTDOT)),
 
 
                 //unambigous PATH_PATTERN,
@@ -951,9 +952,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
                 TUPLE_PATTERN,
                 GROUPED_PATTERN,
-                SLICE_PATTERN,
+                SLICE_PATTERN
 
-                LITERAL_PATTERN
+
         ));
         b.rule(LITERAL_PATTERN).is(b.firstOf(
                 BOOLEAN_LITERAL,

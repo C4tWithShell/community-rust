@@ -30,6 +30,9 @@ public class PatternTest {
     public void testLitteralPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LITERAL_PATTERN))
                 .matches("42")
+                .matches("'z'")
+                .matches("b'c'")
+
 
         ;
     }
@@ -69,6 +72,7 @@ public class PatternTest {
                 .matches("1")
                 .matches("'a'")
                 .matches("'z'")
+
 
         ;
 
@@ -119,6 +123,7 @@ public class PatternTest {
                 .matches("x,y")
 
 
+
         ;
 
     }
@@ -132,6 +137,7 @@ public class PatternTest {
                 .matches("bar")
                 .matches("ref mut bar")
                 .matches("x:10")
+
 
 
         ;
@@ -158,6 +164,7 @@ public class PatternTest {
                 .matches("S(z @ 1, _)")
                 .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
                 .matches("Error::Engine(box EngineError(EngineErrorInner::Request(e)))")
+
 
 
 
@@ -230,6 +237,7 @@ public class PatternTest {
 
 
 
+
         ;
 
     }
@@ -287,6 +295,8 @@ public class PatternTest {
                         "))")
                 .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
                 .matches("Error::Engine(EngineError(box EngineErrorInner::Request(e)))")
+                .matches("'c'")
+                .matches("b'c'")
 
 
 

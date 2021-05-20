@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "Error::Engine(EngineError(box EngineErrorInner::Request(e)));";
+        String sexpr = "let clipboard_type = b'c';";
 
 
         //Print out Ast node content for debugging purpose
