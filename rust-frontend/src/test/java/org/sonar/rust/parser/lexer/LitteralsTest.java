@@ -28,10 +28,13 @@ public class LitteralsTest {
     @Test
     public void charLitterals() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL))
-                .matches("'foo'")
-                .matches("'foo''bar'")
-                .matches("'foo\"bar'")
-                .matches("'C:\\SonarSource\\foo.rs'");
+                .matches("'f'")
+                .matches("'\"'")
+                .notMatches("'\\'")
+                .notMatches("'''")
+                .notMatches("'a' => 'b'")
+                .matches("'\\0'")
+                ;
     }
 
 
@@ -55,7 +58,8 @@ public class LitteralsTest {
                 .matches("\\x7f")
                 .matches("\\r")
                 .matches("\\t")
-                .matches("\\")
+                .matches("\\\\")
+                .matches("\\0")
 
         ;
     }
@@ -82,12 +86,12 @@ public class LitteralsTest {
                 .matches("abc")
                 .matches("abc,def!@")
                 .matches("\r\n")
-                //.notMatches("\r")
                 .notMatches("\"")
                 .notMatches("\"hello")
                 .notMatches("hello\"")
                 .notMatches("hello\"world")
                 .notMatches("\"hello\"")
+
         ;
     }
 
@@ -110,10 +114,12 @@ public class LitteralsTest {
                 .matches("\"  //comment \"")
                 .matches("\"  a//comment \"")
                 .matches("\"  \\n//comment \"")
-                .matches("\"\\u1f600\"")
+                .matches("\"\\u{1f600}\"")
                 .matches("\"😃\"")
                 .matches("\"🦕😃\"")
                 //FIXME.matches("\"\\\\\\\\?\\\\\"")
+                .matches("\"\\x07\"")
+                .matches("\"\\x1b\\\\\"")
 
 
         ;
@@ -181,6 +187,7 @@ public class LitteralsTest {
                 .notMatches("b''\\t")
                 .matches("b'\\xff'")
                 .matches("b'\\\\'")
+                .matches("b'\\''")
         ;
 
     }

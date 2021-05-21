@@ -120,6 +120,7 @@ public class ExpressionWithoutBlockTest {
 
                 .matches("async move {}\n" +
                         "           .boxed()")
+                .matches("'b'")
 
 
         ;

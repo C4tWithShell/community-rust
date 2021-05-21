@@ -69,7 +69,8 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "#![feature(const_fn_fn_ptr_basics)]";
+        String sexpr = "let missing_key = GlyphKey { character: '\\0', ..glyph_key };";
+
 
 
         //Print out Ast node content for debugging purpose

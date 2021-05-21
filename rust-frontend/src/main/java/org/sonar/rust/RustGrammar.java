@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -60,6 +60,7 @@ public enum RustGrammar implements GrammarRuleKey {
     BLOCK_EXPRESSION,
     BOOLEAN_LITERAL,
     BORROW_EXPRESSION,
+    BOX_EXPRESSION,
     BREAK_EXPRESSION,
     BYTE_ESCAPE,
     BYTE_LITERAL,
@@ -344,7 +345,7 @@ public enum RustGrammar implements GrammarRuleKey {
         LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
 
-        b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(INNER_ATTRIBUTE), SPC, b.zeroOrMore(STATEMENT, SPC), EOF);
+        b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(INNER_ATTRIBUTE, SPC), SPC, b.zeroOrMore(STATEMENT, SPC), EOF);
 
         punctuators(b);
         keywords(b);
@@ -385,29 +386,34 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.token(GenericTokenType.UNKNOWN_CHAR, b.regexp("(?s).")),
                 SPC).skip();
 
-
         b.rule(CHAR_LITERAL).is(b.token(RustTokenType.CHARACTER_LITERAL,
-                b.firstOf(b.regexp("^\\'[^\\\r\\n\\t\\'].*\\'"),
-                        b.sequence("'", UNICODE_ESCAPE, "'"),
-                        b.sequence("'", QUOTE_ESCAPE, "'"),
-                        b.sequence("'", ASCII_ESCAPE, "'")))).skip();
+                b.sequence("'",
+                        b.firstOf(
+                                UNICODE_ESCAPE,
+                                QUOTE_ESCAPE,
+                                ASCII_ESCAPE,
+                                b.regexp("[\\x00-\\x08\\x11-\\x12\\x14-\\x26\\x28-x5b\\x5d-\\x{1ffff}]")
+                        ), "'"
+
+                ))).skip();
 
         b.rule(STRING_CONTENT).is(b.oneOrMore(b.regexp("[\\x{0000}-\\x{0021}\\x{0023}-\\x{005b}\\x{005d}-\\x{1ffff}]")));
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
-                b.firstOf(
-                        "\"\\\\\"",
-                        b.sequence(
-                                "\"", b.zeroOrMore(b.firstOf(
-                                        "\\n//",
-                                        QUOTE_ESCAPE
-                                        , ASCII_ESCAPE
-                                        , UNICODE_ESCAPE
-                                        , STRING_CONTINUE
-                                        , STRING_CONTENT
-                                ), SPC),
-                                "\""
-                        ))
+                b.sequence(
+                        "\"", b.zeroOrMore(b.firstOf(
+                                UNICODE_ESCAPE,
+                                "\\n//",
+                                "\\\\",
+                                QUOTE_ESCAPE
+
+                                , ASCII_ESCAPE
+
+                                , STRING_CONTINUE
+                                , STRING_CONTENT
+                        ), SPC),
+                        "\""
+                )
         ));
 
 
@@ -713,7 +719,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(TRAIT_IMPL).is(
                 b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC),
-                b.optional(RustPunctuator.NOT), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE,
+                b.optional(RustPunctuator.NOT), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE, SPC,
                 b.optional(WHERE_CLAUSE, SPC), "{", SPC,
                 b.zeroOrMore(b.firstOf(INNER_ATTRIBUTE, OUTER_ATTRIBUTE), SPC),
                 b.zeroOrMore(ASSOCIATED_ITEM, SPC), "}"
@@ -928,6 +934,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 TUPLE_STRUCT_PATTERN,
                 STRUCT_PATTERN,
                 MACRO_INVOCATION,
+                b.sequence(LITERAL_PATTERN, b.nextNot(RustPunctuator.DOTDOT)),
 
 
                 //unambigous PATH_PATTERN,
@@ -950,9 +957,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
                 TUPLE_PATTERN,
                 GROUPED_PATTERN,
-                SLICE_PATTERN,
+                SLICE_PATTERN
 
-                LITERAL_PATTERN
+
         ));
         b.rule(LITERAL_PATTERN).is(b.firstOf(
                 BOOLEAN_LITERAL,
@@ -1016,7 +1023,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOT);
 
         b.rule(TUPLE_STRUCT_PATTERN).is(
-                PATH_IN_EXPRESSION, "(", b.optional(TUPLE_STRUCT_ITEMS), ")"
+                PATH_IN_EXPRESSION, "(", SPC, b.optional(RustKeyword.KW_BOX, SPC), b.optional(TUPLE_STRUCT_ITEMS), ")"
         );
         b.rule(TUPLE_STRUCT_ITEMS).is(seq(b, PATTERN, RustPunctuator.COMMA));
 
@@ -1031,8 +1038,8 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
         b.rule(GROUPED_PATTERN).is("(", SPC, PATTERN, SPC, ")");
-        b.rule(SLICE_PATTERN).is("[", SPC, PATTERN, SPC,
-                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, PATTERN)), b.optional(RustPunctuator.COMMA, SPC), SPC, "]"
+
+        b.rule(SLICE_PATTERN).is("[", b.optional(seq(b, PATTERN, RustPunctuator.COMMA)), "]"
         );
         b.rule(PATH_PATTERN).is(b.firstOf(PATH_IN_EXPRESSION, QUALIFIED_PATH_IN_EXPRESSION));
     }
@@ -1137,6 +1144,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.firstOf(
                         b.sequence(LITERAL_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(BOX_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.next(b.firstOf(")", "]", "}"))),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
@@ -1169,6 +1177,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+                        b.sequence(BOX_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(RustPunctuator.DOTDOT, b.next(")")),
                         b.sequence(RANGE_TO_INCLUSIVE_EXPR, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
@@ -1362,6 +1371,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION_WITHOUT_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.firstOf(
                         b.sequence(BREAK_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
+                        b.sequence(BOX_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(EXPRESSION_WITH_BLOCK, b.oneOrMore(SPC, EXPRESSION_TERM)),
 
@@ -1502,6 +1512,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(LOOP_LABEL).is(LIFETIME_OR_LABEL, SPC, RustPunctuator.COLON);
         b.rule(BREAK_EXPRESSION).is(RustKeyword.KW_BREAK, SPC, b.optional(LIFETIME_OR_LABEL, SPC), b.optional(EXPRESSION, SPC));
+        b.rule(BOX_EXPRESSION).is(RustKeyword.KW_BOX, SPC, EXPRESSION);
         b.rule(CONTINUE_EXPRESSION).is(
                 RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL));
 
@@ -1803,8 +1814,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(STRUCT_EXPR_FIELD).is(b.firstOf(
 
-                b.sequence(b.firstOf(IDENTIFIER, TUPLE_INDEX), SPC, RustPunctuator.COLON, SPC, EXPRESSION),
-                IDENTIFIER
+                b.sequence(b.optional(OUTER_ATTRIBUTE, SPC), b.firstOf(IDENTIFIER, TUPLE_INDEX), SPC, RustPunctuator.COLON, SPC, EXPRESSION),
+                b.sequence(b.optional(OUTER_ATTRIBUTE, SPC), IDENTIFIER)
 
         ));
 
@@ -2063,7 +2074,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(BYTE_LITERAL).is(b.token(RustTokenType.BYTE_LITERAL,
                 b.firstOf(
-                        b.regexp("^b\\'" + "[^\\'\\n\\r\\t\\\\].*" + "\\'"),
+                        "b'\\''",
+                        b.sequence("b'", b.regexp("[\\x00-\\x08\\x11-\\x12\\x14-\\x26\\x28-x5b\\x5d-\\x7f]"), "'"),
                         b.sequence("b'", BYTE_ESCAPE, "'")
                 )));
 
@@ -2133,7 +2145,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(QUOTE_ESCAPE).is(b.firstOf("\\'", "\\\""));
         b.rule(ASCII_ESCAPE).is(b.firstOf(b.sequence("\\x", OCT_DIGIT, HEX_DIGIT),
-                "\\n", "\\r", "\\t", "\\", "\0"));
+                "\\n", "\\r", "\\t", "\\\\", "\\0"));
         b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT, b.zeroOrMore(RustPunctuator.UNDERSCORE))), "}");
         b.rule(STRING_CONTINUE).is("\\\n");
 

@@ -30,6 +30,9 @@ public class PatternTest {
     public void testLitteralPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LITERAL_PATTERN))
                 .matches("42")
+                .matches("'z'")
+                .matches("b'c'")
+
 
         ;
     }
@@ -69,6 +72,7 @@ public class PatternTest {
                 .matches("1")
                 .matches("'a'")
                 .matches("'z'")
+
 
         ;
 
@@ -119,6 +123,7 @@ public class PatternTest {
                 .matches("x,y")
 
 
+
         ;
 
     }
@@ -132,6 +137,7 @@ public class PatternTest {
                 .matches("bar")
                 .matches("ref mut bar")
                 .matches("x:10")
+
 
 
         ;
@@ -156,6 +162,10 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
+                .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
+                .matches("Error::Engine(box EngineError(EngineErrorInner::Request(e)))")
+
+
 
 
 
@@ -189,6 +199,7 @@ public class PatternTest {
                 .matches("(\"bacon\",42)")
                 .matches("( field_1, )")
 
+
         ;
 
     }
@@ -199,6 +210,7 @@ public class PatternTest {
                 .matches("(42)")
                 .matches("( foo )")
 
+
         ;
 
     }
@@ -206,9 +218,13 @@ public class PatternTest {
     @Test
     public void testSlicePattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.SLICE_PATTERN))
+                .matches("[]")
                 .matches("[42]")
                 .matches("[42,foo, bar]")
                 .matches("[42,foo, bar,]")
+                .matches("[b'#']")
+                .notMatches("[b'#'](")
+
 
 
         ;
@@ -221,6 +237,9 @@ public class PatternTest {
                 .matches("Vec::<u8>::with_capacity")
                 .matches("<S as T1>::f")
                 .matches("Token::BackQuote")
+
+
+
 
         ;
 
@@ -277,6 +296,16 @@ public class PatternTest {
                         "          find_in_comments,\n" +
                         "          provide_prefix_and_suffix_text_for_rename,\n" +
                         "))")
+                .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
+                .matches("Error::Engine(EngineError(box EngineErrorInner::Request(e)))")
+                .matches("'c'")
+                .matches("b'c'")
+                .matches("([])")
+                .matches("([b'8'])")
+                .matches("([b'#'])")
+                .matches("('8', '#')")
+                .matches("([b'#'], b'8')")
+                .matches("(b'8', [b'#'])")
 
 
 

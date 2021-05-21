@@ -54,6 +54,7 @@ public class AttributeTest {
                 .matches("#[cfg(feature = \"serde\")]")
                 .matches("#[inline]")
                 .matches("#[allow(unrooted_must_root)]")
+                .matches("#[cfg(not(any(target_os = \"macos\", windows)))]")
         ;
     }
 }
