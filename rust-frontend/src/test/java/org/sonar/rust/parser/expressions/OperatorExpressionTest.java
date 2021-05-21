@@ -147,7 +147,7 @@ public class OperatorExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("value as f64")
                 .matches("{} as i32")
-                .matches("'test' as i32")
+                .matches("test as i32")
                 .matches("self.len() as u32")
                 .matches("abc() as i32")
                 .matches("len(vals) as f64")

@@ -386,22 +386,13 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.token(GenericTokenType.UNKNOWN_CHAR, b.regexp("(?s).")),
                 SPC).skip();
 
-/*
-        b.rule(CHAR_LITERAL).is(b.token(RustTokenType.CHARACTER_LITERAL,
-                b.firstOf(b.regexp("^\\'[^\\\r\\n\\t\\'].*\\'"),
-                        b.sequence("'", UNICODE_ESCAPE, "'"),
-                        b.sequence("'", QUOTE_ESCAPE, "'"),
-                        b.sequence("'", ASCII_ESCAPE, "'")))).skip();
-
- */
-
         b.rule(CHAR_LITERAL).is(b.token(RustTokenType.CHARACTER_LITERAL,
                 b.sequence("'",
                         b.firstOf(
                                 UNICODE_ESCAPE,
                                 QUOTE_ESCAPE,
                                 ASCII_ESCAPE,
-                                b.regexp("[\\x00-\\x26\\x28-\\x5b\\x5d-\\x{1ffff}]")
+                                b.regexp("[\\x00-\\x08\\x11-\\x12\\x14-\\x26\\x28-x5b\\x5d-\\x{1ffff}]")
                         ), "'"
 
                 ))).skip();
