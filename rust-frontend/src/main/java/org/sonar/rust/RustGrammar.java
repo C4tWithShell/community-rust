@@ -402,11 +402,13 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
                         b.sequence(
                                 "\"", b.zeroOrMore(b.firstOf(
+                                         UNICODE_ESCAPE,
                                         "\\n//",
                                         "\\\\",
                                         QUOTE_ESCAPE
+
                                         , ASCII_ESCAPE
-                                        , UNICODE_ESCAPE
+
                                         , STRING_CONTINUE
                                         , STRING_CONTENT
                                 ), SPC),

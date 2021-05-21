@@ -58,7 +58,8 @@ public class LitteralsTest {
                 .matches("\\x7f")
                 .matches("\\r")
                 .matches("\\t")
-                .matches("\\")
+                .matches("\\\\")
+                .matches("\\0")
 
         ;
     }
@@ -113,7 +114,7 @@ public class LitteralsTest {
                 .matches("\"  //comment \"")
                 .matches("\"  a//comment \"")
                 .matches("\"  \\n//comment \"")
-                .matches("\"\\u1f600\"")
+                .matches("\"\\u{1f600}\"")
                 .matches("\"😃\"")
                 .matches("\"🦕😃\"")
                 //FIXME.matches("\"\\\\\\\\?\\\\\"")
