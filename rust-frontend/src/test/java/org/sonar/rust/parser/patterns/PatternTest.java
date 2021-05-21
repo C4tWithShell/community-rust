@@ -222,6 +222,8 @@ public class PatternTest {
                 .matches("[42]")
                 .matches("[42,foo, bar]")
                 .matches("[42,foo, bar,]")
+                .matches("[b'#']")
+                .notMatches("[b'#'](")
 
 
 
@@ -298,6 +300,12 @@ public class PatternTest {
                 .matches("Error::Engine(EngineError(box EngineErrorInner::Request(e)))")
                 .matches("'c'")
                 .matches("b'c'")
+                .matches("([])")
+                .matches("([b'8'])")
+                .matches("([b'#'])")
+                .matches("('8', '#')")
+                .matches("([b'#'], b'8')")
+                .matches("(b'8', [b'#'])")
 
 
 

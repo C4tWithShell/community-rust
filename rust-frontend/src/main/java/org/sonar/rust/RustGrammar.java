@@ -2073,7 +2073,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(BYTE_LITERAL).is(b.token(RustTokenType.BYTE_LITERAL,
                 b.firstOf(
                         "b'\\''",
-                        b.regexp("^b\\'" + "[^\\'\\n\\r\\t\\\\].*" + "\\'"),
+                        b.sequence("b'",b.regexp("[\\x00-\\x08\\x11-\\x12\\x14-\\x26\\x28-x5b\\x5d-\\x7f]"),"'"),
                         b.sequence("b'", BYTE_ESCAPE, "'")
                 )));
 

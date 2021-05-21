@@ -69,7 +69,8 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "buf.push_str(&format!(\"{:?},\", *item as char));";
+        String sexpr = "('8', [b'#']);";
+
 
 
         //Print out Ast node content for debugging purpose
