@@ -409,11 +409,10 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRING_CONTENT).is(b.oneOrMore(b.regexp("[\\x{0000}-\\x{0021}\\x{0023}-\\x{005b}\\x{005d}-\\x{1ffff}]")));
 
         b.rule(STRING_LITERAL).is(b.token(RustTokenType.STRING_LITERAL,
-                b.firstOf(
-                        "\"\\\\\"",
                         b.sequence(
                                 "\"", b.zeroOrMore(b.firstOf(
                                         "\\n//",
+                                        "\\\\",
                                         QUOTE_ESCAPE
                                         , ASCII_ESCAPE
                                         , UNICODE_ESCAPE
@@ -421,7 +420,7 @@ public enum RustGrammar implements GrammarRuleKey {
                                         , STRING_CONTENT
                                 ), SPC),
                                 "\""
-                        ))
+                        )
         ));
 
 

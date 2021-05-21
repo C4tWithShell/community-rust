@@ -84,12 +84,12 @@ public class LitteralsTest {
                 .matches("abc")
                 .matches("abc,def!@")
                 .matches("\r\n")
-                //.notMatches("\r")
                 .notMatches("\"")
                 .notMatches("\"hello")
                 .notMatches("hello\"")
                 .notMatches("hello\"world")
                 .notMatches("\"hello\"")
+
         ;
     }
 
@@ -116,6 +116,8 @@ public class LitteralsTest {
                 .matches("\"😃\"")
                 .matches("\"🦕😃\"")
                 //FIXME.matches("\"\\\\\\\\?\\\\\"")
+                .matches("\"\\x07\"")
+                .matches("\"\\x1b\\\\\"")
 
 
         ;
