@@ -2143,7 +2143,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(QUOTE_ESCAPE).is(b.firstOf("\\'", "\\\""));
         b.rule(ASCII_ESCAPE).is(b.firstOf(b.sequence("\\x", OCT_DIGIT, HEX_DIGIT),
-                "\\n", "\\r", "\\t", "\\", "\0"));
+                "\\n", "\\r", "\\t", "\\\\", "\\0"));
         b.rule(UNICODE_ESCAPE).is("\\u{", b.oneOrMore(b.sequence(HEX_DIGIT, b.zeroOrMore(RustPunctuator.UNDERSCORE))), "}");
         b.rule(STRING_CONTINUE).is("\\\n");
 

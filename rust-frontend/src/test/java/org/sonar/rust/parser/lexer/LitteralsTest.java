@@ -33,6 +33,7 @@ public class LitteralsTest {
                 .notMatches("'\\'")
                 .notMatches("'''")
                 .notMatches("'a' => 'b'")
+                .matches("'\\0'")
                 ;
     }
 
