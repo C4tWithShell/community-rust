@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let clipboard_type = b'c';";
+        String sexpr = "'a' = 'b';";
 
 
         //Print out Ast node content for debugging purpose

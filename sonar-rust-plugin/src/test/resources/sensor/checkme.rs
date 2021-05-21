@@ -1,2219 +1,1726 @@
-//! Exports the `Term` type which is a high-level API for the Grid.
+//! ANSI Terminal Stream Parsing.
 
-use std::cmp::{max, min};
-use std::ops::{Index, IndexMut, Range};
-use std::sync::Arc;
-use std::{mem, ptr, str};
+use std::convert::TryFrom;
+use std::time::{Duration, Instant};
+use std::{iter, str};
 
-use bitflags::bitflags;
 use log::{debug, trace};
 use serde::{Deserialize, Serialize};
-use unicode_width::UnicodeWidthChar;
+use vte::{Params, ParamsIter};
 
-use crate::ansi::{
-    self, Attr, CharsetIndex, Color, CursorShape, CursorStyle, Handler, NamedColor, StandardCharset,
-};
-use crate::config::Config;
-use crate::event::{Event, EventListener};
-use crate::grid::{Dimensions, DisplayIter, Grid, Scroll};
-use crate::index::{self, Boundary, Column, Direction, Line, Point, Side};
-use crate::selection::{Selection, SelectionRange};
-use crate::term::cell::{Cell, Flags, LineLength};
-use crate::term::color::{Colors, Rgb};
-use crate::vi_mode::{ViModeCursor, ViMotion};
+use alacritty_config_derive::ConfigDeserialize;
 
-pub mod cell;
-pub mod color;
-pub mod search;
+use crate::index::{Column, Line};
+use crate::term::color::Rgb;
 
-/// Minimum number of columns.
+/// Maximum time before a synchronized update is aborted.
+const SYNC_UPDATE_TIMEOUT: Duration = Duration::from_millis(150);
+
+/// Maximum number of bytes read in one synchronized update (2MiB).
+const SYNC_BUFFER_SIZE: usize = 0x20_0000;
+
+/// Number of bytes in the synchronized update DCS sequence before the passthrough parameters.
+const SYNC_ESCAPE_START_LEN: usize = 5;
+
+/// Start of the DCS sequence for beginning synchronized updates.
+const SYNC_START_ESCAPE_START: [u8; SYNC_ESCAPE_START_LEN] = [b'\x1b', b'P', b'=', b'1', b's'];
+
+/// Start of the DCS sequence for terminating synchronized updates.
+const SYNC_END_ESCAPE_START: [u8; SYNC_ESCAPE_START_LEN] = [b'\x1b', b'P', b'=', b'2', b's'];
+
+/// Parse colors in XParseColor format.
+fn xparse_color(color: &[u8]) -> Option<Rgb> {
+    if !color.is_empty() && color[0] == b'#' {
+        parse_legacy_color(&color[1..])
+    } else if color.len() >= 4 && &color[..4] == b"rgb:" {
+        parse_rgb_color(&color[4..])
+    } else {
+        None
+    }
+}
+
+/// Parse colors in `rgb:r(rrr)/g(ggg)/b(bbb)` format.
+fn parse_rgb_color(color: &[u8]) -> Option<Rgb> {
+    let colors = str::from_utf8(color).ok()?.split('/').collect::<Vec<_>>();
+
+    if colors.len() != 3 {
+        return None;
+    }
+
+    // Scale values instead of filling with `0`s.
+    let scale = |input: &str| {
+        if input.len() > 4 {
+            None
+        } else {
+            let max = u32::pow(16, input.len() as u32) - 1;
+            let value = u32::from_str_radix(input, 16).ok()?;
+            Some((255 * value / max) as u8)
+        }
+    };
+
+    Some(Rgb { r: scale(colors[0])?, g: scale(colors[1])?, b: scale(colors[2])? })
+}
+
+/// Parse colors in `#r(rrr)g(ggg)b(bbb)` format.
+fn parse_legacy_color(color: &[u8]) -> Option<Rgb> {
+    let item_len = color.len() / 3;
+
+    // Truncate/Fill to two byte precision.
+    let color_from_slice = |slice: &[u8]| {
+        let col = usize::from_str_radix(str::from_utf8(slice).ok()?, 16).ok()? << 4;
+        Some((col >> (4 * slice.len().saturating_sub(1))) as u8)
+    };
+
+    Some(Rgb {
+        r: color_from_slice(&color[0..item_len])?,
+        g: color_from_slice(&color[item_len..item_len * 2])?,
+        b: color_from_slice(&color[item_len * 2..])?,
+    })
+}
+
+fn parse_number(input: &[u8]) -> Option<u8> {
+    if input.is_empty() {
+        return None;
+    }
+    let mut num: u8 = 0;
+    for c in input {
+        let c = *c as char;
+        if let Some(digit) = c.to_digit(10) {
+            num = match num.checked_mul(10).and_then(|v| v.checked_add(digit as u8)) {
+                Some(v) => v,
+                None => return None,
+            }
+        } else {
+            return None;
+        }
+    }
+    Some(num)
+}
+
+/// Internal state for VTE processor.
+#[derive(Debug, Default)]
+struct ProcessorState {
+    /// Last processed character for repetition.
+    preceding_char: Option<char>,
+
+    /// DCS sequence waiting for termination.
+    dcs: Option<Dcs>,
+
+    /// State for synchronized terminal updates.
+    sync_state: SyncState,
+}
+
+#[derive(Debug)]
+struct SyncState {
+    /// Expiration time of the synchronized update.
+    timeout: Option<Instant>,
+
+    /// Sync DCS waiting for termination sequence.
+    pending_dcs: Option<Dcs>,
+
+    /// Bytes read during the synchronized update.
+    buffer: Vec<u8>,
+}
+
+impl Default for SyncState {
+    fn default() -> Self {
+        Self { buffer: Vec::with_capacity(SYNC_BUFFER_SIZE), pending_dcs: None, timeout: None }
+    }
+}
+
+/// Pending DCS sequence.
+#[derive(Debug)]
+enum Dcs {
+    /// Begin of the synchronized update.
+    SyncStart,
+
+    /// End of the synchronized update.
+    SyncEnd,
+}
+
+/// The processor wraps a `vte::Parser` to ultimately call methods on a Handler.
+#[derive(Default)]
+pub struct Processor {
+    state: ProcessorState,
+    parser: vte::Parser,
+}
+
+impl Processor {
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Process a new byte from the PTY.
+    #[inline]
+    pub fn advance<H>(&mut self, handler: &mut H, byte: u8)
+        where
+            H: Handler,
+    {
+        if self.state.sync_state.timeout.is_none() {
+            let mut performer = Performer::new(&mut self.state, handler);
+            self.parser.advance(&mut performer, byte);
+        } else {
+            self.advance_sync(handler, byte);
+        }
+    }
+
+    /// End a synchronized update.
+    pub fn stop_sync<H>(&mut self, handler: &mut H)
+        where
+            H: Handler,
+    {
+        // Process all synchronized bytes.
+        for i in 0..self.state.sync_state.buffer.len() {
+            let byte = self.state.sync_state.buffer[i];
+            let mut performer = Performer::new(&mut self.state, handler);
+            self.parser.advance(&mut performer, byte);
+        }
+
+        // Resetting state after processing makes sure we don't interpret buffered sync escapes.
+        self.state.sync_state.buffer.clear();
+        self.state.sync_state.timeout = None;
+    }
+
+    /// Synchronized update expiration time.
+    #[inline]
+    pub fn sync_timeout(&self) -> Option<&Instant> {
+        self.state.sync_state.timeout.as_ref()
+    }
+
+    /// Number of bytes in the synchronization buffer.
+    #[inline]
+    pub fn sync_bytes_count(&self) -> usize {
+        self.state.sync_state.buffer.len()
+    }
+
+    /// Process a new byte during a synchronized update.
+    #[cold]
+    fn advance_sync<H>(&mut self, handler: &mut H, byte: u8)
+        where
+            H: Handler,
+    {
+        self.state.sync_state.buffer.push(byte);
+
+        // Handle sync DCS escape sequences.
+        match self.state.sync_state.pending_dcs {
+            Some(_) => self.advance_sync_dcs_end(handler, byte),
+            None => self.advance_sync_dcs_start(),
+        }
+    }
+
+    /// Find the start of sync DCS sequences.
+    fn advance_sync_dcs_start(&mut self) {
+        // Get the last few bytes for comparison.
+        let len = self.state.sync_state.buffer.len();
+        let offset = len.saturating_sub(SYNC_ESCAPE_START_LEN);
+        let end = &self.state.sync_state.buffer[offset..];
+
+        // Check for extension/termination of the synchronized update.
+        if end == SYNC_START_ESCAPE_START {
+            self.state.sync_state.pending_dcs = Some(Dcs::SyncStart);
+        } else if end == SYNC_END_ESCAPE_START || len >= SYNC_BUFFER_SIZE - 1 {
+            self.state.sync_state.pending_dcs = Some(Dcs::SyncEnd);
+        }
+    }
+
+    /// Parse the DCS termination sequence for synchronized updates.
+    fn advance_sync_dcs_end<H>(&mut self, handler: &mut H, byte: u8)
+        where
+            H: Handler,
+    {
+        match byte {
+            // Ignore DCS passthrough characters.
+            0x00..=0x17 | 0x19 | 0x1c..=0x7f | 0xa0..=0xff => (),
+            // Cancel the DCS sequence.
+            0x18 | 0x1a | 0x80..=0x9f => self.state.sync_state.pending_dcs = None,
+            // Dispatch on ESC.
+            0x1b => match self.state.sync_state.pending_dcs.take() {
+                Some(Dcs::SyncStart) => {
+                    self.state.sync_state.timeout = Some(Instant::now() + SYNC_UPDATE_TIMEOUT);
+                },
+                Some(Dcs::SyncEnd) => self.stop_sync(handler),
+                None => (),
+            },
+        }
+    }
+}
+
+/// Helper type that implements `vte::Perform`.
 ///
-/// A minimum of 2 is necessary to hold fullwidth unicode characters.
-pub const MIN_COLUMNS: usize = 2;
+/// Processor creates a Performer when running advance and passes the Performer
+/// to `vte::Parser`.
+struct Performer<'a, H: Handler> {
+    state: &'a mut ProcessorState,
+    handler: &'a mut H,
+}
 
-/// Minimum number of visible lines.
-pub const MIN_SCREEN_LINES: usize = 1;
-
-/// Max size of the window title stack.
-const TITLE_STACK_MAX_DEPTH: usize = 4096;
-
-/// Default tab interval, corresponding to terminfo `it` value.
-const INITIAL_TABSTOPS: usize = 8;
-
-bitflags! {
-    pub struct TermMode: u32 {
-        const NONE                = 0;
-        const SHOW_CURSOR         = 0b0000_0000_0000_0000_0001;
-        const APP_CURSOR          = 0b0000_0000_0000_0000_0010;
-        const APP_KEYPAD          = 0b0000_0000_0000_0000_0100;
-        const MOUSE_REPORT_CLICK  = 0b0000_0000_0000_0000_1000;
-        const BRACKETED_PASTE     = 0b0000_0000_0000_0001_0000;
-        const SGR_MOUSE           = 0b0000_0000_0000_0010_0000;
-        const MOUSE_MOTION        = 0b0000_0000_0000_0100_0000;
-        const LINE_WRAP           = 0b0000_0000_0000_1000_0000;
-        const LINE_FEED_NEW_LINE  = 0b0000_0000_0001_0000_0000;
-        const ORIGIN              = 0b0000_0000_0010_0000_0000;
-        const INSERT              = 0b0000_0000_0100_0000_0000;
-        const FOCUS_IN_OUT        = 0b0000_0000_1000_0000_0000;
-        const ALT_SCREEN          = 0b0000_0001_0000_0000_0000;
-        const MOUSE_DRAG          = 0b0000_0010_0000_0000_0000;
-        const MOUSE_MODE          = 0b0000_0010_0000_0100_1000;
-        const UTF8_MOUSE          = 0b0000_0100_0000_0000_0000;
-        const ALTERNATE_SCROLL    = 0b0000_1000_0000_0000_0000;
-        const VI                  = 0b0001_0000_0000_0000_0000;
-        const URGENCY_HINTS       = 0b0010_0000_0000_0000_0000;
-        const ANY                 = std::u32::MAX;
+impl<'a, H: Handler + 'a> Performer<'a, H> {
+    /// Create a performer.
+    #[inline]
+    pub fn new<'b>(state: &'b mut ProcessorState, handler: &'b mut H) -> Performer<'b, H> {
+        Performer { state, handler }
     }
 }
 
-impl Default for TermMode {
-    fn default() -> TermMode {
-        TermMode::SHOW_CURSOR
-            | TermMode::LINE_WRAP
-            | TermMode::ALTERNATE_SCROLL
-            | TermMode::URGENCY_HINTS
-    }
-}
+/// Type that handles actions from the parser.
+///
+/// XXX Should probably not provide default impls for everything, but it makes
+/// writing specific handler impls for tests far easier.
+pub trait Handler {
+    /// OSC to set window title.
+    fn set_title(&mut self, _: Option<String>) {}
+
+    /// Set the cursor style.
+    fn set_cursor_style(&mut self, _: Option<CursorStyle>) {}
+
+    /// Set the cursor shape.
+    fn set_cursor_shape(&mut self, _shape: CursorShape) {}
 
-/// Terminal size info.
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq)]
-pub struct SizeInfo {
-    /// Terminal window width.
-    width: f32,
-
-    /// Terminal window height.
-    height: f32,
-
-    /// Width of individual cell.
-    cell_width: f32,
-
-    /// Height of individual cell.
-    cell_height: f32,
-
-    /// Horizontal window padding.
-    padding_x: f32,
-
-    /// Horizontal window padding.
-    padding_y: f32,
-
-    /// Number of lines in the viewport.
-    screen_lines: usize,
-
-    /// Number of columns in the viewport.
-    columns: usize,
-}
-
-impl SizeInfo {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        width: f32,
-        height: f32,
-        cell_width: f32,
-        cell_height: f32,
-        mut padding_x: f32,
-        mut padding_y: f32,
-        dynamic_padding: bool,
-    ) -> SizeInfo {
-        if dynamic_padding {
-            padding_x = Self::dynamic_padding(padding_x.floor(), width, cell_width);
-            padding_y = Self::dynamic_padding(padding_y.floor(), height, cell_height);
-        }
-
-        let lines = (height - 2. * padding_y) / cell_height;
-        let screen_lines = max(lines as usize, MIN_SCREEN_LINES);
-
-        let columns = (width - 2. * padding_x) / cell_width;
-        let columns = max(columns as usize, MIN_COLUMNS);
-
-        SizeInfo {
-            width,
-            height,
-            cell_width,
-            cell_height,
-            padding_x: padding_x.floor(),
-            padding_y: padding_y.floor(),
-            screen_lines,
-            columns,
-        }
-    }
-
-    #[inline]
-    pub fn reserve_lines(&mut self, count: usize) {
-        self.screen_lines = max(self.screen_lines.saturating_sub(count), MIN_SCREEN_LINES);
-    }
-
-    /// Check if coordinates are inside the terminal grid.
-    ///
-    /// The padding, message bar or search are not counted as part of the grid.
-    #[inline]
-    pub fn contains_point(&self, x: usize, y: usize) -> bool {
-        x <= (self.padding_x + self.columns as f32 * self.cell_width) as usize
-            && x > self.padding_x as usize
-            && y <= (self.padding_y + self.screen_lines as f32 * self.cell_height) as usize
-            && y > self.padding_y as usize
-    }
-
-    #[inline]
-    pub fn width(&self) -> f32 {
-        self.width
-    }
-
-    #[inline]
-    pub fn height(&self) -> f32 {
-        self.height
-    }
-
-    #[inline]
-    pub fn cell_width(&self) -> f32 {
-        self.cell_width
-    }
-
-    #[inline]
-    pub fn cell_height(&self) -> f32 {
-        self.cell_height
-    }
-
-    #[inline]
-    pub fn padding_x(&self) -> f32 {
-        self.padding_x
-    }
-
-    #[inline]
-    pub fn padding_y(&self) -> f32 {
-        self.padding_y
-    }
-
-    /// Calculate padding to spread it evenly around the terminal content.
-    #[inline]
-    fn dynamic_padding(padding: f32, dimension: f32, cell_dimension: f32) -> f32 {
-        padding + ((dimension - 2. * padding) % cell_dimension) / 2.
-    }
-}
-
-impl Dimensions for SizeInfo {
-    #[inline]
-    fn columns(&self) -> usize {
-        self.columns
-    }
-
-    #[inline]
-    fn screen_lines(&self) -> usize {
-        self.screen_lines
-    }
-
-    #[inline]
-    fn total_lines(&self) -> usize {
-        self.screen_lines()
-    }
-}
-
-pub struct Term<T> {
-    /// Terminal focus controlling the cursor shape.
-    pub is_focused: bool,
-
-    /// Cursor for keyboard selection.
-    pub vi_mode_cursor: ViModeCursor,
-
-    pub selection: Option<Selection>,
-
-    /// Currently active grid.
-    ///
-    /// Tracks the screen buffer currently in use. While the alternate screen buffer is active,
-    /// this will be the alternate grid. Otherwise it is the primary screen buffer.
-    grid: Grid<Cell>,
-
-    /// Currently inactive grid.
-    ///
-    /// Opposite of the active grid. While the alternate screen buffer is active, this will be the
-    /// primary grid. Otherwise it is the alternate screen buffer.
-    inactive_grid: Grid<Cell>,
-
-    /// Index into `charsets`, pointing to what ASCII is currently being mapped to.
-    active_charset: CharsetIndex,
-
-    /// Tabstops.
-    tabs: TabStops,
-
-    /// Mode flags.
-    mode: TermMode,
-
-    /// Scroll region.
-    ///
-    /// Range going from top to bottom of the terminal, indexed from the top of the viewport.
-    scroll_region: Range<Line>,
-
-    semantic_escape_chars: String,
-
-    /// Modified terminal colors.
-    colors: Colors,
-
-    /// Current style of the cursor.
-    cursor_style: Option<CursorStyle>,
-
-    /// Default style for resetting the cursor.
-    default_cursor_style: CursorStyle,
-
-    /// Style of the vi mode cursor.
-    vi_mode_cursor_style: Option<CursorStyle>,
-
-    /// Proxy for sending events to the event loop.
-    event_proxy: T,
-
-    /// Current title of the window.
-    title: Option<String>,
-
-    /// Stack of saved window titles. When a title is popped from this stack, the `title` for the
-    /// term is set.
-    title_stack: Vec<Option<String>>,
-
-    /// Information about cell dimensions.
-    cell_width: usize,
-    cell_height: usize,
-}
-
-impl<T> Term<T> {
-    #[inline]
-    pub fn scroll_display(&mut self, scroll: Scroll)
-        where
-            T: EventListener,
-    {
-        self.grid.scroll_display(scroll);
-        self.event_proxy.send_event(Event::MouseCursorDirty);
-
-        // Clamp vi mode cursor to the viewport.
-        let viewport_start = -(self.grid.display_offset() as i32);
-        let viewport_end = viewport_start + self.bottommost_line().0;
-        let vi_cursor_line = &mut self.vi_mode_cursor.point.line.0;
-        *vi_cursor_line = min(viewport_end, max(viewport_start, *vi_cursor_line));
-        self.vi_mode_recompute_selection();
-    }
-
-    pub fn new<C>(config: &Config<C>, size: SizeInfo, event_proxy: T) -> Term<T> {
-        let num_cols = size.columns;
-        let num_lines = size.screen_lines;
-
-        let history_size = config.scrolling.history() as usize;
-        let grid = Grid::new(num_lines, num_cols, history_size);
-        let alt = Grid::new(num_lines, num_cols, 0);
-
-        let tabs = TabStops::new(grid.columns());
-
-        let scroll_region = Line(0)..Line(grid.screen_lines() as i32);
-
-        Term {
-            grid,
-            inactive_grid: alt,
-            active_charset: Default::default(),
-            vi_mode_cursor: Default::default(),
-            tabs,
-            mode: Default::default(),
-            scroll_region,
-            colors: color::Colors::default(),
-            semantic_escape_chars: config.selection.semantic_escape_chars.to_owned(),
-            cursor_style: None,
-            default_cursor_style: config.cursor.style(),
-            vi_mode_cursor_style: config.cursor.vi_mode_style(),
-            event_proxy,
-            is_focused: true,
-            title: None,
-            title_stack: Vec::new(),
-            selection: None,
-            cell_width: size.cell_width as usize,
-            cell_height: size.cell_height as usize,
-        }
-    }
-
-    pub fn update_config<C>(&mut self, config: &Config<C>)
-        where
-            T: EventListener,
-    {
-        self.semantic_escape_chars = config.selection.semantic_escape_chars.to_owned();
-        self.default_cursor_style = config.cursor.style();
-        self.vi_mode_cursor_style = config.cursor.vi_mode_style();
-
-        let title_event = match &self.title {
-            Some(title) => Event::Title(title.clone()),
-            None => Event::ResetTitle,
-        };
-
-        self.event_proxy.send_event(title_event);
-
-        if self.mode.contains(TermMode::ALT_SCREEN) {
-            self.inactive_grid.update_history(config.scrolling.history() as usize);
-        } else {
-            self.grid.update_history(config.scrolling.history() as usize);
-        }
-    }
-
-    /// Convert the active selection to a String.
-    pub fn selection_to_string(&self) -> Option<String> {
-        let selection_range = self.selection.as_ref().and_then(|s| s.to_range(self))?;
-        let SelectionRange { start, end, is_block } = selection_range;
-
-        let mut res = String::new();
-
-        if is_block {
-            for line in (start.line.0..end.line.0).map(Line::from) {
-                res += &self.line_to_string(line, start.column..end.column, start.column.0 != 0);
-
-                // If the last column is included, newline is appended automatically.
-                if end.column != self.columns() - 1 {
-                    res += "\n";
-                }
-            }
-            res += &self.line_to_string(end.line, start.column..end.column, true);
-        } else {
-            res = self.bounds_to_string(start, end);
-        }
-
-        Some(res)
-    }
-
-    /// Convert range between two points to a String.
-    pub fn bounds_to_string(&self, start: Point, end: Point) -> String {
-        let mut res = String::new();
-
-        for line in (start.line.0..=end.line.0).map(Line::from) {
-            let start_col = if line == start.line { start.column } else { Column(0) };
-            let end_col = if line == end.line { end.column } else { self.last_column() };
-
-            res += &self.line_to_string(line, start_col..end_col, line == end.line);
-        }
-
-        res
-    }
-
-    /// Convert a single line in the grid to a String.
-    fn line_to_string(
-        &self,
-        line: Line,
-        mut cols: Range<Column>,
-        include_wrapped_wide: bool,
-    ) -> String {
-        let mut text = String::new();
-
-        let grid_line = &self.grid[line];
-        let line_length = min(grid_line.line_length(), cols.end + 1);
-
-        // Include wide char when trailing spacer is selected.
-        if grid_line[cols.start].flags.contains(Flags::WIDE_CHAR_SPACER) {
-            cols.start -= 1;
-        }
-
-        let mut tab_mode = false;
-        for column in (cols.start.0..line_length.0).map(Column::from) {
-            let cell = &grid_line[column];
-
-            // Skip over cells until next tab-stop once a tab was found.
-            if tab_mode {
-                if self.tabs[column] {
-                    tab_mode = false;
-                } else {
-                    continue;
-                }
-            }
-
-            if cell.c == '\t' {
-                tab_mode = true;
-            }
-
-            if !cell.flags.intersects(Flags::WIDE_CHAR_SPACER | Flags::LEADING_WIDE_CHAR_SPACER) {
-                // Push cells primary character.
-                text.push(cell.c);
-
-                // Push zero-width characters.
-                for c in cell.zerowidth().into_iter().flatten() {
-                    text.push(*c);
-                }
-            }
-        }
-
-        if cols.end >= self.columns() - 1
-            && (line_length.0 == 0
-            || !self.grid[line][line_length - 1].flags.contains(Flags::WRAPLINE))
-        {
-            text.push('\n');
-        }
-
-        // If wide char is not part of the selection, but leading spacer is, include it.
-        if line_length == self.columns()
-            && line_length.0 >= 2
-            && grid_line[line_length - 1].flags.contains(Flags::LEADING_WIDE_CHAR_SPACER)
-            && include_wrapped_wide
-        {
-            text.push(self.grid[line - 1i32][Column(0)].c);
-        }
-
-        text
-    }
-
-    /// Terminal content required for rendering.
-    #[inline]
-    pub fn renderable_content(&self) -> RenderableContent<'_>
-        where
-            T: EventListener,
-    {
-        RenderableContent::new(self)
-    }
-
-    /// Access to the raw grid data structure.
-    ///
-    /// This is a bit of a hack; when the window is closed, the event processor
-    /// serializes the grid state to a file.
-    pub fn grid(&self) -> &Grid<Cell> {
-        &self.grid
-    }
-
-    /// Mutable access for swapping out the grid during tests.
-    #[cfg(test)]
-    pub fn grid_mut(&mut self) -> &mut Grid<Cell> {
-        &mut self.grid
-    }
-
-    /// Resize terminal to new dimensions.
-    pub fn resize(&mut self, size: SizeInfo) {
-        self.cell_width = size.cell_width as usize;
-        self.cell_height = size.cell_height as usize;
-
-        let old_cols = self.columns();
-        let old_lines = self.screen_lines();
-
-        let num_cols = size.columns;
-        let num_lines = size.screen_lines;
-
-        if old_cols == num_cols && old_lines == num_lines {
-            debug!("Term::resize dimensions unchanged");
-            return;
-        }
-
-        debug!("New num_cols is {} and num_lines is {}", num_cols, num_lines);
-
-        // Move vi mode cursor with the content.
-        let history_size = self.history_size();
-        let mut delta = num_lines as i32 - old_lines as i32;
-        let min_delta = min(0, num_lines as i32 - self.grid.cursor.point.line.0 - 1);
-        delta = min(max(delta, min_delta), history_size as i32);
-        self.vi_mode_cursor.point.line += delta;
-
-        // Invalidate selection and tabs only when necessary.
-        if old_cols != num_cols {
-            self.selection = None;
-
-            // Recreate tabs list.
-            self.tabs.resize(num_cols);
-        } else if let Some(selection) = self.selection.take() {
-            let range = Line(0)..Line(num_lines as i32);
-            self.selection = selection.rotate(self, &range, -delta);
-        }
-
-        let is_alt = self.mode.contains(TermMode::ALT_SCREEN);
-        self.grid.resize(!is_alt, num_lines, num_cols);
-        self.inactive_grid.resize(is_alt, num_lines, num_cols);
-
-        // Clamp vi cursor to viewport.
-        let vi_point = self.vi_mode_cursor.point;
-        self.vi_mode_cursor.point.column = min(vi_point.column, Column(num_cols - 1));
-        self.vi_mode_cursor.point.line = min(vi_point.line, Line(num_lines as i32 - 1));
-
-        // Reset scrolling region.
-        self.scroll_region = Line(0)..Line(self.screen_lines() as i32);
-    }
-
-    /// Active terminal modes.
-    #[inline]
-    pub fn mode(&self) -> &TermMode {
-        &self.mode
-    }
-
-    /// Swap primary and alternate screen buffer.
-    pub fn swap_alt(&mut self) {
-        if !self.mode.contains(TermMode::ALT_SCREEN) {
-            // Set alt screen cursor to the current primary screen cursor.
-            self.inactive_grid.cursor = self.grid.cursor.clone();
-
-            // Drop information about the primary screens saved cursor.
-            self.grid.saved_cursor = self.grid.cursor.clone();
-
-            // Reset alternate screen contents.
-            self.inactive_grid.reset_region(..);
-        }
-
-        mem::swap(&mut self.grid, &mut self.inactive_grid);
-        self.mode ^= TermMode::ALT_SCREEN;
-        self.selection = None;
-    }
-
-    /// Scroll screen down.
-    ///
-    /// Text moves down; clear at bottom
-    /// Expects origin to be in scroll range.
-    #[inline]
-    fn scroll_down_relative(&mut self, origin: Line, mut lines: usize) {
-        trace!("Scrolling down relative: origin={}, lines={}", origin, lines);
-
-        lines = min(lines, (self.scroll_region.end - self.scroll_region.start).0 as usize);
-        lines = min(lines, (self.scroll_region.end - origin).0 as usize);
-
-        let region = origin..self.scroll_region.end;
-
-        // Scroll selection.
-        self.selection =
-            self.selection.take().and_then(|s| s.rotate(self, &region, -(lines as i32)));
-
-        // Scroll between origin and bottom
-        self.grid.scroll_down(&region, lines);
-    }
-
-    /// Scroll screen up
-    ///
-    /// Text moves up; clear at top
-    /// Expects origin to be in scroll range.
-    #[inline]
-    fn scroll_up_relative(&mut self, origin: Line, mut lines: usize) {
-        trace!("Scrolling up relative: origin={}, lines={}", origin, lines);
-
-        lines = min(lines, (self.scroll_region.end - self.scroll_region.start).0 as usize);
-
-        let region = origin..self.scroll_region.end;
-
-        // Scroll selection.
-        self.selection = self.selection.take().and_then(|s| s.rotate(self, &region, lines as i32));
-
-        // Scroll from origin to bottom less number of lines.
-        self.grid.scroll_up(&region, lines);
-    }
-
-    fn deccolm(&mut self)
-        where
-            T: EventListener,
-    {
-        // Setting 132 column font makes no sense, but run the other side effects.
-        // Clear scrolling region.
-        self.set_scrolling_region(1, None);
-
-        // Clear grid.
-        self.grid.reset_region(..);
-    }
-
-    #[inline]
-    pub fn exit(&mut self)
-        where
-            T: EventListener,
-    {
-        self.event_proxy.send_event(Event::Exit);
-    }
-
-    /// Toggle the vi mode.
-    #[inline]
-    pub fn toggle_vi_mode(&mut self)
-        where
-            T: EventListener,
-    {
-        self.mode ^= TermMode::VI;
-
-        if self.mode.contains(TermMode::VI) {
-            let display_offset = self.grid.display_offset() as i32;
-            if self.grid.cursor.point.line > self.bottommost_line() - display_offset {
-                // Move cursor to top-left if terminal cursor is not visible.
-                let point = Point::new(Line(-display_offset), Column(0));
-                self.vi_mode_cursor = ViModeCursor::new(point);
-            } else {
-                // Reset vi mode cursor position to match primary cursor.
-                self.vi_mode_cursor = ViModeCursor::new(self.grid.cursor.point);
-            }
-        }
-
-        // Update UI about cursor blinking state changes.
-        self.event_proxy.send_event(Event::CursorBlinkingChange(self.cursor_style().blinking));
-    }
-
-    /// Move vi mode cursor.
-    #[inline]
-    pub fn vi_motion(&mut self, motion: ViMotion)
-        where
-            T: EventListener,
-    {
-        // Require vi mode to be active.
-        if !self.mode.contains(TermMode::VI) {
-            return;
-        }
-
-        // Move cursor.
-        self.vi_mode_cursor = self.vi_mode_cursor.motion(self, motion);
-        self.vi_mode_recompute_selection();
-    }
-
-    /// Move vi cursor to a point in the grid.
-    #[inline]
-    pub fn vi_goto_point(&mut self, point: Point)
-        where
-            T: EventListener,
-    {
-        // Move viewport to make point visible.
-        self.scroll_to_point(point);
-
-        // Move vi cursor to the point.
-        self.vi_mode_cursor.point = point;
-
-        self.vi_mode_recompute_selection();
-    }
-
-    /// Update the active selection to match the vi mode cursor position.
-    #[inline]
-    fn vi_mode_recompute_selection(&mut self) {
-        // Require vi mode to be active.
-        if !self.mode.contains(TermMode::VI) {
-            return;
-        }
-
-        // Update only if non-empty selection is present.
-        if let Some(selection) = self.selection.as_mut().filter(|s| !s.is_empty()) {
-            selection.update(self.vi_mode_cursor.point, Side::Left);
-            selection.include_all();
-        }
-    }
-
-    /// Scroll display to point if it is outside of viewport.
-    pub fn scroll_to_point(&mut self, point: Point)
-        where
-            T: EventListener,
-    {
-        let display_offset = self.grid.display_offset() as i32;
-        let screen_lines = self.grid.screen_lines() as i32;
-
-        if point.line < -display_offset {
-            let lines = point.line + display_offset;
-            self.scroll_display(Scroll::Delta(-lines.0));
-        } else if point.line >= (screen_lines - display_offset) {
-            let lines = point.line + display_offset - screen_lines + 1i32;
-            self.scroll_display(Scroll::Delta(-lines.0));
-        }
-    }
-
-    /// Jump to the end of a wide cell.
-    pub fn expand_wide(&self, mut point: Point, direction: Direction) -> Point {
-        let flags = self.grid[point.line][point.column].flags;
-
-        match direction {
-            Direction::Right if flags.contains(Flags::LEADING_WIDE_CHAR_SPACER) => {
-                point.column = Column(1);
-                point.line += 1;
-            },
-            Direction::Right if flags.contains(Flags::WIDE_CHAR) => point.column += 1,
-            Direction::Left if flags.intersects(Flags::WIDE_CHAR | Flags::WIDE_CHAR_SPACER) => {
-                if flags.contains(Flags::WIDE_CHAR_SPACER) {
-                    point.column -= 1;
-                }
-
-                let prev = point.sub(self, Boundary::Grid, 1);
-                if self.grid[prev].flags.contains(Flags::LEADING_WIDE_CHAR_SPACER) {
-                    point = prev;
-                }
-            },
-            _ => (),
-        }
-
-        point
-    }
-
-    #[inline]
-    pub fn semantic_escape_chars(&self) -> &str {
-        &self.semantic_escape_chars
-    }
-
-    /// Active terminal cursor style.
-    ///
-    /// While vi mode is active, this will automatically return the vi mode cursor style.
-    #[inline]
-    pub fn cursor_style(&self) -> CursorStyle {
-        let cursor_style = self.cursor_style.unwrap_or(self.default_cursor_style);
-
-        if self.mode.contains(TermMode::VI) {
-            self.vi_mode_cursor_style.unwrap_or(cursor_style)
-        } else {
-            cursor_style
-        }
-    }
-
-    /// Insert a linebreak at the current cursor position.
-    #[inline]
-    fn wrapline(&mut self)
-        where
-            T: EventListener,
-    {
-        if !self.mode.contains(TermMode::LINE_WRAP) {
-            return;
-        }
-
-        trace!("Wrapping input");
-
-        self.grid.cursor_cell().flags.insert(Flags::WRAPLINE);
-
-        if self.grid.cursor.point.line + 1 >= self.scroll_region.end {
-            self.linefeed();
-        } else {
-            self.grid.cursor.point.line += 1;
-        }
-
-        self.grid.cursor.point.column = Column(0);
-        self.grid.cursor.input_needs_wrap = false;
-    }
-
-    /// Write `c` to the cell at the cursor position.
-    #[inline(always)]
-    fn write_at_cursor(&mut self, c: char) {
-        let c = self.grid.cursor.charsets[self.active_charset].map(c);
-        let fg = self.grid.cursor.template.fg;
-        let bg = self.grid.cursor.template.bg;
-        let flags = self.grid.cursor.template.flags;
-
-        let mut cursor_cell = self.grid.cursor_cell();
-
-        // Clear all related cells when overwriting a fullwidth cell.
-        if cursor_cell.flags.intersects(Flags::WIDE_CHAR | Flags::WIDE_CHAR_SPACER) {
-            // Remove wide char and spacer.
-            let wide = cursor_cell.flags.contains(Flags::WIDE_CHAR);
-            let point = self.grid.cursor.point;
-            if wide {
-                self.grid[point.line][point.column + 1].flags.remove(Flags::WIDE_CHAR_SPACER);
-            } else {
-                self.grid[point.line][point.column - 1].clear_wide();
-            }
-
-            // Remove leading spacers.
-            if point.column <= 1 && point.line != self.topmost_line() {
-                let column = self.last_column();
-                self.grid[point.line - 1i32][column].flags.remove(Flags::LEADING_WIDE_CHAR_SPACER);
-            }
-
-            cursor_cell = self.grid.cursor_cell();
-        }
-
-        cursor_cell.drop_extra();
-
-        cursor_cell.c = c;
-        cursor_cell.fg = fg;
-        cursor_cell.bg = bg;
-        cursor_cell.flags = flags;
-    }
-}
-
-impl<T> Dimensions for Term<T> {
-    #[inline]
-    fn columns(&self) -> usize {
-        self.grid.columns()
-    }
-
-    #[inline]
-    fn screen_lines(&self) -> usize {
-        self.grid.screen_lines()
-    }
-
-    #[inline]
-    fn total_lines(&self) -> usize {
-        self.grid.total_lines()
-    }
-}
-
-impl<T: EventListener> Handler for Term<T> {
     /// A character to be displayed.
-    #[inline(never)]
-    fn input(&mut self, c: char) {
-        // Number of cells the char will occupy.
-        let width = match c.width() {
-            Some(width) => width,
-            None => return,
-        };
+    fn input(&mut self, _c: char) {}
 
-        // Handle zero-width characters.
-        if width == 0 {
-            // Get previous column.
-            let mut column = self.grid.cursor.point.column;
-            if !self.grid.cursor.input_needs_wrap {
-                column.0 = column.saturating_sub(1);
-            }
+    /// Set cursor to position.
+    fn goto(&mut self, _: Line, _: Column) {}
 
-            // Put zerowidth characters over first fullwidth character cell.
-            let line = self.grid.cursor.point.line;
-            if self.grid[line][column].flags.contains(Flags::WIDE_CHAR_SPACER) {
-                column.0 = column.saturating_sub(1);
-            }
+    /// Set cursor to specific row.
+    fn goto_line(&mut self, _: Line) {}
 
-            self.grid[line][column].push_zerowidth(c);
-            return;
-        }
+    /// Set cursor to specific column.
+    fn goto_col(&mut self, _: Column) {}
 
-        // Move cursor to next line.
-        if self.grid.cursor.input_needs_wrap {
-            self.wrapline();
-        }
+    /// Insert blank characters in current line starting from cursor.
+    fn insert_blank(&mut self, _: usize) {}
 
-        // If in insert mode, first shift cells to the right.
-        let columns = self.columns();
-        if self.mode.contains(TermMode::INSERT) && self.grid.cursor.point.column + width < columns {
-            let line = self.grid.cursor.point.line;
-            let col = self.grid.cursor.point.column;
-            let row = &mut self.grid[line][..];
+    /// Move cursor up `rows`.
+    fn move_up(&mut self, _: usize) {}
 
-            for col in (col.0..(columns - width)).rev() {
-                row.swap(col + width, col);
-            }
-        }
+    /// Move cursor down `rows`.
+    fn move_down(&mut self, _: usize) {}
 
-        if width == 1 {
-            self.write_at_cursor(c);
-        } else {
-            if self.grid.cursor.point.column + 1 >= columns {
-                if self.mode.contains(TermMode::LINE_WRAP) {
-                    // Insert placeholder before wide char if glyph does not fit in this row.
-                    self.grid.cursor.template.flags.insert(Flags::LEADING_WIDE_CHAR_SPACER);
-                    self.write_at_cursor(' ');
-                    self.grid.cursor.template.flags.remove(Flags::LEADING_WIDE_CHAR_SPACER);
-                    self.wrapline();
-                } else {
-                    // Prevent out of bounds crash when linewrapping is disabled.
-                    self.grid.cursor.input_needs_wrap = true;
-                    return;
-                }
-            }
+    /// Identify the terminal (should write back to the pty stream).
+    fn identify_terminal(&mut self, _intermediate: Option<char>) {}
 
-            // Write full width glyph to current cursor cell.
-            self.grid.cursor.template.flags.insert(Flags::WIDE_CHAR);
-            self.write_at_cursor(c);
-            self.grid.cursor.template.flags.remove(Flags::WIDE_CHAR);
+    /// Report device status.
+    fn device_status(&mut self, _: usize) {}
 
-            // Write spacer to cell following the wide glyph.
-            self.grid.cursor.point.column += 1;
-            self.grid.cursor.template.flags.insert(Flags::WIDE_CHAR_SPACER);
-            self.write_at_cursor(' ');
-            self.grid.cursor.template.flags.remove(Flags::WIDE_CHAR_SPACER);
-        }
+    /// Move cursor forward `cols`.
+    fn move_forward(&mut self, _: Column) {}
 
-        if self.grid.cursor.point.column + 1 < columns {
-            self.grid.cursor.point.column += 1;
-        } else {
-            self.grid.cursor.input_needs_wrap = true;
-        }
-    }
+    /// Move cursor backward `cols`.
+    fn move_backward(&mut self, _: Column) {}
 
-    #[inline]
-    fn decaln(&mut self) {
-        trace!("Decalnning");
+    /// Move cursor down `rows` and set to column 1.
+    fn move_down_and_cr(&mut self, _: usize) {}
 
-        for line in (0..self.screen_lines()).map(Line::from) {
-            for column in 0..self.columns() {
-                let cell = &mut self.grid[line][Column(column)];
-                *cell = Cell::default();
-                cell.c = 'E';
-            }
-        }
-    }
+    /// Move cursor up `rows` and set to column 1.
+    fn move_up_and_cr(&mut self, _: usize) {}
 
-    #[inline]
-    fn goto(&mut self, line: Line, col: Column) {
-        trace!("Going to: line={}, col={}", line, col);
-        let (y_offset, max_y) = if self.mode.contains(TermMode::ORIGIN) {
-            (self.scroll_region.start, self.scroll_region.end - 1)
-        } else {
-            (Line(0), self.bottommost_line())
-        };
+    /// Put `count` tabs.
+    fn put_tab(&mut self, _count: u16) {}
 
-        self.grid.cursor.point.line = max(min(line + y_offset, max_y), Line(0));
-        self.grid.cursor.point.column = min(col, self.last_column());
-        self.grid.cursor.input_needs_wrap = false;
-    }
-
-    #[inline]
-    fn goto_line(&mut self, line: Line) {
-        trace!("Going to line: {}", line);
-        self.goto(line, self.grid.cursor.point.column)
-    }
-
-    #[inline]
-    fn goto_col(&mut self, col: Column) {
-        trace!("Going to column: {}", col);
-        self.goto(self.grid.cursor.point.line, col)
-    }
-
-    #[inline]
-    fn insert_blank(&mut self, count: usize) {
-        let cursor = &self.grid.cursor;
-        let bg = cursor.template.bg;
-
-        // Ensure inserting within terminal bounds
-        let count = min(count, self.columns() - cursor.point.column.0);
-
-        let source = cursor.point.column;
-        let destination = cursor.point.column.0 + count;
-        let num_cells = self.columns() - destination;
-
-        let line = cursor.point.line;
-        let row = &mut self.grid[line][..];
-
-        for offset in (0..num_cells).rev() {
-            row.swap(destination + offset, source.0 + offset);
-        }
-
-        // Cells were just moved out toward the end of the line;
-        // fill in between source and dest with blanks.
-        for cell in &mut row[source.0..destination] {
-            *cell = bg.into();
-        }
-    }
-
-    #[inline]
-    fn move_up(&mut self, lines: usize) {
-        trace!("Moving up: {}", lines);
-        self.goto(self.grid.cursor.point.line - lines, self.grid.cursor.point.column)
-    }
-
-    #[inline]
-    fn move_down(&mut self, lines: usize) {
-        trace!("Moving down: {}", lines);
-        self.goto(self.grid.cursor.point.line + lines, self.grid.cursor.point.column)
-    }
-
-    #[inline]
-    fn move_forward(&mut self, cols: Column) {
-        trace!("Moving forward: {}", cols);
-        let last_column = self.last_column();
-        self.grid.cursor.point.column = min(self.grid.cursor.point.column + cols, last_column);
-        self.grid.cursor.input_needs_wrap = false;
-    }
-
-    #[inline]
-    fn move_backward(&mut self, cols: Column) {
-        trace!("Moving backward: {}", cols);
-        self.grid.cursor.point.column =
-            Column(self.grid.cursor.point.column.saturating_sub(cols.0));
-        self.grid.cursor.input_needs_wrap = false;
-    }
-
-    #[inline]
-    fn identify_terminal(&mut self, intermediate: Option<char>) {
-        match intermediate {
-            None => {
-                trace!("Reporting primary device attributes");
-                let text = String::from("\x1b[?6c");
-                self.event_proxy.send_event(Event::PtyWrite(text));
-            },
-            Some('>') => {
-                trace!("Reporting secondary device attributes");
-                let version = version_number(env!("CARGO_PKG_VERSION"));
-                let text = format!("\x1b[>0;{};1c", version);
-                self.event_proxy.send_event(Event::PtyWrite(text));
-            },
-            _ => debug!("Unsupported device attributes intermediate"),
-        }
-    }
-
-    #[inline]
-    fn device_status(&mut self, arg: usize) {
-        trace!("Reporting device status: {}", arg);
-        match arg {
-            5 => {
-                let text = String::from("\x1b[0n");
-                self.event_proxy.send_event(Event::PtyWrite(text));
-            },
-            6 => {
-                let pos = self.grid.cursor.point;
-                let text = format!("\x1b[{};{}R", pos.line + 1, pos.column + 1);
-                self.event_proxy.send_event(Event::PtyWrite(text));
-            },
-            _ => debug!("unknown device status query: {}", arg),
-        };
-    }
-
-    #[inline]
-    fn move_down_and_cr(&mut self, lines: usize) {
-        trace!("Moving down and cr: {}", lines);
-        self.goto(self.grid.cursor.point.line + lines, Column(0))
-    }
-
-    #[inline]
-    fn move_up_and_cr(&mut self, lines: usize) {
-        trace!("Moving up and cr: {}", lines);
-        self.goto(self.grid.cursor.point.line - lines, Column(0))
-    }
-
-    /// Insert tab at cursor position.
-    #[inline]
-    fn put_tab(&mut self, mut count: u16) {
-        // A tab after the last column is the same as a linebreak.
-        if self.grid.cursor.input_needs_wrap {
-            self.wrapline();
-            return;
-        }
-
-        while self.grid.cursor.point.column < self.columns() && count != 0 {
-            count -= 1;
-
-            let c = self.grid.cursor.charsets[self.active_charset].map('\t');
-            let cell = self.grid.cursor_cell();
-            if cell.c == ' ' {
-                cell.c = c;
-            }
-
-            loop {
-                if (self.grid.cursor.point.column + 1) == self.columns() {
-                    break;
-                }
-
-                self.grid.cursor.point.column += 1;
-
-                if self.tabs[self.grid.cursor.point.column] {
-                    break;
-                }
-            }
-        }
-    }
-
-    /// Backspace.
-    #[inline]
-    fn backspace(&mut self) {
-        trace!("Backspace");
-
-        if self.grid.cursor.point.column > Column(0) {
-            self.grid.cursor.point.column -= 1;
-            self.grid.cursor.input_needs_wrap = false;
-        }
-    }
+    /// Backspace `count` characters.
+    fn backspace(&mut self) {}
 
     /// Carriage return.
-    #[inline]
-    fn carriage_return(&mut self) {
-        trace!("Carriage return");
-        self.grid.cursor.point.column = Column(0);
-        self.grid.cursor.input_needs_wrap = false;
-    }
+    fn carriage_return(&mut self) {}
 
     /// Linefeed.
-    #[inline]
-    fn linefeed(&mut self) {
-        trace!("Linefeed");
-        let next = self.grid.cursor.point.line + 1;
-        if next == self.scroll_region.end {
-            self.scroll_up(1);
-        } else if next < self.screen_lines() {
-            self.grid.cursor.point.line += 1;
-        }
-    }
+    fn linefeed(&mut self) {}
+
+    /// Ring the bell.
+    ///
+    /// Hopefully this is never implemented.
+    fn bell(&mut self) {}
+
+    /// Substitute char under cursor.
+    fn substitute(&mut self) {}
+
+    /// Newline.
+    fn newline(&mut self) {}
 
     /// Set current position as a tabstop.
-    #[inline]
-    fn bell(&mut self) {
-        trace!("Bell");
-        self.event_proxy.send_event(Event::Bell);
-    }
+    fn set_horizontal_tabstop(&mut self) {}
 
-    #[inline]
-    fn substitute(&mut self) {
-        trace!("[unimplemented] Substitute");
-    }
+    /// Scroll up `rows` rows.
+    fn scroll_up(&mut self, _: usize) {}
 
-    /// Run LF/NL.
+    /// Scroll down `rows` rows.
+    fn scroll_down(&mut self, _: usize) {}
+
+    /// Insert `count` blank lines.
+    fn insert_blank_lines(&mut self, _: usize) {}
+
+    /// Delete `count` lines.
+    fn delete_lines(&mut self, _: usize) {}
+
+    /// Erase `count` chars in current line following cursor.
     ///
-    /// LF/NL mode has some interesting history. According to ECMA-48 4th
-    /// edition, in LINE FEED mode,
+    /// Erase means resetting to the default state (default colors, no content,
+    /// no mode flags).
+    fn erase_chars(&mut self, _: Column) {}
+
+    /// Delete `count` chars.
     ///
-    /// > The execution of the formatter functions LINE FEED (LF), FORM FEED
-    /// (FF), LINE TABULATION (VT) cause only movement of the active position in
-    /// the direction of the line progression.
+    /// Deleting a character is like the delete key on the keyboard - everything
+    /// to the right of the deleted things is shifted left.
+    fn delete_chars(&mut self, _: usize) {}
+
+    /// Move backward `count` tabs.
+    fn move_backward_tabs(&mut self, _count: u16) {}
+
+    /// Move forward `count` tabs.
+    fn move_forward_tabs(&mut self, _count: u16) {}
+
+    /// Save current cursor position.
+    fn save_cursor_position(&mut self) {}
+
+    /// Restore cursor position.
+    fn restore_cursor_position(&mut self) {}
+
+    /// Clear current line.
+    fn clear_line(&mut self, _mode: LineClearMode) {}
+
+    /// Clear screen.
+    fn clear_screen(&mut self, _mode: ClearMode) {}
+
+    /// Clear tab stops.
+    fn clear_tabs(&mut self, _mode: TabulationClearMode) {}
+
+    /// Reset terminal state.
+    fn reset_state(&mut self) {}
+
+    /// Reverse Index.
     ///
-    /// In NEW LINE mode,
-    ///
-    /// > The execution of the formatter functions LINE FEED (LF), FORM FEED
-    /// (FF), LINE TABULATION (VT) cause movement to the line home position on
-    /// the following line, the following form, etc. In the case of LF this is
-    /// referred to as the New Line (NL) option.
-    ///
-    /// Additionally, ECMA-48 4th edition says that this option is deprecated.
-    /// ECMA-48 5th edition only mentions this option (without explanation)
-    /// saying that it's been removed.
-    ///
-    /// As an emulator, we need to support it since applications may still rely
-    /// on it.
-    #[inline]
-    fn newline(&mut self) {
-        self.linefeed();
-
-        if self.mode.contains(TermMode::LINE_FEED_NEW_LINE) {
-            self.carriage_return();
-        }
-    }
-
-    #[inline]
-    fn set_horizontal_tabstop(&mut self) {
-        trace!("Setting horizontal tabstop");
-        self.tabs[self.grid.cursor.point.column] = true;
-    }
-
-    #[inline]
-    fn scroll_up(&mut self, lines: usize) {
-        let origin = self.scroll_region.start;
-        self.scroll_up_relative(origin, lines);
-    }
-
-    #[inline]
-    fn scroll_down(&mut self, lines: usize) {
-        let origin = self.scroll_region.start;
-        self.scroll_down_relative(origin, lines);
-    }
-
-    #[inline]
-    fn insert_blank_lines(&mut self, lines: usize) {
-        trace!("Inserting blank {} lines", lines);
-
-        let origin = self.grid.cursor.point.line;
-        if self.scroll_region.contains(&origin) {
-            self.scroll_down_relative(origin, lines);
-        }
-    }
-
-    #[inline]
-    fn delete_lines(&mut self, lines: usize) {
-        let origin = self.grid.cursor.point.line;
-        let lines = min(self.screen_lines() - origin.0 as usize, lines);
-
-        trace!("Deleting {} lines", lines);
-
-        if lines > 0 && self.scroll_region.contains(&origin) {
-            self.scroll_up_relative(origin, lines);
-        }
-    }
-
-    #[inline]
-    fn erase_chars(&mut self, count: Column) {
-        let cursor = &self.grid.cursor;
-
-        trace!("Erasing chars: count={}, col={}", count, cursor.point.column);
-
-        let start = cursor.point.column;
-        let end = min(start + count, Column(self.columns()));
-
-        // Cleared cells have current background color set.
-        let bg = self.grid.cursor.template.bg;
-        let line = cursor.point.line;
-        let row = &mut self.grid[line];
-        for cell in &mut row[start..end] {
-            *cell = bg.into();
-        }
-    }
-
-    #[inline]
-    fn delete_chars(&mut self, count: usize) {
-        let columns = self.columns();
-        let cursor = &self.grid.cursor;
-        let bg = cursor.template.bg;
-
-        // Ensure deleting within terminal bounds.
-        let count = min(count, columns);
-
-        let start = cursor.point.column.0;
-        let end = min(start + count, columns - 1);
-        let num_cells = columns - end;
-
-        let line = cursor.point.line;
-        let row = &mut self.grid[line][..];
-
-        for offset in 0..num_cells {
-            row.swap(start + offset, end + offset);
-        }
-
-        // Clear last `count` cells in the row. If deleting 1 char, need to delete
-        // 1 cell.
-        let end = columns - count;
-        for cell in &mut row[end..] {
-            *cell = bg.into();
-        }
-    }
-
-    #[inline]
-    fn move_backward_tabs(&mut self, count: u16) {
-        trace!("Moving backward {} tabs", count);
-
-        for _ in 0..count {
-            let mut col = self.grid.cursor.point.column;
-            for i in (0..(col.0)).rev() {
-                if self.tabs[index::Column(i)] {
-                    col = index::Column(i);
-                    break;
-                }
-            }
-            self.grid.cursor.point.column = col;
-        }
-    }
-
-    #[inline]
-    fn move_forward_tabs(&mut self, count: u16) {
-        trace!("[unimplemented] Moving forward {} tabs", count);
-    }
-
-    #[inline]
-    fn save_cursor_position(&mut self) {
-        trace!("Saving cursor position");
-
-        self.grid.saved_cursor = self.grid.cursor.clone();
-    }
-
-    #[inline]
-    fn restore_cursor_position(&mut self) {
-        trace!("Restoring cursor position");
-
-        self.grid.cursor = self.grid.saved_cursor.clone();
-    }
-
-    #[inline]
-    fn clear_line(&mut self, mode: ansi::LineClearMode) {
-        trace!("Clearing line: {:?}", mode);
-
-        let cursor = &self.grid.cursor;
-        let bg = cursor.template.bg;
-
-        let point = cursor.point;
-        let row = &mut self.grid[point.line];
-
-        match mode {
-            ansi::LineClearMode::Right => {
-                for cell in &mut row[point.column..] {
-                    *cell = bg.into();
-                }
-            },
-            ansi::LineClearMode::Left => {
-                for cell in &mut row[..=point.column] {
-                    *cell = bg.into();
-                }
-            },
-            ansi::LineClearMode::All => {
-                for cell in &mut row[..] {
-                    *cell = bg.into();
-                }
-            },
-        }
-
-        let range = self.grid.cursor.point.line..=self.grid.cursor.point.line;
-        self.selection = self.selection.take().filter(|s| !s.intersects_range(range));
-    }
-
-    /// Set the indexed color value.
-    #[inline]
-    fn set_color(&mut self, index: usize, color: Rgb) {
-        trace!("Setting color[{}] = {:?}", index, color);
-        self.colors[index] = Some(color);
-    }
-
-    /// Write a foreground/background color escape sequence with the current color.
-    #[inline]
-    fn dynamic_color_sequence(&mut self, code: u8, index: usize, terminator: &str) {
-        trace!("Requested write of escape sequence for color code {}: color[{}]", code, index);
-
-        let terminator = terminator.to_owned();
-        self.event_proxy.send_event(Event::ColorRequest(
-            index,
-            Arc::new(move |color| {
-                format!(
-                    "\x1b]{};rgb:{1:02x}{1:02x}/{2:02x}{2:02x}/{3:02x}{3:02x}{4}",
-                    code, color.r, color.g, color.b, terminator
-                )
-            }),
-        ));
-    }
-
-    /// Reset the indexed color to original value.
-    #[inline]
-    fn reset_color(&mut self, index: usize) {
-        trace!("Resetting color[{}]", index);
-        self.colors[index] = None;
-    }
-
-    /// Store data into clipboard.
-    #[inline]
-    fn clipboard_store(&mut self, clipboard: u8, base64: &[u8]) {
-        let clipboard_type = match clipboard {
-            b'c' => ClipboardType::Clipboard,
-            b'p' | b's' => ClipboardType::Selection,
-            _ => return,
-        };
-
-        if let Ok(bytes) = base64::decode(base64) {
-            if let Ok(text) = String::from_utf8(bytes) {
-                self.event_proxy.send_event(Event::ClipboardStore(clipboard_type, text));
-            }
-        }
-    }
-
-    /// Load data from clipboard.
-    #[inline]
-    fn clipboard_load(&mut self, clipboard: u8, terminator: &str) {
-        let clipboard_type = match clipboard {
-            b'c' => ClipboardType::Clipboard,
-            b'p' | b's' => ClipboardType::Selection,
-            _ => return,
-        };
-
-        let terminator = terminator.to_owned();
-
-        self.event_proxy.send_event(Event::ClipboardLoad(
-            clipboard_type,
-            Arc::new(move |text| {
-                let base64 = base64::encode(&text);
-                format!("\x1b]52;{};{}{}", clipboard as char, base64, terminator)
-            }),
-        ));
-    }
-
-    #[inline]
-    fn clear_screen(&mut self, mode: ansi::ClearMode) {
-        trace!("Clearing screen: {:?}", mode);
-        let bg = self.grid.cursor.template.bg;
-
-        let screen_lines = self.screen_lines();
-
-        match mode {
-            ansi::ClearMode::Above => {
-                let cursor = self.grid.cursor.point;
-
-                // If clearing more than one line.
-                if cursor.line > 1 {
-                    // Fully clear all lines before the current line.
-                    self.grid.reset_region(..cursor.line);
-                }
-
-                // Clear up to the current column in the current line.
-                let end = min(cursor.column + 1, Column(self.columns()));
-                for cell in &mut self.grid[cursor.line][..end] {
-                    *cell = bg.into();
-                }
-
-                let range = Line(0)..=cursor.line;
-                self.selection = self.selection.take().filter(|s| !s.intersects_range(range));
-            },
-            ansi::ClearMode::Below => {
-                let cursor = self.grid.cursor.point;
-                for cell in &mut self.grid[cursor.line][cursor.column..] {
-                    *cell = bg.into();
-                }
-
-                if (cursor.line.0 as usize) < screen_lines - 1 {
-                    self.grid.reset_region((cursor.line + 1)..);
-                }
-
-                let range = cursor.line..Line(screen_lines as i32);
-                self.selection = self.selection.take().filter(|s| !s.intersects_range(range));
-            },
-            ansi::ClearMode::All => {
-                if self.mode.contains(TermMode::ALT_SCREEN) {
-                    self.grid.reset_region(..);
-                } else {
-                    self.grid.clear_viewport();
-                }
-
-                self.selection = None;
-            },
-            ansi::ClearMode::Saved if self.history_size() > 0 => {
-                self.grid.clear_history();
-
-                self.selection = self.selection.take().filter(|s| !s.intersects_range(..Line(0)));
-            },
-            // We have no history to clear.
-            ansi::ClearMode::Saved => (),
-        }
-    }
-
-    #[inline]
-    fn clear_tabs(&mut self, mode: ansi::TabulationClearMode) {
-        trace!("Clearing tabs: {:?}", mode);
-        match mode {
-            ansi::TabulationClearMode::Current => {
-                self.tabs[self.grid.cursor.point.column] = false;
-            },
-            ansi::TabulationClearMode::All => {
-                self.tabs.clear_all();
-            },
-        }
-    }
-
-    /// Reset all important fields in the term struct.
-    #[inline]
-    fn reset_state(&mut self) {
-        if self.mode.contains(TermMode::ALT_SCREEN) {
-            mem::swap(&mut self.grid, &mut self.inactive_grid);
-        }
-        self.active_charset = Default::default();
-        self.cursor_style = None;
-        self.grid.reset();
-        self.inactive_grid.reset();
-        self.scroll_region = Line(0)..Line(self.screen_lines() as i32);
-        self.tabs = TabStops::new(self.columns());
-        self.title_stack = Vec::new();
-        self.title = None;
-        self.selection = None;
-
-        // Preserve vi mode across resets.
-        self.mode &= TermMode::VI;
-        self.mode.insert(TermMode::default());
-
-        let blinking = self.cursor_style().blinking;
-        self.event_proxy.send_event(Event::CursorBlinkingChange(blinking));
-    }
-
-    #[inline]
-    fn reverse_index(&mut self) {
-        trace!("Reversing index");
-        // If cursor is at the top.
-        if self.grid.cursor.point.line == self.scroll_region.start {
-            self.scroll_down(1);
-        } else {
-            self.grid.cursor.point.line = max(self.grid.cursor.point.line - 1, Line(0));
-        }
-    }
+    /// Move the active position to the same horizontal position on the
+    /// preceding line. If the active position is at the top margin, a scroll
+    /// down is performed.
+    fn reverse_index(&mut self) {}
 
     /// Set a terminal attribute.
+    fn terminal_attribute(&mut self, _attr: Attr) {}
+
+    /// Set mode.
+    fn set_mode(&mut self, _mode: Mode) {}
+
+    /// Unset mode.
+    fn unset_mode(&mut self, _: Mode) {}
+
+    /// DECSTBM - Set the terminal scrolling region.
+    fn set_scrolling_region(&mut self, _top: usize, _bottom: Option<usize>) {}
+
+    /// DECKPAM - Set keypad to applications mode (ESCape instead of digits).
+    fn set_keypad_application_mode(&mut self) {}
+
+    /// DECKPNM - Set keypad to numeric mode (digits instead of ESCape seq).
+    fn unset_keypad_application_mode(&mut self) {}
+
+    /// Set one of the graphic character sets, G0 to G3, as the active charset.
+    ///
+    /// 'Invoke' one of G0 to G3 in the GL area. Also referred to as shift in,
+    /// shift out and locking shift depending on the set being activated.
+    fn set_active_charset(&mut self, _: CharsetIndex) {}
+
+    /// Assign a graphic character set to G0, G1, G2 or G3.
+    ///
+    /// 'Designate' a graphic character set as one of G0 to G3, so that it can
+    /// later be 'invoked' by `set_active_charset`.
+    fn configure_charset(&mut self, _: CharsetIndex, _: StandardCharset) {}
+
+    /// Set an indexed color value.
+    fn set_color(&mut self, _: usize, _: Rgb) {}
+
+    /// Write a foreground/background color escape sequence with the current color.
+    fn dynamic_color_sequence(&mut self, _: u8, _: usize, _: &str) {}
+
+    /// Reset an indexed color to original value.
+    fn reset_color(&mut self, _: usize) {}
+
+    /// Store data into clipboard.
+    fn clipboard_store(&mut self, _: u8, _: &[u8]) {}
+
+    /// Load data from clipboard.
+    fn clipboard_load(&mut self, _: u8, _: &str) {}
+
+    /// Run the decaln routine.
+    fn decaln(&mut self) {}
+
+    /// Push a title onto the stack.
+    fn push_title(&mut self) {}
+
+    /// Pop the last title from the stack.
+    fn pop_title(&mut self) {}
+
+    /// Report text area size in pixels.
+    fn text_area_size_pixels(&mut self) {}
+
+    /// Report text area size in characters.
+    fn text_area_size_chars(&mut self) {}
+}
+
+/// Terminal cursor configuration.
+#[derive(ConfigDeserialize, Default, Debug, Eq, PartialEq, Copy, Clone, Hash)]
+pub struct CursorStyle {
+    pub shape: CursorShape,
+    pub blinking: bool,
+}
+
+/// Terminal cursor shape.
+#[derive(ConfigDeserialize, Debug, Eq, PartialEq, Copy, Clone, Hash)]
+pub enum CursorShape {
+    /// Cursor is a block like `▒`.
+    Block,
+
+    /// Cursor is an underscore like `_`.
+    Underline,
+
+    /// Cursor is a vertical bar `⎸`.
+    Beam,
+
+    /// Cursor is a box like `☐`.
+    #[config(skip)]
+    HollowBlock,
+
+    /// Invisible cursor.
+    #[config(skip)]
+    Hidden,
+}
+
+impl Default for CursorShape {
+    fn default() -> CursorShape {
+        CursorShape::Block
+    }
+}
+
+/// Terminal modes.
+#[derive(Debug, Eq, PartialEq)]
+pub enum Mode {
+    /// ?1
+    CursorKeys = 1,
+    /// Select 80 or 132 columns per page (DECCOLM).
+    ///
+    /// CSI ? 3 h -> set 132 column font.
+    /// CSI ? 3 l -> reset 80 column font.
+    ///
+    /// Additionally,
+    ///
+    /// * set margins to default positions
+    /// * erases all data in page memory
+    /// * resets DECLRMM to unavailable
+    /// * clears data from the status line (if set to host-writable)
+    ColumnMode = 3,
+    /// IRM Insert Mode.
+    ///
+    /// NB should be part of non-private mode enum.
+    ///
+    /// * `CSI 4 h` change to insert mode
+    /// * `CSI 4 l` reset to replacement mode
+    Insert = 4,
+    /// ?6
+    Origin = 6,
+    /// ?7
+    LineWrap = 7,
+    /// ?12
+    BlinkingCursor = 12,
+    /// 20
+    ///
+    /// NB This is actually a private mode. We should consider adding a second
+    /// enumeration for public/private modesets.
+    LineFeedNewLine = 20,
+    /// ?25
+    ShowCursor = 25,
+    /// ?1000
+    ReportMouseClicks = 1000,
+    /// ?1002
+    ReportCellMouseMotion = 1002,
+    /// ?1003
+    ReportAllMouseMotion = 1003,
+    /// ?1004
+    ReportFocusInOut = 1004,
+    /// ?1005
+    Utf8Mouse = 1005,
+    /// ?1006
+    SgrMouse = 1006,
+    /// ?1007
+    AlternateScroll = 1007,
+    /// ?1042
+    UrgencyHints = 1042,
+    /// ?1049
+    SwapScreenAndSetRestoreCursor = 1049,
+    /// ?2004
+    BracketedPaste = 2004,
+}
+
+impl Mode {
+    /// Create mode from a primitive.
+    pub fn from_primitive(intermediate: Option<&u8>, num: u16) -> Option<Mode> {
+        let private = match intermediate {
+            Some(b'?') => true,
+            None => false,
+            _ => return None,
+        };
+
+        if private {
+            Some(match num {
+                1 => Mode::CursorKeys,
+                3 => Mode::ColumnMode,
+                6 => Mode::Origin,
+                7 => Mode::LineWrap,
+                12 => Mode::BlinkingCursor,
+                25 => Mode::ShowCursor,
+                1000 => Mode::ReportMouseClicks,
+                1002 => Mode::ReportCellMouseMotion,
+                1003 => Mode::ReportAllMouseMotion,
+                1004 => Mode::ReportFocusInOut,
+                1005 => Mode::Utf8Mouse,
+                1006 => Mode::SgrMouse,
+                1007 => Mode::AlternateScroll,
+                1042 => Mode::UrgencyHints,
+                1049 => Mode::SwapScreenAndSetRestoreCursor,
+                2004 => Mode::BracketedPaste,
+                _ => {
+                    trace!("[unimplemented] primitive mode: {}", num);
+                    return None;
+                },
+            })
+        } else {
+            Some(match num {
+                4 => Mode::Insert,
+                20 => Mode::LineFeedNewLine,
+                _ => return None,
+            })
+        }
+    }
+}
+
+/// Mode for clearing line.
+///
+/// Relative to cursor.
+#[derive(Debug)]
+pub enum LineClearMode {
+    /// Clear right of cursor.
+    Right,
+    /// Clear left of cursor.
+    Left,
+    /// Clear entire line.
+    All,
+}
+
+/// Mode for clearing terminal.
+///
+/// Relative to cursor.
+#[derive(Debug)]
+pub enum ClearMode {
+    /// Clear below cursor.
+    Below,
+    /// Clear above cursor.
+    Above,
+    /// Clear entire terminal.
+    All,
+    /// Clear 'saved' lines (scrollback).
+    Saved,
+}
+
+/// Mode for clearing tab stops.
+#[derive(Debug)]
+pub enum TabulationClearMode {
+    /// Clear stop under cursor.
+    Current,
+    /// Clear all stops.
+    All,
+}
+
+/// Standard colors.
+///
+/// The order here matters since the enum should be castable to a `usize` for
+/// indexing a color list.
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
+pub enum NamedColor {
+    /// Black.
+    Black = 0,
+    /// Red.
+    Red,
+    /// Green.
+    Green,
+    /// Yellow.
+    Yellow,
+    /// Blue.
+    Blue,
+    /// Magenta.
+    Magenta,
+    /// Cyan.
+    Cyan,
+    /// White.
+    White,
+    /// Bright black.
+    BrightBlack,
+    /// Bright red.
+    BrightRed,
+    /// Bright green.
+    BrightGreen,
+    /// Bright yellow.
+    BrightYellow,
+    /// Bright blue.
+    BrightBlue,
+    /// Bright magenta.
+    BrightMagenta,
+    /// Bright cyan.
+    BrightCyan,
+    /// Bright white.
+    BrightWhite,
+    /// The foreground color.
+    Foreground = 256,
+    /// The background color.
+    Background,
+    /// Color for the cursor itself.
+    Cursor,
+    /// Dim black.
+    DimBlack,
+    /// Dim red.
+    DimRed,
+    /// Dim green.
+    DimGreen,
+    /// Dim yellow.
+    DimYellow,
+    /// Dim blue.
+    DimBlue,
+    /// Dim magenta.
+    DimMagenta,
+    /// Dim cyan.
+    DimCyan,
+    /// Dim white.
+    DimWhite,
+    /// The bright foreground color.
+    BrightForeground,
+    /// Dim foreground.
+    DimForeground,
+}
+
+impl NamedColor {
+    pub fn to_bright(self) -> Self {
+        match self {
+            NamedColor::Foreground => NamedColor::BrightForeground,
+            NamedColor::Black => NamedColor::BrightBlack,
+            NamedColor::Red => NamedColor::BrightRed,
+            NamedColor::Green => NamedColor::BrightGreen,
+            NamedColor::Yellow => NamedColor::BrightYellow,
+            NamedColor::Blue => NamedColor::BrightBlue,
+            NamedColor::Magenta => NamedColor::BrightMagenta,
+            NamedColor::Cyan => NamedColor::BrightCyan,
+            NamedColor::White => NamedColor::BrightWhite,
+            NamedColor::DimForeground => NamedColor::Foreground,
+            NamedColor::DimBlack => NamedColor::Black,
+            NamedColor::DimRed => NamedColor::Red,
+            NamedColor::DimGreen => NamedColor::Green,
+            NamedColor::DimYellow => NamedColor::Yellow,
+            NamedColor::DimBlue => NamedColor::Blue,
+            NamedColor::DimMagenta => NamedColor::Magenta,
+            NamedColor::DimCyan => NamedColor::Cyan,
+            NamedColor::DimWhite => NamedColor::White,
+            val => val,
+        }
+    }
+
+    pub fn to_dim(self) -> Self {
+        match self {
+            NamedColor::Black => NamedColor::DimBlack,
+            NamedColor::Red => NamedColor::DimRed,
+            NamedColor::Green => NamedColor::DimGreen,
+            NamedColor::Yellow => NamedColor::DimYellow,
+            NamedColor::Blue => NamedColor::DimBlue,
+            NamedColor::Magenta => NamedColor::DimMagenta,
+            NamedColor::Cyan => NamedColor::DimCyan,
+            NamedColor::White => NamedColor::DimWhite,
+            NamedColor::Foreground => NamedColor::DimForeground,
+            NamedColor::BrightBlack => NamedColor::Black,
+            NamedColor::BrightRed => NamedColor::Red,
+            NamedColor::BrightGreen => NamedColor::Green,
+            NamedColor::BrightYellow => NamedColor::Yellow,
+            NamedColor::BrightBlue => NamedColor::Blue,
+            NamedColor::BrightMagenta => NamedColor::Magenta,
+            NamedColor::BrightCyan => NamedColor::Cyan,
+            NamedColor::BrightWhite => NamedColor::White,
+            NamedColor::BrightForeground => NamedColor::Foreground,
+            val => val,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Color {
+    Named(NamedColor),
+    Spec(Rgb),
+    Indexed(u8),
+}
+
+/// Terminal character attributes.
+#[derive(Debug, Eq, PartialEq)]
+pub enum Attr {
+    /// Clear all special abilities.
+    Reset,
+    /// Bold text.
+    Bold,
+    /// Dim or secondary color.
+    Dim,
+    /// Italic text.
+    Italic,
+    /// Underline text.
+    Underline,
+    /// Underlined twice.
+    DoubleUnderline,
+    /// Blink cursor slowly.
+    BlinkSlow,
+    /// Blink cursor fast.
+    BlinkFast,
+    /// Invert colors.
+    Reverse,
+    /// Do not display characters.
+    Hidden,
+    /// Strikeout text.
+    Strike,
+    /// Cancel bold.
+    CancelBold,
+    /// Cancel bold and dim.
+    CancelBoldDim,
+    /// Cancel italic.
+    CancelItalic,
+    /// Cancel all underlines.
+    CancelUnderline,
+    /// Cancel blink.
+    CancelBlink,
+    /// Cancel inversion.
+    CancelReverse,
+    /// Cancel text hiding.
+    CancelHidden,
+    /// Cancel strikeout.
+    CancelStrike,
+    /// Set indexed foreground color.
+    Foreground(Color),
+    /// Set indexed background color.
+    Background(Color),
+}
+
+/// Identifiers which can be assigned to a graphic character set.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CharsetIndex {
+    /// Default set, is designated as ASCII at startup.
+    G0,
+    G1,
+    G2,
+    G3,
+}
+
+impl Default for CharsetIndex {
+    fn default() -> Self {
+        CharsetIndex::G0
+    }
+}
+
+/// Standard or common character sets which can be designated as G0-G3.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StandardCharset {
+    Ascii,
+    SpecialCharacterAndLineDrawing,
+}
+
+impl Default for StandardCharset {
+    fn default() -> Self {
+        StandardCharset::Ascii
+    }
+}
+
+impl StandardCharset {
+    /// Switch/Map character to the active charset. Ascii is the common case and
+    /// for that we want to do as little as possible.
     #[inline]
-    fn terminal_attribute(&mut self, attr: Attr) {
-        trace!("Setting attribute: {:?}", attr);
-        let cursor = &mut self.grid.cursor;
-        match attr {
-            Attr::Foreground(color) => cursor.template.fg = color,
-            Attr::Background(color) => cursor.template.bg = color,
-            Attr::Reset => {
-                cursor.template.fg = Color::Named(NamedColor::Foreground);
-                cursor.template.bg = Color::Named(NamedColor::Background);
-                cursor.template.flags = Flags::empty();
+    pub fn map(self, c: char) -> char {
+        match self {
+            StandardCharset::Ascii => c,
+            StandardCharset::SpecialCharacterAndLineDrawing => match c {
+                1 => 12,
+                '`' => '◆',
+                'a' => '▒',
+                'b' => '\t',
+                'c' => '\u{000c}',
+                'd' => '\r',
+                'e' => '\n',
+                'f' => '°',
+                'g' => '±',
+                'h' => '\u{2424}',
+                'i' => '\u{000b}',
+                'j' => '┘',
+                'k' => '┐',
+                'l' => '┌',
+                'm' => '└',
+                'n' => '┼',
+                'o' => '⎺',
+                'p' => '⎻',
+                'q' => '─',
+                'r' => '⎼',
+                's' => '⎽',
+                't' => '├',
+                'u' => '┤',
+                'v' => '┴',
+                'w' => '┬',
+                'x' => '│',
+                'y' => '≤',
+                'z' => '≥',
+                '{' => 'π',
+                '|' => '≠',
+                '}' => '£',
+                '~' => '·',
+                _ => c,
             },
-            Attr::Reverse => cursor.template.flags.insert(Flags::INVERSE),
-            Attr::CancelReverse => cursor.template.flags.remove(Flags::INVERSE),
-            Attr::Bold => cursor.template.flags.insert(Flags::BOLD),
-            Attr::CancelBold => cursor.template.flags.remove(Flags::BOLD),
-            Attr::Dim => cursor.template.flags.insert(Flags::DIM),
-            Attr::CancelBoldDim => cursor.template.flags.remove(Flags::BOLD | Flags::DIM),
-            Attr::Italic => cursor.template.flags.insert(Flags::ITALIC),
-            Attr::CancelItalic => cursor.template.flags.remove(Flags::ITALIC),
-            Attr::Underline => {
-                cursor.template.flags.remove(Flags::DOUBLE_UNDERLINE);
-                cursor.template.flags.insert(Flags::UNDERLINE);
-            },
-            Attr::DoubleUnderline => {
-                cursor.template.flags.remove(Flags::UNDERLINE);
-                cursor.template.flags.insert(Flags::DOUBLE_UNDERLINE);
-            },
-            Attr::CancelUnderline => {
-                cursor.template.flags.remove(Flags::UNDERLINE | Flags::DOUBLE_UNDERLINE);
-            },
-            Attr::Hidden => cursor.template.flags.insert(Flags::HIDDEN),
-            Attr::CancelHidden => cursor.template.flags.remove(Flags::HIDDEN),
-            Attr::Strike => cursor.template.flags.insert(Flags::STRIKEOUT),
-            Attr::CancelStrike => cursor.template.flags.remove(Flags::STRIKEOUT),
-            _ => {
-                debug!("Term got unhandled attr: {:?}", attr);
-            },
+        }
+    }
+}
+
+impl<'a, H> vte::Perform for Performer<'a, H>
+    where
+        H: Handler + 'a,
+{
+    #[inline]
+    fn print(&mut self, c: char) {
+        self.handler.input(c);
+        self.state.preceding_char = Some(c);
+    }
+
+    #[inline]
+    fn execute(&mut self, byte: u8) {
+        match byte {
+            C0::HT => self.handler.put_tab(1),
+            C0::BS => self.handler.backspace(),
+            C0::CR => self.handler.carriage_return(),
+            C0::LF | C0::VT | C0::FF => self.handler.linefeed(),
+            C0::BEL => self.handler.bell(),
+            C0::SUB => self.handler.substitute(),
+            C0::SI => self.handler.set_active_charset(CharsetIndex::G0),
+            C0::SO => self.handler.set_active_charset(CharsetIndex::G1),
+            _ => debug!("[unhandled] execute byte={:02x}", byte),
         }
     }
 
     #[inline]
-    fn set_mode(&mut self, mode: ansi::Mode) {
-        trace!("Setting mode: {:?}", mode);
-        match mode {
-            ansi::Mode::UrgencyHints => self.mode.insert(TermMode::URGENCY_HINTS),
-            ansi::Mode::SwapScreenAndSetRestoreCursor => {
-                if !self.mode.contains(TermMode::ALT_SCREEN) {
-                    self.swap_alt();
+    fn hook(&mut self, params: &Params, intermediates: &[u8], ignore: bool, action: char) {
+        match (action, intermediates) {
+            ('s', [b'=']) => {
+                // Start a synchronized update. The end is handled with a separate parser.
+                if params.iter().next().map_or(false, |param| param[0] == 1) {
+                    self.state.dcs = Some(Dcs::SyncStart);
                 }
             },
-            ansi::Mode::ShowCursor => self.mode.insert(TermMode::SHOW_CURSOR),
-            ansi::Mode::CursorKeys => self.mode.insert(TermMode::APP_CURSOR),
-            // Mouse protocols are mutually exclusive.
-            ansi::Mode::ReportMouseClicks => {
-                self.mode.remove(TermMode::MOUSE_MODE);
-                self.mode.insert(TermMode::MOUSE_REPORT_CLICK);
-                self.event_proxy.send_event(Event::MouseCursorDirty);
-            },
-            ansi::Mode::ReportCellMouseMotion => {
-                self.mode.remove(TermMode::MOUSE_MODE);
-                self.mode.insert(TermMode::MOUSE_DRAG);
-                self.event_proxy.send_event(Event::MouseCursorDirty);
-            },
-            ansi::Mode::ReportAllMouseMotion => {
-                self.mode.remove(TermMode::MOUSE_MODE);
-                self.mode.insert(TermMode::MOUSE_MOTION);
-                self.event_proxy.send_event(Event::MouseCursorDirty);
-            },
-            ansi::Mode::ReportFocusInOut => self.mode.insert(TermMode::FOCUS_IN_OUT),
-            ansi::Mode::BracketedPaste => self.mode.insert(TermMode::BRACKETED_PASTE),
-            // Mouse encodings are mutually exclusive.
-            ansi::Mode::SgrMouse => {
-                self.mode.remove(TermMode::UTF8_MOUSE);
-                self.mode.insert(TermMode::SGR_MOUSE);
-            },
-            ansi::Mode::Utf8Mouse => {
-                self.mode.remove(TermMode::SGR_MOUSE);
-                self.mode.insert(TermMode::UTF8_MOUSE);
-            },
-            ansi::Mode::AlternateScroll => self.mode.insert(TermMode::ALTERNATE_SCROLL),
-            ansi::Mode::LineWrap => self.mode.insert(TermMode::LINE_WRAP),
-            ansi::Mode::LineFeedNewLine => self.mode.insert(TermMode::LINE_FEED_NEW_LINE),
-            ansi::Mode::Origin => self.mode.insert(TermMode::ORIGIN),
-            ansi::Mode::ColumnMode => self.deccolm(),
-            ansi::Mode::Insert => self.mode.insert(TermMode::INSERT),
-            ansi::Mode::BlinkingCursor => {
-                let style = self.cursor_style.get_or_insert(self.default_cursor_style);
-                style.blinking = true;
-                self.event_proxy.send_event(Event::CursorBlinkingChange(true));
-            },
+            _ => debug!(
+                "[unhandled hook] params={:?}, ints: {:?}, ignore: {:?}, action: {:?}",
+                params, intermediates, ignore, action
+            ),
         }
     }
 
     #[inline]
-    fn unset_mode(&mut self, mode: ansi::Mode) {
-        trace!("Unsetting mode: {:?}", mode);
-        match mode {
-            ansi::Mode::UrgencyHints => self.mode.remove(TermMode::URGENCY_HINTS),
-            ansi::Mode::SwapScreenAndSetRestoreCursor => {
-                if self.mode.contains(TermMode::ALT_SCREEN) {
-                    self.swap_alt();
+    fn put(&mut self, byte: u8) {
+        debug!("[unhandled put] byte={:?}", byte);
+    }
+
+    #[inline]
+    fn unhook(&mut self) {
+        match self.state.dcs {
+            Some(Dcs::SyncStart) => {
+                self.state.sync_state.timeout = Some(Instant::now() + SYNC_UPDATE_TIMEOUT);
+            },
+            Some(Dcs::SyncEnd) => (),
+            _ => debug!("[unhandled unhook]"),
+        }
+    }
+
+    #[inline]
+    fn osc_dispatch(&mut self, params: &[&[u8]], bell_terminated: bool) {
+        let terminator = if bell_terminated { "\x07" } else { "\x1b\\" };
+
+        fn unhandled(params: &[&[u8]]) {
+            let mut buf = String::new();
+            for items in params {
+                buf.push('[');
+                for item in *items {
+                    buf.push_str(&format!("{:?},", *item as char));
                 }
-            },
-            ansi::Mode::ShowCursor => self.mode.remove(TermMode::SHOW_CURSOR),
-            ansi::Mode::CursorKeys => self.mode.remove(TermMode::APP_CURSOR),
-            ansi::Mode::ReportMouseClicks => {
-                self.mode.remove(TermMode::MOUSE_REPORT_CLICK);
-                self.event_proxy.send_event(Event::MouseCursorDirty);
-            },
-            ansi::Mode::ReportCellMouseMotion => {
-                self.mode.remove(TermMode::MOUSE_DRAG);
-                self.event_proxy.send_event(Event::MouseCursorDirty);
-            },
-            ansi::Mode::ReportAllMouseMotion => {
-                self.mode.remove(TermMode::MOUSE_MOTION);
-                self.event_proxy.send_event(Event::MouseCursorDirty);
-            },
-            ansi::Mode::ReportFocusInOut => self.mode.remove(TermMode::FOCUS_IN_OUT),
-            ansi::Mode::BracketedPaste => self.mode.remove(TermMode::BRACKETED_PASTE),
-            ansi::Mode::SgrMouse => self.mode.remove(TermMode::SGR_MOUSE),
-            ansi::Mode::Utf8Mouse => self.mode.remove(TermMode::UTF8_MOUSE),
-            ansi::Mode::AlternateScroll => self.mode.remove(TermMode::ALTERNATE_SCROLL),
-            ansi::Mode::LineWrap => self.mode.remove(TermMode::LINE_WRAP),
-            ansi::Mode::LineFeedNewLine => self.mode.remove(TermMode::LINE_FEED_NEW_LINE),
-            ansi::Mode::Origin => self.mode.remove(TermMode::ORIGIN),
-            ansi::Mode::ColumnMode => self.deccolm(),
-            ansi::Mode::Insert => self.mode.remove(TermMode::INSERT),
-            ansi::Mode::BlinkingCursor => {
-                let style = self.cursor_style.get_or_insert(self.default_cursor_style);
-                style.blinking = false;
-                self.event_proxy.send_event(Event::CursorBlinkingChange(false));
-            },
+                buf.push_str("],");
+            }
+            debug!("[unhandled osc_dispatch]: [{}] at line {}", &buf, line!());
         }
-    }
 
-    #[inline]
-    fn set_scrolling_region(&mut self, top: usize, bottom: Option<usize>) {
-        // Fallback to the last line as default.
-        let bottom = bottom.unwrap_or_else(|| self.screen_lines());
-
-        if top >= bottom {
-            debug!("Invalid scrolling region: ({};{})", top, bottom);
+        if params.is_empty() || params[0].is_empty() {
             return;
         }
 
-        // Bottom should be included in the range, but range end is not
-        // usually included. One option would be to use an inclusive
-        // range, but instead we just let the open range end be 1
-        // higher.
-        let start = Line(top as i32 - 1);
-        let end = Line(bottom as i32);
+        match params[0] {
+            // Set window title.
+            b"0" | b"2" => {
+                if params.len() >= 2 {
+                    let title = params[1..]
+                        .iter()
+                        .flat_map(|x| str::from_utf8(x))
+                        .collect::<Vec<&str>>()
+                        .join(";")
+                        .trim()
+                        .to_owned();
+                    self.handler.set_title(Some(title));
+                    return;
+                }
+                unhandled(params);
+            },
 
-        trace!("Setting scrolling region: ({};{})", start, end);
+            // Set color index.
+            b"4" => {
+                if params.len() > 1 && params.len() % 2 != 0 {
+                    for chunk in params[1..].chunks(2) {
+                        let index = parse_number(chunk[0]);
+                        let color = xparse_color(chunk[1]);
+                        if let (Some(i), Some(c)) = (index, color) {
+                            self.handler.set_color(i as usize, c);
+                            return;
+                        }
+                    }
+                }
+                unhandled(params);
+            },
 
-        let screen_lines = Line(self.screen_lines() as i32);
-        self.scroll_region.start = min(start, screen_lines);
-        self.scroll_region.end = min(end, screen_lines);
-        self.goto(Line(0), Column(0));
-    }
+            // Get/set Foreground, Background, Cursor colors.
+            b"10" | b"11" | b"12" => {
+                if params.len() >= 2 {
+                    if let Some(mut dynamic_code) = parse_number(params[0]) {
+                        for param in &params[1..] {
+                            // 10 is the first dynamic color, also the foreground.
+                            let offset = dynamic_code as usize - 10;
+                            let index = NamedColor::Foreground as usize + offset;
 
-    #[inline]
-    fn set_keypad_application_mode(&mut self) {
-        trace!("Setting keypad application mode");
-        self.mode.insert(TermMode::APP_KEYPAD);
-    }
+                            // End of setting dynamic colors.
+                            if index > NamedColor::Cursor as usize {
+                                unhandled(params);
+                                break;
+                            }
 
-    #[inline]
-    fn unset_keypad_application_mode(&mut self) {
-        trace!("Unsetting keypad application mode");
-        self.mode.remove(TermMode::APP_KEYPAD);
-    }
+                            if let Some(color) = xparse_color(param) {
+                                self.handler.set_color(index, color);
+                            } else if param == b"?" {
+                                self.handler.dynamic_color_sequence(
+                                    dynamic_code,
+                                    index,
+                                    terminator,
+                                );
+                            } else {
+                                unhandled(params);
+                            }
+                            dynamic_code += 1;
+                        }
+                        return;
+                    }
+                }
+                unhandled(params);
+            },
 
-    #[inline]
-    fn configure_charset(&mut self, index: CharsetIndex, charset: StandardCharset) {
-        trace!("Configuring charset {:?} as {:?}", index, charset);
-        self.grid.cursor.charsets[index] = charset;
-    }
+            // Set cursor style.
+            b"50" => {
+                if params.len() >= 2
+                    && params[1].len() >= 13
+                    && params[1][0..12] == *b"CursorShape="
+                {
+                    let shape = match params[1][12] as char {
+                        '0' => CursorShape::Block,
+                        '1' => CursorShape::Beam,
+                        '2' => CursorShape::Underline,
+                        _ => return unhandled(params),
+                    };
+                    self.handler.set_cursor_shape(shape);
+                    return;
+                }
+                unhandled(params);
+            },
 
-    #[inline]
-    fn set_active_charset(&mut self, index: CharsetIndex) {
-        trace!("Setting active charset {:?}", index);
-        self.active_charset = index;
-    }
-
-    #[inline]
-    fn set_cursor_style(&mut self, style: Option<CursorStyle>) {
-        trace!("Setting cursor style {:?}", style);
-        self.cursor_style = style;
-
-        // Notify UI about blinking changes.
-        let blinking = style.unwrap_or(self.default_cursor_style).blinking;
-        self.event_proxy.send_event(Event::CursorBlinkingChange(blinking));
-    }
-
-    #[inline]
-    fn set_cursor_shape(&mut self, shape: CursorShape) {
-        trace!("Setting cursor shape {:?}", shape);
-
-        let style = self.cursor_style.get_or_insert(self.default_cursor_style);
-        style.shape = shape;
-    }
-
-    #[inline]
-    fn set_title(&mut self, title: Option<String>) {
-        trace!("Setting title to '{:?}'", title);
-
-        self.title = title.clone();
-
-        let title_event = match title {
-            Some(title) => Event::Title(title),
-            None => Event::ResetTitle,
-        };
-
-        self.event_proxy.send_event(title_event);
-    }
-
-    #[inline]
-    fn push_title(&mut self) {
-        trace!("Pushing '{:?}' onto title stack", self.title);
-
-        if self.title_stack.len() >= TITLE_STACK_MAX_DEPTH {
-            let removed = self.title_stack.remove(0);
-            trace!(
-                "Removing '{:?}' from bottom of title stack that exceeds its maximum depth",
-                removed
-            );
-        }
-
-        self.title_stack.push(self.title.clone());
-    }
-
-    #[inline]
-    fn pop_title(&mut self) {
-        trace!("Attempting to pop title from stack...");
-
-        if let Some(popped) = self.title_stack.pop() {
-            trace!("Title '{:?}' popped from stack", popped);
-            self.set_title(popped);
-        }
-    }
-
-    #[inline]
-    fn text_area_size_pixels(&mut self) {
-        let width = self.cell_width * self.columns();
-        let height = self.cell_height * self.screen_lines();
-        let text = format!("\x1b[4;{};{}t", height, width);
-        self.event_proxy.send_event(Event::PtyWrite(text));
-    }
-
-    #[inline]
-    fn text_area_size_chars(&mut self) {
-        let text = format!("\x1b[8;{};{}t", self.screen_lines(), self.columns());
-        self.event_proxy.send_event(Event::PtyWrite(text));
-    }
-}
-
-/// Terminal version for escape sequence reports.
-///
-/// This returns the current terminal version as a unique number based on alacritty_terminal's
-/// semver version. The different versions are padded to ensure that a higher semver version will
-/// always report a higher version number.
-fn version_number(mut version: &str) -> usize {
-    if let Some(separator) = version.rfind('-') {
-        version = &version[..separator];
-    }
-
-    let mut version_number = 0;
-
-    let semver_versions = version.split('.');
-    for (i, semver_version) in semver_versions.rev().enumerate() {
-        let semver_number = semver_version.parse::<usize>().unwrap_or(0);
-        version_number += usize::pow(100, i as u32) * semver_number;
-    }
-
-    version_number
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ClipboardType {
-    Clipboard,
-    Selection,
-}
-
-struct TabStops {
-    tabs: Vec<bool>,
-}
-
-impl TabStops {
-    #[inline]
-    fn new(columns: usize) -> TabStops {
-        TabStops { tabs: (0..columns).map(|i| i % INITIAL_TABSTOPS == 0).collect() }
-    }
-
-    /// Remove all tabstops.
-    #[inline]
-    fn clear_all(&mut self) {
-        unsafe {
-            ptr::write_bytes(self.tabs.as_mut_ptr(), 0, self.tabs.len());
-        }
-    }
-
-    /// Increase tabstop capacity.
-    #[inline]
-    fn resize(&mut self, columns: usize) {
-        let mut index = self.tabs.len();
-        self.tabs.resize_with(columns, || {
-            let is_tabstop = index % INITIAL_TABSTOPS == 0;
-            index += 1;
-            is_tabstop
-        });
-    }
-}
-
-impl Index<Column> for TabStops {
-    type Output = bool;
-
-    fn index(&self, index: Column) -> &bool {
-        &self.tabs[index.0]
-    }
-}
-
-impl IndexMut<Column> for TabStops {
-    fn index_mut(&mut self, index: Column) -> &mut bool {
-        self.tabs.index_mut(index.0)
-    }
-}
-
-/// Terminal cursor rendering information.
-#[derive(Copy, Clone)]
-pub struct RenderableCursor {
-    pub shape: CursorShape,
-    pub point: Point,
-}
-
-impl RenderableCursor {
-    fn new<T>(term: &Term<T>) -> Self {
-        // Cursor position.
-        let vi_mode = term.mode().contains(TermMode::VI);
-        let mut point = if vi_mode { term.vi_mode_cursor.point } else { term.grid.cursor.point };
-        if term.grid[point].flags.contains(Flags::WIDE_CHAR_SPACER) {
-            point.column -= 1;
-        }
-
-        // Cursor shape.
-        let shape = if !vi_mode && !term.mode().contains(TermMode::SHOW_CURSOR) {
-            CursorShape::Hidden
-        } else {
-            term.cursor_style().shape
-        };
-
-        Self { shape, point }
-    }
-}
-
-/// Visible terminal content.
-///
-/// This contains all content required to render the current terminal view.
-pub struct RenderableContent<'a> {
-    pub display_iter: DisplayIter<'a, Cell>,
-    pub selection: Option<SelectionRange>,
-    pub cursor: RenderableCursor,
-    pub display_offset: usize,
-    pub colors: &'a color::Colors,
-    pub mode: TermMode,
-}
-
-impl<'a> RenderableContent<'a> {
-    fn new<T>(term: &'a Term<T>) -> Self {
-        Self {
-            display_iter: term.grid().display_iter(),
-            display_offset: term.grid().display_offset(),
-            cursor: RenderableCursor::new(term),
-            selection: term.selection.as_ref().and_then(|s| s.to_range(term)),
-            colors: &term.colors,
-            mode: *term.mode(),
-        }
-    }
-}
-
-/// Terminal test helpers.
-pub mod test {
-    use super::*;
-
-    use unicode_width::UnicodeWidthChar;
-
-    use crate::config::Config;
-    use crate::index::Column;
-
-    /// Construct a terminal from its content as string.
-    ///
-    /// A `\n` will break line and `\r\n` will break line without wrapping.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use alacritty_terminal::term::test::mock_term;
-    ///
-    /// // Create a terminal with the following cells:
-    /// //
-    /// // [h][e][l][l][o] <- WRAPLINE flag set
-    /// // [:][)][ ][ ][ ]
-    /// // [t][e][s][t][ ]
-    /// mock_term(
-    ///     "\
-    ///     hello\n:)\r\ntest",
-    /// );
-    /// ```
-    pub fn mock_term(content: &str) -> Term<()> {
-        let lines: Vec<&str> = content.split('\n').collect();
-        let num_cols = lines
-            .iter()
-            .map(|line| line.chars().filter(|c| *c != '\r').map(|c| c.width().unwrap()).sum())
-            .max()
-            .unwrap_or(0);
-
-        // Create terminal with the appropriate dimensions.
-        let size = SizeInfo::new(num_cols as f32, lines.len() as f32, 1., 1., 0., 0., false);
-        let mut term = Term::new(&Config::<()>::default(), size, ());
-
-        // Fill terminal with content.
-        for (line, text) in lines.iter().enumerate() {
-            let line = Line(line as i32);
-            if !text.ends_with('\r') && line + 1 != lines.len() {
-                term.grid[line][Column(num_cols - 1)].flags.insert(Flags::WRAPLINE);
-            }
-
-            let mut index = 0;
-            for c in text.chars().take_while(|c| *c != '\r') {
-                term.grid[line][Column(index)].c = c;
-
-                // Handle fullwidth characters.
-                let width = c.width().unwrap();
-                if width == 2 {
-                    term.grid[line][Column(index)].flags.insert(Flags::WIDE_CHAR);
-                    term.grid[line][Column(index + 1)].flags.insert(Flags::WIDE_CHAR_SPACER);
+            // Set clipboard.
+            b"52" => {
+                if params.len() < 3 {
+                    return unhandled(params);
                 }
 
-                index += width;
-            }
+                let clipboard = params[1].get(0).unwrap_or(&b'c');
+                match params[2] {
+                    b"?" => self.handler.clipboard_load(*clipboard, terminator),
+                    base64 => self.handler.clipboard_store(*clipboard, base64),
+                }
+            },
+
+            // Reset color index.
+            b"104" => {
+                // Reset all color indexes when no parameters are given.
+                if params.len() == 1 {
+                    for i in 0..256 {
+                        self.handler.reset_color(i);
+                    }
+                    return;
+                }
+
+                // Reset color indexes given as parameters.
+                for param in &params[1..] {
+                    match parse_number(param) {
+                        Some(index) => self.handler.reset_color(index as usize),
+                        None => unhandled(params),
+                    }
+                }
+            },
+
+            // Reset foreground color.
+            b"110" => self.handler.reset_color(NamedColor::Foreground as usize),
+
+            // Reset background color.
+            b"111" => self.handler.reset_color(NamedColor::Background as usize),
+
+            // Reset text cursor color.
+            b"112" => self.handler.reset_color(NamedColor::Cursor as usize),
+
+            _ => unhandled(params),
+        }
+    }
+
+    #[allow(clippy::cognitive_complexity)]
+    #[inline]
+    fn csi_dispatch(
+        &mut self,
+        params: &Params,
+        intermediates: &[u8],
+        has_ignored_intermediates: bool,
+        action: char,
+    ) {
+        macro_rules! unhandled {
+            () => {{
+                debug!(
+                    "[Unhandled CSI] action={:?}, params={:?}, intermediates={:?}",
+                    action, params, intermediates
+                );
+            }};
         }
 
-        term
+        if has_ignored_intermediates || intermediates.len() > 1 {
+            unhandled!();
+            return;
+        }
+
+        let mut params_iter = params.iter();
+        let handler = &mut self.handler;
+
+        let mut next_param_or = |default: u16| {
+            params_iter.next().map(|param| param[0]).filter(|&param| param != 0).unwrap_or(default)
+        };
+
+        match (action, intermediates) {
+            ('@', []) => handler.insert_blank(next_param_or(1) as usize),
+            ('A', []) => handler.move_up(next_param_or(1) as usize),
+            ('B', []) | ('e', []) => handler.move_down(next_param_or(1) as usize),
+            ('b', []) => {
+                if let Some(c) = self.state.preceding_char {
+                    for _ in 0..next_param_or(1) {
+                        handler.input(c);
+                    }
+                } else {
+                    debug!("tried to repeat with no preceding char");
+                }
+            },
+            ('C', []) | ('a', []) => handler.move_forward(Column(next_param_or(1) as usize)),
+            ('c', intermediates) if next_param_or(0) == 0 => {
+                handler.identify_terminal(intermediates.get(0).map(|&i| i as char))
+            },
+            ('D', []) => handler.move_backward(Column(next_param_or(1) as usize)),
+            ('d', []) => handler.goto_line(Line(next_param_or(1) as i32 - 1)),
+            ('E', []) => handler.move_down_and_cr(next_param_or(1) as usize),
+            ('F', []) => handler.move_up_and_cr(next_param_or(1) as usize),
+            ('G', []) | ('`', []) => handler.goto_col(Column(next_param_or(1) as usize - 1)),
+            ('g', []) => {
+                let mode = match next_param_or(0) {
+                    0 => TabulationClearMode::Current,
+                    3 => TabulationClearMode::All,
+                    _ => {
+                        unhandled!();
+                        return;
+                    },
+                };
+
+                handler.clear_tabs(mode);
+            },
+            ('H', []) | ('f', []) => {
+                let y = next_param_or(1) as i32;
+                let x = next_param_or(1) as usize;
+                handler.goto(Line(y - 1), Column(x - 1));
+            },
+            ('h', intermediates) => {
+                for param in params_iter.map(|param| param[0]) {
+                    match Mode::from_primitive(intermediates.get(0), param) {
+                        Some(mode) => handler.set_mode(mode),
+                        None => unhandled!(),
+                    }
+                }
+            },
+            ('I', []) => handler.move_forward_tabs(next_param_or(1)),
+            ('J', []) => {
+                let mode = match next_param_or(0) {
+                    0 => ClearMode::Below,
+                    1 => ClearMode::Above,
+                    2 => ClearMode::All,
+                    3 => ClearMode::Saved,
+                    _ => {
+                        unhandled!();
+                        return;
+                    },
+                };
+
+                handler.clear_screen(mode);
+            },
+            ('K', []) => {
+                let mode = match next_param_or(0) {
+                    0 => LineClearMode::Right,
+                    1 => LineClearMode::Left,
+                    2 => LineClearMode::All,
+                    _ => {
+                        unhandled!();
+                        return;
+                    },
+                };
+
+                handler.clear_line(mode);
+            },
+            ('L', []) => handler.insert_blank_lines(next_param_or(1) as usize),
+            ('l', intermediates) => {
+                for param in params_iter.map(|param| param[0]) {
+                    match Mode::from_primitive(intermediates.get(0), param) {
+                        Some(mode) => handler.unset_mode(mode),
+                        None => unhandled!(),
+                    }
+                }
+            },
+            ('M', []) => handler.delete_lines(next_param_or(1) as usize),
+            ('m', []) => {
+                if params.is_empty() {
+                    handler.terminal_attribute(Attr::Reset);
+                } else {
+                    for attr in attrs_from_sgr_parameters(&mut params_iter) {
+                        match attr {
+                            Some(attr) => handler.terminal_attribute(attr),
+                            None => unhandled!(),
+                        }
+                    }
+                }
+            },
+            ('n', []) => handler.device_status(next_param_or(0) as usize),
+            ('P', []) => handler.delete_chars(next_param_or(1) as usize),
+            ('q', [b' ']) => {
+                // DECSCUSR (CSI Ps SP q) -- Set Cursor Style.
+                let cursor_style_id = next_param_or(0);
+                let shape = match cursor_style_id {
+                    0 => None,
+                    1 | 2 => Some(CursorShape::Block),
+                    3 | 4 => Some(CursorShape::Underline),
+                    5 | 6 => Some(CursorShape::Beam),
+                    _ => {
+                        unhandled!();
+                        return;
+                    },
+                };
+                let cursor_style =
+                    shape.map(|shape| CursorStyle { shape, blinking: cursor_style_id % 2 == 1 });
+
+                handler.set_cursor_style(cursor_style);
+            },
+            ('r', []) => {
+                let top = next_param_or(1) as usize;
+                let bottom =
+                    params_iter.next().map(|param| param[0] as usize).filter(|&param| param != 0);
+
+                handler.set_scrolling_region(top, bottom);
+            },
+            ('S', []) => handler.scroll_up(next_param_or(1) as usize),
+            ('s', []) => handler.save_cursor_position(),
+            ('T', []) => handler.scroll_down(next_param_or(1) as usize),
+            ('t', []) => match next_param_or(1) as usize {
+                14 => handler.text_area_size_pixels(),
+                18 => handler.text_area_size_chars(),
+                22 => handler.push_title(),
+                23 => handler.pop_title(),
+                _ => unhandled!(),
+            },
+            ('u', []) => handler.restore_cursor_position(),
+            ('X', []) => handler.erase_chars(Column(next_param_or(1) as usize)),
+            ('Z', []) => handler.move_backward_tabs(next_param_or(1)),
+            _ => unhandled!(),
+        }
+    }
+
+    #[inline]
+    fn esc_dispatch(&mut self, intermediates: &[u8], _ignore: bool, byte: u8) {
+        macro_rules! unhandled {
+            () => {{
+                debug!(
+                    "[unhandled] esc_dispatch ints={:?}, byte={:?} ({:02x})",
+                    intermediates, byte as char, byte
+                );
+            }};
+        }
+
+        macro_rules! configure_charset {
+            ($charset:path, $intermediates:expr) => {{
+                let index: CharsetIndex = match $intermediates {
+                    [b'('] => CharsetIndex::G0,
+                    [b')'] => CharsetIndex::G1,
+                    [b'*'] => CharsetIndex::G2,
+                    [b'+'] => CharsetIndex::G3,
+                    _ => {
+                        unhandled!();
+                        return;
+                    },
+                };
+                self.handler.configure_charset(index, $charset)
+            }};
+        }
+
+        match (byte, intermediates) {
+            (b'B', intermediates) => configure_charset!(StandardCharset::Ascii, intermediates),
+            (b'D', []) => self.handler.linefeed(),
+            (b'E', []) => {
+                self.handler.linefeed();
+                self.handler.carriage_return();
+            },
+            (b'H', []) => self.handler.set_horizontal_tabstop(),
+            (b'M', []) => self.handler.reverse_index(),
+            (b'Z', []) => self.handler.identify_terminal(None),
+            (b'c', []) => self.handler.reset_state(),
+            (b'0', intermediates) => {
+                configure_charset!(StandardCharset::SpecialCharacterAndLineDrawing, intermediates)
+            },
+            (b'7', []) => self.handler.save_cursor_position(),
+            (b'8', [b'#']) => self.handler.decaln(),
+            (b'8', []) => self.handler.restore_cursor_position(),
+            (b'=', []) => self.handler.set_keypad_application_mode(),
+            (b'>', []) => self.handler.unset_keypad_application_mode(),
+            // String terminator, do nothing (parser handles as string terminator).
+            (b'\\', []) => (),
+            _ => unhandled!(),
+        }
     }
 }
 
+#[inline]
+fn attrs_from_sgr_parameters(params: &mut ParamsIter<'_>) -> Vec<Option<Attr>> {
+    let mut attrs = Vec::with_capacity(params.size_hint().0);
+
+    while let Some(param) = params.next() {
+        let attr = match param {
+            [0] => Some(Attr::Reset),
+            [1] => Some(Attr::Bold),
+            [2] => Some(Attr::Dim),
+            [3] => Some(Attr::Italic),
+            [4, 0] => Some(Attr::CancelUnderline),
+            [4, 2] => Some(Attr::DoubleUnderline),
+            [4, ..] => Some(Attr::Underline),
+            [5] => Some(Attr::BlinkSlow),
+            [6] => Some(Attr::BlinkFast),
+            [7] => Some(Attr::Reverse),
+            [8] => Some(Attr::Hidden),
+            [9] => Some(Attr::Strike),
+            [21] => Some(Attr::CancelBold),
+            [22] => Some(Attr::CancelBoldDim),
+            [23] => Some(Attr::CancelItalic),
+            [24] => Some(Attr::CancelUnderline),
+            [25] => Some(Attr::CancelBlink),
+            [27] => Some(Attr::CancelReverse),
+            [28] => Some(Attr::CancelHidden),
+            [29] => Some(Attr::CancelStrike),
+            [30] => Some(Attr::Foreground(Color::Named(NamedColor::Black))),
+            [31] => Some(Attr::Foreground(Color::Named(NamedColor::Red))),
+            [32] => Some(Attr::Foreground(Color::Named(NamedColor::Green))),
+            [33] => Some(Attr::Foreground(Color::Named(NamedColor::Yellow))),
+            [34] => Some(Attr::Foreground(Color::Named(NamedColor::Blue))),
+            [35] => Some(Attr::Foreground(Color::Named(NamedColor::Magenta))),
+            [36] => Some(Attr::Foreground(Color::Named(NamedColor::Cyan))),
+            [37] => Some(Attr::Foreground(Color::Named(NamedColor::White))),
+            [38] => {
+                let mut iter = params.map(|param| param[0]);
+                parse_sgr_color(&mut iter).map(Attr::Foreground)
+            },
+            [38, params @ ..] => {
+                let rgb_start = if params.len() > 4 { 2 } else { 1 };
+                let rgb_iter = params[rgb_start..].iter().copied();
+                let mut iter = iter::once(params[0]).chain(rgb_iter);
+
+                parse_sgr_color(&mut iter).map(Attr::Foreground)
+            },
+            [39] => Some(Attr::Foreground(Color::Named(NamedColor::Foreground))),
+            [40] => Some(Attr::Background(Color::Named(NamedColor::Black))),
+            [41] => Some(Attr::Background(Color::Named(NamedColor::Red))),
+            [42] => Some(Attr::Background(Color::Named(NamedColor::Green))),
+            [43] => Some(Attr::Background(Color::Named(NamedColor::Yellow))),
+            [44] => Some(Attr::Background(Color::Named(NamedColor::Blue))),
+            [45] => Some(Attr::Background(Color::Named(NamedColor::Magenta))),
+            [46] => Some(Attr::Background(Color::Named(NamedColor::Cyan))),
+            [47] => Some(Attr::Background(Color::Named(NamedColor::White))),
+            [48] => {
+                let mut iter = params.map(|param| param[0]);
+                parse_sgr_color(&mut iter).map(Attr::Background)
+            },
+            [48, params @ ..] => {
+                let rgb_start = if params.len() > 4 { 2 } else { 1 };
+                let rgb_iter = params[rgb_start..].iter().copied();
+                let mut iter = iter::once(params[0]).chain(rgb_iter);
+
+                parse_sgr_color(&mut iter).map(Attr::Background)
+            },
+            [49] => Some(Attr::Background(Color::Named(NamedColor::Background))),
+            [90] => Some(Attr::Foreground(Color::Named(NamedColor::BrightBlack))),
+            [91] => Some(Attr::Foreground(Color::Named(NamedColor::BrightRed))),
+            [92] => Some(Attr::Foreground(Color::Named(NamedColor::BrightGreen))),
+            [93] => Some(Attr::Foreground(Color::Named(NamedColor::BrightYellow))),
+            [94] => Some(Attr::Foreground(Color::Named(NamedColor::BrightBlue))),
+            [95] => Some(Attr::Foreground(Color::Named(NamedColor::BrightMagenta))),
+            [96] => Some(Attr::Foreground(Color::Named(NamedColor::BrightCyan))),
+            [97] => Some(Attr::Foreground(Color::Named(NamedColor::BrightWhite))),
+            [100] => Some(Attr::Background(Color::Named(NamedColor::BrightBlack))),
+            [101] => Some(Attr::Background(Color::Named(NamedColor::BrightRed))),
+            [102] => Some(Attr::Background(Color::Named(NamedColor::BrightGreen))),
+            [103] => Some(Attr::Background(Color::Named(NamedColor::BrightYellow))),
+            [104] => Some(Attr::Background(Color::Named(NamedColor::BrightBlue))),
+            [105] => Some(Attr::Background(Color::Named(NamedColor::BrightMagenta))),
+            [106] => Some(Attr::Background(Color::Named(NamedColor::BrightCyan))),
+            [107] => Some(Attr::Background(Color::Named(NamedColor::BrightWhite))),
+            _ => None,
+        };
+        attrs.push(attr);
+    }
+
+    attrs
+}
+
+/// Parse a color specifier from list of attributes.
+fn parse_sgr_color(params: &mut dyn Iterator<Item = u16>) -> Option<Color> {
+    match params.next() {
+        Some(2) => Some(Color::Spec(Rgb {
+            r: u8::try_from(params.next()?).ok()?,
+            g: u8::try_from(params.next()?).ok()?,
+            b: u8::try_from(params.next()?).ok()?,
+        })),
+        Some(5) => Some(Color::Indexed(u8::try_from(params.next()?).ok()?)),
+        _ => None,
+    }
+}
+
+/// C0 set of 7-bit control characters (from ANSI X3.4-1977).
+#[allow(non_snake_case)]
+pub mod C0 {
+    /// Null filler, terminal should ignore this character.
+    pub const NUL: u8 = 0x00;
+    /// Start of Header.
+    pub const SOH: u8 = 0x01;
+    /// Start of Text, implied end of header.
+    pub const STX: u8 = 0x02;
+    /// End of Text, causes some terminal to respond with ACK or NAK.
+    pub const ETX: u8 = 0x03;
+    /// End of Transmission.
+    pub const EOT: u8 = 0x04;
+    /// Enquiry, causes terminal to send ANSWER-BACK ID.
+    pub const ENQ: u8 = 0x05;
+    /// Acknowledge, usually sent by terminal in response to ETX.
+    pub const ACK: u8 = 0x06;
+    /// Bell, triggers the bell, buzzer, or beeper on the terminal.
+    pub const BEL: u8 = 0x07;
+    /// Backspace, can be used to define overstruck characters.
+    pub const BS: u8 = 0x08;
+    /// Horizontal Tabulation, move to next predetermined position.
+    pub const HT: u8 = 0x09;
+    /// Linefeed, move to same position on next line (see also NL).
+    pub const LF: u8 = 0x0A;
+    /// Vertical Tabulation, move to next predetermined line.
+    pub const VT: u8 = 0x0B;
+    /// Form Feed, move to next form or page.
+    pub const FF: u8 = 0x0C;
+    /// Carriage Return, move to first character of current line.
+    pub const CR: u8 = 0x0D;
+    /// Shift Out, switch to G1 (other half of character set).
+    pub const SO: u8 = 0x0E;
+    /// Shift In, switch to G0 (normal half of character set).
+    pub const SI: u8 = 0x0F;
+    /// Data Link Escape, interpret next control character specially.
+    pub const DLE: u8 = 0x10;
+    /// (DC1) Terminal is allowed to resume transmitting.
+    pub const XON: u8 = 0x11;
+    /// Device Control 2, causes ASR-33 to activate paper-tape reader.
+    pub const DC2: u8 = 0x12;
+    /// (DC2) Terminal must pause and refrain from transmitting.
+    pub const XOFF: u8 = 0x13;
+    /// Device Control 4, causes ASR-33 to deactivate paper-tape reader.
+    pub const DC4: u8 = 0x14;
+    /// Negative Acknowledge, used sometimes with ETX and ACK.
+    pub const NAK: u8 = 0x15;
+    /// Synchronous Idle, used to maintain timing in Sync communication.
+    pub const SYN: u8 = 0x16;
+    /// End of Transmission block.
+    pub const ETB: u8 = 0x17;
+    /// Cancel (makes VT100 abort current escape sequence if any).
+    pub const CAN: u8 = 0x18;
+    /// End of Medium.
+    pub const EM: u8 = 0x19;
+    /// Substitute (VT100 uses this to display parity errors).
+    pub const SUB: u8 = 0x1A;
+    /// Prefix to an escape sequence.
+    pub const ESC: u8 = 0x1B;
+    /// File Separator.
+    pub const FS: u8 = 0x1C;
+    /// Group Separator.
+    pub const GS: u8 = 0x1D;
+    /// Record Separator (sent by VT132 in block-transfer mode).
+    pub const RS: u8 = 0x1E;
+    /// Unit Separator.
+    pub const US: u8 = 0x1F;
+    /// Delete, should be ignored by terminal.
+    pub const DEL: u8 = 0x7f;
+}
+
+// Tests for parsing escape sequences.
+//
+// Byte sequences used in these tests are recording of pty stdout.
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use std::mem;
+    use crate::term::color::Rgb;
 
-    use crate::ansi::{self, CharsetIndex, Handler, StandardCharset};
-    use crate::config::MockConfig;
-    use crate::grid::{Grid, Scroll};
-    use crate::index::{Column, Point, Side};
-    use crate::selection::{Selection, SelectionType};
-    use crate::term::cell::{Cell, Flags};
+    struct MockHandler {
+        index: CharsetIndex,
+        charset: StandardCharset,
+        attr: Option<Attr>,
+        identity_reported: bool,
+    }
 
-    #[test]
-    fn semantic_selection_works() {
-        let size = SizeInfo::new(5., 3., 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-        let mut grid: Grid<Cell> = Grid::new(3, 5, 0);
-        for i in 0..5 {
-            for j in 0..2 {
-                grid[Line(j)][Column(i)].c = 'a';
+    impl Handler for MockHandler {
+        fn terminal_attribute(&mut self, attr: Attr) {
+            self.attr = Some(attr);
+        }
+
+        fn configure_charset(&mut self, index: CharsetIndex, charset: StandardCharset) {
+            self.index = index;
+            self.charset = charset;
+        }
+
+        fn set_active_charset(&mut self, index: CharsetIndex) {
+            self.index = index;
+        }
+
+        fn identify_terminal(&mut self, _intermediate: Option<char>) {
+            self.identity_reported = true;
+        }
+
+        fn reset_state(&mut self) {
+            *self = Self::default();
+        }
+    }
+
+    impl Default for MockHandler {
+        fn default() -> MockHandler {
+            MockHandler {
+                index: CharsetIndex::G0,
+                charset: StandardCharset::Ascii,
+                attr: None,
+                identity_reported: false,
             }
         }
-        grid[Line(0)][Column(0)].c = '"';
-        grid[Line(0)][Column(3)].c = '"';
-        grid[Line(1)][Column(2)].c = '"';
-        grid[Line(0)][Column(4)].flags.insert(Flags::WRAPLINE);
+    }
 
-        let mut escape_chars = String::from("\"");
+    #[test]
+    fn parse_control_attribute() {
+        static BYTES: &[u8] = &[0x1b, b'[', b'1', b'm'];
 
-        mem::swap(&mut term.grid, &mut grid);
-        mem::swap(&mut term.semantic_escape_chars, &mut escape_chars);
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
 
-        {
-            term.selection = Some(Selection::new(
-                SelectionType::Semantic,
-                Point { line: Line(0), column: Column(1) },
-                Side::Left,
-            ));
-            assert_eq!(term.selection_to_string(), Some(String::from("aa")));
+        for byte in BYTES {
+            parser.advance(&mut handler, *byte);
         }
 
-        {
-            term.selection = Some(Selection::new(
-                SelectionType::Semantic,
-                Point { line: Line(0), column: Column(4) },
-                Side::Left,
-            ));
-            assert_eq!(term.selection_to_string(), Some(String::from("aaa")));
+        assert_eq!(handler.attr, Some(Attr::Bold));
+    }
+
+    #[test]
+    fn parse_terminal_identity_csi() {
+        let bytes: &[u8] = &[0x1b, b'[', b'1', b'c'];
+
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
+
+        for byte in bytes {
+            parser.advance(&mut handler, *byte);
         }
 
-        {
-            term.selection = Some(Selection::new(
-                SelectionType::Semantic,
-                Point { line: Line(1), column: Column(1) },
-                Side::Left,
-            ));
-            assert_eq!(term.selection_to_string(), Some(String::from("aaa")));
+        assert!(!handler.identity_reported);
+        handler.reset_state();
+
+        let bytes: &[u8] = &[0x1b, b'[', b'c'];
+
+        for byte in bytes {
+            parser.advance(&mut handler, *byte);
+        }
+
+        assert!(handler.identity_reported);
+        handler.reset_state();
+
+        let bytes: &[u8] = &[0x1b, b'[', b'0', b'c'];
+
+        for byte in bytes {
+            parser.advance(&mut handler, *byte);
+        }
+
+        assert!(handler.identity_reported);
+    }
+
+    #[test]
+    fn parse_terminal_identity_esc() {
+        let bytes: &[u8] = &[0x1b, b'Z'];
+
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
+
+        for byte in bytes {
+            parser.advance(&mut handler, *byte);
+        }
+
+        assert!(handler.identity_reported);
+        handler.reset_state();
+
+        let bytes: &[u8] = &[0x1b, b'#', b'Z'];
+
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
+
+        for byte in bytes {
+            parser.advance(&mut handler, *byte);
+        }
+
+        assert!(!handler.identity_reported);
+        handler.reset_state();
+    }
+
+    #[test]
+    fn parse_truecolor_attr() {
+        static BYTES: &[u8] = &[
+            0x1b, b'[', b'3', b'8', b';', b'2', b';', b'1', b'2', b'8', b';', b'6', b'6', b';',
+            b'2', b'5', b'5', b'm',
+        ];
+
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
+
+        for byte in BYTES {
+            parser.advance(&mut handler, *byte);
+        }
+
+        let spec = Rgb { r: 128, g: 66, b: 255 };
+
+        assert_eq!(handler.attr, Some(Attr::Foreground(Color::Spec(spec))));
+    }
+
+    /// No exactly a test; useful for debugging.
+    #[test]
+    fn parse_zsh_startup() {
+        static BYTES: &[u8] = &[
+            0x1b, b'[', b'1', b'm', 0x1b, b'[', b'7', b'm', b'%', 0x1b, b'[', b'2', b'7', b'm',
+            0x1b, b'[', b'1', b'm', 0x1b, b'[', b'0', b'm', b' ', b' ', b' ', b' ', b' ', b' ',
+            b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
+            b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
+            b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
+            b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
+            b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
+            b' ', b' ', b' ', b'\r', b' ', b'\r', b'\r', 0x1b, b'[', b'0', b'm', 0x1b, b'[', b'2',
+            b'7', b'm', 0x1b, b'[', b'2', b'4', b'm', 0x1b, b'[', b'J', b'j', b'w', b'i', b'l',
+            b'm', b'@', b'j', b'w', b'i', b'l', b'm', b'-', b'd', b'e', b's', b'k', b' ', 0x1b,
+            b'[', b'0', b'1', b';', b'3', b'2', b'm', 0xe2, 0x9e, 0x9c, b' ', 0x1b, b'[', b'0',
+            b'1', b';', b'3', b'2', b'm', b' ', 0x1b, b'[', b'3', b'6', b'm', b'~', b'/', b'c',
+            b'o', b'd', b'e',
+        ];
+
+        let mut handler = MockHandler::default();
+        let mut parser = Processor::new();
+
+        for byte in BYTES {
+            parser.advance(&mut handler, *byte);
         }
     }
 
     #[test]
-    fn line_selection_works() {
-        let size = SizeInfo::new(5., 1., 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-        let mut grid: Grid<Cell> = Grid::new(1, 5, 0);
-        for i in 0..5 {
-            grid[Line(0)][Column(i)].c = 'a';
-        }
-        grid[Line(0)][Column(0)].c = '"';
-        grid[Line(0)][Column(3)].c = '"';
+    fn parse_designate_g0_as_line_drawing() {
+        static BYTES: &[u8] = &[0x1b, b'(', b'0'];
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
 
-        mem::swap(&mut term.grid, &mut grid);
-
-        term.selection = Some(Selection::new(
-            SelectionType::Lines,
-            Point { line: Line(0), column: Column(3) },
-            Side::Left,
-        ));
-        assert_eq!(term.selection_to_string(), Some(String::from("\"aa\"a\n")));
-    }
-
-    #[test]
-    fn selecting_empty_line() {
-        let size = SizeInfo::new(3.0, 3.0, 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-        let mut grid: Grid<Cell> = Grid::new(3, 3, 0);
-        for l in 0..3 {
-            if l != 1 {
-                for c in 0..3 {
-                    grid[Line(l)][Column(c)].c = 'a';
-                }
-            }
+        for byte in BYTES {
+            parser.advance(&mut handler, *byte);
         }
 
-        mem::swap(&mut term.grid, &mut grid);
-
-        let mut selection = Selection::new(
-            SelectionType::Simple,
-            Point { line: Line(0), column: Column(0) },
-            Side::Left,
-        );
-        selection.update(Point { line: Line(2), column: Column(2) }, Side::Right);
-        term.selection = Some(selection);
-        assert_eq!(term.selection_to_string(), Some("aaa\n\naaa\n".into()));
-    }
-
-    /// Check that the grid can be serialized back and forth losslessly.
-    ///
-    /// This test is in the term module as opposed to the grid since we want to
-    /// test this property with a T=Cell.
-    #[test]
-    fn grid_serde() {
-        let grid: Grid<Cell> = Grid::new(24, 80, 0);
-        let serialized = serde_json::to_string(&grid).expect("ser");
-        let deserialized = serde_json::from_str::<Grid<Cell>>(&serialized).expect("de");
-
-        assert_eq!(deserialized, grid);
+        assert_eq!(handler.index, CharsetIndex::G0);
+        assert_eq!(handler.charset, StandardCharset::SpecialCharacterAndLineDrawing);
     }
 
     #[test]
-    fn input_line_drawing_character() {
-        let size = SizeInfo::new(21.0, 51.0, 3.0, 3.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-        let cursor = Point::new(Line(0), Column(0));
-        term.configure_charset(CharsetIndex::G0, StandardCharset::SpecialCharacterAndLineDrawing);
-        term.input('a');
+    fn parse_designate_g1_as_line_drawing_and_invoke() {
+        static BYTES: &[u8] = &[0x1b, b')', b'0', 0x0e];
+        let mut parser = Processor::new();
+        let mut handler = MockHandler::default();
 
-        assert_eq!(term.grid()[cursor].c, '▒');
-    }
-
-    #[test]
-    fn clear_saved_lines() {
-        let size = SizeInfo::new(21.0, 51.0, 3.0, 3.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-
-        // Add one line of scrollback.
-        term.grid.scroll_up(&(Line(0)..Line(1)), 1);
-
-        // Clear the history.
-        term.clear_screen(ansi::ClearMode::Saved);
-
-        // Make sure that scrolling does not change the grid.
-        let mut scrolled_grid = term.grid.clone();
-        scrolled_grid.scroll_display(Scroll::Top);
-
-        // Truncate grids for comparison.
-        scrolled_grid.truncate();
-        term.grid.truncate();
-
-        assert_eq!(term.grid, scrolled_grid);
-    }
-
-    #[test]
-    fn grow_lines_updates_active_cursor_pos() {
-        let mut size = SizeInfo::new(100.0, 10.0, 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-
-        // Create 10 lines of scrollback.
-        for _ in 0..19 {
-            term.newline();
+        for byte in &BYTES[..3] {
+            parser.advance(&mut handler, *byte);
         }
-        assert_eq!(term.history_size(), 10);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(9), Column(0)));
 
-        // Increase visible lines.
-        size.screen_lines = 30;
-        term.resize(size);
+        assert_eq!(handler.index, CharsetIndex::G1);
+        assert_eq!(handler.charset, StandardCharset::SpecialCharacterAndLineDrawing);
 
-        assert_eq!(term.history_size(), 0);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(19), Column(0)));
+        let mut handler = MockHandler::default();
+        parser.advance(&mut handler, BYTES[3]);
+
+        assert_eq!(handler.index, CharsetIndex::G1);
     }
 
     #[test]
-    fn grow_lines_updates_inactive_cursor_pos() {
-        let mut size = SizeInfo::new(100.0, 10.0, 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-
-        // Create 10 lines of scrollback.
-        for _ in 0..19 {
-            term.newline();
-        }
-        assert_eq!(term.history_size(), 10);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(9), Column(0)));
-
-        // Enter alt screen.
-        term.set_mode(ansi::Mode::SwapScreenAndSetRestoreCursor);
-
-        // Increase visible lines.
-        size.screen_lines = 30;
-        term.resize(size);
-
-        // Leave alt screen.
-        term.unset_mode(ansi::Mode::SwapScreenAndSetRestoreCursor);
-
-        assert_eq!(term.history_size(), 0);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(19), Column(0)));
+    fn parse_valid_rgb_colors() {
+        assert_eq!(xparse_color(b"rgb:f/e/d"), Some(Rgb { r: 0xff, g: 0xee, b: 0xdd }));
+        assert_eq!(xparse_color(b"rgb:11/aa/ff"), Some(Rgb { r: 0x11, g: 0xaa, b: 0xff }));
+        assert_eq!(xparse_color(b"rgb:f/ed1/cb23"), Some(Rgb { r: 0xff, g: 0xec, b: 0xca }));
+        assert_eq!(xparse_color(b"rgb:ffff/0/0"), Some(Rgb { r: 0xff, g: 0x0, b: 0x0 }));
     }
 
     #[test]
-    fn shrink_lines_updates_active_cursor_pos() {
-        let mut size = SizeInfo::new(100.0, 10.0, 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-
-        // Create 10 lines of scrollback.
-        for _ in 0..19 {
-            term.newline();
-        }
-        assert_eq!(term.history_size(), 10);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(9), Column(0)));
-
-        // Increase visible lines.
-        size.screen_lines = 5;
-        term.resize(size);
-
-        assert_eq!(term.history_size(), 15);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(4), Column(0)));
+    fn parse_valid_legacy_rgb_colors() {
+        assert_eq!(xparse_color(b"#1af"), Some(Rgb { r: 0x10, g: 0xa0, b: 0xf0 }));
+        assert_eq!(xparse_color(b"#11aaff"), Some(Rgb { r: 0x11, g: 0xaa, b: 0xff }));
+        assert_eq!(xparse_color(b"#110aa0ff0"), Some(Rgb { r: 0x11, g: 0xaa, b: 0xff }));
+        assert_eq!(xparse_color(b"#1100aa00ff00"), Some(Rgb { r: 0x11, g: 0xaa, b: 0xff }));
     }
 
     #[test]
-    fn shrink_lines_updates_inactive_cursor_pos() {
-        let mut size = SizeInfo::new(100.0, 10.0, 1.0, 1.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-
-        // Create 10 lines of scrollback.
-        for _ in 0..19 {
-            term.newline();
-        }
-        assert_eq!(term.history_size(), 10);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(9), Column(0)));
-
-        // Enter alt screen.
-        term.set_mode(ansi::Mode::SwapScreenAndSetRestoreCursor);
-
-        // Increase visible lines.
-        size.screen_lines = 5;
-        term.resize(size);
-
-        // Leave alt screen.
-        term.unset_mode(ansi::Mode::SwapScreenAndSetRestoreCursor);
-
-        assert_eq!(term.history_size(), 15);
-        assert_eq!(term.grid.cursor.point, Point::new(Line(4), Column(0)));
+    fn parse_invalid_rgb_colors() {
+        assert_eq!(xparse_color(b"rgb:0//"), None);
+        assert_eq!(xparse_color(b"rgb://///"), None);
     }
 
     #[test]
-    fn window_title() {
-        let size = SizeInfo::new(21.0, 51.0, 3.0, 3.0, 0.0, 0.0, false);
-        let mut term = Term::new(&MockConfig::default(), size, ());
-
-        // Title None by default.
-        assert_eq!(term.title, None);
-
-        // Title can be set.
-        term.set_title(Some("Test".into()));
-        assert_eq!(term.title, Some("Test".into()));
-
-        // Title can be pushed onto stack.
-        term.push_title();
-        term.set_title(Some("Next".into()));
-        assert_eq!(term.title, Some("Next".into()));
-        assert_eq!(term.title_stack.get(0).unwrap(), &Some("Test".into()));
-
-        // Title can be popped from stack and set as the window title.
-        term.pop_title();
-        assert_eq!(term.title, Some("Test".into()));
-        assert!(term.title_stack.is_empty());
-
-        // Title stack doesn't grow infinitely.
-        for _ in 0..4097 {
-            term.push_title();
-        }
-        assert_eq!(term.title_stack.len(), 4096);
-
-        // Title and title stack reset when terminal state is reset.
-        term.push_title();
-        term.reset_state();
-        assert_eq!(term.title, None);
-        assert!(term.title_stack.is_empty());
-
-        // Title stack pops back to default.
-        term.title = None;
-        term.push_title();
-        term.set_title(Some("Test".into()));
-        term.pop_title();
-        assert_eq!(term.title, None);
-
-        // Title can be reset to default.
-        term.title = Some("Test".into());
-        term.set_title(None);
-        assert_eq!(term.title, None);
+    fn parse_invalid_legacy_rgb_colors() {
+        assert_eq!(xparse_color(b"#"), None);
+        assert_eq!(xparse_color(b"#f"), None);
     }
 
     #[test]
-    fn parse_cargo_version() {
-        assert!(version_number(env!("CARGO_PKG_VERSION")) >= 10_01);
-        assert_eq!(version_number("0.0.1-dev"), 1);
-        assert_eq!(version_number("0.1.2-dev"), 1_02);
-        assert_eq!(version_number("1.2.3-dev"), 1_02_03);
-        assert_eq!(version_number("999.99.99"), 9_99_99_99);
+    fn parse_invalid_number() {
+        assert_eq!(parse_number(b"1abc"), None);
+    }
+
+    #[test]
+    fn parse_valid_number() {
+        assert_eq!(parse_number(b"123"), Some(123));
+    }
+
+    #[test]
+    fn parse_number_too_large() {
+        assert_eq!(parse_number(b"321"), None);
     }
 }

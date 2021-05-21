@@ -106,6 +106,8 @@ public class MatchExpressionTest {
                         "            }")
                 .matches("'c' => ClipboardType::Clipboard")
                 .matches("b'c' => ClipboardType::Clipboard")
+                .matches("42 => 'b'")
+                .matches("'a' => 'b'")
 
 
                 ;

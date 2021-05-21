@@ -28,10 +28,12 @@ public class LitteralsTest {
     @Test
     public void charLitterals() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL))
-                .matches("'foo'")
-                .matches("'foo''bar'")
-                .matches("'foo\"bar'")
-                .matches("'C:\\SonarSource\\foo.rs'");
+                .matches("'f'")
+                .matches("'\"'")
+                .notMatches("'\\'")
+                .notMatches("'''")
+                .notMatches("'a' => 'b'")
+                ;
     }
 
 

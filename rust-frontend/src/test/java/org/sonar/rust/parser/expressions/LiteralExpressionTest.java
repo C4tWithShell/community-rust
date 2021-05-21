@@ -30,7 +30,6 @@ public class LiteralExpressionTest {
     public void testLiteralExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.LITERAL_EXPRESSION))
                 .matches("'foo'")
-                .matches("'foo''bar'")
                 .matches("\"b\"")
                 .matches("\"52\"")
                 .matches("r\"foo\"")
