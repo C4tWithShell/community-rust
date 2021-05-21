@@ -73,6 +73,27 @@ public class StructExpressionTest {
                 .matches("TuplePoint { .. bar}")
                 .matches("TuplePoint { age :35,.. structbase}")
                 .matches("Point {x: 10, y: 20}")
+                .matches("Self {\n" +
+                        "            current_mouse_cursor,\n" +
+                        "            mouse_visible: true,\n" +
+                        "            windowed_context,\n" +
+                        "            #[cfg(not(any(target_os = \"macos\", windows)))]\n" +
+                        "            should_draw: Arc::new(AtomicBool::new(true)),\n" +
+                        "            #[cfg(all(feature = \"wayland\", not(any(target_os = \"macos\", windows))))]\n" +
+                        "            wayland_surface,\n" +
+                        "            dpr,\n" +
+                        "        }")
+                .matches("Self {\n" +
+                        "            current_mouse_cursor,\n" +
+                        "            mouse_visible: true,\n" +
+                        "            windowed_context,\n" +
+                        "            #[cfg(not(any(target_os = \"macos\", windows)))]\n" +
+                        "            should_draw: Arc::new(AtomicBool::new(true)),\n" +
+                        "            #[cfg(all(feature = \"wayland\", not(any(target_os = \"macos\", windows))))]\n" +
+                        "            wayland_surface,\n" +
+                        "            dpr,\n" +
+                        "        }")
+
         ;
     }
 
@@ -141,6 +162,16 @@ public class StructExpressionTest {
                         "frames: js_error.frames.clone(),\n" +
                         "stack: None,\n" +
                         "}")
+                .matches("Self {\n" +
+                        "            current_mouse_cursor,\n" +
+                        "            mouse_visible: true,\n" +
+                        "            windowed_context,\n" +
+                        "            #[cfg(not(any(target_os = \"macos\", windows)))]\n" +
+                        "            should_draw: Arc::new(AtomicBool::new(true)),\n" +
+                        "            #[cfg(all(feature = \"wayland\", not(any(target_os = \"macos\", windows))))]\n" +
+                        "            wayland_surface,\n" +
+                        "            dpr,\n" +
+                        "        }")
 
 
 

@@ -57,6 +57,8 @@ public class MatchExpressionTest {
                 .matches("1 | _ if { i.set(i.get() + 1); false }")
                 .matches("(a,_)")
                 .matches("(a,b)")
+                .matches("'c'")
+                .matches("b'c'")
 
         ;
     }
@@ -102,6 +104,11 @@ public class MatchExpressionTest {
                 .matches("(&http::Method::GET, \"/json\") => {\n" +
                         "              handle_json_request(inspector_map.clone())\n" +
                         "            }")
+                .matches("'c' => ClipboardType::Clipboard")
+                .matches("b'c' => ClipboardType::Clipboard")
+                .matches("42 => 'b'")
+                .matches("'a' => 'b'")
+
 
                 ;
 
