@@ -1812,8 +1812,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(STRUCT_EXPR_FIELD).is(b.firstOf(
 
-                b.sequence(b.firstOf(IDENTIFIER, TUPLE_INDEX), SPC, RustPunctuator.COLON, SPC, EXPRESSION),
-                IDENTIFIER
+                b.sequence(b.optional(OUTER_ATTRIBUTE, SPC), b.firstOf(IDENTIFIER, TUPLE_INDEX), SPC, RustPunctuator.COLON, SPC, EXPRESSION),
+                b.sequence(b.optional(OUTER_ATTRIBUTE, SPC),IDENTIFIER)
 
         ));
 
