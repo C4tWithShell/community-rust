@@ -218,6 +218,7 @@ public class PatternTest {
     @Test
     public void testSlicePattern(){
         assertThat(RustGrammar.create().build().rule(RustGrammar.SLICE_PATTERN))
+                .matches("[]")
                 .matches("[42]")
                 .matches("[42,foo, bar]")
                 .matches("[42,foo, bar,]")

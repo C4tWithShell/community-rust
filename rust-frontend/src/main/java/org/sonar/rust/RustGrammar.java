@@ -1045,8 +1045,8 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
         b.rule(GROUPED_PATTERN).is("(", SPC, PATTERN, SPC, ")");
-        b.rule(SLICE_PATTERN).is("[", SPC, PATTERN, SPC,
-                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, PATTERN)), b.optional(RustPunctuator.COMMA, SPC), SPC, "]"
+
+        b.rule(SLICE_PATTERN).is("[", b.optional(seq(b,PATTERN, RustPunctuator.COMMA )), "]"
         );
         b.rule(PATH_PATTERN).is(b.firstOf(PATH_IN_EXPRESSION, QUALIFIED_PATH_IN_EXPRESSION));
     }
