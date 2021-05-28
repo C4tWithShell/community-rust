@@ -1,494 +1,272 @@
-/*! Sciter video rendering.
+#![allow(unused_variables)]
+#![allow(unused_must_use)]
 
-Host application can render custom video streams using `<video>` infrastructure.
+extern crate sciter;
 
-*/
-
-
-use capi::sctypes::{UINT, LPCBYTE, LPCSTR};
-use capi::scom::som_passport_t;
-
-/// A type alias for Sciter functions that return `bool`.
-pub type Result<T> = ::std::result::Result<T, ()>;
+use sciter::{Value, Element, HELEMENT};
+use sciter::dom::event::*;
 
 
-/// Color space for video frame.
-#[repr(C)]
-pub enum COLOR_SPACE {
-    Unknown,
 
-    Yv12,
-    /// I420
-    Iyuv,
-    Nv12,
-    Yuy2,
+#[derive(Default)]
+struct DocumentHandler;
 
-    Rgb24,
-    Rgb555,
-    Rgb565,
-    Rgb32,
-}
+impl sciter::EventHandler for DocumentHandler {
 
-macro_rules! cppcall {
-	// self.func()
-	($this:ident . $func:ident ()) => {
-		unsafe {
-			((*$this.vtbl).$func)($this as *mut _)
-		}
-	};
-  (const $this:ident . $func:ident ()) => {
-    unsafe {
-      ((*$this.vtbl).$func)($this as *const _)
+    fn attached(&mut self, _root: sciter::HELEMENT) {
+        println!("attached");
     }
-  };
 
-	// self.func(args...)
-	($this:ident . $func:ident ( $( $arg:expr ),* )) => {
-		unsafe {
-			((*$this.vtbl).$func)($this as *mut _, $($arg),* )
-		}
-	};
-  (const $this:ident . $func:ident ( $( $arg:expr ),* )) => {
-    unsafe {
-      ((*$this.vtbl).$func)($this as *const _, $($arg),* )
+    fn detached(&mut self, root: sciter::HELEMENT) {
+        let root = Element::from(root);
+        println!("detaching from {}", root);
     }
-  };
-}
 
-macro_rules! cppresult {
-	( $( $t:tt )* ) => {
-		if cppcall!( $($t)* ) {
-			Ok(())
-		} else {
-			Err(())
-		}
-	}
-}
+    fn document_complete(&mut self, root: sciter::HELEMENT, source: sciter::HELEMENT) {
 
-#[doc(hidden)]
-pub trait NamedInterface {
-    fn get_interface_name() -> &'static [u8];
+        println!("document is loaded.");
 
-    fn query_interface(from: &mut iasset) -> Option<* mut iasset> {
-        let mut out: *mut iasset = ::std::ptr::null_mut();
-        from.get_interface(Self::get_interface_name().as_ptr() as LPCSTR, &mut out as *mut _);
-        if !out.is_null() {
-            Some(out)
-        } else {
-            None
+        let root = Element::from(root);
+        assert_eq!(root.get_tag(), "html");
+        println!("root {:?}", root);
+
+        let head = root.first_child().expect("empty <html>?");
+        assert_eq!(head.get_tag(), "head");
+        assert_eq!(head.index(), 0);
+        println!("head {:?}", head);
+
+        let body = head.next_sibling().expect("only <head>?");
+        assert_eq!(body.get_tag(), "body");
+        assert_eq!(body.index(), 1);
+        println!("body {:?}", body);
+
+        assert_eq!(body.first_sibling().expect("must be head"), head);
+        assert_eq!(body.last_sibling().expect("must be body"), body);
+
+        println!("for loop in children");
+        for e in root.children() {
+            println!("child {:?}", e);
         }
-    }
-}
-
-impl NamedInterface for video_source {
-    fn get_interface_name() -> &'static [u8] {
-        b"source.video.sciter.com\0"
-    }
-}
-
-impl NamedInterface for video_destination {
-    fn get_interface_name() -> &'static [u8] {
-        b"destination.video.sciter.com\0"
-    }
-}
-
-impl NamedInterface for fragmented_video_destination {
-    fn get_interface_name() -> &'static [u8] {
-        b"fragmented.destination.video.sciter.com\0"
-    }
-}
-
-
-/// COM `IUnknown` alike thing.
-#[repr(C)]
-struct iasset_vtbl {
-    /// Increments the reference count for an interface on an object.
-    pub add_ref: extern "C" fn(this: *mut iasset) -> i32,
-
-    /// Decrements the reference count for an interface on an object.
-    pub release: extern "C" fn(this: *mut iasset) -> i32,
-
-    /// Retrieves pointers to the supported interfaces on an object.
-    pub get_interface: extern "C" fn(this: *mut iasset, name: LPCSTR, out: *mut *mut iasset) -> bool,
-
-    /// Retrieves a pointer to the passport declaration of an object.
-    pub get_passport: extern "C" fn(thing: *mut iasset) -> *const som_passport_t,
-}
-
-/// COM `IUnknown` alike thing.
-#[repr(C)]
-pub struct iasset {
-    vtbl: *const iasset_vtbl,
-}
-
-impl iasset {
-    /// Increments the reference count for an interface on an object.
-    fn add_ref(&mut self) -> i32 {
-        cppcall!(self.add_ref())
-    }
-
-    /// Decrements the reference count for an interface on an object.
-    fn release(&mut self) -> i32 {
-        cppcall!(self.release())
-    }
-
-    /// Retrieves pointers to the supported interfaces on an object.
-    pub fn get_interface(&mut self, name: LPCSTR, out: *mut *mut iasset) -> bool {
-        cppcall!(self.get_interface(name, out))
-    }
-}
-
-
-/// Video source interface, used by engine to query video state.
-#[repr(C)]
-struct video_source_vtbl {
-    // <-- iasset:
-    /// Increments the reference count for an interface on an object.
-    pub add_ref: extern "C" fn(this: *mut video_source) -> i32,
-
-    /// Decrements the reference count for an interface on an object.
-    pub release: extern "C" fn(this: *mut video_source) -> i32,
-
-    /// Retrieves pointers to the supported interfaces on an object.
-    pub get_interface: extern "C" fn(this: *mut video_source, name: *const u8, out: *mut *mut iasset) -> bool,
-
-    /// Retrieves a pointer to the passport declaration of an object.
-    pub get_passport: extern "C" fn(thing: *mut iasset) -> *const som_passport_t,
-    // -->
-
-    // <-- video_source
-    pub play: extern "C" fn(this: *mut video_source) -> bool,
-    pub pause: extern "C" fn(this: *mut video_source) -> bool,
-    pub stop: extern "C" fn(this: *mut video_source) -> bool,
-
-    pub get_is_ended: extern "C" fn(this: *const video_source, is_end: *mut bool) -> bool,
-
-    pub get_position: extern "C" fn(this: *const video_source, seconds: *mut f64) -> bool,
-    pub set_position: extern "C" fn(this: *mut video_source, seconds: f64) -> bool,
-
-    pub get_duration: extern "C" fn(this: *const video_source, seconds: *mut f64) -> bool,
-
-    pub get_volume: extern "C" fn(this: *const video_source, volume: *mut f64) -> bool,
-    pub set_volume: extern "C" fn(this: *mut video_source, volume: f64) -> bool,
-
-    pub get_balance: extern "C" fn(this: *const video_source, balance: *mut f64) -> bool,
-    pub set_balance: extern "C" fn(this: *mut video_source, balance: f64) -> bool,
-    // -->
-}
-
-/// Video source interface to query video state.
-#[repr(C)]
-pub struct video_source {
-    vtbl: *const video_source_vtbl,
-}
-
-impl video_source {
-    /// Starts playback from the current position.
-    pub fn play(&mut self) -> Result<()> {
-        cppresult!(self.play())
-    }
-
-    /// Pauses playback.
-    pub fn pause(&mut self) -> Result<()> {
-        cppresult!(self.pause())
-    }
-
-    /// Stops playback.
-    pub fn stop(&mut self) -> Result<()> {
-        cppresult!(self.stop())
-    }
-
-    /// Whether playback has reached the end of the video.
-    pub fn is_ended(&self) -> Result<bool> {
-        let mut r = false;
-        cppresult!(const self.get_is_ended(&mut r as *mut _)).map(|_| r)
-    }
-
-    /// Reports the current playback position.
-    pub fn get_position(&self) -> Result<f64> {
-        let mut r = 0f64;
-        cppresult!(const self.get_position(&mut r as *mut _)).map(|_| r)
-    }
-
-    /// Sets the current playback position.
-    pub fn set_position(&mut self, seconds: f64) -> Result<()> {
-        cppresult!(self.set_position(seconds))
-    }
-
-    /// Reports the duration of the video in seconds.
-    ///
-    /// If duration is not available, returns `0`.
-    pub fn get_duration(&self) -> Result<f64> {
-        let mut r = 0f64;
-        cppresult!(const self.get_duration(&mut r as *mut _)).map(|_| r)
-    }
-
-    /// Reports the current volume level of an audio track of the movie.
-    ///
-    /// `1.0` corresponds to `0db`, `0.0` (mute) to `-100db`.
-    pub fn get_volume(&self) -> Result<f64> {
-        let mut r = 0f64;
-        cppresult!(const self.get_volume(&mut r as *mut _)).map(|_| r)
-    }
-
-    /// Sets the current volume level between `0.0` (mute) and `1.0` (`0db`).
-    pub fn set_volume(&mut self, volume: f64) -> Result<()> {
-        cppresult!(self.set_volume(volume))
-    }
-
-    /// Reports the current stereo balance.
-    pub fn get_balance(&self) -> Result<f64> {
-        let mut r = 0f64;
-        cppresult!(const self.get_balance(&mut r as *mut _)).map(|_| r)
-    }
-
-    /// Sets a new value of the stereo balance.
-    pub fn set_balance(&mut self, balance: f64) -> Result<()> {
-        cppresult!(self.set_balance(balance))
-    }
-}
-
-
-/// Video destination interface, represents video rendering site.
-#[repr(C)]
-struct video_destination_vtbl {
-    // <-- iasset:
-    /// Increments the reference count for an interface on an object.
-    pub add_ref: extern "C" fn(this: *mut video_destination) -> i32,
-
-    /// Decrements the reference count for an interface on an object.
-    pub release: extern "C" fn(this: *mut video_destination) -> i32,
-
-    /// Retrieves pointers to the supported interfaces on an object.
-    pub get_interface: extern "C" fn(this: *mut video_destination, name: *const u8, out: *mut *mut iasset) -> bool,
-
-    /// Retrieves a pointer to the passport declaration of an object.
-    pub get_passport: extern "C" fn(thing: *mut iasset) -> *const som_passport_t,
-    // -->
-
-    // <-- video_destination
-    /// Whether this instance of `video_renderer` is attached to a DOM element and is capable of playing.
-    pub is_alive: extern "C" fn(this: *const video_destination) -> bool,
-
-    /// Start streaming/rendering.
-    pub start_streaming: extern "C" fn(this: *mut video_destination, frame_width: i32, frame_height: i32, color_space: COLOR_SPACE, src: *const video_source) -> bool,
-
-    /// Stop streaming.
-    pub stop_streaming: extern "C" fn(this: *mut video_destination) -> bool,
-
-    /// Render the next frame.
-    pub render_frame: extern "C" fn(this: *mut video_destination, data: LPCBYTE, size: UINT) -> bool,
-    // -->
-}
-
-/// Video destination interface, represents video rendering site.
-#[repr(C)]
-pub struct video_destination {
-    vtbl: *const video_destination_vtbl,
-}
-
-impl video_destination {
-
-    /// Whether this instance of `video_renderer` is attached to a DOM element and is capable of playing.
-    pub fn is_alive(&self) -> bool {
-        cppcall!(const self.is_alive())
-    }
-
-    /// Start streaming/rendering.
-    ///
-    /// * `frame_size` - the width and the height of the video frame.
-    /// * `color_space` - the color space format of the video frame.
-    /// * `src` - an optional custom [`video_source`](struct.video_source.html) interface implementation, provided by the application.
-    pub fn start_streaming(&mut self, frame_size: (i32, i32), color_space: COLOR_SPACE, src: Option<&video_source>) -> Result<()> {
-        let src_ptr = if let Some(ptr) = src { ptr as *const _ } else { ::std::ptr::null() };
-        cppresult!(self.start_streaming(frame_size.0, frame_size.1, color_space, src_ptr))
-    }
-
-    /// Stop streaming.
-    pub fn stop_streaming(&mut self) -> Result<()> {
-        cppresult!(self.stop_streaming())
-    }
-
-    /// Render the next frame.
-    pub fn render_frame(&mut self, data: &[u8]) -> Result<()> {
-        cppresult!(self.render_frame(data.as_ptr(), data.len() as UINT))
-    }
-}
-
-
-/// Fragmented destination interface, used for partial updates.
-#[repr(C)]
-struct fragmented_video_destination_vtbl {
-    // <-- iasset:
-    /// Increments the reference count for an interface on an object.
-    pub add_ref: extern "C" fn(this: *mut fragmented_video_destination) -> i32,
-
-    /// Decrements the reference count for an interface on an object.
-    pub release: extern "C" fn(this: *mut fragmented_video_destination) -> i32,
-
-    /// Retrieves pointers to the supported interfaces on an object.
-    pub get_interface: extern "C" fn(this: *mut fragmented_video_destination, name: *const u8, out: *mut *mut iasset) -> bool,
-
-    /// Retrieves a pointer to the passport declaration of an object.
-    pub get_passport: extern "C" fn(thing: *mut iasset) -> *const som_passport_t,
-    // -->
-
-    // <-- video_destination
-    /// Whether this instance of `video_renderer` is attached to a DOM element and is capable of playing.
-    pub is_alive: extern "C" fn(this: *const fragmented_video_destination) -> bool,
-
-    /// Start streaming/rendering.
-    pub start_streaming: extern "C" fn(this: *mut fragmented_video_destination, frame_width: i32, frame_height: i32, color_space: COLOR_SPACE, src: *const video_source) -> bool,
-
-    /// Stop streaming.
-    pub stop_streaming: extern "C" fn(this: *mut fragmented_video_destination) -> bool,
-
-    /// Render the next frame.
-    pub render_frame: extern "C" fn(this: *mut fragmented_video_destination, data: LPCBYTE, size: UINT) -> bool,
-    // -->
-
-    // <-- fragmented_video_destination
-    /// Render the specified part of the current frame.
-    pub render_frame_part: extern "C" fn(this: *mut fragmented_video_destination, data: LPCBYTE, size: UINT, x: i32, y: i32, width: i32, height: i32) -> bool,
-    // -->
-}
-
-/// Fragmented destination interface, used for partial updates.
-#[repr(C)]
-pub struct fragmented_video_destination {
-    vtbl: *const fragmented_video_destination_vtbl,
-}
-
-impl fragmented_video_destination {
-
-    /// Whether this instance of `video_renderer` is attached to a DOM element and is capable of playing.
-    pub fn is_alive(&self) -> bool {
-        cppcall!(const self.is_alive())
-    }
-
-    /// Start streaming/rendering.
-    ///
-    /// * `frame_size` - the width and the height of the video frame.
-    /// * `color_space` - the color space format of the video frame.
-    /// * `src` - an optional custom [`video_source`](struct.video_source.html) interface implementation, provided by the application.
-    pub fn start_streaming(&mut self, frame_size: (i32, i32), color_space: COLOR_SPACE, src: Option<&video_source>) -> Result<()> {
-        let src_ptr = if let Some(ptr) = src { ptr as *const _ } else { ::std::ptr::null() };
-        cppresult!(self.start_streaming(frame_size.0, frame_size.1, color_space, src_ptr))
-    }
-
-    /// Stop streaming.
-    pub fn stop_streaming(&mut self) -> Result<()> {
-        cppresult!(self.stop_streaming())
-    }
-
-    /// Render the next frame.
-    pub fn render_frame(&mut self, data: &[u8]) -> Result<()> {
-        cppresult!(self.render_frame(data.as_ptr(), data.len() as UINT))
-    }
-
-    /// Render the specified part of the current frame.
-    ///
-    /// * `update_point` - X and Y coordinates of the update portion.
-    /// * `update_size` - width and height of the update portion.
-    pub fn render_frame_part(&mut self, data: &[u8], update_point: (i32, i32), update_size: (i32, i32)) -> Result<()> {
-        cppresult!(self.render_frame_part(data.as_ptr(), data.len() as UINT, update_point.0, update_point.1, update_size.0, update_size.1))
-    }
-}
-
-/// A managed `iasset` pointer.
-pub struct AssetPtr<T> {
-    ptr: *mut T,
-}
-
-/// It's okay to transfer video pointers between threads.
-unsafe impl<T> Send for AssetPtr<T> {}
-
-use ::std::ops::{Deref, DerefMut};
-
-impl Deref for AssetPtr<video_destination> {
-    type Target = video_destination;
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*self.ptr }
-    }
-}
-
-impl DerefMut for AssetPtr<video_destination> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { &mut *self.ptr }
-    }
-}
-
-impl Deref for AssetPtr<fragmented_video_destination> {
-    type Target = fragmented_video_destination;
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*self.ptr }
-    }
-}
-
-impl DerefMut for AssetPtr<fragmented_video_destination> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { &mut *self.ptr }
-    }
-}
-
-/// Decrements the reference count of a managed pointer.
-impl<T> Drop for AssetPtr<T> {
-    fn drop(&mut self) {
-        self.get().release();
-    }
-}
-
-impl<T> AssetPtr<T> {
-    /// Attach to an existing `iasset` pointer without reference increment.
-    fn attach(lp: *mut T) -> Self {
-        assert!(!lp.is_null());
-        Self {
-            ptr: lp
+
+        println!("for loop in ref");
+        for e in &root {
+            println!("child {:?}", e);
+        }
+
+        if let Ok(Some(h1)) = body.find_first("body > h1") {
+            println!("h1 {:?}", h1);
+
+            let h1_parent = h1.parent().expect("come on!");
+            assert_eq!(h1_parent, body);
+
+            let text = h1.get_text();
+            assert_eq!(text, "Herman Melville - Moby-Dick");
+
+            let html = h1.get_html(true);
+            assert_eq!(html.as_slice(), br"<h1>Herman Melville - Moby-Dick</h1>".as_ref());
+
+            let value = h1.get_value();
+            assert!(value.is_string());
+            assert_eq!(value.as_string().unwrap(), text);
+        }
+
+        if let Some(mut h1) = body.first_child() {
+            println!("changing h1 attributes");
+            h1.set_style_attribute("color", "green");
+            h1.set_style_attribute("outline", "1px solid orange");
+            h1.set_attribute("title", "yellow!");
+        }
+
+        {
+            let all: Vec<Element> = body.find_all("div > p").unwrap().expect("must be at least one 'div > p'");
+            assert!(!all.is_empty());
+            assert_eq!(all.len(), 1);
+            all.len();
+        }
+
+        if let Ok(Some(mut body)) = root.find_first("html > body") {
+            let mut div = Element::with_parent("div", &mut body).unwrap();
+            div.set_attribute("id", "requests");
+            div.set_style_attribute("outline", "1px solid orange");
+            div.set_style_attribute("margin", "10dip 0");
+            div.set_style_attribute("padding", "4dip");
+
+            let e = Element::with_text("label", "Requests:").unwrap();
+            div.append(&e).unwrap();
+
+            let d = Element::with_text("div", "data").unwrap();
+            div.append(&d).unwrap();
+
+            let c = Element::with_text("div", "footer").unwrap();
+            div.append(&c).unwrap();
+
+            d.request_html("https://sciter.com/test/text.txt", None).unwrap();
+
+            // d.send_get_request("https://sciter.com/test/text.txt", None).expect("can't send an http request");
+            // d.send_get_request("http://httpbin.org/html", None).expect("can't send an http request");
+            // d.send_get_request("http://httpbin.org/get?one=1&two=2", None).expect("can't send an http request");
+
+            // let params = [("one", "1"), ("two", "2")];
+            // let method = sciter::request::REQUEST_TYPE::AsyncGet;
+            // let data_type = sciter::request::RESOURCE_TYPE::HTML;
+            // d.send_request("http://httpbin.org/html", Some(&params), Some(method), Some(data_type)).expect("can't send an http request");
+        }
+
+        if let Ok(Some(mut body)) = root.find_first("html > body") {
+
+            println!("creating some elments");
+
+            // DOM manipulation.
+            // After creating the new Element, we can set only attributes for it until we'll attach it to the DOM.
+            //
+            let mut div = Element::with_parent("div", &mut body).unwrap();
+            div.set_style_attribute("outline", "1px solid orange");
+            div.set_style_attribute("width", "max-content");
+            div.set_style_attribute("padding", "5dip");
+
+            let mut lb = Element::with_text("label", "Output: ").unwrap();
+            div.append(&lb).expect("wtf?");	// push as reference, we can access this `lb` still.
+
+            let mut date = Element::with_type("input", "date").unwrap();
+            date.set_attribute("id", "mydate");
+            date.set_attribute("value", "now");
+
+            lb.append(&date).expect("wtf?");
+
+            date.set_style_attribute("width", "100px");
+            date.set_style_attribute("outline", "1px dotted gray");
+            date.set_style_attribute("margin", "10px");
+
+
+            lb.set_attribute("accesskey", "o");
+            lb.set_style_attribute("color", "lightblue");
+            lb.set_style_attribute("vertical-align", "middle");
+
+            let mut progress = Element::create("progress").unwrap();
+            progress.set_attribute("max", "100");
+            progress.set_attribute("id", "id1");
+            progress.set_attribute("title", "Click to start timer.");
+
+            div.append(&progress).expect("wtf?");
+
+            // after attaching Element to DOM, we can set its styles, text, html or value.
+            progress.set_value(Value::from(42));
+            progress.set_style_attribute("behavior", "progress clickable");
+
+            // attach a new handler to this element;
+            // since timers are not sinking/bubbling, we need to attach
+            // a dedicated handler to that element directly.
+            let handler = ProgressHandler::default();
+            progress.attach_handler(handler).expect("can't attach?");
+
+            let mut e = Element::with_text("span", " <-- check tooltip").unwrap();
+            div.append(&e);
+
+            e.set_style_attribute("font-style", "italic");
         }
     }
 
-    /// Attach to an `iasset` pointer and increment its reference count.
-    pub fn adopt(lp: *mut T) -> Self {
-        let mut me = Self::attach(lp);
-        me.get().add_ref();
-        me
+}
+
+#[derive(Default)]
+struct ProgressHandler {
+    progress: Option<Element>,
+    start_timer: bool,
+}
+
+impl sciter::EventHandler for ProgressHandler {
+
+    fn get_subscription(&mut self) -> Option<EVENT_GROUPS> {
+        Some(default_events() | EVENT_GROUPS::HANDLE_TIMER)
     }
 
-    /// Get as an `iasset` type.
-    fn get(&mut self) -> &mut iasset {
-        let ptr = self.ptr as *mut iasset;
-        unsafe { &mut *ptr }
+    fn attached(&mut self, root: sciter::HELEMENT) {
+        let root = Element::from(root);
+        println!("attached an element event handler to {}", root);
+        if root.test("progress") {
+            self.progress = Some(root.clone());
+            self.start_timer = false;
+        }
+    }
+
+    fn detached(&mut self, root: sciter::HELEMENT) {
+        let root = Element::from(root);
+        println!("detaching from {}", root);
+    }
+
+    fn on_event(&mut self, root: HELEMENT, source: HELEMENT, target: HELEMENT, code: BEHAVIOR_EVENTS, phase: PHASE_MASK, reason: EventReason) -> bool {
+        if phase != PHASE_MASK::BUBBLING {
+            return false;
+        }
+
+        match code {
+            BEHAVIOR_EVENTS::BUTTON_CLICK => {
+
+                let source = Element::from(source);
+                let mut target = Element::from(target);
+
+                println!("button click on target {}", target);
+
+                if self.progress.is_some() && *self.progress.as_ref().unwrap() == target {
+                    self.start_timer = !self.start_timer;
+
+                    if self.start_timer {
+                        println!("starting timer");
+                        target.set_value(Value::from(0));
+                        target.start_timer(1000, 1).ok();
+                    } else {
+                        println!("stopping timer");
+                        target.stop_timer(1);
+
+                        let cur = target.get_value();
+                        target.set_attribute("title", &format!("Current value is {}. Click to start the timer again.", cur));
+                    }
+                }
+
+                true
+            }
+            _ => false
+        }
+    }
+
+    fn on_timer(&mut self, root: HELEMENT, timer_id: u64) -> bool {
+        println!("timer {} tick on {}", timer_id, Element::from(root));
+        if timer_id == 1 && self.progress.is_some() {
+            let e = self.progress.as_mut().unwrap();
+            let max_attr = e.get_attribute("max").unwrap();
+            let max: f64 = max_attr.parse().unwrap();
+
+            let v = e.get_value();
+            let next = v.to_float().unwrap() + 5.0;
+
+            if next > max {
+                println!("that's enough, finish.");
+                self.start_timer = false;
+                e.stop_timer(1);
+            }
+
+            e.set_value(Value::from(next));
+            e.set_attribute("title", &format!("Current value is {}. Click to stop the timer if need.", next));
+
+            return true;
+        }
+        false
     }
 }
 
+fn main() {
+    let mut frame = sciter::WindowBuilder::main_window()
+        .with_size((750, 950))
+        .debug()
+        .create();
 
-/// Attach to an `iasset` pointer.
-impl<T> From<*mut T> for AssetPtr<T> {
-    /// Attach to a pointer and increment its reference count.
-    fn from(lp: *mut T) -> Self {
-        AssetPtr::adopt(lp)
-    }
-}
+    println!("attaching an event handler for the whole window");
+    frame.event_handler(DocumentHandler::default());
+    frame.set_title("DOM sample");
 
+    println!("loading the page...");
+    frame.load_file("http://httpbin.org/html");
 
-/// Attempt to construct `Self` via a conversion.
-impl<T: NamedInterface> AssetPtr<T> {
-
-    /// Retrieve a supported interface of the managed pointer.
-    ///
-    /// Example:
-    ///
-    /// ```rust,no_run
-    /// # use sciter::video::{AssetPtr, iasset, video_source};
-    /// # let external_ptr: *mut iasset = ::std::ptr::null_mut();
-    /// let mut site = AssetPtr::adopt(external_ptr);
-    /// let source = AssetPtr::<video_source>::try_from(&mut site);
-    /// assert!(source.is_ok());
-    /// ```
-    pub fn try_from<U>(other: &mut AssetPtr<U>) -> Result<Self> {
-        let me = T::query_interface(other.get());
-        me.map(|p| AssetPtr::adopt(p as *mut T)).ok_or(())
-    }
+    println!("running the app");
+    frame.run_app();
 }

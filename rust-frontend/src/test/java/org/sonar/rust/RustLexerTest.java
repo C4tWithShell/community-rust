@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let missing_key = GlyphKey { character: '\\0', ..glyph_key };";
+        String sexpr = "assert_eq!(html.as_slice(), br\"<h1>Herman Melville - Moby-Dick</h1>\".as_ref());";
 
 
 

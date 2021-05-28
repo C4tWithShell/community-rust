@@ -2123,7 +2123,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(RAW_BYTE_STRING_CONTENT).is(
                 b.firstOf(
-                        b.regexp("^\"[\\x00-\\x7F]*\""),
+                        b.regexp("(?=\"+)((.|\\n)+?\"+)"),
+                        b.regexp("(#\"(.|\\n)+?\\\"#)"),
                         b.sequence("#", RAW_BYTE_STRING_CONTENT, "#")
                 ));
 

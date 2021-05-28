@@ -235,6 +235,8 @@ public class LitteralsTest {
                 .matches("br#\"\"foo\"\"#")
                 .matches("br\"R\"")
                 .matches("br\"\\x52\"")
+                .matches("br\"<h1>Herman Melville - Moby-Dick</h1>\"")
+                .notMatches("br\"<h1>Herman Melville - Moby-Dick</h1>\"other\"")
 
         ;
     }
