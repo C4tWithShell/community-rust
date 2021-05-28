@@ -688,7 +688,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/items/constant-items.html */
     private static void constantsItem(LexerlessGrammarBuilder b) {
         b.rule(CONSTANT_ITEM).is(
-                RustKeyword.KW_CONST, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),
+                RustKeyword.KW_CONST, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),SPC,
                 RustPunctuator.COLON, SPC, TYPE,
                 SPC, RustPunctuator.EQ, SPC, EXPRESSION, RustPunctuator.SEMI
         );
