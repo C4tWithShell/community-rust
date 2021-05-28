@@ -35,6 +35,7 @@ public class FunctionTest {
                 .matches("const unsafe")
                 .matches("async unsafe")
                 .matches("async")
+                .matches("extern \"C\"")
 
         ;
 
@@ -48,6 +49,7 @@ public class FunctionTest {
                 .matches("r\"foo\"")
                 .matches("\"abc\"")
                 .matches("r#\"foo\"#")
+                .matches("\"C\"")
         ;
 
     }

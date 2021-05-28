@@ -127,8 +127,6 @@ public enum RustGrammar implements GrammarRuleKey {
     GENERIC_ARGS,
     GENERIC_ARGS_BINDING,
     GENERIC_ARGS_CONST,
-    //GENERIC_ARGS_LIFETIMES,
-    //GENERIC_ARGS_TYPES,
     GENERIC_PARAMS,
     GENERIC_PARAM,
     GROUPED_EXPRESSION,
@@ -1062,11 +1060,11 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/types/function-pointer.html */
     private static void functionpointer(LexerlessGrammarBuilder b) {
         b.rule(BARE_FUNCTION_TYPE).is(
-                b.optional(FOR_LIFETIMES), FUNCTION_QUALIFIERS, RustKeyword.KW_FN,
-                "(", b.optional(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC), ")",
+                b.optional(FOR_LIFETIMES), FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN,
+                "(", SPC, b.optional(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC),SPC,  ")",SPC,
                 b.optional(BARE_FUNCTION_RETURN_TYPE)
         );
-        b.rule(BARE_FUNCTION_RETURN_TYPE).is("->", TYPE_NO_BOUNDS);
+        b.rule(BARE_FUNCTION_RETURN_TYPE).is(RustPunctuator.RARROW, SPC, TYPE_NO_BOUNDS);
         b.rule(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC).is(b.firstOf(
                 MAYBE_NAMED_FUNCTION_PARAMETERS, MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC
         ));
@@ -1075,11 +1073,11 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.optional(b.sequence(
                         b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON
-                )), TYPE
+                )), SPC, TYPE
         );
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(
                 b.zeroOrMore(b.sequence(MAYBE_NAMED_PARAM, SPC, RustPunctuator.COMMA, SPC)),
-                MAYBE_NAMED_PARAM, RustPunctuator.COMMA, SPC, b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOTDOT
+                MAYBE_NAMED_PARAM, SPC, RustPunctuator.COMMA, SPC, b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOTDOT
         );
 
 
@@ -1863,8 +1861,11 @@ public enum RustGrammar implements GrammarRuleKey {
 
     /* https://doc.rust-lang.org/reference/types.html#type-expressions */
     public static void type(LexerlessGrammarBuilder b) {
-        b.rule(TYPE).is(b.firstOf(IMPL_TRAIT_TYPE, TRAIT_OBJECT_TYPE, TYPE_NO_BOUNDS));
-        b.rule(TYPE_NO_BOUNDS).is(b.firstOf(
+        b.rule(TYPE).is(b.firstOf(
+                IMPL_TRAIT_TYPE
+                ,BARE_FUNCTION_TYPE
+                ,TRAIT_OBJECT_TYPE,
+
                 PARENTHESIZED_TYPE,
                 IMPL_TRAIT_TYPE_ONE_BOUND,
                 TRAIT_OBJECT_TYPE_ONE_BOUND,
@@ -1877,7 +1878,27 @@ public enum RustGrammar implements GrammarRuleKey {
                 SLICE_TYPE,
                 INFERRED_TYPE,
                 QUALIFIED_PATH_IN_TYPE,
+
+                MACRO_INVOCATION
+
+
+
+        ));
+        b.rule(TYPE_NO_BOUNDS).is(b.firstOf(
                 BARE_FUNCTION_TYPE,
+                PARENTHESIZED_TYPE,
+                IMPL_TRAIT_TYPE_ONE_BOUND,
+                TRAIT_OBJECT_TYPE_ONE_BOUND,
+                TYPE_PATH,
+                TUPLE_TYPE,
+                NEVER_TYPE,
+                RAW_POINTER_TYPE,
+                REFERENCE_TYPE,
+                ARRAY_TYPE,
+                SLICE_TYPE,
+                INFERRED_TYPE,
+                QUALIFIED_PATH_IN_TYPE,
+
                 MACRO_INVOCATION
         ));
         b.rule(PARENTHESIZED_TYPE).is("(", TYPE, ")");

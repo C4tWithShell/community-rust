@@ -69,6 +69,16 @@ public class TypeTest {
                 .matches("dyn ( for <'a> abc::def )")
                 .matches("dyn (? for <'a> abc::def)")
                 .matches("dyn Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
+                .matches("dyn Future<Input = Result<CachedModule, (ModuleSpecifier, AnyError)>>")
+
+        ;
+    }
+
+    @Test
+    public void testBareFunctionType() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.BARE_FUNCTION_TYPE))
+                .matches("extern \"C\" fn(this: *mut iasset) -> i32")
+
 
         ;
     }
@@ -81,6 +91,8 @@ public class TypeTest {
                 .matches("Circle")
                 .notMatches("Circle{")
                 .matches("[u8]")
+                .matches("extern \"C\" fn(this: *mut iasset) -> i32")
+
 
 
         ;
@@ -137,6 +149,7 @@ public class TypeTest {
 
 
 
+
         ;
     }
 
@@ -146,6 +159,7 @@ public class TypeTest {
     @Test
     public void testType() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE))
+                .matches("extern \"C\" fn(this: *mut iasset) -> i32")
                 .matches("i32")
                 .matches("(i32, u8)")
                 .matches("Circle")
@@ -162,10 +176,13 @@ public class TypeTest {
                 .matches("Result<T,(U,V)>")
                 .matches("Result<T, (U, V)>")
                 .matches("Result<CachedModule, (ModuleSpecifier, AnyError)>")
+                .matches("dyn Future<Input = Result<CachedModule, (ModuleSpecifier, AnyError)>>")
                 .matches("dyn Future<Output = Result<CachedModule, (ModuleSpecifier, AnyError)>>\n" +
                         "    + 'static\n" +
                         "    + Send")
                 .matches("impl FnOnce()")
+
+
 
         ;
     }
