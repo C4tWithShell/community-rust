@@ -906,7 +906,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.sequence("$", IDENTIFIER, SPC, RustPunctuator.COLON, SPC, MACRO_FRAG_SPEC),
 
                 b.sequence("$", SPC, "(", SPC, b.oneOrMore(MACRO_MATCH, SPC), ")"
-                        , b.optional(RustPunctuator.COMMA) // MacroRepSep
+                        , b.optional(MACRO_REP_SEP) // MacroRepSep
                         , b.firstOf("+", "*", "?")),
                 TOKEN_MACRO,
                 MACRO_MATCHER
@@ -918,7 +918,51 @@ public enum RustGrammar implements GrammarRuleKey {
                 "block", "expr", "ident", "item", "lifetime", "literal"
                 , "meta", "path", "pat", "stmt", "tt", "ty", "vis"
         ));
-        b.rule(MACRO_REP_SEP).is(TOKEN); //except $ and delimiters
+        b.rule(MACRO_REP_SEP).is(b.firstOf(LITERALS, IDENTIFIER_OR_KEYWORD,
+                LIFETIMES,
+                RustPunctuator.MINUS,
+                RustPunctuator.SLASH,
+                RustPunctuator.PERCENT,
+                RustPunctuator.CARET,
+                RustPunctuator.NOT,
+                RustPunctuator.AND,
+                RustPunctuator.OR,
+                RustPunctuator.ANDAND,
+                RustPunctuator.OROR,
+                RustPunctuator.SHL,
+                RustPunctuator.SHR,
+                RustPunctuator.PLUSEQ,
+                RustPunctuator.MINUSEQ,
+                RustPunctuator.STAREQ,
+                RustPunctuator.SLASHEQ,
+                RustPunctuator.PERCENTEQ,
+                RustPunctuator.CARETEQ,
+                RustPunctuator.ANDEQ,
+                RustPunctuator.OREQ,
+                RustPunctuator.SHLEQ,
+                RustPunctuator.SHREQ,
+                RustPunctuator.EQ,
+                RustPunctuator.EQEQ,
+                RustPunctuator.NE,
+                RustPunctuator.GT,
+                RustPunctuator.LT,
+                RustPunctuator.GE,
+                RustPunctuator.LE,
+                RustPunctuator.AT,
+                RustPunctuator.UNDERSCORE,
+                RustPunctuator.DOT,
+                RustPunctuator.DOTDOT,
+                RustPunctuator.DOTDOTDOT,
+                RustPunctuator.DOTDOTEQ,
+                RustPunctuator.COMMA,
+                RustPunctuator.SEMI,
+                RustPunctuator.PATHSEP,
+                RustPunctuator.COLON,
+                RustPunctuator.RARROW,
+                RustPunctuator.FATARROW,
+                RustPunctuator.POUND,
+                RustPunctuator.DOLLAR
+                )); //   Token except delimiters and repetition operators
         b.rule(MACRO_REP_OP).is(b.firstOf(RustPunctuator.STAR, RustPunctuator.PLUS, RustPunctuator.QUESTION));
         b.rule(MACRO_TRANSCRIBER).is(DELIM_TOKEN_TREE);
 
