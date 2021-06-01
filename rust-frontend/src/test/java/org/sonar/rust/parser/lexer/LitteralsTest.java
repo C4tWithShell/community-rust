@@ -235,6 +235,8 @@ public class LitteralsTest {
                 .matches("br#\"\"foo\"\"#")
                 .matches("br\"R\"")
                 .matches("br\"\\x52\"")
+                .matches("br\"<h1>Herman Melville - Moby-Dick</h1>\"")
+                .notMatches("br\"<h1>Herman Melville - Moby-Dick</h1>\"other\"")
 
         ;
     }
@@ -359,7 +361,9 @@ public class LitteralsTest {
     public void testBoolean() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL))
                 .matches("true")
-                .matches("false");
+                .matches("false")
+                .notMatches("true_lies")
+                ;
     }
 
 

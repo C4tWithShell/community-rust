@@ -63,6 +63,7 @@ public class EnumerationTest {
     @Test
     public void testEnumeration() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.ENUMERATION))
+                .matches("enum Empty {}")
                 .matches("enum Animal {\n" +
                         "    Dog,\n" +
                         "    Cat,\n" +
