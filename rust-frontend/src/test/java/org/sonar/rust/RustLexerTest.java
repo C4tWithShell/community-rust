@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "assert_eq!(html.as_slice(), br\"<h1>Herman Melville - Moby-Dick</h1>\".as_ref());";
+        String sexpr = "let prior = false_prior;";
 
 
 

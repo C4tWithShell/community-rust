@@ -59,6 +59,7 @@ public class MatchExpressionTest {
                 .matches("(a,b)")
                 .matches("'c'")
                 .matches("b'c'")
+                .matches("Err(true_prior)")
 
         ;
     }
@@ -108,6 +109,9 @@ public class MatchExpressionTest {
                 .matches("b'c' => ClipboardType::Clipboard")
                 .matches("42 => 'b'")
                 .matches("'a' => 'b'")
+                .matches("Err(true_prior) => {\n" +
+                        "                    prior = true_prior;\n" +
+                        "                }")
 
 
                 ;

@@ -361,7 +361,9 @@ public class LitteralsTest {
     public void testBoolean() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL))
                 .matches("true")
-                .matches("false");
+                .matches("false")
+                .notMatches("true_lies")
+                ;
     }
 
 

@@ -976,7 +976,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 TUPLE_STRUCT_PATTERN,
                 STRUCT_PATTERN,
                 MACRO_INVOCATION,
-                b.sequence(LITERAL_PATTERN, b.nextNot(RustPunctuator.DOTDOT)),
+
 
 
                 //unambigous PATH_PATTERN,
@@ -989,8 +989,19 @@ public enum RustGrammar implements GrammarRuleKey {
                                         , b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS))),
                                 b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)))
                         , QUALIFIED_PATH_IN_EXPRESSION),
-                IDENTIFIER_PATTERN,
 
+                BYTE_LITERAL,
+                RAW_STRING_LITERAL,
+                BYTE_STRING_LITERAL,
+                RAW_BYTE_STRING_LITERAL,
+                IDENTIFIER_PATTERN,
+                BOOLEAN_LITERAL,
+                CHAR_LITERAL,
+
+                STRING_LITERAL,
+
+                b.sequence(b.optional("-"), INTEGER_LITERAL,  b.nextNot(RustPunctuator.DOTDOT)),
+                b.sequence(b.optional("-"), FLOAT_LITERAL),
 
                 WILDCARD_PATTERN,
                 REST_PATTERN,
@@ -2117,7 +2128,7 @@ public enum RustGrammar implements GrammarRuleKey {
         bytes(b);
         integerliteral(b);
         floatliteral(b);
-        b.rule(BOOLEAN_LITERAL).is(b.token(RustTokenType.BOOLEAN_LITERAL, b.firstOf("true", "false")));
+        b.rule(BOOLEAN_LITERAL).is(b.token(RustTokenType.BOOLEAN_LITERAL, b.sequence(b.firstOf("true", "false"), b.nextNot(IDENTIFIER))));
 
     }
 
