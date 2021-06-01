@@ -44,6 +44,9 @@ public class PatternTest {
                 .matches("e @ 1..=5")
                 .matches("f @ 'a'..='z'")
                 .matches("None")
+                .matches("true_prior")
+                .notMatches("b'c'")
+
 
         ;
 
@@ -182,6 +185,10 @@ public class PatternTest {
                 .matches("\"bacon\",42")
                 .matches("\"bacon\", foo")
                 .matches("\"bacon\" , foo")
+                .matches("OK(_)")
+                .matches("Err(tru_prior)")
+                .matches("Err(true)")
+                .matches("Err(true_prior)")
 
         ;
 
@@ -200,6 +207,7 @@ public class PatternTest {
                 .matches("( field_1, )")
 
 
+
         ;
 
     }
@@ -209,6 +217,7 @@ public class PatternTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GROUPED_PATTERN))
                 .matches("(42)")
                 .matches("( foo )")
+
 
 
         ;
@@ -227,6 +236,7 @@ public class PatternTest {
 
 
 
+
         ;
 
     }
@@ -237,6 +247,7 @@ public class PatternTest {
                 .matches("Vec::<u8>::with_capacity")
                 .matches("<S as T1>::f")
                 .matches("Token::BackQuote")
+
 
 
 
@@ -306,6 +317,8 @@ public class PatternTest {
                 .matches("('8', '#')")
                 .matches("([b'#'], b'8')")
                 .matches("(b'8', [b'#'])")
+                .matches("OK(_)")
+                //.matches("Err(true_prior)")
 
 
 

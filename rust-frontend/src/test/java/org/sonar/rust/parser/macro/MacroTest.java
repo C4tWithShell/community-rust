@@ -156,6 +156,7 @@ public class MacroTest {
                 .matches("($l:tt)")
                 .matches("{ $($key:expr => $value:expr)+ }")
                 .matches("{ $($key:expr => $value:expr),+ }")
+                .matches("($($f:ident $(< $($generic:ty),* > )? )::+($($arg:ty),*): Send & Sync)")
                 ;
     }
 

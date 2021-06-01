@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let missing_key = GlyphKey { character: '\\0', ..glyph_key };";
+        String sexpr = "let prior = false_prior;";
 
 
 

@@ -126,6 +126,7 @@ public class LifeTimeTest {
                 .matches("(? for <'a> abc::def)")
                 .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError>")
 
+
         ;
 
     }
@@ -170,6 +171,7 @@ public class LifeTimeTest {
                 .matches("(? for <'a> abc::def)+'a+abc::def")
                 .matches("ValueOrVector")
                 .matches("Fn(&mut OpState, u32, &mut [ZeroCopyBuf]) -> Result<R, AnyError> + 'static")
+
         ;
 
     }
