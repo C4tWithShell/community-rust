@@ -31,6 +31,7 @@ import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.rust.RustVisitorContext;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustTokenType;
+import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 import org.sonarsource.analyzer.commons.TokenLocation;
 
@@ -44,9 +45,9 @@ public class RustTokensVisitor{
 
         private final Set<String> keywords = new HashSet<>(Arrays.asList(RustKeyword.keywordValues()));
         private final SensorContext context;
-        private final ParserAdapter lexer;
+        private final ParserAdapter<LexerlessGrammar> lexer;
 
-        public RustTokensVisitor(SensorContext context, ParserAdapter lexer) {
+        public RustTokensVisitor(SensorContext context, ParserAdapter<LexerlessGrammar> lexer) {
             this.context = context;
             this.lexer = lexer;
         }

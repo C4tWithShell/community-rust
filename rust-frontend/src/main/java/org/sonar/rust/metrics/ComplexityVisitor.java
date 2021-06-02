@@ -33,7 +33,7 @@ public class ComplexityVisitor extends RustVisitor {
 
     private static boolean isSomethingComplex(AstNode node) {
         //placeholder for ideas may have ideas later
-        return false;
+        return node.getChildren().size() > 42;
     }
 
     public int complexity() {

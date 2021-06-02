@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -21,7 +21,6 @@ package org.sonar.rust.metrics;
 
 import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.Grammar;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustVisitor;
 import org.sonar.sslr.parser.LexerlessGrammar;
@@ -35,7 +34,7 @@ public class LinesOfCodeVisitor extends RustVisitor {
     private final ParserAdapter<LexerlessGrammar> lexer;
     private final Set<Integer> linesOfCode = new HashSet<>();
 
-    public LinesOfCodeVisitor(ParserAdapter lexer) {
+    public LinesOfCodeVisitor(ParserAdapter<LexerlessGrammar> lexer) {
         this.lexer = lexer;
     }
 

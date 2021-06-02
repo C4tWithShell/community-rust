@@ -51,6 +51,8 @@ import org.sonar.rust.RustVisitorContext;
 import org.sonar.rust.metrics.MetricsVisitor;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 
@@ -95,7 +97,7 @@ public class RustSensor implements Sensor {
                 fileSystem.predicates().hasLanguage(RustLanguage.KEY),
                 fileSystem.predicates().hasType(InputFile.Type.MAIN));
 
-        RustParserConfiguration parserConfiguration = new RustPluginConfiguration(context.config()).getParserConfiguration(fileSystem.encoding());
+        RustParserConfiguration parserConfiguration = new RustPluginConfiguration().getParserConfiguration(fileSystem.encoding());
         Parser<Grammar> parser = RustParser.create(parserConfiguration);
         MetricsVisitor metricsVisitor = new MetricsVisitor(parserConfiguration);
         RustTokensVisitor tokensVisitor = new RustTokensVisitor(context, RustLexer.create(parserConfiguration));
@@ -118,12 +120,13 @@ public class RustSensor implements Sensor {
             Parser<Grammar> parser,
             Collection<RustCheck> checks) {
 
-        File file = inputFile.file();
+        //File file = inputFile.file();
+
         SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
         RustVisitorContext visitorContext;
-        LOG.debug("Rust parsing " +  file.getPath());
+        LOG.debug("Rust parsing " +  inputFile.filename());
         try {
-            AstNode tree = parser.parse(file);
+            AstNode tree = parser.parse(inputFile.contents());
             visitorContext = new RustVisitorContext(rustFile, tree);
 
             saveMetrics(sensorContext, inputFile, visitorContext, metricsVisitor);
@@ -132,6 +135,10 @@ public class RustSensor implements Sensor {
         } catch (RecognitionException e) {
             visitorContext = new RustVisitorContext(rustFile, e);
             logParseError(sensorContext, inputFile, e);
+        } catch (IOException e) {
+            RecognitionException re = new RecognitionException(0, e.getMessage());
+            visitorContext = new RustVisitorContext(rustFile, re);
+            logParseError(sensorContext, inputFile, re);
         }
 
         for (RustCheck check : checks) {
@@ -176,6 +183,7 @@ public class RustSensor implements Sensor {
 
     private void saveIssues(SensorContext context, InputFile inputFile, RustCheck check, List<Issue> issues) {
         RuleKey ruleKey = checks.ruleKey(check);
+        if (ruleKey == null) return;
         for (Issue rustIssue : issues) {
             NewIssue issue = context.newIssue();
             NewIssueLocation location = issue.newLocation()

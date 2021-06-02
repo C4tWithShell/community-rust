@@ -79,7 +79,7 @@ public class ClippySensorTest{
         assertThat(externalIssues).hasSize(2);
 
         ExternalIssue first = externalIssues.get(0);
-        assertThat(first.ruleKey().toString()).isEqualTo(CLIPPY_AEC);
+        assertThat(first.ruleKey()).hasToString(CLIPPY_AEC);
         assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
         assertThat(first.severity()).isEqualTo(Severity.MAJOR);
         IssueLocation firstPrimaryLoc = first.primaryLocation();
@@ -93,7 +93,7 @@ public class ClippySensorTest{
         assertThat(firstTextRange.end().line()).isEqualTo(9);
 
         ExternalIssue second = externalIssues.get(1);
-        assertThat(second.ruleKey().toString()).isEqualTo(CLIPPY_AEC);
+        assertThat(second.ruleKey()).hasToString(CLIPPY_AEC);
         assertThat(second.type()).isEqualTo(RuleType.CODE_SMELL);
         assertThat(second.severity()).isEqualTo(Severity.MAJOR);
         IssueLocation secondPrimaryLoc = second.primaryLocation();
@@ -130,7 +130,7 @@ public class ClippySensorTest{
 
         ExternalIssue first = externalIssues.get(0);
         assertThat(first.primaryLocation().inputComponent().key()).isEqualTo(CLIPPY_FILE);
-        assertThat(first.ruleKey().toString()).isEqualTo(CLIPPY_AEC);
+        assertThat(first.ruleKey()).hasToString(CLIPPY_AEC);
         assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
         assertThat(first.severity()).isEqualTo(Severity.MAJOR);
         assertThat(first.primaryLocation().message()).isEqualTo("A message");
