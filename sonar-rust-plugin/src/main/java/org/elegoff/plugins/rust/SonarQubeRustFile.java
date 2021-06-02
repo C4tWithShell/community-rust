@@ -38,12 +38,12 @@ public class SonarQubeRustFile implements RustFile {
 
     @Override
     public String name() {
-        return inputFile.file().getName();
+        return inputFile.filename();
     }
 
     @Override
     public URI uri() {
-        return inputFile.file().toURI();
+        return inputFile.uri();
     }
 
     private InputFile inputFile() {
