@@ -176,6 +176,7 @@ public class RustSensor implements Sensor {
 
     private void saveIssues(SensorContext context, InputFile inputFile, RustCheck check, List<Issue> issues) {
         RuleKey ruleKey = checks.ruleKey(check);
+        if (ruleKey == null) return;
         for (Issue rustIssue : issues) {
             NewIssue issue = context.newIssue();
             NewIssueLocation location = issue.newLocation()
