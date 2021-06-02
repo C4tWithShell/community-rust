@@ -19,7 +19,6 @@
  */
 package org.elegoff.plugins.rust;
 
-import org.sonar.api.config.Configuration;
 import org.sonar.rust.RustParserConfiguration;
 
 import java.nio.charset.Charset;
