@@ -26,6 +26,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.rust.RustFile;
 
 import java.io.FileNotFoundException;
+import java.net.URI;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -41,8 +42,12 @@ public class SonarQubeRustFileTest {
     @Test
     public void knowFile() throws Exception {
         when(inputFile.contents()).thenReturn("Success");
+        when(inputFile.filename()).thenReturn("myfile");
+        when(inputFile.uri()).thenReturn(new URI("uri"));
         RustFile rustFile = SonarQubeRustFile.create(inputFile);
         assertThat(rustFile.content()).isEqualTo("Success");
+        assertThat(rustFile.name()).isEqualTo("myfile");
+        assertThat(rustFile.uri()).isEqualTo(new URI("uri"));
     }
 
     @Test
