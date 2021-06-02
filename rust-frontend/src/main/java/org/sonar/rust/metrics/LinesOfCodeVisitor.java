@@ -21,7 +21,6 @@ package org.sonar.rust.metrics;
 
 import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.Grammar;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustVisitor;
 import org.sonar.sslr.parser.LexerlessGrammar;
