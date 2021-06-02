@@ -50,12 +50,12 @@ public enum RustLexer implements GrammarRuleKey {
         return b;
     }
 
-    public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf) {
+    public static ParserAdapter create(RustParserConfiguration conf) {
         return new ParserAdapter(conf.getCharset(), create().build());
     }
 
 
-    public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf, GrammarRuleKey root) {
+    public static ParserAdapter create(RustParserConfiguration conf, GrammarRuleKey root) {
         return new ParserAdapter(conf.getCharset(), create(root).build());
     }
 
