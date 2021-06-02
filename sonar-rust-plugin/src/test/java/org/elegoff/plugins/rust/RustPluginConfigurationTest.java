@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mock;
 public class RustPluginConfigurationTest {
     @Test
     public void getParserConfigurationCharset() {
-        RustPluginConfiguration pluginConf = new RustPluginConfiguration(getDefaultSettings().asConfig());
+        RustPluginConfiguration pluginConf = new RustPluginConfiguration();
 
         Charset charset = mock(Charset.class);
         assertThat(pluginConf.getParserConfiguration(charset).getCharset()).isEqualTo(charset);

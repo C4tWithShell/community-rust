@@ -26,11 +26,7 @@ import java.nio.charset.Charset;
 
 
 public class RustPluginConfiguration {
-    private final Configuration configuration;
 
-    public RustPluginConfiguration(Configuration configuration) {
-        this.configuration = configuration;
-    }
 
 
     RustParserConfiguration getParserConfiguration(Charset charset) {
