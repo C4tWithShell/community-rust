@@ -50,9 +50,7 @@ import org.sonar.rust.RustParserConfiguration;
 import org.sonar.rust.RustVisitorContext;
 import org.sonar.rust.metrics.MetricsVisitor;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 
@@ -119,8 +117,6 @@ public class RustSensor implements Sensor {
             RustTokensVisitor tokensVisitor,
             Parser<Grammar> parser,
             Collection<RustCheck> checks) {
-
-        //File file = inputFile.file();
 
         SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
         RustVisitorContext visitorContext;

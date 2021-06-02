@@ -19,10 +19,7 @@
  */
 package org.elegoff.plugins.rust;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import org.elegoff.plugins.rust.rules.RustRulesDefinition;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.rust.clippy.ClippySensor;
