@@ -22,7 +22,6 @@ package org.sonar.rust;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
-import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
 public enum RustLexer implements GrammarRuleKey {
