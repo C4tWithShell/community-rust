@@ -95,7 +95,7 @@ public class RustSensor implements Sensor {
                 fileSystem.predicates().hasLanguage(RustLanguage.KEY),
                 fileSystem.predicates().hasType(InputFile.Type.MAIN));
 
-        RustParserConfiguration parserConfiguration = new RustPluginConfiguration(context.config()).getParserConfiguration(fileSystem.encoding());
+        RustParserConfiguration parserConfiguration = new RustPluginConfiguration().getParserConfiguration(fileSystem.encoding());
         Parser<Grammar> parser = RustParser.create(parserConfiguration);
         MetricsVisitor metricsVisitor = new MetricsVisitor(parserConfiguration);
         RustTokensVisitor tokensVisitor = new RustTokensVisitor(context, RustLexer.create(parserConfiguration));
