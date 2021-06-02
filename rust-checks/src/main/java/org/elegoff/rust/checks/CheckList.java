@@ -25,8 +25,7 @@ import java.util.*;
 public class CheckList {
     public static final String REPOSITORY_KEY = "rust";
 
-    private CheckList() {
-    }
+    private CheckList() { }
 
     public static List<Class<? extends RustCheck>> getRustChecks() {
         //empty array so far, until a first rule is defined
