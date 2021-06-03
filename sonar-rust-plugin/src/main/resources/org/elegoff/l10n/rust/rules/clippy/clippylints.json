@@ -975,6 +975,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_saturating_arithmetic"
   },
   {
+    "key": "clippy::manual_str_repeat",
+    "name": "Checks for manual implementations of `str::repeat`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_str_repeat"
+  },
+  {
     "key": "clippy::manual_strip",
     "name": "Suggests using `strip_{prefix,suffix}` over `str::{starts,ends}_with` and slicing using\nthe pattern'",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_strip"
@@ -1520,11 +1525,6 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ptr_offset_with_cast"
   },
   {
-    "key": "clippy::pub_enum_variant_names",
-    "name": "Detects public enumeration variants that are\nprefixed or suffixed by the same characters.",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#pub_enum_variant_names"
-  },
-  {
     "key": "clippy::question_mark",
     "name": "Checks for expressions that could be replaced by the question mark operator.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#question_mark"
@@ -1610,6 +1610,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#redundant_static_lifetimes"
   },
   {
+    "key": "clippy::ref_binding_to_reference",
+    "name": "Checks for `ref` bindings which create a reference to a reference.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_binding_to_reference"
+  },
+  {
     "key": "clippy::ref_in_deref",
     "name": "Checks for references in expressions that use\nauto dereference.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_in_deref"
@@ -1671,7 +1676,7 @@
   },
   {
     "key": "clippy::semicolon_if_nothing_returned",
-    "name": "Looks for blocks of expressions and fires if the last expression returns `()`\nbut is not followed by",
+    "name": "Looks for blocks of expressions and fires if the last expression returns\n`()` but is not followed by",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#semicolon_if_nothing_returned"
   },
   {
@@ -1833,6 +1838,11 @@
     "key": "clippy::suspicious_operation_groupings",
     "name": "Checks for unlikely usages of binary operators that are almost\ncertainly typos and/or copy/paste err",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_operation_groupings"
+  },
+  {
+    "key": "clippy::suspicious_splitn",
+    "name": "Checks for calls to [`splitn`]\n(https://doc.rust-lang.org/std/primitive.str.html#method.splitn) and\n",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_splitn"
   },
   {
     "key": "clippy::suspicious_unary_op_formatting",
@@ -2253,11 +2263,6 @@
     "key": "clippy::writeln_empty_string",
     "name": "This lint warns when you use `writeln!(buf, \"\")` to\nprint a newline.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#writeln_empty_string"
-  },
-  {
-    "key": "clippy::wrong_pub_self_convention",
-    "name": "This is the same as\n[`wrong_self_convention`](#wrong_self_convention), but for public items.",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#wrong_pub_self_convention"
   },
   {
     "key": "clippy::wrong_self_convention",
