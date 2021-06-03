@@ -38,9 +38,9 @@ public class RustPluginTest extends TestCase {
     public void testGetExtensions() {
         Version v79 = Version.create(7, 9);
         SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(v79, SonarQubeSide.SERVER, SonarEdition.DEVELOPER);
-        assertThat(extensions(runtime)).hasSize(9);
+        assertThat(extensions(runtime)).hasSize(11);
         assertThat(extensions(runtime)).contains(ClippyRulesDefinition.class);
-        assertThat(extensions(SonarRuntimeImpl.forSonarLint(v79))).hasSize(9);
+        assertThat(extensions(SonarRuntimeImpl.forSonarLint(v79))).hasSize(11);
     }
 
     private static List extensions(SonarRuntime runtime) {

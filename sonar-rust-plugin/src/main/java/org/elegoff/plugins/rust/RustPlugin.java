@@ -28,6 +28,7 @@ import org.elegoff.plugins.rust.language.RustLanguage;
 import org.elegoff.plugins.rust.language.RustQualityProfile;
 import org.elegoff.plugins.rust.settings.RustLanguageSettings;
 import org.sonar.api.resources.Qualifiers;
+import org.elegoff.plugins.rust.coverage.RustCoverageSensor;
 
 /**
  * This class is the entry point for all extensions. It is referenced in pom.xml.
@@ -58,5 +59,20 @@ public class RustPlugin implements Plugin {
                         .multiValues(true)
                         .build(),
                 ClippyRulesDefinition.class);
+
+        //tarpaulin Xml
+        context.addExtensions(
+                PropertyDefinition.builder(RustCoverageSensor.REPORT_PATHS_KEY)
+                        .index(20)
+                        .name("Path to coverage report(s)")
+                        .description("List of paths pointing to coverage reports. Ant patterns are accepted for relative path. " +
+                                "The reports have to conform to the Cobertura XML format.")
+                        .category("Rust")
+                        .subCategory("Tests and coverage")
+                        .onQualifiers(Qualifiers.PROJECT)
+                        .defaultValue(RustCoverageSensor.DEFAULT_REPORT_PATH)
+                        .multiValues(true)
+                        .build(),
+                RustCoverageSensor.class);
     }
 }
