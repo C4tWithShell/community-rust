@@ -59,6 +59,11 @@ public class RustVisitor {
         return context;
     }
 
+    //for testing purpose only
+    public void setContext(RustVisitorContext context){
+        this.context = context;
+    }
+
     public void scanFile(RustVisitorContext context) {
         this.context = context;
         AstNode tree = context.rootTree();
