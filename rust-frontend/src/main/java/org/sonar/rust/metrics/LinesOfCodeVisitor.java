@@ -34,8 +34,8 @@ public class LinesOfCodeVisitor extends RustVisitor {
     private final ParserAdapter<LexerlessGrammar> lexer;
     private final Set<Integer> linesOfCode = new HashSet<>();
 
-    public LinesOfCodeVisitor(ParserAdapter<LexerlessGrammar> lexer) {
-        this.lexer = lexer;
+    public LinesOfCodeVisitor(ParserAdapter<LexerlessGrammar> parser) {
+        this.lexer = parser;
     }
 
     @Override

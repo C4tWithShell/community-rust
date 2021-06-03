@@ -8,6 +8,6 @@ public class CheckListTest {
 
     @Test
     public void testSize(){
-        assertThat(CheckList.getRustChecks().isEmpty());
+        assertThat(CheckList.getRustChecks().isEmpty()).isTrue();
     }
 }
