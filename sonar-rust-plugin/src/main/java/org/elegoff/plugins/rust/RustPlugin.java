@@ -36,6 +36,8 @@ public class RustPlugin implements Plugin {
 
     private static final String EXTERNAL_ANALYZERS_CATEGORY = "External Analyzers";
     private static final String RUST_SUBCATEGORY = "Rust";
+    public static final String LCOV_REPORT_PATHS = "sonar.rust.lcov.reportPaths";
+    public static final String LCOV_REPORT_PATHS_DEFAULT_VALUE = "lcov.info";
 
     @Override
     public void define(Context context) {
@@ -57,7 +59,21 @@ public class RustPlugin implements Plugin {
                         .onQualifiers(Qualifiers.PROJECT)
                         .multiValues(true)
                         .build(),
-                ClippyRulesDefinition.class);
+                ClippyRulesDefinition.class,
+
+                PropertyDefinition.builder(LCOV_REPORT_PATHS)
+                        .defaultValue(LCOV_REPORT_PATHS_DEFAULT_VALUE)
+                        .name("LCOV Files")
+                        .description("Paths (absolute or relative) to the files with LCOV data.")
+                        .onQualifiers(Qualifiers.PROJECT)
+                        .subCategory("Test and Coverage")
+                        .category("Rust")
+                        .multiValues(true)
+                        .build()
+
+
+
+                );
 
 
     }
