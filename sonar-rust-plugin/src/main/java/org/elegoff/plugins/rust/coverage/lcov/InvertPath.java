@@ -5,7 +5,7 @@ import org.sonar.api.batch.fs.InputFile;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ReversePathTree {
+public class InvertPath {
     private Node root = new Node();
 
     void index(InputFile inputFile, String[] path) {

@@ -24,18 +24,18 @@ public class LCOVParser {
         private final SensorContext context;
         // deduplicated list of unresolved paths (keep order of insertion)
         private final Set<String> unresolvedPaths = new LinkedHashSet<>();
-        private final FileLocator fileLocator;
+        private final FileChooser fileChooser;
         private int inconsistenciesCounter = 0;
 
         private static final Logger LOG = Loggers.get(LCOVParser.class);
 
-        private LCOVParser(List<String> lines, SensorContext context, FileLocator fileLocator) {
+        private LCOVParser(List<String> lines, SensorContext context, FileChooser fileChooser) {
             this.context = context;
-            this.fileLocator = fileLocator;
+            this.fileChooser = fileChooser;
             this.coverageByFile = parse(lines);
         }
 
-        static LCOVParser create(SensorContext context, List<File> files, FileLocator fileLocator) {
+        static LCOVParser create(SensorContext context, List<File> files, FileChooser fileChooser) {
             final List<String> lines = new LinkedList<>();
             for (File file : files) {
                 try (Stream<String> fileLines = Files.lines(file.toPath())) {
@@ -44,7 +44,7 @@ public class LCOVParser {
                     throw new IllegalArgumentException("Could not read content from file: " + file, e);
                 }
             }
-            return new LCOVParser(lines, context, fileLocator);
+            return new LCOVParser(lines, context, fileChooser);
         }
 
         Map<InputFile, NewCoverage> coverageByFile() {
@@ -130,7 +130,7 @@ public class LCOVParser {
             // some tools (like Istanbul, Karma) provide relative paths, so let's consider them relative to project directory
             InputFile inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(filePath));
             if (inputFile == null) {
-                inputFile = fileLocator.getInputFile(filePath);
+                inputFile = fileChooser.getInputFile(filePath);
             }
             if (inputFile == null) {
                 unresolvedPaths.add(filePath);

@@ -9,8 +9,6 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
-import org.sonar.api.config.Configuration;
-import org.sonar.api.utils.WildcardPattern;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -54,10 +52,17 @@ public class CoverageSensor implements Sensor {
 
             FileSystem fileSystem = context.fileSystem();
             FilePredicate mainFilePredicate = fileSystem.predicates().hasLanguages(RustLanguage.KEY);
-            FileLocator fileLocator = new FileLocator(fileSystem.inputFiles(mainFilePredicate));
+            FileChooser fileChooser = new FileChooser(fileSystem.inputFiles(mainFilePredicate));
 
-            LCOVParser parser = LCOVParser.create(context, lcovFiles, fileLocator);
+            LCOVParser parser = LCOVParser.create(context, lcovFiles, fileChooser);
             Map<InputFile, NewCoverage> coveredFiles = parser.coverageByFile();
+
+            Iterable<InputFile> ericfiles = fileSystem.inputFiles(mainFilePredicate);
+
+            for (InputFile ipf : ericfiles){
+                String name = ipf.filename();
+            }
+
 
             for (InputFile inputFile : fileSystem.inputFiles(mainFilePredicate)) {
                 NewCoverage fileCoverage = coveredFiles.get(inputFile);

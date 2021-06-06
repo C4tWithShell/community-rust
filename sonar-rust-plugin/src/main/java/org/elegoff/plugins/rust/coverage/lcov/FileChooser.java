@@ -5,10 +5,10 @@ import org.sonar.api.utils.PathUtils;
 
 import javax.annotation.CheckForNull;
 
-public class FileLocator {
-    private final ReversePathTree tree = new ReversePathTree();
+public class FileChooser {
+    private final InvertPath tree = new InvertPath();
 
-    FileLocator(Iterable<InputFile> inputFiles) {
+    FileChooser(Iterable<InputFile> inputFiles) {
         inputFiles.forEach(inputFile -> {
             String[] path = inputFile.relativePath().split("/");
             tree.index(inputFile, path);
