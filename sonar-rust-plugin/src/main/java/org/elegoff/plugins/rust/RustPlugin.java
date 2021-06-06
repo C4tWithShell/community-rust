@@ -19,6 +19,7 @@
  */
 package org.elegoff.plugins.rust;
 
+import org.elegoff.plugins.rust.coverage.lcov.CoverageSensor;
 import org.elegoff.plugins.rust.rules.RustRulesDefinition;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
@@ -37,7 +38,7 @@ public class RustPlugin implements Plugin {
     private static final String EXTERNAL_ANALYZERS_CATEGORY = "External Analyzers";
     private static final String RUST_SUBCATEGORY = "Rust";
     public static final String LCOV_REPORT_PATHS = "sonar.rust.lcov.reportPaths";
-    public static final String LCOV_REPORT_PATHS_DEFAULT_VALUE = "lcov.info";
+    public static final String DEFAULT_LCOV_REPORT_PATHS = "lcov.info";
 
     @Override
     public void define(Context context) {
@@ -61,8 +62,9 @@ public class RustPlugin implements Plugin {
                         .build(),
                 ClippyRulesDefinition.class,
 
+                CoverageSensor.class,
                 PropertyDefinition.builder(LCOV_REPORT_PATHS)
-                        .defaultValue(LCOV_REPORT_PATHS_DEFAULT_VALUE)
+                        .defaultValue(DEFAULT_LCOV_REPORT_PATHS)
                         .name("LCOV Files")
                         .description("Paths (absolute or relative) to the files with LCOV data.")
                         .onQualifiers(Qualifiers.PROJECT)
