@@ -36,7 +36,7 @@ public class CoverageSensor implements Sensor {
 
 
             List<File> lcovFiles = reports.stream()
-                    .map(report -> getIOFile(context.fileSystem().baseDir(), report))
+                    .map(report -> getFile(context.fileSystem().baseDir(), report))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
@@ -48,23 +48,18 @@ public class CoverageSensor implements Sensor {
         }
 
         private static void saveCoverageFromLcovFiles(SensorContext context, List<File> lcovFiles) {
-            LOG.info("Analysing {}", lcovFiles);
+            LOG.info("Importing {}", lcovFiles);
 
             FileSystem fileSystem = context.fileSystem();
             FilePredicate mainFilePredicate = fileSystem.predicates().hasLanguages(RustLanguage.KEY);
             FileChooser fileChooser = new FileChooser(fileSystem.inputFiles(mainFilePredicate));
 
-            LCOVParser parser = LCOVParser.create(context, lcovFiles, fileChooser);
-            Map<InputFile, NewCoverage> coveredFiles = parser.coverageByFile();
-
-            Iterable<InputFile> ericfiles = fileSystem.inputFiles(mainFilePredicate);
-
-            for (InputFile ipf : ericfiles){
-                String name = ipf.filename();
-            }
+            LCOV_Parser parser = LCOV_Parser.build(context, lcovFiles, fileChooser);
+            Map<InputFile, NewCoverage> coveredFiles = parser.getFileCoverage();
 
 
-            for (InputFile inputFile : fileSystem.inputFiles(mainFilePredicate)) {
+            for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext(); ) {
+                InputFile inputFile = iterator.next();
                 NewCoverage fileCoverage = coveredFiles.get(inputFile);
 
                 if (fileCoverage != null) {
@@ -72,8 +67,9 @@ public class CoverageSensor implements Sensor {
                 }
             }
 
-            List<String> unresolvedPaths = parser.unresolvedPaths();
-            if (!unresolvedPaths.isEmpty()) {
+            List<String> unresolvedPaths = parser.unknownPaths();
+            if (unresolvedPaths.isEmpty()) {
+            } else {
                 LOG.warn(String.format("Could not resolve %d file paths in %s", unresolvedPaths.size(), lcovFiles));
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Unresolved paths:\n" + String.join("\n", unresolvedPaths));
@@ -82,18 +78,14 @@ public class CoverageSensor implements Sensor {
                 }
             }
 
-            int inconsistenciesNumber = parser.inconsistenciesNumber();
-            if (inconsistenciesNumber > 0) {
-                LOG.warn("Found {} inconsistencies in coverage report. Re-run analyse in debug mode to see details.", inconsistenciesNumber);
+            int pbCount = parser.pbCount();
+            if (pbCount > 0) {
+                LOG.warn("Found {} inconsistencies in coverage report", pbCount);
             }
         }
 
-        /**
-         * Returns a java.io.File for the given path.
-         * If path is not absolute, returns a File with module base directory as parent path.
-         */
         @CheckForNull
-        private static File getIOFile(File baseDir, String path) {
+        private static File getFile(File baseDir, String path) {
             File file = new File(path);
             if (!file.isAbsolute()) {
                 file = new File(baseDir, path);
