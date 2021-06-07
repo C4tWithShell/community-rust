@@ -1,5 +1,9 @@
 package org.elegoff.plugins.rust.coverage.lcov;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.elegoff.plugins.rust.RustPlugin;
 import org.elegoff.plugins.rust.language.RustLanguage;
 import org.sonar.api.batch.fs.FilePredicate;
@@ -106,7 +110,7 @@ public class CoverageSensor implements Sensor {
     public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
         LOG.debug("Using pattern '{}' to find reports", reportPath);
 
-        DirectoryScanner scanner = new DirectoryScanner(new File(baseDirPath), WildcardPattern.create(reportPath));
+        DirectoryLookup scanner = new DirectoryLookup(new File(baseDirPath), WildcardPattern.create(reportPath));
         List<File> includedFiles = scanner.getIncludedFiles();
 
         if (includedFiles.isEmpty()) {
@@ -126,4 +130,32 @@ public class CoverageSensor implements Sensor {
     }
 
 
+    private static class DirectoryLookup {
+        private final File baseDir;
+        private final WildcardPattern pattern;
+
+        public DirectoryLookup(File baseDir, WildcardPattern pattern) {
+            this.baseDir = baseDir;
+            this.pattern = pattern;
+        }
+
+        public List<File> getIncludedFiles() {
+            final String baseDirAbsolutePath = baseDir.getAbsolutePath();
+            IOFileFilter fileFilter = new IOFileFilter() {
+
+                @Override
+                public boolean accept(File dir, String name) {
+                    return accept(new File(dir, name));
+                }
+
+                @Override
+                public boolean accept(File file) {
+                    String path = file.getAbsolutePath();
+                    path = path.substring(Math.min(baseDirAbsolutePath.length(), path.length()));
+                    return pattern.match(FilenameUtils.separatorsToUnix(path));
+                }
+            };
+            return new ArrayList<>(FileUtils.listFiles(baseDir, fileFilter, TrueFileFilter.INSTANCE));
+        }
+    }
 }
