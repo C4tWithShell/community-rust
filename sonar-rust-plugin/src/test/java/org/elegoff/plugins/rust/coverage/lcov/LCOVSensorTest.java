@@ -23,7 +23,7 @@ import java.nio.file.Files;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CoverageSensorTest  {
+public class LCOVSensorTest {
 
     private static final String REPORT1 = "reports/report_1.lcov";
     private static final String REPORT2 = "reports/report_2.lcov";
@@ -34,7 +34,7 @@ public class CoverageSensorTest  {
     @ClassRule
     public static TemporaryFolder temp = new TemporaryFolder();
 
-    private CoverageSensor coverageSensor = new CoverageSensor();
+    private LCOV_Sensor coverageSensor = new LCOV_Sensor();
     private File moduleBaseDir = new File("src/test/resources/lcov/").getAbsoluteFile();
 
     @org.junit.Rule

@@ -24,8 +24,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class CoverageSensor implements Sensor {
-        private static final Logger LOG = Loggers.get(CoverageSensor.class);
+public class LCOV_Sensor implements Sensor {
+        private static final Logger LOG = Loggers.get(LCOV_Sensor.class);
 
         @Override
         public void describe(SensorDescriptor descriptor) {
