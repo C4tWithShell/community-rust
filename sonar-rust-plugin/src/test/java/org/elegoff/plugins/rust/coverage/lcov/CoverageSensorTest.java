@@ -123,7 +123,7 @@ public class CoverageSensorTest  {
                 .contains("Could not resolve 2 file paths in [" + moduleBaseDir.getAbsolutePath() + fileName + "]")
                 .contains("First unresolved path: unresolved/file1.rs (Run in DEBUG mode to get full list of unresolved paths)");
         assertThat(logTester.logs(LoggerLevel.DEBUG))
-                .isEmpty();
+                .contains("Using pattern 'reports/report_with_unresolved_path.lcov' to find reports");
     }
 
     @Test
@@ -153,22 +153,18 @@ public class CoverageSensorTest  {
 
         assertThat(logTester.logs(LoggerLevel.DEBUG)).contains("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.NumberFormatException: For input string: \"1.\").");
         String stringIndexOutOfBoundLogMessage = logTester.logs(LoggerLevel.DEBUG).get(1);
-        assertThat(stringIndexOutOfBoundLogMessage).startsWith("Error while parsing LCOV report: can't save DA data for line 4 of coverage report file (java.lang.StringIndexOutOfBoundsException:");
+        assertThat(stringIndexOutOfBoundLogMessage).startsWith("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.NumberFormatException:");
         assertThat(logTester.logs(LoggerLevel.DEBUG).get(logTester.logs(LoggerLevel.DEBUG).size() - 1)).startsWith("Error while parsing LCOV report: can't save BRDA data for line 6 of coverage report file (java.lang.ArrayIndexOutOfBoundsException: ");
         assertThat(logTester.logs(LoggerLevel.WARN)).contains("Found 3 inconsistencies in coverage report");
     }
 
-    @Test
-    public void should_contain_sensor_descriptor() {
-        DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
 
+    @Test
+    public void sensor_descriptor() {
+        DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
         coverageSensor.describe(descriptor);
-        assertThat(descriptor.name()).isEqualTo("Rust Coverage");
-        assertThat(descriptor.languages()).contains("rust");
-        assertThat(descriptor.type()).isEqualTo(InputFile.Type.MAIN);
-        assertThat(descriptor.configurationPredicate().test(new MapSettings().setProperty("sonar.rust.lcov.reportPaths", "foo").asConfig())).isTrue();
-        assertThat(descriptor.configurationPredicate().test(new MapSettings().setProperty("sonar.rust.lcov.reportPaths", "foo").asConfig())).isTrue();
-        assertThat(descriptor.configurationPredicate().test(new MapSettings().asConfig())).isFalse();
+        assertThat(descriptor.name()).isEqualTo("LCOV Sensor for Rust coverage");
+        assertThat(descriptor.languages()).containsOnly("rust");
     }
 
     @Test

@@ -9,6 +9,8 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
+import org.sonar.api.config.Configuration;
+import org.sonar.api.utils.WildcardPattern;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -24,21 +26,14 @@ public class CoverageSensor implements Sensor {
         @Override
         public void describe(SensorDescriptor descriptor) {
             descriptor
-                    .onlyOnLanguages(RustLanguage.KEY)
-                    .onlyWhenConfiguration(conf -> conf.hasKey(RustPlugin.LCOV_REPORT_PATHS))
-                    .name("Rust Coverage")
-                    .onlyOnFileType(InputFile.Type.MAIN);
+                    .name("LCOV Sensor for Rust coverage")
+                    .onlyOnLanguage(RustLanguage.KEY);
         }
 
         @Override
         public void execute(SensorContext context) {
-            Set<String> reports = new HashSet<>(Arrays.asList(context.config().getStringArray(RustPlugin.LCOV_REPORT_PATHS)));
-
-
-            List<File> lcovFiles = reports.stream()
-                    .map(report -> getFile(context.fileSystem().baseDir(), report))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+            String baseDir = context.fileSystem().baseDir().getPath();
+            List<File> lcovFiles = getLcovReports(baseDir, context.config());
 
             if (lcovFiles.isEmpty()) {
                 LOG.warn("No coverage information will be saved because all LCOV files cannot be found.");
@@ -97,4 +92,38 @@ public class CoverageSensor implements Sensor {
             }
             return file;
         }
+
+    private static List<File> getLcovReports(String baseDir, Configuration config) {
+        if (!config.hasKey(RustPlugin.LCOV_REPORT_PATHS)) {
+            return getReports(config, baseDir, RustPlugin.LCOV_REPORT_PATHS, RustPlugin.DEFAULT_LCOV_REPORT_PATHS);
+        }
+
+        return Arrays.stream(config.getStringArray(RustPlugin.LCOV_REPORT_PATHS))
+                .flatMap(path -> getReports(config, baseDir, RustPlugin.LCOV_REPORT_PATHS, path).stream())
+                .collect(Collectors.toList());
+    }
+
+    public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
+        LOG.debug("Using pattern '{}' to find reports", reportPath);
+
+        DirectoryScanner scanner = new DirectoryScanner(new File(baseDirPath), WildcardPattern.create(reportPath));
+        List<File> includedFiles = scanner.getIncludedFiles();
+
+        if (includedFiles.isEmpty()) {
+            if (conf.hasKey(reportPathPropertyKey)) {
+                // try absolute path
+                File file = new File(reportPath);
+                if (!file.exists()) {
+                    LOG.warn("No report was found for {} using pattern {}", reportPathPropertyKey, reportPath);
+                } else {
+                    includedFiles.add(file);
+                }
+            } else {
+                LOG.debug("No report was found for {} using default pattern {}", reportPathPropertyKey, reportPath);
+            }
+        }
+        return includedFiles;
+    }
+
+
 }
