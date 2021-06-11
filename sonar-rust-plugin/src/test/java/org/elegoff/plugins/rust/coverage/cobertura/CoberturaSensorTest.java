@@ -32,16 +32,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class CoberturaSensorTest {
 
-    private static final String ABSOLUTE_PATH_PLACEHOLDER = "{CHANGE_ME}";
     private static final String TESTFILE1 = "moduleKey:src/cgroups/common.rs";
     private static final String TESTFILE2 = "moduleKey:src/cgroups/test.rs";
-    private static final String TESTFILE3 = "moduleKey:src/process/fork.rs";
-    private static final String TESTFILE4 = "moduleKey:src/process/init.rs";
+    private static final String TESTFILE3 = "moduleKey:src/process/init.rs";
+
     private SensorContextTester context;
     private MapSettings settings;
 
     
-    private CoberturaSensor coverageSensor;
+    private CoberturaSensor coberturaSensor;
     private File moduleBaseDir = new File("src/test/resources/org/elegoff/plugins/rust/cobertura").getAbsoluteFile();
 
     @Rule
@@ -53,7 +52,7 @@ public class CoberturaSensorTest {
     @Before
     public void init() {
 
-        coverageSensor = new CoberturaSensor();
+        coberturaSensor = new CoberturaSensor();
         settings = new MapSettings();
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "cobertura.xml");
         context = SensorContextTester.create(moduleBaseDir);
@@ -78,25 +77,19 @@ public class CoberturaSensorTest {
         return inputFile;
     }
 
-    @Test
-    public void report_not_found() {
-        settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "/fake/path/report.xml");
-        coverageSensor.execute(context);
-        assertThat(context.lineHits(TESTFILE1, 1)).isNull();
-    }
 
     @Test
     public void absolute_path() {
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, new File(moduleBaseDir, "cobertura.xml").getAbsolutePath());
 
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
 
         assertThat(context.lineHits(TESTFILE1, 42)).isEqualTo(1);
     }
 
     @Test
     public void test_coverage() {
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
         Map<Integer, Integer> file1Expected = new HashMap<>();
         file1Expected.put(42,1);
         file1Expected.put(43,3);
@@ -126,7 +119,7 @@ public class CoberturaSensorTest {
     @Test
     public void test_ambigous_locations() {
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "coverage-other-2.xml");
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
 
         assertThat(context.lineHits("moduleKey:src/cgroups/common.rs", 30)).isEqualTo(3);
         //  ambiguity detection
@@ -138,10 +131,10 @@ public class CoberturaSensorTest {
 
     @Test
     public void test_report_with_absolute_path() throws Exception {
-        String reportPath = createReportWithAbsolutePaths();
+        String reportPath = generateReportWithAbsPaths();
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, reportPath);
 
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
 
         assertThat(context.lineHits(TESTFILE1, 1)).isEqualTo(1);
         assertThat(context.lineHits(TESTFILE1, 4)).isEqualTo(0);
@@ -150,22 +143,20 @@ public class CoberturaSensorTest {
 
     @Test
     public void test_unresolved_path() {
-
-
-        String currentFileSeparator = File.separator;
+        String separator = File.separator;
 
         logTester.clear();
 
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "unresolved.xml");
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
 
-        String expectedLogMessage = String.format(
+        String expectedMsg = String.format(
                 "The file name '/mymodule/src/fake.rs' of the coverage report can not be resolved, the file does not exist in all <source>.",
-                currentFileSeparator,
-                currentFileSeparator,
-                currentFileSeparator);
+                separator,
+                separator,
+                separator);
         assertThat(logTester.logs(LoggerLevel.ERROR)).containsExactly(
-                expectedLogMessage,
+                expectedMsg,
                 "2 file paths can not be resolved, coverage measures will be ignored for those files");
     }
 
@@ -173,38 +164,37 @@ public class CoberturaSensorTest {
     @Test
     public void test_multiple_reports() {
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "cobertura.xml,coverage-other*.xml");
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
 
         assertThat(context.conditions(TESTFILE2, 2)).isNull();
         assertThat(context.lineHits(TESTFILE2, 39)).isEqualTo(1);
         assertThat(context.lineHits(TESTFILE2, 45)).isEqualTo(0);
-        assertThat(context.lineHits(TESTFILE4, 7)).isNull();
-        assertThat(context.lineHits(TESTFILE4, 12)).isEqualTo(0);
+        assertThat(context.lineHits(TESTFILE3, 7)).isNull();
+        assertThat(context.lineHits(TESTFILE3, 12)).isEqualTo(0);
     }
 
 
     @Test(expected = IllegalStateException.class)
-    public void should_fail_on_invalid_report() {
+    public void fail_with_invalid_report() {
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "invalid.xml");
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void should_fail_on_unexpected_eof() {
+    public void fail_with_invalid_eof() {
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "wrong_eof.xml");
-        coverageSensor.execute(context);
+        coberturaSensor.execute(context);
     }
 
     @Test
-    public void should_do_nothing_on_empty_report() {
+    public void ok_when_empty_report() {
         settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "empty.xml");
-        coverageSensor.execute(context);
-
-        assertThat(context.lineHits(TESTFILE1, 1)).isNull();
+        coberturaSensor.execute(context);
+        assertThat(context.lineHits(TESTFILE1, 42)).isNull();
     }
 
     @Test
-    public void default_report_logs() {
+    public void default_debug_logs() {
         settings.clear();
         CoberturaSensor sensor = new CoberturaSensor();
         sensor.execute(context);
@@ -219,19 +209,26 @@ public class CoberturaSensorTest {
         assertThat(descriptor.languages()).containsOnly(RustLanguage.KEY);
     }
 
-    private String createReportWithAbsolutePaths() throws Exception {
-        Path workDir = tmpDir.newFolder("sonar-rust").toPath().toAbsolutePath();
+    private String generateReportWithAbsPaths() throws Exception {
+        Path tmpPath = tmpDir.newFolder("sonar-rust").toPath().toAbsolutePath();
         String reportName="unresolved.xml";
 
-        String absoluteSourcePath = new File(moduleBaseDir, "src/cgroups/common.rs").getAbsolutePath();
+        String absoluteSourcePath = new File(moduleBaseDir, TESTFILE1).getAbsolutePath();
         Path report = new File(moduleBaseDir, reportName).toPath();
         String reportContent = new String(Files.readAllBytes(report), UTF_8);
-        reportContent = reportContent.replace(ABSOLUTE_PATH_PLACEHOLDER, absoluteSourcePath);
+        reportContent = reportContent.replace("{CHANGE_ME}", absoluteSourcePath);
 
-        Path reportCopy = workDir.resolve(reportName);
-        Files.write(reportCopy, reportContent.getBytes(UTF_8));
+        Path generated = tmpPath.resolve(reportName);
+        Files.write(generated, reportContent.getBytes(UTF_8));
 
-        return reportCopy.toAbsolutePath().toString();
+        return generated.toAbsolutePath().toString();
+    }
+
+    @Test
+    public void report_not_found() {
+        settings.setProperty(RustPlugin.COBERTURA_REPORT_PATHS, "/report/not/found.xml");
+        coberturaSensor.execute(context);
+        assertThat(context.lineHits(TESTFILE1, 1)).isNull();
     }
 
 }
