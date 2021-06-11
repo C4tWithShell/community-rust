@@ -33,28 +33,24 @@ public class StaxParserTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void should_fail_parsing_ig_file_does_not_exist() throws Exception {
+    public void should_fail_parsing_if_file_does_not_exist() throws Exception {
         thrown.expect(XMLStreamException.class);
         StaxParser parser = new StaxParser(rootCursor -> {});
         parser.parse(new File("fake.xml"));
     }
 
-    @Test
-    public void test_XML_with_DTD() throws XMLStreamException {
+
+
+    private void test_grammar_parsable(String resource) throws XMLStreamException {
         StaxParser parser = new StaxParser(getTestHandler());
-        parser.parse(getClass().getClassLoader().getResourceAsStream("org/elegoff/plugins/rust/cobertura/dtd-test.xml"));
+        parser.parse(getClass().getClassLoader().getResourceAsStream(resource));
     }
 
-    @Test
-    public void test_XML_with_XSD() throws XMLStreamException {
-        StaxParser parser = new StaxParser(getTestHandler());
-        parser.parse(getClass().getClassLoader().getResourceAsStream("org/elegoff/plugins/rust/cobertura/xsd-test.xml"));
-    }
-
-    @Test
-    public void test_XML_with_XSD_and_ampersand() throws XMLStreamException {
-        StaxParser parser = new StaxParser(getTestHandler());
-        parser.parse(getClass().getClassLoader().getResourceAsStream("org/elegoff/plugins/rust/cobertura/xsd-test-with-entity.xml"));
+    @Test(expected = Test.None.class /* no exception expected */)
+    public void test_grammars() throws XMLStreamException {
+        test_grammar_parsable("org/elegoff/plugins/rust/cobertura/dtd-test.xml");
+        test_grammar_parsable("org/elegoff/plugins/rust/cobertura/xsd-test.xml");
+        test_grammar_parsable("org/elegoff/plugins/rust/cobertura/xsd-test-with-entity.xml");
     }
 
     private static StaxParser.XmlStreamHandler getTestHandler() {

@@ -156,8 +156,8 @@ public class CoberturaSensorTest {
         coberturaSensor.execute(context);
 
         assertThat(context.lineHits(TESTFILE1, 1)).isEqualTo(1);
-        assertThat(context.lineHits(TESTFILE1, 4)).isEqualTo(0);
-        assertThat(context.lineHits(TESTFILE1, 6)).isEqualTo(0);
+        assertThat(context.lineHits(TESTFILE1, 4)).isZero();
+        assertThat(context.lineHits(TESTFILE1, 6)).isZero();
     }
 
     @Test
@@ -187,9 +187,9 @@ public class CoberturaSensorTest {
 
         assertThat(context.conditions(TESTFILE2, 2)).isNull();
         assertThat(context.lineHits(TESTFILE2, 39)).isEqualTo(1);
-        assertThat(context.lineHits(TESTFILE2, 45)).isEqualTo(0);
+        assertThat(context.lineHits(TESTFILE2, 45)).isZero();
         assertThat(context.lineHits(TESTFILE3, 7)).isNull();
-        assertThat(context.lineHits(TESTFILE3, 12)).isEqualTo(0);
+        assertThat(context.lineHits(TESTFILE3, 12)).isZero();
     }
 
 

@@ -111,12 +111,12 @@ public class CoberturaSensor implements Sensor {
     public static List<File> getIncludedFiles(Configuration config, String baseDirPath, String reportPathPropertyKey, String reportPath) {
         LOG.debug("Using pattern '{}' to find reports", reportPath);
 
-        RustFileSystem rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
+        var rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
         List<File> includedFiles = rustFileSystem.getIncludedFiles();
 
         if (includedFiles.isEmpty()) {
             if (config.hasKey(reportPathPropertyKey)) {
-                File file = new File(reportPath);
+                var file = new File(reportPath);
                 if (file.exists()) {
                     includedFiles.add(file);
                 } else {

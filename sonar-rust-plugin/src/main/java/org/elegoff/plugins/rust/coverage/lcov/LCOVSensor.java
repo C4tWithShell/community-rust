@@ -22,8 +22,6 @@ package org.elegoff.plugins.rust.coverage.lcov;
 import org.elegoff.plugins.rust.RustPlugin;
 import org.elegoff.plugins.rust.coverage.RustFileSystem;
 import org.elegoff.plugins.rust.language.RustLanguage;
-import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -65,16 +63,16 @@ public class LCOVSensor implements Sensor {
         private static void saveCoverageFromLcovFiles(SensorContext context, List<File> lcovFiles) {
             LOG.info("Importing {}", lcovFiles);
 
-            FileSystem fileSystem = context.fileSystem();
-            FilePredicate mainFilePredicate = fileSystem.predicates().hasLanguages(RustLanguage.KEY);
-            FileChooser fileChooser = new FileChooser(fileSystem.inputFiles(mainFilePredicate));
+            var fileSystem = context.fileSystem();
+            var mainFilePredicate = fileSystem.predicates().hasLanguages(RustLanguage.KEY);
+            var fileChooser = new FileChooser(fileSystem.inputFiles(mainFilePredicate));
+            var parser = LCOVParser.build(context, lcovFiles, fileChooser);
 
-            LCOVParser parser = LCOVParser.build(context, lcovFiles, fileChooser);
             Map<InputFile, NewCoverage> coveredFiles = parser.getFileCoverage();
 
 
             for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext(); ) {
-                InputFile inputFile = iterator.next();
+                var inputFile = iterator.next();
                 NewCoverage fileCoverage = coveredFiles.get(inputFile);
 
                 if (fileCoverage != null) {
@@ -83,8 +81,7 @@ public class LCOVSensor implements Sensor {
             }
 
             List<String> unresolvedPaths = parser.unknownPaths();
-            if (unresolvedPaths.isEmpty()) {
-            } else {
+            if (!unresolvedPaths.isEmpty()) {
                 LOG.warn(String.format("Could not resolve %d file paths in %s", unresolvedPaths.size(), lcovFiles));
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Unresolved paths:\n" + String.join("\n", unresolvedPaths));
@@ -101,7 +98,7 @@ public class LCOVSensor implements Sensor {
 
         @CheckForNull
         private static File getFile(File baseDir, String path) {
-            File file = new File(path);
+            var file = new File(path);
             if (!file.isAbsolute()) {
                 file = new File(baseDir, path);
             }
@@ -126,13 +123,12 @@ public class LCOVSensor implements Sensor {
     public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
         LOG.debug("Using pattern '{}' to find reports", reportPath);
 
-        RustFileSystem rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
+        var rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
         List<File> includedFiles = rustFileSystem.getIncludedFiles();
 
         if (includedFiles.isEmpty()) {
             if (conf.hasKey(reportPathPropertyKey)) {
-                // try absolute path
-                File file = new File(reportPath);
+                var file = new File(reportPath);
                 if (!file.exists()) {
                     LOG.warn("No report was found for {} using pattern {}", reportPathPropertyKey, reportPath);
                 } else {

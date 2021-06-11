@@ -80,7 +80,7 @@ public class LCOVParser {
     private Map<InputFile, NewCoverage> parse(List<String> lines) {
         final Map<InputFile, FileContent> files = new HashMap<>();
         FileContent fileContent = null;
-        int reportLineNum = 0;
+        var reportLineNum = 0;
 
         for (String line : lines) {
             reportLineNum++;
@@ -88,14 +88,12 @@ public class LCOVParser {
                 fileContent = files.computeIfAbsent(inputFileForSourceFile(line),
                         inputFile -> inputFile == null ? null : new FileContent(inputFile));
 
-            } else {
-                if (fileContent != null) {
-                    if (line.startsWith(String.valueOf(DA))) {
-                        parseLineCoverage(fileContent, reportLineNum, line);
+            } else if (fileContent != null) {
+                if (line.startsWith(String.valueOf(DA))) {
+                    parseLineCoverage(fileContent, reportLineNum, line);
 
-                    } else if (line.startsWith(String.valueOf(BRDA))) {
-                        parseBranchCoverage(fileContent, reportLineNum, line);
-                    }
+                } else if (line.startsWith(String.valueOf(BRDA))) {
+                    parseBranchCoverage(fileContent, reportLineNum, line);
                 }
             }
 
@@ -104,7 +102,7 @@ public class LCOVParser {
         Map<InputFile, NewCoverage> coveredFiles = new HashMap<>();
 
         files.entrySet().forEach(e -> {
-            NewCoverage newCoverage = sensorContext.newCoverage().onFile(e.getKey());
+            var newCoverage = sensorContext.newCoverage().onFile(e.getKey());
             e.getValue().save(newCoverage);
             coveredFiles.put(e.getKey(), newCoverage);
         });
@@ -126,9 +124,9 @@ public class LCOVParser {
 
     private void parseLineCoverage(FileContent fileContent, int linum, String line) {
         try {
-            String execution = line.substring(String.valueOf(DA).length() + 1);
-            String executionCount = execution.substring(execution.indexOf(',') + 1);
-            String lineNumber = execution.substring(0, execution.indexOf(','));
+            var execution = line.substring(String.valueOf(DA).length() + 1);
+            var executionCount = execution.substring(execution.indexOf(',') + 1);
+            var lineNumber = execution.substring(0, execution.indexOf(','));
 
             fileContent.newLine(Integer.valueOf(lineNumber), Integer.valueOf(executionCount));
         } catch (Exception e) {
@@ -145,7 +143,7 @@ public class LCOVParser {
     private InputFile inputFileForSourceFile(String line) {
         String filePath;
         filePath = line.substring(String.valueOf(SF).length() + 1);
-        InputFile inputFile = sensorContext.fileSystem().inputFile(sensorContext.fileSystem().predicates().hasPath(filePath));
+        var inputFile = sensorContext.fileSystem().inputFile(sensorContext.fileSystem().predicates().hasPath(filePath));
 
         if (inputFile == null) {
             inputFile = fc.getInputFile(filePath);
@@ -195,7 +193,7 @@ public class LCOVParser {
             for (Map.Entry<Integer, Map<String, Integer>> e : branches.entrySet()) {
                 int line = e.getKey();
                 int conditions = e.getValue().size();
-                int covered = 0;
+                var covered = 0;
                 for (Integer taken : e.getValue().values()) {
                     if (taken > 0) {
                         covered++;
