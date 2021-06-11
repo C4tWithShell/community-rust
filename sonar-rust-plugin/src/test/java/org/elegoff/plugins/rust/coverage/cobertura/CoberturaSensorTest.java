@@ -160,13 +160,13 @@ public class CoberturaSensorTest {
         coverageSensor.execute(context);
 
         String expectedLogMessage = String.format(
-                "Cannot resolve the file path '/mymodule/src/fake.rs' of the coverage report, the file does not exist in all <source>.",
+                "The file name '/mymodule/src/fake.rs' of the coverage report can not be resolved, the file does not exist in all <source>.",
                 currentFileSeparator,
                 currentFileSeparator,
                 currentFileSeparator);
         assertThat(logTester.logs(LoggerLevel.ERROR)).containsExactly(
                 expectedLogMessage,
-                "Cannot resolve 2 file paths, ignoring coverage measures for those files");
+                "2 file paths can not be resolved, coverage measures will be ignored for those files");
     }
 
 

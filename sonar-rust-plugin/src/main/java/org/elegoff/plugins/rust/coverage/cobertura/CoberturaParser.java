@@ -25,15 +25,17 @@ public class CoberturaParser {
     private static final String PACKAGES="packages";
     private static final String LINES="lines";
     private static final String LINE="line";
+    private static final String NUMBER="number";
+    private static final String FILENAME="filename";
     private static final String HITS="hits";
     private static final String BRANCH="branch";
     private static final String CONDITION_COVERAGE="condition-coverage";
 
-    private int unresolvedCpt;
+    private int unresolvedNb;
 
     public void importReport(File xmlFile, SensorContext context, final Map<InputFile, NewCoverage> coverageMap) throws XMLStreamException {
         LOG.info("Importing report '{}'", xmlFile);
-        unresolvedCpt = 0;
+        unresolvedNb = 0;
 
         StaxParser parser;
         parser = new StaxParser(rootCursor -> {
@@ -55,24 +57,26 @@ public class CoberturaParser {
             }
         });
         parser.parse(xmlFile);
-        if (unresolvedCpt > 1) {
-            LOG.error("Cannot resolve {} file paths, ignoring coverage measures for those files", unresolvedCpt);
+        if (unresolvedNb > 1) {
+            LOG.error("{} file paths can not be resolved, coverage measures will be ignored for those files", unresolvedNb);
         }
     }
 
     private static List<File> lookupBaseDirs(SMInputCursor sources, File baseDir) throws XMLStreamException {
         List<File> baseDirs = new ArrayList<>();
         SMInputCursor source = sources.childElementCursor(SOURCE);
-        while (source.getNext() != null) {
-            String path = FilenameUtils.normalize(source.collectDescendantText());
-            if (!StringUtils.isBlank(path)) {
-                File baseDirectory = new File(path);
-                if (baseDirectory.isDirectory()) {
-                    baseDirs.add(baseDirectory);
-                } else {
-                    LOG.warn("Invalid directory path in 'source' element: {}", path);
+        if (source.getNext() != null) {
+            do {
+                String path = FilenameUtils.normalize(source.collectDescendantText());
+                if (!StringUtils.isBlank(path)) {
+                    File baseDirectory = new File(path);
+                    if (baseDirectory.isDirectory()) {
+                        baseDirs.add(baseDirectory);
+                    } else {
+                        LOG.warn("Invalid directory path {} found in 'source' element", path);
+                    }
                 }
-            }
+            } while (source.getNext() != null);
         }
         if (baseDirs.isEmpty()) {
             return Collections.singletonList(baseDir);
@@ -83,7 +87,7 @@ public class CoberturaParser {
     private void getFileMeasures(SMInputCursor classCursor, SensorContext context, Map<InputFile, NewCoverage> coverageData, List<File> baseDirectories)
             throws XMLStreamException {
         while (classCursor.getNext() != null) {
-            String filename = FilenameUtils.normalize(classCursor.getAttrValue("filename"));
+            String filename = FilenameUtils.normalize(classCursor.getAttrValue(FILENAME));
             InputFile inputFile = resolve(context, baseDirectories, filename);
             if (inputFile != null) {
                 NewCoverage coverage = coverageData.computeIfAbsent(inputFile, f -> context.newCoverage().onFile(f));
@@ -97,15 +101,16 @@ public class CoberturaParser {
     private static void readFileContent(SMInputCursor classCursor, NewCoverage coverage) throws XMLStreamException {
         SMInputCursor line = classCursor.childElementCursor(LINES).advance().childElementCursor(LINE);
         while (line.getNext() != null) {
-            int lineId = Integer.parseInt(line.getAttrValue("number"));
-            coverage.lineHits(lineId, Integer.parseInt(line.getAttrValue(HITS)));
+            int linum = Integer.parseInt(line.getAttrValue(NUMBER));
+            coverage.lineHits(linum, Integer.parseInt(line.getAttrValue(HITS)));
 
             String isBranch = line.getAttrValue(BRANCH);
             String text = line.getAttrValue(CONDITION_COVERAGE);
-            if (StringUtils.equals(isBranch, "true") && StringUtils.isNotBlank(text)) {
-                String[] conditions = StringUtils.split(StringUtils.substringBetween(text, "(", ")"), "/");
-                coverage.conditions(lineId, Integer.parseInt(conditions[1]), Integer.parseInt(conditions[0]));
+            if (!StringUtils.equals(isBranch, "true") || !StringUtils.isNotBlank(text)) {
+                continue;
             }
+            String[] conditions = StringUtils.split(StringUtils.substringBetween(text, "(", ")"), "/");
+            coverage.conditions(linum, Integer.parseInt(conditions[1]), Integer.parseInt(conditions[0]));
         }
     }
 
@@ -115,7 +120,7 @@ public class CoberturaParser {
         File file = new File(filename);
         if (file.isAbsolute()) {
             if (!file.exists()) {
-                logUnresolvedFile("Cannot resolve the file path '{}' of the coverage report, the file does not exist in all <source>.", filename);
+                logUnresolvedFile("The file name '{}' of the coverage report can not be resolved, the file does not exist in all <source>.", filename);
             }
             absolutePath = file.getAbsolutePath();
         } else {
@@ -124,11 +129,11 @@ public class CoberturaParser {
                     .filter(File::exists)
                     .collect(Collectors.toList());
             if (fileList.isEmpty()) {
-                logUnresolvedFile("Cannot resolve the file path '{}' of the coverage report, the file does not exist in all <source>.", filename);
+                logUnresolvedFile("The file name '{}' of the coverage report can not be resolved, the file does not exist in all <source>.", filename);
                 return null;
             }
             if (fileList.size() > 1) {
-                logUnresolvedFile("Cannot resolve the file path '{}' of the coverage report, ambiguity, the file exists in several <source>.", filename);
+                logUnresolvedFile("Ambigous file name '{}' detected in mulitple location of the coverage report <source>.", filename);
                 return null;
             }
             absolutePath = fileList.get(0).getAbsolutePath();
@@ -137,8 +142,8 @@ public class CoberturaParser {
     }
 
     private void logUnresolvedFile(String msg, String filename) {
-        unresolvedCpt++;
-        if (unresolvedCpt == 1) {
+        unresolvedNb++;
+        if (unresolvedNb == 1) {
             LOG.error(msg, filename);
         }
     }
