@@ -17,16 +17,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.elegoff.rust.checks;
+package org.elegoff.plugins.rust.coverage.lcov;
 
-import org.junit.Test;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.utils.PathUtils;
 
-public class CheckListTest {
+import javax.annotation.CheckForNull;
 
+public class FileChooser {
+    private final InvertPath tree = new InvertPath();
 
-    @Test
-    public void testSize(){
-        assertThat(CheckList.getRustChecks().isEmpty()).isTrue();
+    FileChooser(Iterable<InputFile> inputFiles) {
+        inputFiles.forEach(inputFile -> {
+            String[] path = inputFile.relativePath().split("/");
+            tree.index(inputFile, path);
+        });
+    }
+
+    @CheckForNull
+    InputFile getInputFile(String filePath) {
+        String sanitizedPath = PathUtils.sanitize(filePath);
+        if (sanitizedPath == null) {
+            return null;
+        }
+        String[] pathElements = sanitizedPath.split("/");
+        return tree.getFileWithSuffix(pathElements);
     }
 }
