@@ -45,7 +45,7 @@ public class CoberturaParser {
                 rootCursor.advance();
             } catch (WstxEOFException e) {
                 LOG.debug("Reaching end of file unexpectedly", e);
-                throw new EmptyReportException();
+                throw new CoberturaException();
             }
             SMInputCursor cursor = rootCursor.childElementCursor();
             while (cursor.getNext() != null) {

@@ -37,40 +37,40 @@ public class CoberturaSensor implements Sensor {
         String baseDir = context.fileSystem().baseDir().getPath();
         Configuration config = context.config();
 
-        HashSet<InputFile> filesCovered = new HashSet<>();
-        List<File> reports = getCoverageReports(baseDir, config);
+        var filesCovered = new HashSet<InputFile>();
+        List<File> reports = fetchReports(baseDir, config);
         if (!reports.isEmpty()) {
             LOG.info("Rust coverage");
-            for (File report : uniqueAbsolutePaths(reports)) {
+            for (File report : deduplicate(reports)) {
                 Map<InputFile, NewCoverage> coverageMeasures = importReport(report, context);
-                saveMeasures(coverageMeasures, filesCovered);
+                saveCoverageMeasures(coverageMeasures, filesCovered);
             }
         }
     }
 
-    private static List<File> getCoverageReports(String baseDir, Configuration config) {
-        if (!config.hasKey(RustPlugin.COBERTURA_REPORT_PATHS)) {
-            return getReports(config, baseDir, RustPlugin.COBERTURA_REPORT_PATHS, RustPlugin.DEFAULT_COBERTURA_REPORT_PATHS);
-        }
-
-        return Arrays.stream(config.getStringArray(RustPlugin.COBERTURA_REPORT_PATHS))
-                .flatMap(path -> getReports(config, baseDir, RustPlugin.COBERTURA_REPORT_PATHS, path).stream())
-                .collect(Collectors.toList());
-    }
-
-
-    private static Set<File> uniqueAbsolutePaths(List<File> reports) {
+    private static Set<File> deduplicate(List<File> reports) {
         return reports.stream()
                 .map(File::getAbsoluteFile)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private static Map<InputFile, NewCoverage> importReport(File report, SensorContext context)  {
+    private static List<File> fetchReports(String baseDir, Configuration config) {
+        if (config.hasKey(RustPlugin.COBERTURA_REPORT_PATHS)) {
+            return Arrays.stream(config.getStringArray(RustPlugin.COBERTURA_REPORT_PATHS))
+                    .flatMap(path -> getIncludedFiles(config, baseDir, RustPlugin.COBERTURA_REPORT_PATHS, path).stream())
+                    .collect(Collectors.toList());
+        }
+        return getIncludedFiles(config, baseDir, RustPlugin.COBERTURA_REPORT_PATHS, RustPlugin.DEFAULT_COBERTURA_REPORT_PATHS);
+
+    }
+
+
+    private static Map<InputFile, NewCoverage> importReport(File report, SensorContext sensorContext)  {
         Map<InputFile, NewCoverage> coverageMeasures = new HashMap<>();
         try {
             CoberturaParser parser = new CoberturaParser();
-            parser.importReport(report, context, coverageMeasures);
-        } catch (EmptyReportException e) {
+            parser.importReport(report, sensorContext, coverageMeasures);
+        } catch (CoberturaException e) {
             LOG.warn("The report '{}' seems to be empty, ignoring. '{}'", report, e);
         } catch (XMLStreamException e) {
             throw new IllegalStateException("Error parsing the report '" + report + "'", e);
@@ -78,32 +78,29 @@ public class CoberturaSensor implements Sensor {
         return coverageMeasures;
     }
 
-    private static void saveMeasures(Map<InputFile, NewCoverage> coverageMeasures, HashSet<InputFile> coveredFiles) {
-        for (Map.Entry<InputFile, NewCoverage> entry : coverageMeasures.entrySet()) {
-            InputFile inputFile = entry.getKey();
+    private static void saveCoverageMeasures(Map<InputFile, NewCoverage> coverageMeasures, HashSet<InputFile> coveredFiles) {
+        coverageMeasures.forEach((inputFile, value) -> {
             coveredFiles.add(inputFile);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Saving coverage measures for file '{}'", inputFile.toString());
             }
-            entry.getValue()
-                    .save();
-        }
+            value.save();
+        });
     }
 
-    public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
+    public static List<File> getIncludedFiles(Configuration config, String baseDirPath, String reportPathPropertyKey, String reportPath) {
         LOG.debug("Using pattern '{}' to find reports", reportPath);
 
         DirectoryScanner scanner = new DirectoryScanner(new File(baseDirPath), WildcardPattern.create(reportPath));
         List<File> includedFiles = scanner.getIncludedFiles();
 
         if (includedFiles.isEmpty()) {
-            if (conf.hasKey(reportPathPropertyKey)) {
-                // try absolute path
+            if (config.hasKey(reportPathPropertyKey)) {
                 File file = new File(reportPath);
-                if (!file.exists()) {
-                    LOG.warn("No report was found for {} using pattern {}", reportPathPropertyKey, reportPath);
-                } else {
+                if (file.exists()) {
                     includedFiles.add(file);
+                } else {
+                    LOG.warn("No report was found for {} using pattern {}", reportPathPropertyKey, reportPath);
                 }
             } else {
                 LOG.debug("No report was found for {} using default pattern {}", reportPathPropertyKey, reportPath);
@@ -140,5 +137,9 @@ public class CoberturaSensor implements Sensor {
             };
             return new ArrayList<>(FileUtils.listFiles(baseDir, fileFilter, TrueFileFilter.INSTANCE));
         }
+
+
     }
+
+
 }
