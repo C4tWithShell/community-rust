@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- * <p>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -20,7 +20,7 @@
 package org.elegoff.plugins.rust;
 
 import org.elegoff.plugins.rust.coverage.cobertura.CoberturaSensor;
-import org.elegoff.plugins.rust.coverage.lcov.LCOV_Sensor;
+import org.elegoff.plugins.rust.coverage.lcov.LCOVSensor;
 import org.elegoff.plugins.rust.rules.RustRulesDefinition;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
@@ -40,7 +40,7 @@ public class RustPlugin implements Plugin {
     private static final String RUST_SUBCATEGORY = "Rust";
     public static final String LCOV_REPORT_PATHS = "sonar.rust.lcov.reportPaths";
     public static final String DEFAULT_LCOV_REPORT_PATHS = "lcov.info";
-    public static final String COBERTURA_REPORT_PATHS = "sonar.rust.cobertura.reportPaths";;
+    public static final String COBERTURA_REPORT_PATHS = "sonar.rust.cobertura.reportPaths";
     public static final String DEFAULT_COBERTURA_REPORT_PATHS = "cobertura.xml" ;
 
     @Override
@@ -65,7 +65,7 @@ public class RustPlugin implements Plugin {
                         .build(),
                 ClippyRulesDefinition.class,
 
-                LCOV_Sensor.class,
+                LCOVSensor.class,
                 PropertyDefinition.builder(LCOV_REPORT_PATHS)
                         .defaultValue(DEFAULT_LCOV_REPORT_PATHS)
                         .name("LCOV Files")

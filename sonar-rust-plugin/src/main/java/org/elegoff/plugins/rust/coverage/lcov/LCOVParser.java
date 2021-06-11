@@ -1,3 +1,22 @@
+/**
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2021 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 package org.elegoff.plugins.rust.coverage.lcov;
 
 import org.sonar.api.batch.fs.InputFile;
@@ -14,9 +33,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.elegoff.plugins.rust.coverage.lcov.LCOV_Fields.*;
+import static org.elegoff.plugins.rust.coverage.lcov.LCOVFields.*;
 
-public class LCOV_Parser {
+public class LCOVParser {
 
     private final Map<InputFile, NewCoverage> fileCoverage;
     private final SensorContext sensorContext;
@@ -24,27 +43,26 @@ public class LCOV_Parser {
     private final FileChooser fc;
     private int pbCount = 0;
 
-    private static final Logger LOG = Loggers.get(LCOV_Parser.class);
+    private static final Logger LOG = Loggers.get(LCOVParser.class);
 
-    private LCOV_Parser(List<String> lines, SensorContext sensorContext, FileChooser fc) {
+    private LCOVParser(List<String> lines, SensorContext sensorContext, FileChooser fc) {
         this.sensorContext = sensorContext;
         this.fc = fc;
         this.fileCoverage = parse(lines);
     }
 
-    static LCOV_Parser build(SensorContext context, List<File> files, FileChooser fileChooser) {
+    static LCOVParser build(SensorContext context, List<File> files, FileChooser fileChooser) {
         final List<String> lines;
         lines = new LinkedList<>();
         for (int i = 0, filesSize = files.size(); i < filesSize; i++) {
-            File file = files.get(i);
+            var file = files.get(i);
             try (Stream<String> fileLines = Files.lines(file.toPath())) {
                 lines.addAll(fileLines.collect(Collectors.toList()));
             } catch (IOException e) {
                 throw new IllegalArgumentException("Could not read content from file: " + file, e);
             }
         }
-        LCOV_Parser parser = new LCOV_Parser(lines, context, fileChooser);
-        return parser;
+        return new LCOVParser(lines, context, fileChooser);
     }
 
     Map<InputFile, NewCoverage> getFileCoverage() {
@@ -66,7 +84,11 @@ public class LCOV_Parser {
 
         for (String line : lines) {
             reportLineNum++;
-            if (!line.startsWith(String.valueOf(SF))) {
+            if (line.startsWith(String.valueOf(SF))) {
+                fileContent = files.computeIfAbsent(inputFileForSourceFile(line),
+                        inputFile -> inputFile == null ? null : new FileContent(inputFile));
+
+            } else {
                 if (fileContent != null) {
                     if (line.startsWith(String.valueOf(DA))) {
                         parseLineCoverage(fileContent, reportLineNum, line);
@@ -75,10 +97,6 @@ public class LCOV_Parser {
                         parseBranchCoverage(fileContent, reportLineNum, line);
                     }
                 }
-            } else {
-                fileContent = files.computeIfAbsent(inputFileForSourceFile(line),
-                        inputFile -> inputFile == null ? null : new FileContent(inputFile));
-
             }
 
         }

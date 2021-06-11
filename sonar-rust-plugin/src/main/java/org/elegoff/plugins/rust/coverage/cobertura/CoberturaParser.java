@@ -1,3 +1,22 @@
+/**
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2021 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 package org.elegoff.plugins.rust.coverage.cobertura;
 
 import java.io.File;
@@ -69,7 +88,7 @@ public class CoberturaParser {
             do {
                 String path = FilenameUtils.normalize(source.collectDescendantText());
                 if (!StringUtils.isBlank(path)) {
-                    File baseDirectory = new File(path);
+                    var baseDirectory = new File(path);
                     if (baseDirectory.isDirectory()) {
                         baseDirs.add(baseDirectory);
                     } else {
@@ -88,7 +107,7 @@ public class CoberturaParser {
             throws XMLStreamException {
         while (classCursor.getNext() != null) {
             String filename = FilenameUtils.normalize(classCursor.getAttrValue(FILENAME));
-            InputFile inputFile = resolve(context, baseDirectories, filename);
+            var inputFile = resolve(context, baseDirectories, filename);
             if (inputFile != null) {
                 NewCoverage coverage = coverageData.computeIfAbsent(inputFile, f -> context.newCoverage().onFile(f));
                 readFileContent(classCursor, coverage);
@@ -101,7 +120,7 @@ public class CoberturaParser {
     private static void readFileContent(SMInputCursor classCursor, NewCoverage coverage) throws XMLStreamException {
         SMInputCursor line = classCursor.childElementCursor(LINES).advance().childElementCursor(LINE);
         while (line.getNext() != null) {
-            int linum = Integer.parseInt(line.getAttrValue(NUMBER));
+            var linum = Integer.parseInt(line.getAttrValue(NUMBER));
             coverage.lineHits(linum, Integer.parseInt(line.getAttrValue(HITS)));
 
             String isBranch = line.getAttrValue(BRANCH);
@@ -117,7 +136,7 @@ public class CoberturaParser {
     @Nullable
     private InputFile resolve(SensorContext context, List<File> baseDirectories, String filename) {
         String absolutePath;
-        File file = new File(filename);
+        var file = new File(filename);
         if (file.isAbsolute()) {
             if (!file.exists()) {
                 logUnresolvedFile("The file name '{}' of the coverage report can not be resolved, the file does not exist in all <source>.", filename);

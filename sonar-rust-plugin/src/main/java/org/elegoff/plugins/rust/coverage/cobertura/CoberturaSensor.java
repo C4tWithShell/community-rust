@@ -1,3 +1,22 @@
+/**
+ * Sonar Rust Plugin (Community)
+ * Copyright (C) 2021 Eric Le Goff
+ * http://github.com/elegoff/sonar-rust
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 package org.elegoff.plugins.rust.coverage.cobertura;
 
 import org.apache.commons.io.FileUtils;
@@ -5,6 +24,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.elegoff.plugins.rust.RustPlugin;
+import org.elegoff.plugins.rust.coverage.RustFileSystem;
 import org.elegoff.plugins.rust.language.RustLanguage;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -68,7 +88,7 @@ public class CoberturaSensor implements Sensor {
     private static Map<InputFile, NewCoverage> importReport(File report, SensorContext sensorContext)  {
         Map<InputFile, NewCoverage> coverageMeasures = new HashMap<>();
         try {
-            CoberturaParser parser = new CoberturaParser();
+            var parser = new CoberturaParser();
             parser.importReport(report, sensorContext, coverageMeasures);
         } catch (CoberturaException e) {
             LOG.warn("Ignoring report '{}' which seems to be empty. '{}'", report, e);
@@ -91,8 +111,8 @@ public class CoberturaSensor implements Sensor {
     public static List<File> getIncludedFiles(Configuration config, String baseDirPath, String reportPathPropertyKey, String reportPath) {
         LOG.debug("Using pattern '{}' to find reports", reportPath);
 
-        DirectoryScanner scanner = new DirectoryScanner(new File(baseDirPath), WildcardPattern.create(reportPath));
-        List<File> includedFiles = scanner.getIncludedFiles();
+        RustFileSystem rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
+        List<File> includedFiles = rustFileSystem.getIncludedFiles();
 
         if (includedFiles.isEmpty()) {
             if (config.hasKey(reportPathPropertyKey)) {
@@ -110,36 +130,6 @@ public class CoberturaSensor implements Sensor {
     }
 
 
-    private static class DirectoryScanner {
-        private final File baseDir;
-        private final WildcardPattern pattern;
-
-        public DirectoryScanner(File baseDir, WildcardPattern pattern) {
-            this.baseDir = baseDir;
-            this.pattern = pattern;
-        }
-
-        public List<File> getIncludedFiles() {
-            final String baseDirAbsolutePath = baseDir.getAbsolutePath();
-            IOFileFilter fileFilter = new IOFileFilter() {
-
-                @Override
-                public boolean accept(File dir, String name) {
-                    return accept(new File(dir, name));
-                }
-
-                @Override
-                public boolean accept(File file) {
-                    String path = file.getAbsolutePath();
-                    path = path.substring(Math.min(baseDirAbsolutePath.length(), path.length()));
-                    return pattern.match(FilenameUtils.separatorsToUnix(path));
-                }
-            };
-            return new ArrayList<>(FileUtils.listFiles(baseDir, fileFilter, TrueFileFilter.INSTANCE));
-        }
-
-
-    }
 
 
 }
