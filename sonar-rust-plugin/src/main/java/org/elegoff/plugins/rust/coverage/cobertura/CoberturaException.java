@@ -17,16 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.elegoff.rust.checks;
+package org.elegoff.plugins.rust.coverage.cobertura;
 
-import org.junit.Test;
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class CheckListTest {
-
-
-    @Test
-    public void testSize(){
-        assertThat(CheckList.getRustChecks().isEmpty()).isTrue();
-    }
+public class CoberturaException extends RuntimeException {
 }
