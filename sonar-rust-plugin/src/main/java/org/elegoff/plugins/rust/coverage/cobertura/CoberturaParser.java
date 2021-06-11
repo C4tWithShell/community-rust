@@ -20,6 +20,14 @@ import org.sonar.api.utils.log.Loggers;
 public class CoberturaParser {
 
     private static final Logger LOG = Loggers.get(CoberturaParser.class);
+    private static final String SOURCES="sources";
+    private static final String SOURCE="source";
+    private static final String PACKAGES="packages";
+    private static final String LINES="lines";
+    private static final String LINE="line";
+    private static final String HITS="hits";
+    private static final String BRANCH="branch";
+    private static final String CONDITION_COVERAGE="condition-coverage";
 
     private int unresolvedCpt;
 
@@ -33,16 +41,16 @@ public class CoberturaParser {
             List<File> baseDirs = Collections.singletonList(baseDir);
             try {
                 rootCursor.advance();
-            } catch (com.ctc.wstx.exc.WstxEOFException e) {
-                LOG.debug("Reaching end of file unexepectedly", e);
+            } catch (WstxEOFException e) {
+                LOG.debug("Reaching end of file unexpectedly", e);
                 throw new EmptyReportException();
             }
             SMInputCursor cursor = rootCursor.childElementCursor();
             while (cursor.getNext() != null) {
-                if ("sources".equals(cursor.getLocalName())) {
-                    baseDirs = extractBaseDirectories(cursor, baseDir);
-                } else if ("packages".equals(cursor.getLocalName())) {
-                    collectFileMeasures(cursor.descendantElementCursor("class"), context, coverageMap, baseDirs);
+                if (SOURCES.equals(cursor.getLocalName())) {
+                    baseDirs = lookupBaseDirs(cursor, baseDir);
+                } else if (PACKAGES.equals(cursor.getLocalName())) {
+                    getFileMeasures(cursor.descendantElementCursor("class"), context, coverageMap, baseDirs);
                 }
             }
         });
@@ -52,36 +60,51 @@ public class CoberturaParser {
         }
     }
 
-    private static List<File> extractBaseDirectories(SMInputCursor sources, File defaultBaseDirectory) throws XMLStreamException {
-        List<File> baseDirectories = new ArrayList<>();
-        SMInputCursor source = sources.childElementCursor("source");
+    private static List<File> lookupBaseDirs(SMInputCursor sources, File baseDir) throws XMLStreamException {
+        List<File> baseDirs = new ArrayList<>();
+        SMInputCursor source = sources.childElementCursor(SOURCE);
         while (source.getNext() != null) {
             String path = FilenameUtils.normalize(source.collectDescendantText());
             if (!StringUtils.isBlank(path)) {
                 File baseDirectory = new File(path);
                 if (baseDirectory.isDirectory()) {
-                    baseDirectories.add(baseDirectory);
+                    baseDirs.add(baseDirectory);
                 } else {
                     LOG.warn("Invalid directory path in 'source' element: {}", path);
                 }
             }
         }
-        if (baseDirectories.isEmpty()) {
-            return Collections.singletonList(defaultBaseDirectory);
+        if (baseDirs.isEmpty()) {
+            return Collections.singletonList(baseDir);
         }
-        return baseDirectories;
+        return baseDirs;
     }
 
-    private void collectFileMeasures(SMInputCursor classCursor, SensorContext context, Map<InputFile, NewCoverage> coverageData, List<File> baseDirectories)
+    private void getFileMeasures(SMInputCursor classCursor, SensorContext context, Map<InputFile, NewCoverage> coverageData, List<File> baseDirectories)
             throws XMLStreamException {
         while (classCursor.getNext() != null) {
             String filename = FilenameUtils.normalize(classCursor.getAttrValue("filename"));
             InputFile inputFile = resolve(context, baseDirectories, filename);
             if (inputFile != null) {
                 NewCoverage coverage = coverageData.computeIfAbsent(inputFile, f -> context.newCoverage().onFile(f));
-                collectFileData(classCursor, coverage);
+                readFileContent(classCursor, coverage);
             } else {
                 classCursor.advance();
+            }
+        }
+    }
+
+    private static void readFileContent(SMInputCursor classCursor, NewCoverage coverage) throws XMLStreamException {
+        SMInputCursor line = classCursor.childElementCursor(LINES).advance().childElementCursor(LINE);
+        while (line.getNext() != null) {
+            int lineId = Integer.parseInt(line.getAttrValue("number"));
+            coverage.lineHits(lineId, Integer.parseInt(line.getAttrValue(HITS)));
+
+            String isBranch = line.getAttrValue(BRANCH);
+            String text = line.getAttrValue(CONDITION_COVERAGE);
+            if (StringUtils.equals(isBranch, "true") && StringUtils.isNotBlank(text)) {
+                String[] conditions = StringUtils.split(StringUtils.substringBetween(text, "(", ")"), "/");
+                coverage.conditions(lineId, Integer.parseInt(conditions[1]), Integer.parseInt(conditions[0]));
             }
         }
     }
@@ -113,25 +136,12 @@ public class CoberturaParser {
         return context.fileSystem().inputFile(context.fileSystem().predicates().hasAbsolutePath(absolutePath));
     }
 
-    private void logUnresolvedFile(String message, String filename) {
+    private void logUnresolvedFile(String msg, String filename) {
         unresolvedCpt++;
         if (unresolvedCpt == 1) {
-            LOG.error(message, filename);
+            LOG.error(msg, filename);
         }
     }
 
-    private static void collectFileData(SMInputCursor classCursor, NewCoverage coverage) throws XMLStreamException {
-        SMInputCursor line = classCursor.childElementCursor("lines").advance().childElementCursor("line");
-        while (line.getNext() != null) {
-            int lineId = Integer.parseInt(line.getAttrValue("number"));
-            coverage.lineHits(lineId, Integer.parseInt(line.getAttrValue("hits")));
 
-            String isBranch = line.getAttrValue("branch");
-            String text = line.getAttrValue("condition-coverage");
-            if (StringUtils.equals(isBranch, "true") && StringUtils.isNotBlank(text)) {
-                String[] conditions = StringUtils.split(StringUtils.substringBetween(text, "(", ")"), "/");
-                coverage.conditions(lineId, Integer.parseInt(conditions[1]), Integer.parseInt(conditions[0]));
-            }
-        }
-    }
 }
