@@ -6,14 +6,12 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.elegoff.plugins.rust.RustPlugin;
 import org.elegoff.plugins.rust.language.RustLanguage;
-import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
 import org.sonar.api.config.Configuration;
-import org.sonar.api.config.Settings;
 import org.sonar.api.utils.WildcardPattern;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -44,7 +42,7 @@ public class CoberturaSensor implements Sensor {
         if (!reports.isEmpty()) {
             LOG.info("Rust coverage");
             for (File report : uniqueAbsolutePaths(reports)) {
-                Map<InputFile, NewCoverage> coverageMeasures = parseReport(report, context);
+                Map<InputFile, NewCoverage> coverageMeasures = importReport(report, context);
                 saveMeasures(coverageMeasures, filesCovered);
             }
         }
@@ -67,11 +65,11 @@ public class CoberturaSensor implements Sensor {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private static Map<InputFile, NewCoverage> parseReport(File report, SensorContext context)  {
+    private static Map<InputFile, NewCoverage> importReport(File report, SensorContext context)  {
         Map<InputFile, NewCoverage> coverageMeasures = new HashMap<>();
         try {
             CoberturaParser parser = new CoberturaParser();
-            parser.parseReport(report, context, coverageMeasures);
+            parser.importReport(report, context, coverageMeasures);
         } catch (EmptyReportException e) {
             LOG.warn("The report '{}' seems to be empty, ignoring. '{}'", report, e);
         } catch (XMLStreamException e) {

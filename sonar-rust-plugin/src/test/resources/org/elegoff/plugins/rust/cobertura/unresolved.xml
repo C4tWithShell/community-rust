@@ -3,7 +3,7 @@
     SYSTEM 'http://cobertura.sourceforge.net/xml/coverage-03.dtd'>
 <coverage branch-rate="0.5" line-rate="0.27397260274" timestamp="1335184370" version="gcovr 2.5-prerelease (r2774)">
   <sources>
-    <source>src/test/resources/org/sonar/plugins/python/coverage-reports</source>
+    <source>src/test/resources/org/elegoff/plugins/rust/cobertura</source>
   </sources>
 
   <packages>

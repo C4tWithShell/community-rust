@@ -1,60 +1,54 @@
 package org.elegoff.plugins.rust.coverage.cobertura;
 
 import java.io.File;
-import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import javax.xml.stream.XMLStreamException;
 
+import com.ctc.wstx.exc.WstxEOFException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.staxmate.in.SMInputCursor;
-import org.elegoff.plugins.rust.language.RustLanguage;
-import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.coverage.CoverageType;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
-import org.sonar.api.utils.MessageException;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
-import static java.util.Locale.ENGLISH;
-import static org.sonar.api.utils.ParsingUtils.parseNumber;
 
 public class CoberturaParser {
 
     private static final Logger LOG = Loggers.get(CoberturaParser.class);
 
-    private int unresolvedFilenameCount;
+    private int unresolvedCpt;
 
-    public void parseReport(File xmlFile, SensorContext context, final Map<InputFile, NewCoverage> coverageData) throws XMLStreamException {
-        LOG.info("Parsing report '{}'", xmlFile);
-        unresolvedFilenameCount = 0;
+    public void importReport(File xmlFile, SensorContext context, final Map<InputFile, NewCoverage> coverageMap) throws XMLStreamException {
+        LOG.info("Importing report '{}'", xmlFile);
+        unresolvedCpt = 0;
 
-        StaxParser parser = new StaxParser(rootCursor -> {
-            File defaultBaseDirectory = context.fileSystem().baseDir();
-            List<File> baseDirectories = Collections.singletonList(defaultBaseDirectory);
+        StaxParser parser;
+        parser = new StaxParser(rootCursor -> {
+            File baseDir = context.fileSystem().baseDir();
+            List<File> baseDirs = Collections.singletonList(baseDir);
             try {
                 rootCursor.advance();
-            } catch (com.ctc.wstx.exc.WstxEOFException eofExc) {
-                LOG.debug("Unexpected end of file is encountered", eofExc);
+            } catch (com.ctc.wstx.exc.WstxEOFException e) {
+                LOG.debug("Reaching end of file unexepectedly", e);
                 throw new EmptyReportException();
             }
             SMInputCursor cursor = rootCursor.childElementCursor();
             while (cursor.getNext() != null) {
                 if ("sources".equals(cursor.getLocalName())) {
-                    baseDirectories = extractBaseDirectories(cursor, defaultBaseDirectory);
+                    baseDirs = extractBaseDirectories(cursor, baseDir);
                 } else if ("packages".equals(cursor.getLocalName())) {
-                    collectFileMeasures(cursor.descendantElementCursor("class"), context, coverageData, baseDirectories);
+                    collectFileMeasures(cursor.descendantElementCursor("class"), context, coverageMap, baseDirs);
                 }
             }
         });
         parser.parse(xmlFile);
-        if (unresolvedFilenameCount > 1) {
-            LOG.error("Cannot resolve {} file paths, ignoring coverage measures for those files", unresolvedFilenameCount);
+        if (unresolvedCpt > 1) {
+            LOG.error("Cannot resolve {} file paths, ignoring coverage measures for those files", unresolvedCpt);
         }
     }
 
@@ -120,8 +114,8 @@ public class CoberturaParser {
     }
 
     private void logUnresolvedFile(String message, String filename) {
-        unresolvedFilenameCount++;
-        if (unresolvedFilenameCount == 1) {
+        unresolvedCpt++;
+        if (unresolvedCpt == 1) {
             LOG.error(message, filename);
         }
     }
