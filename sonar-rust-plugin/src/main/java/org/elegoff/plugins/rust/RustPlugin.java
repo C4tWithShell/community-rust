@@ -19,7 +19,7 @@
  */
 package org.elegoff.plugins.rust;
 
-import org.elegoff.plugins.rust.coverage.cobertura.Cobertura_Sensor;
+import org.elegoff.plugins.rust.coverage.cobertura.CoberturaSensor;
 import org.elegoff.plugins.rust.coverage.lcov.LCOV_Sensor;
 import org.elegoff.plugins.rust.rules.RustRulesDefinition;
 import org.sonar.api.Plugin;
@@ -76,7 +76,7 @@ public class RustPlugin implements Plugin {
                         .multiValues(true)
                         .build(),
 
-                Cobertura_Sensor.class,
+                CoberturaSensor.class,
                 PropertyDefinition.builder(COBERTURA_REPORT_PATHS)
                         .defaultValue(DEFAULT_COBERTURA_REPORT_PATHS)
                         .name("LCOV Files")

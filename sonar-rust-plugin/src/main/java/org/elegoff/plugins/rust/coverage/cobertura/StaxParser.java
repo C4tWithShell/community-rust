@@ -10,6 +10,7 @@ import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class StaxParser {
 
@@ -44,6 +45,15 @@ public class StaxParser {
     }
 
     private void parse(SMHierarchicCursor rootCursor) throws XMLStreamException {
+        try {
+            streamHandler.stream(rootCursor);
+        } finally {
+            rootCursor.getStreamReader().closeCompletely();
+        }
+    }
+
+    public void parse(InputStream xmlInput) throws XMLStreamException {
+        SMHierarchicCursor rootCursor = inf.rootElementCursor(xmlInput);
         try {
             streamHandler.stream(rootCursor);
         } finally {
