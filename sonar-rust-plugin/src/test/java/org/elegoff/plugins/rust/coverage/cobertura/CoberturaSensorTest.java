@@ -205,7 +205,7 @@ public class CoberturaSensorTest {
     public void sensor_descriptor() {
         DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
         new CoberturaSensor().describe(descriptor);
-        assertThat(descriptor.name()).isEqualTo("Cobertura Sensor for Rust coverage");
+        assertThat(descriptor.name()).isEqualTo("Cobertura Sensor for Rust");
         assertThat(descriptor.languages()).containsOnly(RustLanguage.KEY);
     }
 

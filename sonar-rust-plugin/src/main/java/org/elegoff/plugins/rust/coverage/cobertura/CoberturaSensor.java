@@ -28,7 +28,7 @@ public class CoberturaSensor implements Sensor {
     @Override
     public void describe(SensorDescriptor descriptor) {
         descriptor
-                .name("Cobertura Sensor for Rust coverage")
+                .name("Cobertura Sensor for Rust")
                 .onlyOnLanguage(RustLanguage.KEY);
     }
 
@@ -40,7 +40,7 @@ public class CoberturaSensor implements Sensor {
         var filesCovered = new HashSet<InputFile>();
         List<File> reports = fetchReports(baseDir, config);
         if (!reports.isEmpty()) {
-            LOG.info("Rust coverage");
+            LOG.info("Rust cobertura coverage");
             for (File report : deduplicate(reports)) {
                 Map<InputFile, NewCoverage> coverageMeasures = importReport(report, context);
                 saveCoverageMeasures(coverageMeasures, filesCovered);
@@ -71,9 +71,9 @@ public class CoberturaSensor implements Sensor {
             CoberturaParser parser = new CoberturaParser();
             parser.importReport(report, sensorContext, coverageMeasures);
         } catch (CoberturaException e) {
-            LOG.warn("The report '{}' seems to be empty, ignoring. '{}'", report, e);
+            LOG.warn("Ignoring report '{}' which seems to be empty. '{}'", report, e);
         } catch (XMLStreamException e) {
-            throw new IllegalStateException("Error parsing the report '" + report + "'", e);
+            throw new IllegalStateException("Failed to import report '" + report + "'", e);
         }
         return coverageMeasures;
     }
