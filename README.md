@@ -3,32 +3,27 @@
 |  [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=coverage) |
 | [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)|[Download latest release](https://github.com/elegoff/sonar-rust/releases) |
 
-## SonarQube Rust plugin (Community)
+## SonarQube plugin for Rust (Community)
 
-[SonarQube](https://www.sonarqube.org) is an open platform to manage code quality. This plugin
-adds Rust support to SonarQube with the focus on integration of existing Rust tools.
+The plugin enables analysis of Rust language within [SonarQube](https://www.sonarqube.org), which is an open platform to manage code quality.
+It is compatible with SonarQube 7.9 and above (including [SonarQube 8.9 LTS](https://www.sonarqube.org/sonarqube-8-9-lts/))
 
-This plugin is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+It leverages [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) to raise issues against coding rules,  [LCOV](https://wiki.documentfoundation.org/Development/Lcov) or [Cobertura](http://cobertura.github.io/cobertura/) for code coverage.
 
-This plugin allows visualizing [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) reports from the SonarQube UI
-It is compatible with SonarQube 7.9+
+### How ?
+
+You may want to read :
+* The [documentation](./DOC.md)
+* The [FAQ page](./FAQ.md)
+
+***
+*This plugin is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.*
+
+Please note this is a community supported plugin,  not developed, maintained or supported by SonarSource (the company behind SonarQube product)
+
+Your contribution and/or user feedback is welcomed
+
+*Contact :* <sonar-rust@pm.me>
 
 
-## Installation
-
-Just [download the latest plugin JAR file](https://github.com/elegoff/sonar-rust/releases) and copy it to the `extensions/plugins` directory of SonarQube and restart.
-
-## Build the plugin from source
-
-`mvn clean package`
-
-## Generating clippy report files :
-
-`cargo clippy --message-format=json &> <clippy report file>`
-
-## Analysis parameter
-
-Add SonarQube analysis parameter `sonar.rust.clippy.reportPaths=<clippy report file>`
-
-NB: `sonar.rust.clippy.reportPaths` supports passing of multiple clippy report files by comma separating them.
 
