@@ -6,7 +6,7 @@
 ## SonarQube plugin for Rust (Community)
 
 The plugin enables analysis of Rust language within [SonarQube](https://www.sonarqube.org), which is an open platform to manage code quality.
-It is compatible with SonarQube 7.9 and above (including [SonarQube 8.9 LTS](https://www.sonarqube.org/sonarqube-8-9-lts/))
+It is compatible with SonarQube 7.9 and above.
 
 It leverages [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) to raise issues against coding rules,  [LCOV](https://wiki.documentfoundation.org/Development/Lcov) or [Cobertura](http://cobertura.github.io/cobertura/) for code coverage.
 
@@ -18,8 +18,6 @@ You may want to read :
 
 ***
 *This plugin is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.*
-
-Please note this is a community supported plugin,  not developed, maintained or supported by SonarSource (the company behind SonarQube product)
 
 Your contribution and/or user feedback is welcomed
 

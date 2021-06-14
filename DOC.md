@@ -1,9 +1,9 @@
+# Documentation
 ## Requirements
 
 - An existing instance of SonarQube server with minimum version v7.9
 - Install SonarQube Scanner and be sure you can call `sonar-scanner` from your project root directory 
-- Network connectivity between the machine hosting your source (and scanning it)  
-  and the SonarQube server 
+- You need network connectivity between the machine running the scan and the SonarQube server 
 
 ## Installation
 
@@ -13,12 +13,12 @@
 ## Upgrade 
 
 Same as installing, except you will need to delete the previous plugin jar file from the `extensions/plugins` folder
-(SonarQube will fail to start if detects two different versions of the same plugin and does not assume to use latest)
+(SonarQube would fail to start if detects two different versions of the same plugin)
 
 
 ## Generating Clippy report files :
 
-This plugin will not detect any issue unless you provide him location of a Clippy report JSON file
+This plugin will not detect any issue unless you provide a location of Clippy report JSON file(s)
 
 Typically, a Clippy JSON report can be generated with
 
@@ -30,17 +30,15 @@ where console output can be redirected into a file:
 
 ## Minimal Configuration the Rust Analysis 
 
-- Add a file `sonar-project.properties` at the root of your project
+- Add a file `sonar-project.properties` at the root of your project (More details in the [official documentation](https://docs.sonarqube.org/8.9/analysis/scan/sonarscanner/#header-1))
 
-(More details in the [official documentation](https://docs.sonarqube.org/8.9/analysis/scan/sonarscanner/#header-1))
-
-This Rust plugin requires you add an extra SonarQube analysis parameter `sonar.rust.clippy.reportPaths` setting the Clippy report file(s) location
+- add an extra SonarQube analysis parameter `sonar.rust.clippy.reportPaths` setting the Clippy report file(s) location
 
 NB: `sonar.rust.clippy.reportPaths` supports passing of multiple clippy report files by comma separating them.
 
 ## Adding coverage measures 
 
-On top of the list of issues imported from Clippy reports, SonarQube can also display coverage measures
+Optionally SonarQube can also display Rust coverage measures
 
 This Rust plugin doesn't run your tests or generate coverage reports for you. That has to be done before analysis and fed in in the form of reports.
 
