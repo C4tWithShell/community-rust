@@ -12,7 +12,17 @@ It leverages [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) to 
 
 ### How ?
 
-You may want to read :
+#### tl;dr
+
+* Generate a Clippy report
+  `cargo clippy --message-format=json &> <CLIPPY REPORT FILE>`
+* Import it into SonarQube
+   set analysis parameter `sonar.rust.clippy.reportPaths=<CLIPPY REPORT FILE>`
+* Optionally import coverage measures 
+use either `sonar.rust.lcov.reportPaths` or `sonar.rust.cobertura.reportPaths`
+
+
+For more details, you may want to read :
 * The [documentation](./DOC.md)
 * The [FAQ page](./FAQ.md)
 
