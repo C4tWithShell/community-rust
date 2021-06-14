@@ -10,6 +10,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#almost_swapped"
   },
   {
+    "key": "clippy::append_instead_of_extend",
+    "name": "Checks for occurrences where one vector gets extended instead of append",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#append_instead_of_extend"
+  },
+  {
     "key": "clippy::approx_constant",
     "name": "Checks for floating point literals that approximate\nconstants which are defined in\n[`std::f32::const",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#approx_constant"
@@ -318,6 +323,11 @@
     "key": "clippy::disallowed_method",
     "name": "Denies the configured methods and functions in clippy.toml",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#disallowed_method"
+  },
+  {
+    "key": "clippy::disallowed_type",
+    "name": "Denies the configured types in clippy.toml.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#disallowed_type"
   },
   {
     "key": "clippy::diverging_sub_expression",
