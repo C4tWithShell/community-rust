@@ -6,7 +6,7 @@
 
     <groupId>org.elegoff</groupId>
     <artifactId>rust-report</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.4</version>
 
     <packaging>pom</packaging>
 
