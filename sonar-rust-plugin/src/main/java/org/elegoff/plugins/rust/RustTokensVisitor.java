@@ -25,7 +25,6 @@ import com.sonar.sslr.api.Token;
 import com.sonar.sslr.api.Trivia;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.cpd.NewCpdTokens;
 import org.sonar.api.batch.sensor.highlighting.NewHighlighting;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.rust.RustVisitorContext;
@@ -68,15 +67,15 @@ public class RustTokensVisitor{
         }
 
         public void scanFile(InputFile inputFile, RustVisitorContext visitorContext) {
-            NewHighlighting highlighting = context.newHighlighting();
+            var highlighting = context.newHighlighting();
             highlighting.onFile(inputFile);
 
-            NewCpdTokens cpdTokens = context.newCpdTokens();
+            var cpdTokens = context.newCpdTokens();
             cpdTokens.onFile(inputFile);
 
             for (Token token : lexer.parse(visitorContext.file().content()).getTokens()) {
                 final String tokenImage = getTokenImage(token);
-                final TokenLocation tokenLocation = tokenLocation(token);
+                final var tokenLocation = tokenLocation(token);
 
                 if (token.getType().equals(RustTokenType.CHARACTER_LITERAL)
                         ||token.getType().equals(RustTokenType.STRING_LITERAL)

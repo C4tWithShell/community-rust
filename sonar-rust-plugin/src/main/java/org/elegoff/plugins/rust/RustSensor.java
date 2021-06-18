@@ -28,20 +28,15 @@ import org.elegoff.plugins.rust.language.RustLanguage;
 import org.elegoff.rust.checks.CheckList;
 import org.elegoff.rust.checks.Issue;
 import org.elegoff.rust.checks.RustCheck;
-import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.measures.CoreMetrics;
-import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
-import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.rust.RustLexer;
@@ -90,15 +85,15 @@ public class RustSensor implements Sensor {
 
     @Override
     public void execute(SensorContext context) {
-        final FileSystem fileSystem = context.fileSystem();
-        final FilePredicate mainFilePredicates = fileSystem.predicates().and(
+        final var fileSystem = context.fileSystem();
+        final var mainFilePredicates = fileSystem.predicates().and(
                 fileSystem.predicates().hasLanguage(RustLanguage.KEY),
                 fileSystem.predicates().hasType(InputFile.Type.MAIN));
 
         RustParserConfiguration parserConfiguration = new RustPluginConfiguration().getParserConfiguration(fileSystem.encoding());
         Parser<Grammar> parser = RustParser.create(parserConfiguration);
-        MetricsVisitor metricsVisitor = new MetricsVisitor(parserConfiguration);
-        RustTokensVisitor tokensVisitor = new RustTokensVisitor(context, RustLexer.create(parserConfiguration));
+        var metricsVisitor = new MetricsVisitor(parserConfiguration);
+        var tokensVisitor = new RustTokensVisitor(context, RustLexer.create(parserConfiguration));
 
         Collection<RustCheck> rustChecks = checks.all();
 

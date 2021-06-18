@@ -31,11 +31,9 @@ import java.util.stream.Collectors;
 
 import org.elegoff.plugins.rust.language.RustLanguage;
 import org.sonar.api.batch.rule.Severity;
-import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.batch.sensor.issue.NewExternalIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.log.Logger;
