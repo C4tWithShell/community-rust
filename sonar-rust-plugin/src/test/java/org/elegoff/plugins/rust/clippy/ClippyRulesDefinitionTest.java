@@ -38,7 +38,7 @@ public class ClippyRulesDefinitionTest {
         assertThat(repository.name()).isEqualTo("Clippy");
         assertThat(repository.language()).isEqualTo("rust");
         assertThat(repository.isExternal()).isTrue();
-        assertThat(repository.rules().size()).isEqualTo(460);
+        assertThat(repository.rules().size()).isEqualTo(462);
 
         RulesDefinition.Rule rule = repository.rule("clippy::absurd_extreme_comparisons");
         assertThat(rule).isNotNull();
