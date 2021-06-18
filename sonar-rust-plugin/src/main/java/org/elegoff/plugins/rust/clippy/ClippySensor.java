@@ -79,13 +79,13 @@ public class ClippySensor implements Sensor {
             return;
         }
 
-        InputFile inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(clippyIssue.filePath));
+        var inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(clippyIssue.filePath));
         if (inputFile == null) {
             unresolvedInputFiles.add(clippyIssue.filePath);
             return;
         }
 
-        NewExternalIssue newExternalIssue = context.newExternalIssue();
+        var newExternalIssue = context.newExternalIssue();
         newExternalIssue
                 .type(RuleType.CODE_SMELL)
                 .severity(toSonarQubeSeverity(clippyIssue.severity))
