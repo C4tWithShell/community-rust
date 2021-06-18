@@ -118,7 +118,7 @@ public class RustSensor implements Sensor {
             Parser<Grammar> parser,
             Collection<RustCheck> checks) {
 
-        SonarQubeRustFile rustFile = SonarQubeRustFile.create(inputFile);
+        var rustFile = SonarQubeRustFile.create(inputFile);
         RustVisitorContext visitorContext;
         LOG.debug("Rust parsing " +  inputFile.filename());
         try {
@@ -132,7 +132,7 @@ public class RustSensor implements Sensor {
             visitorContext = new RustVisitorContext(rustFile, e);
             logParseError(sensorContext, inputFile, e);
         } catch (IOException e) {
-            RecognitionException re = new RecognitionException(0, e.getMessage());
+            var re = new RecognitionException(0, e.getMessage());
             visitorContext = new RustVisitorContext(rustFile, re);
             logParseError(sensorContext, inputFile, re);
         }
@@ -170,7 +170,7 @@ public class RustSensor implements Sensor {
                 .withValue(metricsVisitor.numberOfFunctions())
                 .save();
 
-        FileLinesContext fileLinesContext = fileLinesContextFactory.createFor(inputFile);
+        var fileLinesContext = fileLinesContextFactory.createFor(inputFile);
         for (Integer line : metricsVisitor.linesOfCode()) {
             fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line, 1);
         }
@@ -178,10 +178,10 @@ public class RustSensor implements Sensor {
     }
 
     private void saveIssues(SensorContext context, InputFile inputFile, RustCheck check, List<Issue> issues) {
-        RuleKey ruleKey = checks.ruleKey(check);
+        var ruleKey = checks.ruleKey(check);
         if (ruleKey == null) return;
         for (Issue rustIssue : issues) {
-            NewIssue issue = context.newIssue();
+            var issue = context.newIssue();
             NewIssueLocation location = issue.newLocation()
                     .on(inputFile)
                     .message(rustIssue.message());

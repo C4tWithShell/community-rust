@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -34,11 +34,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClippyJsonReportReader {
     private final JSONParser jsonParser = new JSONParser();
     private final Consumer<ClippyIssue> consumer;
-    private static final String RESULTS="results";
-    private static final String BEGINJSON = "{\""+ RESULTS+ "\": [";
+    private static final String RESULTS = "results";
+    private static final String BEGINJSON = "{\"" + RESULTS + "\": [";
     private static final String ENDJSON = "]}";
-    private static final String VISIT_MSG="for further information visit";
-    private static final String MESSAGE="message";
+    private static final String VISIT_MSG = "for further information visit";
+    private static final String MESSAGE = "message";
 
     public static class ClippyIssue {
         @Nullable
@@ -78,23 +78,28 @@ public class ClippyJsonReportReader {
     private void onResult(JSONObject result) {
 
 
-        ClippyIssue clippyIssue = new ClippyIssue();
-        //Exit silently when JSON is not compliant
-
+        var clippyIssue = new ClippyIssue();
         JSONObject message = (JSONObject) result.get(MESSAGE);
-        if (message == null) return;
+
+        if (message == null) return; //Exit silently when JSON is not compliant
         JSONObject code = (JSONObject) message.get("code");
-        if (code == null) return;
+
+        if (code == null) return; //Exit silently when JSON is not compliant
+
         clippyIssue.ruleKey = (String) code.get("code");
         JSONArray spans = (JSONArray) message.get("spans");
-        if ((spans == null) || spans.isEmpty()) return;
+
+        if ((spans == null) || spans.isEmpty()) return; //Exit silently when JSON is not compliant
+
         JSONObject span = (JSONObject) spans.get(0);
         clippyIssue.filePath = (String) span.get("file_name");
         clippyIssue.message = (String) message.get(MESSAGE);
         JSONArray children = (JSONArray) message.get("children");
-        if ((clippyIssue.message != null)&&(children != null) && !children.isEmpty()){
+
+        if ((clippyIssue.message != null) && (children != null) && !children.isEmpty()) {
             addHelpDetails(clippyIssue, children);
         }
+
         clippyIssue.lineNumberStart = toInteger(span.get("line_start"));
         clippyIssue.lineNumberEnd = toInteger(span.get("line_end"));
         clippyIssue.colNumberStart = toInteger(span.get("column_start"));
@@ -106,11 +111,12 @@ public class ClippyJsonReportReader {
 
     private void addHelpDetails(ClippyIssue clippyIssue, JSONArray children) {
         int sz = children.size();
-        StringBuilder sb = new StringBuilder(clippyIssue.message);
-        for (int i = 0;i< sz;i++){
-            JSONObject child = (JSONObject)children.get(i);
-            String level = (String)child.get("level");
-            String childMsg = (String)child.get(MESSAGE);
+        var sb = new StringBuilder(clippyIssue.message);
+
+        for (var i = 0; i < sz; i++) {
+            JSONObject child = (JSONObject) children.get(i);
+            String level = (String) child.get("level");
+            String childMsg = (String) child.get(MESSAGE);
 
             //ignore some of the children
             boolean isNote = level.equalsIgnoreCase("note");
@@ -127,12 +133,12 @@ public class ClippyJsonReportReader {
         clippyIssue.message = sb.toString();
     }
 
-    private static String suggestedMessage(JSONObject obj){
+    private static String suggestedMessage(JSONObject obj) {
         if (obj == null) return null;
-        JSONArray spans = (JSONArray)obj.get("spans");
+        JSONArray spans = (JSONArray) obj.get("spans");
         if ((spans == null) || spans.isEmpty()) return null;
-        JSONObject span = (JSONObject)spans.get(0);
-        return (String)span.get("suggested_replacement");
+        JSONObject span = (JSONObject) spans.get(0);
+        return (String) span.get("suggested_replacement");
     }
 
     private static Integer toInteger(Object value) {
@@ -149,15 +155,15 @@ public class ClippyJsonReportReader {
             throw new FileNotFoundException();
         }
 
-        StringBuilder sb = new StringBuilder(BEGINJSON);
+        var sb = new StringBuilder(BEGINJSON);
 
         //read text report line by line
         String reportPath = rawReport.getAbsolutePath();
         BufferedReader reader;
 
-        try (BufferedReader bufferedReader = reader = new BufferedReader(new FileReader(reportPath))) {
+        try (var bufferedReader = reader = new BufferedReader(new FileReader(reportPath))) {
             String line = reader.readLine();
-            String separator = "";
+            var separator = "";
             while (line != null) {
                 //a valid Clippy result needs to be a valid json String
                 if (line.startsWith("{") && line.endsWith("}")) {
