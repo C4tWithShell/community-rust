@@ -690,7 +690,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(CONSTANT_ITEM).is(
                 RustKeyword.KW_CONST, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),SPC,
                 RustPunctuator.COLON, SPC, TYPE,
-                SPC, RustPunctuator.EQ, SPC, EXPRESSION, RustPunctuator.SEMI
+                SPC, b.optional(RustPunctuator.EQ, SPC, EXPRESSION), RustPunctuator.SEMI
         );
 
     }

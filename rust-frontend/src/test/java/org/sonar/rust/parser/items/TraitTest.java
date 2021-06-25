@@ -35,6 +35,9 @@ public class TraitTest {
                         "    fn elt_at(&self, n: u32) -> T;\n" +
                         "    fn iter<F>(&self, f:F) where F: Fn(T);\n" +
                         "}")
+                .matches("trait Thing {\n" +
+                        " const FIELD : Self;\n" +
+                        "}")
 
 
         ;

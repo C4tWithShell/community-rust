@@ -34,6 +34,7 @@ public class ConstantTest {
                 .matches("const BITS: [u32; 2] = [BIT1, BIT2];")
                 .matches("const STRING: &'static str = \"bitstring\";")
                 .matches("const WHITE: Color = Color(255, 255, 255);")
+                .matches("const MAX: Self;")
         ;
 
     }
