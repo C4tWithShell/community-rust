@@ -593,13 +593,13 @@ public enum RustGrammar implements GrammarRuleKey {
                 RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS), SPC,
                 b.optional(WHERE_CLAUSE, SPC),
                 b.optional(RustPunctuator.EQ, SPC, TYPE, SPC),
-                b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)),
+                b.optional(RustPunctuator.COLON, b.optional(SPC, TYPE_PARAM_BOUNDS,SPC)),
                 RustPunctuator.SEMI
         );
     }
 
     private static void useItem(LexerlessGrammarBuilder b) {
-        b.rule(USE_DECLARATION).is("use", SPC, USE_TREE, ";");
+        b.rule(USE_DECLARATION).is(RustKeyword.KW_USE, SPC, USE_TREE,SPC, RustPunctuator.SEMI);
 
         b.rule(USE_TREE).is(b.firstOf(
                 b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP), RustPunctuator.STAR),
@@ -690,7 +690,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(CONSTANT_ITEM).is(
                 RustKeyword.KW_CONST, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE),SPC,
                 RustPunctuator.COLON, SPC, TYPE,
-                SPC, b.optional(RustPunctuator.EQ, SPC, EXPRESSION), RustPunctuator.SEMI
+                SPC, b.optional(RustPunctuator.EQ, SPC, EXPRESSION,SPC), RustPunctuator.SEMI
         );
 
     }
@@ -700,7 +700,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STATIC_ITEM).is(
                 RustKeyword.KW_STATIC, SPC, b.optional(RustKeyword.KW_MUT, SPC), IDENTIFIER,
                 SPC, RustPunctuator.COLON, SPC, TYPE, SPC, b.optional(RustPunctuator.EQ, SPC,
-                        EXPRESSION), RustPunctuator.SEMI
+                        EXPRESSION,SPC), RustPunctuator.SEMI
         );
     }
 
@@ -828,7 +828,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void externcrates(LexerlessGrammarBuilder b) {
         b.rule(EXTERN_CRATE).is(
-                RustKeyword.KW_EXTERN, SPC, RustKeyword.KW_CRATE, SPC, CRATE_REF, b.optional(SPC, AS_CLAUSE), RustPunctuator.SEMI
+                RustKeyword.KW_EXTERN, SPC, RustKeyword.KW_CRATE, SPC, CRATE_REF, SPC, b.optional(SPC, AS_CLAUSE,SPC), RustPunctuator.SEMI
         );
         b.rule(CRATE_REF).is(b.firstOf(RustKeyword.KW_SELFVALUE, IDENTIFIER));
         b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPC, b.firstOf(RustPunctuator.UNDERSCORE, IDENTIFIER));
@@ -886,8 +886,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 "macro_rules!", SPC, IDENTIFIER, SPC, MACRO_RULES_DEF
         );
         b.rule(MACRO_RULES_DEF).is(b.firstOf(
-                b.sequence("(", SPC, MACRO_RULES, SPC, ")", RustPunctuator.SEMI),
-                b.sequence("[", SPC, MACRO_RULES, SPC, "]", RustPunctuator.SEMI),
+                b.sequence("(", SPC, MACRO_RULES, SPC, ")", SPC, RustPunctuator.SEMI),
+                b.sequence("[", SPC, MACRO_RULES, SPC, "]", SPC, RustPunctuator.SEMI),
                 b.sequence("{", SPC, MACRO_RULES, SPC, "}")
         ));
         b.rule(MACRO_RULES).is(
@@ -1142,7 +1142,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STATEMENT).is(b.firstOf(
                 RustPunctuator.SEMI,
                 b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI),
-                b.sequence(EXPRESSION_WITH_BLOCK, b.optional(SPC, RustPunctuator.SEMI)),
+                b.sequence(EXPRESSION_WITH_BLOCK, SPC, b.optional(SPC, RustPunctuator.SEMI)),
                 ITEM,
                 LET_STATEMENT,
                 MACRO_INVOCATION_SEMI
@@ -1632,7 +1632,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 "]");
 
         b.rule(ARRAY_ELEMENTS).is(b.firstOf(
-                b.sequence(SPC, EXPRESSION, RustPunctuator.SEMI, SPC, EXPRESSION),
+                b.sequence(SPC, EXPRESSION, SPC, RustPunctuator.SEMI, SPC, EXPRESSION),
                 b.sequence(SPC, EXPRESSION, SPC, b.zeroOrMore(RustPunctuator.COMMA, SPC, EXPRESSION), b.optional(RustPunctuator.COMMA, SPC))
 
         ));
@@ -1785,7 +1785,7 @@ public enum RustGrammar implements GrammarRuleKey {
                                 b.firstOf(
                                         b.sequence(RustPunctuator.SEMI, SPC),
                                         b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI, SPC),
-                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(RustPunctuator.SEMI), SPC),
+                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(SPC, RustPunctuator.SEMI), SPC),
                                         b.sequence(ITEM, SPC),
                                         b.sequence(LET_STATEMENT, SPC),
                                         b.sequence(MACRO_INVOCATION_SEMI, SPC)
@@ -1801,7 +1801,7 @@ public enum RustGrammar implements GrammarRuleKey {
                                 b.firstOf(
                                         b.sequence(RustPunctuator.SEMI, SPC),
                                         b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI, SPC),
-                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(RustPunctuator.SEMI), SPC),
+                                        b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(SPC, RustPunctuator.SEMI), SPC),
                                         b.sequence(ITEM, SPC),
                                         b.sequence(LET_STATEMENT, SPC),
                                         b.sequence(MACRO_INVOCATION_SEMI, SPC)

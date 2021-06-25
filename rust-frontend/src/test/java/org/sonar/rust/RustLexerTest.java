@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "const MAX: i32;";
+        String sexpr = "test() ;";
 
 
 

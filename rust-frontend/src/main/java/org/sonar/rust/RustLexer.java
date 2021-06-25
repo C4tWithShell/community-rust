@@ -32,7 +32,7 @@ public enum RustLexer implements GrammarRuleKey {
     public static LexerlessGrammarBuilder create() {
         LexerlessGrammarBuilder b =RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN,b.optional(RustPunctuator.SEMI),RustGrammar.SPC), RustGrammar.EOF);
+        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN,b.optional(RustGrammar.SPC, RustPunctuator.SEMI),RustGrammar.SPC), RustGrammar.EOF);
 
         b.setRootRule(TOKENS);
 

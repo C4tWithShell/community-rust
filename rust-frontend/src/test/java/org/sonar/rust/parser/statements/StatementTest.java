@@ -168,6 +168,7 @@ public class StatementTest {
                 .matches("unsafe {}\n" +
                         "assert_eq!(state.borrow::<MyStruct>().value, 110);")
                 .matches("mystruct{};")
+                .matches("test() ;")
 
 
 

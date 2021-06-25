@@ -35,6 +35,7 @@ public class CompilationUnitTest {
                 .notMatches("use")
                 .matches("foo")
                 .matches("fnac")
+                .matches("test")
                 ;
     }
 
@@ -65,6 +66,8 @@ public class CompilationUnitTest {
                         "}")
                 .matches("mod foobar{#![crate_type = \"lib\"]\n" +
                         "}")
+                .matches("test();")
+                .matches("test() ;")
       ;
     }
 }

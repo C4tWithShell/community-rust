@@ -74,6 +74,10 @@ public class LoopExpressionTest {
                         "    println!(\"hello\");\n" +
                         "    i = i + 1;\n" +
                         "}")
+                .matches("for (i, n) in hist.normalized_bins().enumerate() {\n" +
+                        "        let bin = (n as f64) / (N_SAMPLES as f64) ;\n" +
+                        "        diff[i] = (bin - expected[i]).abs();\n" +
+                        "    }")
         ;
     }
 }
