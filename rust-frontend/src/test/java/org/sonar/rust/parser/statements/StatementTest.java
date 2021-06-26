@@ -59,6 +59,8 @@ public class StatementTest {
                 .matches("let ref ref5 = fut5.await;")
                 .matches("let mut mut6 = fut6.await;")
                 .matches("let ref mut refmut = fut.await;")
+                .matches("let x = i32;")
+                .matches("let zero = <X as Default>::default();")
 
 
         ;

@@ -82,6 +82,7 @@ public class CallExpressionTest {
                 .matches("Ok(2)")
                 .matches("Ok(())")
                 .matches("f(stdout[..40])")
+                .matches("<X as Default>::default()")
         ;
     }
 

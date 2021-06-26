@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -50,6 +50,17 @@ public class PathTest {
     }
 
     @Test
+    public void testPathExprSegment() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_EXPR_SEGMENT))
+                .matches("f")
+                .matches("f::<>")
+                .matches("f::<T>")
+
+
+        ;
+    }
+
+    @Test
     public void testPathInExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_IN_EXPRESSION))
                 .matches("Vec::<u8>::with_capacity")
@@ -61,9 +72,9 @@ public class PathTest {
                 .notMatches("match")
                 .matches("Token::BackQuote")
 
+
         ;
     }
-
 
 
     @Test
@@ -73,8 +84,6 @@ public class PathTest {
                 .matches("U=Circle")
         ;
     }
-
-
 
 
     @Test
@@ -98,8 +107,6 @@ public class PathTest {
                 .matches("<Pin<Box<(dyn Future<A = Result<T,(U,V)>>)>>>")
 
 
-
-
         ;
     }
 
@@ -108,6 +115,7 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_TYPE))
                 .matches("<T1>")
                 .matches("<T1 as T>")
+                .matches("<X as Default>")
 
         ;
     }
@@ -116,6 +124,17 @@ public class PathTest {
     public void testQualifiedPathInExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_IN_EXPRESSION))
                 .matches("<S as T1>::f")
+                .matches("<X as Default>::default")
+
+
+        ;
+    }
+
+    @Test
+    public void testQualifiedPathInType() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_IN_TYPE))
+                .matches("<S as T1>::f")
+                .matches("<X as Default>::default()")
 
 
         ;
