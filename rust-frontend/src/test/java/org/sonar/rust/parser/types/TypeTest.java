@@ -181,6 +181,7 @@ public class TypeTest {
                         "    + 'static\n" +
                         "    + Send")
                 .matches("impl FnOnce()")
+                .matches("<X as Default>::default()")
 
 
 

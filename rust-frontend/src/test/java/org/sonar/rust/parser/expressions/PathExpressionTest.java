@@ -37,6 +37,7 @@ public class PathExpressionTest {
                 .matches("Identifier::Numeric")
                 .matches("Vec::new")
                 .matches("StepPosition::JumpEnd")
+                .matches("<X as Default>::default")
 
         ;
     }

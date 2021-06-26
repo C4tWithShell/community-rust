@@ -27,6 +27,7 @@ import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class LinesOfCodeVisitor extends RustVisitor {
@@ -41,7 +42,10 @@ public class LinesOfCodeVisitor extends RustVisitor {
     @Override
     public void visitFile(AstNode node) {
         linesOfCode.clear();
-        for (AstNode token : lexer.parse(getContext().file().content()).getChildren(RustGrammar.ANY_TOKEN)) {
+        List<AstNode> tokens = lexer.parse(getContext().file().content()).getChildren(RustGrammar.ANY_TOKEN);
+
+
+        for (AstNode token : tokens) {
             String[] tokenLines = token.getTokenValue().split("(\r)?\n|\r", -1);
 
             for (int lineOffset = 0; lineOffset < tokenLines.length; lineOffset++) {

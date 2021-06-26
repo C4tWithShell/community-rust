@@ -58,6 +58,7 @@ public class ExpressionTest {
                 .matches("3+2")
                 .matches("1 << 1")
                 .matches("foo")
+                .matches("u8")
                 .matches("Some(42)")
                 .matches("panic!()")
                 .notMatches("== b")
@@ -113,6 +114,7 @@ public class ExpressionTest {
                 .matches("break 42")
                 .matches("break Ok(Poll::Pending)")
                 .matches("true_prior")
+                .matches("<X as Default>::default()")
 
      ;
     }
