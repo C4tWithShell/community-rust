@@ -2181,8 +2181,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(RAW_BYTE_STRING_CONTENT).is(
                 b.firstOf(
-                        b.regexp("(?=\"+)((.|\\n)+?\"+)"),
-                        b.regexp("(#\"(.|\\n)+?\\\"#)"),
+                        b.regexp("(?=\"+)([\\s\\S]+?\"+)"),
+                        b.regexp("(#\"[\\s\\S]+?\\\"#)"),
                         b.sequence("#", RAW_BYTE_STRING_CONTENT, "#")
                 ));
 
@@ -2237,8 +2237,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(RAW_STRING_CONTENT).is(
                 b.firstOf(
-                        b.regexp("(?=\"+)((.|\\n)+?\"+)"),
-                        b.regexp("(#\"(.|\\n)+?\\\"#)"),
+                        b.regexp("(?=\"+)([\\s\\S]+?\"+)"),
+                        b.regexp("(#\"[\\s\\S]+?\\\"#)"),
                         b.sequence("#", RAW_STRING_CONTENT, "#")
 
                 ));
