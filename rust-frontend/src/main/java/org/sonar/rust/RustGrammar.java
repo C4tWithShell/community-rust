@@ -2064,7 +2064,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 QUALIFIED_PATH_TYPE, b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)));
 
         b.rule(QUALIFIED_PATH_TYPE).is(
-                RustPunctuator.LT, TYPE, b.optional(RustKeyword.KW_AS, SPC, TYPE_PATH), RustPunctuator.GT
+                RustPunctuator.LT, SPC, TYPE, b.optional(SPC, RustKeyword.KW_AS, SPC, TYPE_PATH),SPC,  RustPunctuator.GT
         );
 
         b.rule(QUALIFIED_PATH_IN_TYPE).is(QUALIFIED_PATH_TYPE, b.oneOrMore(

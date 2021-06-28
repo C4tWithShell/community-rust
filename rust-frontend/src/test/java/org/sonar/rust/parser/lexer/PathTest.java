@@ -136,6 +136,7 @@ public class PathTest {
                 .matches("<T1 as T>")
                 .matches("<X as Default>")
 
+
         ;
     }
 
@@ -154,8 +155,7 @@ public class PathTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.QUALIFIED_PATH_IN_TYPE))
                 .matches("<S as T1>::f")
                 .matches("<X as Default>::default()")
-
-
+                .matches("<[T] as SpanlessEq>::eq(self, other)")
         ;
     }
 
