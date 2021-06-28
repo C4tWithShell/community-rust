@@ -92,6 +92,7 @@ public class TypeTest {
                 .notMatches("Circle{")
                 .matches("[u8]")
                 .matches("extern \"C\" fn(this: *mut iasset) -> i32")
+                .matches("Token![#]")
 
 
 
@@ -182,6 +183,8 @@ public class TypeTest {
                         "    + Send")
                 .matches("impl FnOnce()")
                 .matches("<X as Default>::default()")
+                .matches("Token![#]")
+
 
 
 

@@ -1918,6 +1918,7 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/types.html#type-expressions */
     public static void type(LexerlessGrammarBuilder b) {
         b.rule(TYPE).is(b.firstOf(
+                MACRO_INVOCATION,
                 IMPL_TRAIT_TYPE,
                 BARE_FUNCTION_TYPE,
                 TRAIT_OBJECT_TYPE,
@@ -1932,12 +1933,13 @@ public enum RustGrammar implements GrammarRuleKey {
                 ARRAY_TYPE,
                 SLICE_TYPE,
                 INFERRED_TYPE,
-                QUALIFIED_PATH_IN_TYPE,
-                MACRO_INVOCATION
+                QUALIFIED_PATH_IN_TYPE
+
 
 
         ));
         b.rule(TYPE_NO_BOUNDS).is(b.firstOf(
+                MACRO_INVOCATION,
                 BARE_FUNCTION_TYPE,
                 PARENTHESIZED_TYPE,
                 IMPL_TRAIT_TYPE_ONE_BOUND,
@@ -1950,9 +1952,8 @@ public enum RustGrammar implements GrammarRuleKey {
                 ARRAY_TYPE,
                 SLICE_TYPE,
                 INFERRED_TYPE,
-                QUALIFIED_PATH_IN_TYPE,
+                QUALIFIED_PATH_IN_TYPE
 
-                MACRO_INVOCATION
         ));
         b.rule(PARENTHESIZED_TYPE).is("(", TYPE, ")");
         b.rule(TRAIT_OBJECT_TYPE).is(b.optional(RustKeyword.KW_DYN, SPC), TYPE_PARAM_BOUNDS);

@@ -87,6 +87,26 @@ public class PathTest {
 
 
     @Test
+    public void testGenericArg() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARG))
+                .matches("T")
+                .matches("i32")
+                .matches("Circle")
+                .matches("U=i32")
+                .matches("V=f64")
+                .matches("Pin<T>")
+                .matches("Pin<Box<T>>")
+                .matches("Pin<Box<(dyn Future<T>)>>")
+                .matches("Pin<Box<(dyn Future<A = B>)>>")
+                .matches("Pin<Box<(dyn Future<A = Result<T>>)>>")
+                .matches("Pin<Box<(dyn Future<A = Result<T,(U,V)>>)>>")
+
+
+        ;
+    }
+
+
+    @Test
     public void testGenericArgs() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_ARGS))
                 .matches("<>")
@@ -98,14 +118,13 @@ public class PathTest {
                 .matches("<Circle, f64, u8>")
                 .matches("<U=i32>")
                 .matches("<V=f64>")
-                //FIXME.matches("<T,U,V=f64>")
+                .matches("<T,U,V=f64>")
                 .matches("<Pin<T>>")
                 .matches("<Pin<Box<T>>>")
                 .matches("<Pin<Box<(dyn Future<T>)>>>")
                 .matches("<Pin<Box<(dyn Future<A = B>)>>>")
                 .matches("<Pin<Box<(dyn Future<A = Result<T>>)>>>")
                 .matches("<Pin<Box<(dyn Future<A = Result<T,(U,V)>>)>>>")
-
 
         ;
     }
