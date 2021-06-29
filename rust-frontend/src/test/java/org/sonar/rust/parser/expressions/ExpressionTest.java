@@ -2,17 +2,17 @@
  * Sonar Rust Plugin (Community)
  * Copyright (C) 2021 Eric Le Goff
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -81,9 +81,9 @@ public class ExpressionTest {
                 .matches("Identifier::Numeric")
                 .matches("Vec::new")
                 .matches("MediaElementAudioSourceNode {\n" +
-                "            node,\n" +
-                "            media_element,\n" +
-                "        }")
+                        "            node,\n" +
+                        "            media_element,\n" +
+                        "        }")
                 .matches("StepPosition::JumpEnd")
                 .matches("*position == StepPosition::JumpEnd || *position == StepPosition::End")
                 .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
@@ -108,14 +108,15 @@ public class ExpressionTest {
                         "        }\n" +
                         "            .boxed_local()")
                 .notMatches("is_ok {\n" +
-                "        // empty block" +
-                " } ")
+                        "        // empty block" +
+                        " } ")
                 .matches("..")
                 .matches("break 42")
                 .matches("break Ok(Poll::Pending)")
                 .matches("true_prior")
                 .matches("<X as Default>::default()")
+                .matches("formatter.field(\"await_token\", &self.await_token)")
 
-     ;
+        ;
     }
 }

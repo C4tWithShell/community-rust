@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let is_ok = ahead.parse::<T>().is_ok();";
+        String sexpr = "let a = 42;";
 
 
 

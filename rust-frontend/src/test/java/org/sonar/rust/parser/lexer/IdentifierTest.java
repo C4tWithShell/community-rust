@@ -74,6 +74,7 @@ public class IdentifierTest {
                 .notMatches("s#52")
                 .matches("phenotype")
                 .matches("crate_type")
+                .matches("await_token")
 
         ;
 
