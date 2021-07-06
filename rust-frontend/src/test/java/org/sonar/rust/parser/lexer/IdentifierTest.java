@@ -66,6 +66,7 @@ public class IdentifierTest {
                 .matches("Abc")
                 .notMatches("as")
                 .notMatches("trait")
+                .notMatches("super")
                 .notMatches("foo ")
                 .notMatches("r#")
                 .matches("r#a")

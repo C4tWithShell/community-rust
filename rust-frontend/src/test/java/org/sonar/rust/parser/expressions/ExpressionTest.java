@@ -116,6 +116,7 @@ public class ExpressionTest {
                 .matches("true_prior")
                 .matches("<X as Default>::default()")
                 .matches("formatter.field(\"await_token\", &self.await_token)")
+                .matches("supertraits.push_value(input.parse()?)")
 
         ;
     }
