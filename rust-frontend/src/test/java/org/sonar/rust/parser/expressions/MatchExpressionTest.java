@@ -247,6 +247,9 @@ public class MatchExpressionTest {
                 .matches("match new_state {\n" +
                         "         42 => break foo\n" +
                         "            }")
+                .matches("match match_suffix {\n" +
+                        "         42 => break foo\n" +
+                        "            }")
                 .matches("match new_state {\n" +
                         "         PollState::Idle => break Ok(Poll::Pending),\n" +
                         "            }")
@@ -257,6 +260,17 @@ public class MatchExpressionTest {
                         "        PollState::Parked => thread::park(), // Park the thread.\n" +
                         "          _ => unreachable!(),\n" +
                         "            }")
+                .matches("match foo {\n" +
+                        "                is_ok(foo)\n" +
+                        "                        if true =>\n" +
+                        "                            {\n" +
+                        "                                match is_really_ok(foo) {\n" +
+                        "                                    val => true,\n" +
+                        "                                    _ => false,\n" +
+                        "                                }\n" +
+                        "                            }\n" +
+                        "                        _ => false,\n" +
+                        "                    }")
 
 
 

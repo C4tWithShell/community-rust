@@ -66,6 +66,7 @@ public class IdentifierTest {
                 .matches("Abc")
                 .notMatches("as")
                 .notMatches("trait")
+                .notMatches("super")
                 .notMatches("foo ")
                 .notMatches("r#")
                 .matches("r#a")
@@ -74,6 +75,8 @@ public class IdentifierTest {
                 .notMatches("s#52")
                 .matches("phenotype")
                 .matches("crate_type")
+                .matches("await_token")
+                .matches("if_ok")
 
         ;
 

@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "let zero = 0;";
+        String sexpr = "if sif_ok {}";
 
 
 

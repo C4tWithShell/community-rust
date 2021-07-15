@@ -90,6 +90,7 @@ public class MacroTest {
                 .matches("panic!()")
                 .matches("println!(\"{}, {}\", word, j)")
                 .notMatches("")
+                .matches("Token![#]")
         ;
     }
 
