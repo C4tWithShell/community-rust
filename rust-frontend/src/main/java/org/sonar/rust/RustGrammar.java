@@ -1507,7 +1507,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void ifExpr(LexerlessGrammarBuilder b) {
         b.rule(IF_EXPRESSION).is(
-                RustKeyword.KW_IF, SPC, b.optional(b.firstOf(RustKeyword.KW_IF, RustKeyword.KW_MATCH)), EXPRESSION_EXCEPT_STRUCT, b.next(SPC, "{")
+                RustKeyword.KW_IF, SPC,
+                //b.optional(b.firstOf(RustKeyword.KW_IF, RustKeyword.KW_MATCH)),//in case a var starts if "if" or "match"
+                EXPRESSION_EXCEPT_STRUCT, b.next(SPC, "{")
                 , SPC, BLOCK_EXPRESSION, SPC,
                 b.optional(
 

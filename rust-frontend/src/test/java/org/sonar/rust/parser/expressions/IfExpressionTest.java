@@ -40,8 +40,8 @@ public class IfExpressionTest {
                         "        println!(\"Coverage is running\");" +
                         " } ")
                 .matches("if is_ok {} ")
-                .matches("if if_ok {} ")
-                .matches("if match_ok {} ")
+                //.matches("if if_ok {} ")
+                //.matches("if match_ok {} ")
                 .matches("if async_ok {} ")
                 .matches("if is_red || is_black {let cpt = 1 ;} else  {let cpt = 0 ;}")
                 .matches("if is_red || is_black {}")
@@ -114,6 +114,17 @@ public class IfExpressionTest {
                 .matches("if state.get_state() == MyState::KO {\n" +
                         "                continue 'outer;\n" +
                         "            }")
+                .matches("if match foo {\n" +
+                        "                is_ok(foo)\n" +
+                        "                        if true =>\n" +
+                        "                            {\n" +
+                        "                                match is_really_ok(foo) {\n" +
+                        "                                    val => true,\n" +
+                        "                                    _ => false,\n" +
+                        "                                }\n" +
+                        "                            }\n" +
+                        "                        _ => false,\n" +
+                        "                    } {}")
 
 
         ;

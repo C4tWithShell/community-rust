@@ -69,7 +69,17 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "supert.push_value(input.parse()?);";
+        String sexpr = "match foo {\n" +
+                "                is_ok(foo)\n" +
+                "                        if vv =>\n" +
+                "                            {\n" +
+                "                                match is_really_ok(foo) {\n" +
+                "                                    val => true,\n" +
+                "                                    _ => false,\n" +
+                "                                }\n" +
+                "                            }\n" +
+                "                        _ => false,\n" +
+                "                    }";
 
 
 

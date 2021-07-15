@@ -257,6 +257,17 @@ public class MatchExpressionTest {
                         "        PollState::Parked => thread::park(), // Park the thread.\n" +
                         "          _ => unreachable!(),\n" +
                         "            }")
+                .matches("match foo {\n" +
+                        "                is_ok(foo)\n" +
+                        "                        if true =>\n" +
+                        "                            {\n" +
+                        "                                match is_really_ok(foo) {\n" +
+                        "                                    val => true,\n" +
+                        "                                    _ => false,\n" +
+                        "                                }\n" +
+                        "                            }\n" +
+                        "                        _ => false,\n" +
+                        "                    }")
 
 
 

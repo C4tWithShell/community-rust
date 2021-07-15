@@ -45,6 +45,17 @@ public class ExpressionTest {
                 .matches("!c")
                 .notMatches("!c { None }")
                 .matches("continue 'outer")
+                .matches("match foo {\n" +
+                        "                is_ok(foo)\n" +
+                        "                        if true =>\n" +
+                        "                            {\n" +
+                        "                                match is_really_ok(foo) {\n" +
+                        "                                    val => true,\n" +
+                        "                                    _ => false,\n" +
+                        "                                }\n" +
+                        "                            }\n" +
+                        "                        _ => false,\n" +
+                        "                    }")
 
         ;
     }
