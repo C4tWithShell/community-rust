@@ -56,6 +56,8 @@ public class ExpressionTest {
                         "                            }\n" +
                         "                        _ => false,\n" +
                         "                    }")
+                .matches("if_ok")
+                .matches("match_ok")
 
         ;
     }

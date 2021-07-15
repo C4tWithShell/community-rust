@@ -76,6 +76,7 @@ public class IdentifierTest {
                 .matches("phenotype")
                 .matches("crate_type")
                 .matches("await_token")
+                .matches("if_ok")
 
         ;
 
