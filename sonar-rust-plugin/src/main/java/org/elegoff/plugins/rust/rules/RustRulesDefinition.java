@@ -37,7 +37,7 @@ public class RustRulesDefinition implements RulesDefinition {
 
     @Override
     public void define(Context context) {
-        NewRepository repository = context.createRepository("community-rust", RustLanguage.KEY).setName("RUST Analyzer");
+        NewRepository repository = context.createRepository(CheckList.REPOSITORY_KEY, RustLanguage.KEY).setName("RUST Analyzer");
 
         List<Class<?>> checkClasses =  CheckList.getRustChecks();
         RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RULES_DEFINITION_FOLDER, RustQualityProfile.PROFILE_PATH);

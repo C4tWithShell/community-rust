@@ -23,7 +23,7 @@ package org.elegoff.rust.checks;
 import java.util.*;
 
 public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+    public static final String REPOSITORY_KEY = "community-rust";
 
     private CheckList() {
     }
