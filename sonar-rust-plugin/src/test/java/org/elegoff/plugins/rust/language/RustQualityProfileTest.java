@@ -32,7 +32,7 @@ public class RustQualityProfileTest extends TestCase{
         BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("rust", "Community Rust");
         assertNotNull(profile);
         assertTrue(profile.isDefault());
-        assertEquals(0, profile.rules().size());
+        assertEquals(2, profile.rules().size());
     }
 
 

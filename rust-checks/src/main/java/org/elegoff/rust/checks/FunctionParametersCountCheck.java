@@ -2,12 +2,14 @@ package org.elegoff.rust.checks;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.AstNodeType;
+import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.rust.RustGrammar;
 
 import java.util.Collections;
 import java.util.Set;
 
+@Rule(key = "FunctionParametersCount")
 public class FunctionParametersCountCheck extends RustCheck {
 
     private static final int DEFAULT_MAXIMUM_PARAMETER_COUNT = 8;

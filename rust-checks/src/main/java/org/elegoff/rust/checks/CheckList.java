@@ -30,7 +30,8 @@ public class CheckList {
 
     public static List<Class<?>> getRustChecks() {
         return Arrays.asList(
-                LineLengthCheck.class
+                LineLengthCheck.class,
+                FunctionParametersCountCheck.class
         );
     }
 }
