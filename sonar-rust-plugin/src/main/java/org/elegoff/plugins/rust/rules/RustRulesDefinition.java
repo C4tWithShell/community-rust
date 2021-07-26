@@ -43,7 +43,7 @@ public class RustRulesDefinition implements RulesDefinition {
         RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RULES_DEFINITION_FOLDER, RustQualityProfile.PROFILE_PATH);
         ruleMetadataLoader.addRulesByAnnotatedClass(repository, checkClasses);
         repository.rules().stream()
-                .forEach(r -> r.setTemplate(true));
+                .forEach(r -> r.setTemplate(false));
 
         //Current repository is empty
         repository.done();
