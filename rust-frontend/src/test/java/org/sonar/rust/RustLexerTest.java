@@ -69,7 +69,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "if sif_ok {}";
+        String sexpr = "enum Test {}";
 
 
 

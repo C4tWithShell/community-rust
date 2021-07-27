@@ -27,6 +27,6 @@ public class CheckListTest {
 
     @Test
     public void testSize(){
-        assertThat(CheckList.getRustChecks().size()).isEqualTo(2);
+        assertThat(CheckList.getRustChecks().size()).isEqualTo(3);
     }
 }

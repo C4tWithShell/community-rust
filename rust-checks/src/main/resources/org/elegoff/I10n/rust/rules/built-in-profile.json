@@ -2,6 +2,7 @@
   "name": "Community Rust",
   "ruleKeys": [
     "LineLength",
-    "FunctionParametersCount"
+    "FunctionParametersCount",
+    "EmptyEnum"
   ]
 }

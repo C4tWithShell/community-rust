@@ -31,7 +31,8 @@ public class CheckList {
     public static List<Class<?>> getRustChecks() {
         return Arrays.asList(
                 LineLengthCheck.class,
-                FunctionParametersCountCheck.class
+                FunctionParametersCountCheck.class,
+                EmptyEnumCheck.class
         );
     }
 }
