@@ -11,5 +11,6 @@
     "suspicious"
   ],
   "defaultSeverity": "Major",
+  "sqKey": "EmptyEnum",
   "scope": "All"
 }
