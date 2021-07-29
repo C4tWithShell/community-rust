@@ -19,14 +19,34 @@
  */
 package org.elegoff.rust.checks;
 
-import org.junit.Test;
-import static org.assertj.core.api.Assertions.assertThat;
+import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.AstNodeType;
+import org.sonar.check.Rule;
+import org.sonar.rust.RustGrammar;
 
-public class CheckListTest {
+import java.util.Collections;
+import java.util.Set;
 
-
-    @Test
-    public void testSize(){
-        assertThat(CheckList.getRustChecks().size()).isEqualTo(3);
+@Rule(key = "EmptyEnum")
+public class EmptyEnumCheck extends RustCheck {
+    @Override
+    public Set<AstNodeType> subscribedKinds() {
+        return Collections.singleton(RustGrammar.ENUMERATION);
     }
+
+    @Override
+    public void visitNode(AstNode node) {
+        AstNode enumItems = node.getFirstChild(RustGrammar.ENUM_ITEMS);
+
+        if (enumItems == null) {
+            raiseIssue(node);
+        }
+    }
+
+    private void raiseIssue(AstNode node) {
+        addIssue("Either remove or fill this empty enumeration.", node);
+    }
+
 }
+
+

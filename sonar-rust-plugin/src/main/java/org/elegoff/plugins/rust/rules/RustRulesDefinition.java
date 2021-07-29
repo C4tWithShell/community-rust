@@ -20,20 +20,28 @@
 package org.elegoff.plugins.rust.rules;
 
 import org.elegoff.plugins.rust.language.RustLanguage;
+import org.elegoff.plugins.rust.language.RustQualityProfile;
+import org.elegoff.rust.checks.CheckList;
 import org.sonar.api.server.rule.RulesDefinition;
+import org.sonarsource.analyzer.commons.RuleMetadataLoader;
+
+import java.util.List;
 
 public class RustRulesDefinition implements RulesDefinition {
     /**
      * Path to the directory/folder containing the descriptor files (JSON and HTML) for the rules
      */
-    public static final String RULES_DEFINITION_FOLDER = "org/elegoff/l10n/rust/rules";
+    public static final String RULES_DEFINITION_FOLDER = "org/elegoff/I10n/rust/rules";
 
 
     @Override
     public void define(Context context) {
-        NewRepository repository = context.createRepository("rust", RustLanguage.KEY).setName("RUST Analyzer");
-
-        //Current repository is empty
+        NewRepository repository = context.createRepository(CheckList.REPOSITORY_KEY, RustLanguage.KEY).setName("Community RUST");
+        List<Class<?>> checkClasses = CheckList.getRustChecks();
+        RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RULES_DEFINITION_FOLDER, RustQualityProfile.PROFILE_PATH);
+        ruleMetadataLoader.addRulesByAnnotatedClass(repository, checkClasses);
+        repository.rules().stream()
+                .forEach(r -> r.setTemplate(false));
         repository.done();
     }
 }

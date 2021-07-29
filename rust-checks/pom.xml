@@ -28,6 +28,10 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.sonarsource.analyzer-commons</groupId>
+            <artifactId>sonar-analyzer-test-commons</artifactId>
+        </dependency>
 
         <!-- test dependencies -->
         <dependency>

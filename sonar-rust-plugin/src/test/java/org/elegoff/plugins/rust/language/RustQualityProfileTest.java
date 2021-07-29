@@ -29,10 +29,10 @@ public class RustQualityProfileTest extends TestCase{
         BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
         RustQualityProfile qp = new RustQualityProfile();
         qp.define(context);
-        BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("rust", "RUST Rules");
+        BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("rust", "Community Rust");
         assertNotNull(profile);
         assertTrue(profile.isDefault());
-        assertEquals(0, profile.rules().size());
+        assertEquals(3, profile.rules().size());
     }
 
 

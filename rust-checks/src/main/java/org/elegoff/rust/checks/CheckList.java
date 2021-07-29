@@ -17,20 +17,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.elegoff.rust.checks;
 
 import java.util.*;
 
 public class CheckList {
-    public static final String REPOSITORY_KEY = "rust";
+    public static final String REPOSITORY_KEY = "community-rust";
 
-    private CheckList() { }
-
-    public static List<Class<? extends RustCheck>> getRustChecks() {
-        //empty array so far, until a first rule is defined
-        return new ArrayList<>();
+    private CheckList() {
     }
 
-
+    public static List<Class<?>> getRustChecks() {
+        return Arrays.asList(
+                LineLengthCheck.class,
+                FunctionParametersCountCheck.class,
+                EmptyEnumCheck.class
+        );
+    }
 }
+
+
+

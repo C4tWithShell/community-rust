@@ -19,7 +19,10 @@
  */
 package org.elegoff.plugins.rust.language;
 
+import org.elegoff.plugins.rust.rules.RustRulesDefinition;
+import org.elegoff.rust.checks.CheckList;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
+import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
 
 
 /**
@@ -27,9 +30,13 @@ import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
  */
 public final class RustQualityProfile implements BuiltInQualityProfilesDefinition {
 
+    public static final String PROFILE_PATH = RustRulesDefinition.RULES_DEFINITION_FOLDER+"/built-in-profile.json";
+    static final String PROFILE_NAME = "Community Rust";
+
     @Override
     public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile("RUST Rules", RustLanguage.KEY);
+        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, RustLanguage.KEY);
+        BuiltInQualityProfileJsonLoader.load(profile, CheckList.REPOSITORY_KEY, PROFILE_PATH);
         profile.setDefault(true);
         profile.done();
     }

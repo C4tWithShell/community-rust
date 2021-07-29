@@ -21,11 +21,11 @@ package org.elegoff.rust.checks;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
-import org.sonar.api.internal.google.common.collect.ImmutableList;
 import org.sonar.rust.RustVisitor;
 import org.sonar.rust.RustVisitorContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class RustCheck extends RustVisitor {
@@ -34,7 +34,7 @@ public class RustCheck extends RustVisitor {
     public List<Issue> scanFileForIssues(RustVisitorContext context) {
         issues.clear();
         scanFile(context);
-        return ImmutableList.copyOf(issues);
+        return Collections.unmodifiableList(new ArrayList<>(issues));
     }
 
     public void addIssue(String message, AstNode node) {
@@ -42,9 +42,7 @@ public class RustCheck extends RustVisitor {
     }
 
     public void addIssue(String message, Token token) {
-        if (token.getURI().equals(getContext().file().uri())) {
-            addLineIssue(message, token.getLine());
-        }
+        addLineIssue(message, token.getLine());
     }
 
     public void addLineIssue(String message, int line) {

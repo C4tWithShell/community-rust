@@ -20,13 +20,19 @@
 package org.elegoff.rust.checks;
 
 import org.junit.Test;
-import static org.assertj.core.api.Assertions.assertThat;
 
-public class CheckListTest {
+import java.io.File;
 
+public class LineLengthCheckTest {
+    @Test
+    public void test() {
+        RustCheckVerifier.verify(new File("src/test/resources/checks/line_length.rs"), new LineLengthCheck());
+    }
 
     @Test
-    public void testSize(){
-        assertThat(CheckList.getRustChecks().size()).isEqualTo(3);
+    public void custom() {
+        LineLengthCheck check = new LineLengthCheck();
+        check.maximumLineLength = 119;
+        RustCheckVerifier.verify(new File("src/test/resources/checks/line_length_119.rs"), check);
     }
 }

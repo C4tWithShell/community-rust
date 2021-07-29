@@ -20,13 +20,13 @@
 package org.elegoff.rust.checks;
 
 import org.junit.Test;
-import static org.assertj.core.api.Assertions.assertThat;
 
-public class CheckListTest {
+import java.io.File;
 
+public class EmptyEnumCheckTest {
 
     @Test
-    public void testSize(){
-        assertThat(CheckList.getRustChecks().size()).isEqualTo(3);
+    public void test() {
+        RustCheckVerifier.verify(new File("src/test/resources/checks/empty_enum.rs"), new EmptyEnumCheck());
     }
 }
