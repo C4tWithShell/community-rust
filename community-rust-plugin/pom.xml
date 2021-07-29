@@ -134,7 +134,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <pluginKey>rustreport</pluginKey>
-                    <pluginClass>org.elegoff.plugins.rust.RustPlugin</pluginClass>
+                    <pluginClass>org.elegoff.plugins.communityRust.CommunityRustPlugin</pluginClass>
                 </configuration>
             </plugin>
             <plugin>
