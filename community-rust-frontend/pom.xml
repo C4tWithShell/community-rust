@@ -8,7 +8,7 @@
         <version>0.0.5-SNAPSHOT</version>
     </parent>
 
-    <artifactId>rust-frontend</artifactId>
+    <artifactId>community-rust-frontend</artifactId>
 
     <name>Rust :: Frontend</name>
 

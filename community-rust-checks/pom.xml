@@ -8,7 +8,7 @@
         <version>0.0.5-SNAPSHOT</version>
     </parent>
 
-    <artifactId>rust-checks</artifactId>
+    <artifactId>community-rust-checks</artifactId>
 
     <name>Rust :: Checks</name>
 
@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>rust-frontend</artifactId>
+            <artifactId>community-rust-frontend</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

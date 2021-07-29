@@ -32,26 +32,26 @@ where console output can be redirected into a file:
 
 - Add a file `sonar-project.properties` at the root of your project (More details in the [official documentation](https://docs.sonarqube.org/8.9/analysis/scan/sonarscanner/#header-1))
 
-- add an extra SonarQube analysis parameter `sonar.rust.clippy.reportPaths` setting the Clippy report file(s) location
+- add an extra SonarQube analysis parameter `community.rust.clippy.reportPaths` setting the Clippy report file(s) location
 
-NB: `sonar.rust.clippy.reportPaths` supports passing of multiple clippy report files by comma separating them.
+NB: `community.rust.clippy.reportPaths` supports passing of multiple clippy report files by comma separating them.
 
 ## Adding coverage measures 
 
-Optionally SonarQube can also display Rust coverage measures
+Optionally SonarQube can also display coverage measures
 
-This Rust plugin doesn't run your tests or generate coverage reports for you. That has to be done before analysis and fed in in the form of reports.
+This Community Rust plugin doesn't run your tests or generate coverage reports for you. That has to be done before analysis and provided in the form of reports.
 
-Currently two coverage formats are supported :
+Currently, two coverage formats are supported :
 
 #### LCOV
 
-Insert a parameter `sonar.rust.lcov.reportPaths` into you `sonar-project.properties` file.
+Insert a parameter `community.rust.lcov.reportPaths` into you `sonar-project.properties` file.
 The parameters sets the location of the LCOV report(s) (possibly a comma separated list of multiple LCOV reports)
 
 #### COBERTURA
 
-Insert a parameter `sonar.rust.cobertura.reportPaths` into you `sonar-project.properties` file.
+Insert a parameter `community.rust.cobertura.reportPaths` into you `sonar-project.properties` file.
 The parameters set the location of the COBERTURA report(s) (possibly a comma separated list of multiple COBERTURA reports)
 
 The Rust plugin only requires you provide reports that comply to one of those formats. It does not need to know or care which tools are used to generate the data
