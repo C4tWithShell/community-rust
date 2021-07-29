@@ -25,7 +25,6 @@ import org.sonar.check.Rule;
 import org.sonar.rust.RustGrammar;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 @Rule(key = "EmptyEnum")
