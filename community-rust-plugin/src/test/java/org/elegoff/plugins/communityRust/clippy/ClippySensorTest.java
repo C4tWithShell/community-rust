@@ -181,7 +181,7 @@ public class ClippySensorTest{
             context.setRuntime(SonarRuntimeImpl.forSonarQube(Version.create(majorVersion, minorVersion), SonarQubeSide.SERVER, SonarEdition.DEVELOPER));
             if (fileName != null) {
                 String path = PROJECT_DIR.resolve(fileName).toAbsolutePath().toString();
-                context.settings().setProperty("sonar.rust.clippy.reportPaths", path);
+                context.settings().setProperty("community.rust.clippy.reportPaths", path);
             }
             clippySensor.execute(context);
             return new ArrayList<>(context.allExternalIssues());

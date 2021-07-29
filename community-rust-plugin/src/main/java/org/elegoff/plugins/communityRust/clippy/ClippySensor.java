@@ -48,7 +48,7 @@ public class ClippySensor implements Sensor {
     private static final Logger LOG = Loggers.get(ClippySensor.class);
     static final String LINTER_KEY = "clippy";
     static final String LINTER_NAME = "Clippy";
-    public static final String REPORT_PROPERTY_KEY = "sonar.rust.clippy.reportPaths";
+    public static final String REPORT_PROPERTY_KEY = "community.rust.clippy.reportPaths";
     private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
 
     @Override
