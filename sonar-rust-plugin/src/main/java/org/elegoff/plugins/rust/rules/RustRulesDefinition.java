@@ -22,7 +22,6 @@ package org.elegoff.plugins.rust.rules;
 import org.elegoff.plugins.rust.language.RustLanguage;
 import org.elegoff.plugins.rust.language.RustQualityProfile;
 import org.elegoff.rust.checks.CheckList;
-import org.elegoff.rust.checks.RustCheck;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
@@ -37,15 +36,12 @@ public class RustRulesDefinition implements RulesDefinition {
 
     @Override
     public void define(Context context) {
-        NewRepository repository = context.createRepository(CheckList.REPOSITORY_KEY, RustLanguage.KEY).setName("RUST Analyzer");
-
-        List<Class<?>> checkClasses =  CheckList.getRustChecks();
+        NewRepository repository = context.createRepository(CheckList.REPOSITORY_KEY, RustLanguage.KEY).setName("Community RUST");
+        List<Class<?>> checkClasses = CheckList.getRustChecks();
         RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RULES_DEFINITION_FOLDER, RustQualityProfile.PROFILE_PATH);
         ruleMetadataLoader.addRulesByAnnotatedClass(repository, checkClasses);
         repository.rules().stream()
                 .forEach(r -> r.setTemplate(false));
-
-        //Current repository is empty
         repository.done();
     }
 }
