@@ -5,12 +5,12 @@
 
 
     <groupId>org.elegoff</groupId>
-    <artifactId>rust-report</artifactId>
+    <artifactId>community-rust</artifactId>
     <version>0.0.5-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
-    <name>Rust Report</name>
+    <name>Rust language analyzer</name>
     <inceptionYear>2021</inceptionYear>
     <organization>
         <name>Eric Le Goff</name>
@@ -28,14 +28,14 @@
         <developer>
             <id>elegoff</id>
             <name>Eric Le Goff</name>
-            <email>elegoff@protonmail.com</email>
+            <email>community-rust@pm.me</email>
         </developer>
     </developers>
 
     <modules>
-        <module>rust-frontend</module>
-        <module>rust-checks</module>
-        <module>sonar-rust-plugin</module>
+        <module>community-rust-frontend</module>
+        <module>community-rust-checks</module>
+        <module>community-rust-plugin</module>
     </modules>
 
     <scm>

@@ -4,7 +4,7 @@
 
     <parent>
         <groupId>org.elegoff</groupId>
-        <artifactId>rust-report</artifactId>
+        <artifactId>community-rust</artifactId>
         <version>0.0.5-SNAPSHOT</version>
     </parent>
 

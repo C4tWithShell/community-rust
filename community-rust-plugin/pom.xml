@@ -6,19 +6,17 @@
 
     <parent>
         <groupId>org.elegoff</groupId>
-        <artifactId>rust-report</artifactId>
+        <artifactId>community-rust</artifactId>
         <version>0.0.5-SNAPSHOT</version>
     </parent>
-    <artifactId>sonar-rust-plugin</artifactId>
+    <artifactId>community-rust-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
 
 
 
-    <name>Rust report analyzer</name>
-    <description>Plugin for importing Rust reports</description>
+    <name>Rust language analyzer</name>
+    <description>Plugin analyzing rust file and importing Clippy reports</description>
     <url>https://github.com/elegoff/sonar-rust</url>
-
-
 
     <dependencies>
         <dependency>
