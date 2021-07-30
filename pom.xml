@@ -6,11 +6,11 @@
 
     <groupId>org.elegoff</groupId>
     <artifactId>community-rust</artifactId>
-    <version>0.0.5-SNAPSHOT</version>
+    <version>0.0.5</version>
 
     <packaging>pom</packaging>
 
-    <name>Rust language analyzer</name>
+    <name>Community Rust SonarQube plugin</name>
     <inceptionYear>2021</inceptionYear>
     <organization>
         <name>Eric Le Goff</name>

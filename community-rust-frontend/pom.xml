@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.elegoff</groupId>
         <artifactId>community-rust</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.5</version>
     </parent>
 
     <artifactId>community-rust-frontend</artifactId>
 
-    <name>Rust :: Frontend</name>
+    <name>Community Rust :: Frontend</name>
 
 
 

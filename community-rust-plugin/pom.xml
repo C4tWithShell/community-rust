@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.elegoff</groupId>
         <artifactId>community-rust</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.5</version>
     </parent>
     <artifactId>community-rust-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
@@ -27,12 +27,12 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>rust-frontend</artifactId>
+            <artifactId>community-rust-frontend</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>rust-checks</artifactId>
+            <artifactId>community-rust-checks</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

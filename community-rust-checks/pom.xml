@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.elegoff</groupId>
         <artifactId>community-rust</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.5</version>
     </parent>
 
     <artifactId>community-rust-checks</artifactId>
 
-    <name>Rust :: Checks</name>
+    <name>Community Rust :: Checks</name>
 
 
 
