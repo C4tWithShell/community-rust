@@ -1,6 +1,7 @@
 /**
- * Sonar Rust Plugin (Community)
+ * Community Rust Plugin
  * Copyright (C) 2021 Eric Le Goff
+ * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
@@ -51,12 +52,12 @@ public enum RustLexer implements GrammarRuleKey {
     }
 
     public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf) {
-        return new ParserAdapter(conf.getCharset(), create().build());
+        return new ParserAdapter<>(conf.getCharset(), create().build());
     }
 
 
     public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf, GrammarRuleKey root) {
-        return new ParserAdapter(conf.getCharset(), create(root).build());
+        return new ParserAdapter<>(conf.getCharset(), create(root).build());
     }
 
 }

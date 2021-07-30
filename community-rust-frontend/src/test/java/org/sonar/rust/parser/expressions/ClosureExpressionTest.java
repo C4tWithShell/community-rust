@@ -1,6 +1,7 @@
 /**
- * Sonar Rust Plugin (Community)
+ * Community Rust Plugin
  * Copyright (C) 2021 Eric Le Goff
+ * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *
  * This program is free software; you can redistribute it and/or
