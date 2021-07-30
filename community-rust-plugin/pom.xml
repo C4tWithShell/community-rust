@@ -133,7 +133,7 @@
                 <version>1.20.0.405</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <pluginKey>rustreport</pluginKey>
+                    <pluginKey>communityrust</pluginKey>
                     <pluginClass>org.elegoff.plugins.communityrust.CommunityRustPlugin</pluginClass>
                 </configuration>
             </plugin>
