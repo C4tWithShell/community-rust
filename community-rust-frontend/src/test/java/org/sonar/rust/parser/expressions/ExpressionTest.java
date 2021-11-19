@@ -28,8 +28,8 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class ExpressionTest {
 
     @Test
-    public void testExpressionExceptStruct() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
+    public void testScrutinee() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.SCRUTINEE))
                 .matches("a")
                 .matches("a || b")
                 .matches("a() || b")
