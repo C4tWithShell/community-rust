@@ -1600,16 +1600,12 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void array(LexerlessGrammarBuilder b) {
-        b.rule(ARRAY_EXPRESSION).is("[", SPC, b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-                b.optional(ARRAY_ELEMENTS, SPC), SPC,
-                "]");
+        b.rule(ARRAY_EXPRESSION).is("[", SPC, b.optional(ARRAY_ELEMENTS, SPC), SPC,"]");
 
         b.rule(ARRAY_ELEMENTS).is(b.firstOf(
                 b.sequence(SPC, EXPRESSION, SPC, RustPunctuator.SEMI, SPC, EXPRESSION),
                 b.sequence(SPC, EXPRESSION, SPC, b.zeroOrMore(RustPunctuator.COMMA, SPC, EXPRESSION), b.optional(RustPunctuator.COMMA, SPC))
-
         ));
-
 
         b.rule(INDEX_EXPRESSION).is(EXPRESSION, SPC, "[", SPC, EXPRESSION, SPC, "]");
 
