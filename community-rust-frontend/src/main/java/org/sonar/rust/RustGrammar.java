@@ -87,12 +87,6 @@ public enum RustGrammar implements GrammarRuleKey {
     DEREFERENCE_EXPRESSION,
     DIVISION_EXPRESSION,
     ENUMERATION,
-    ENUMERATION_VARIANT_EXPRESSION,
-    ENUM_EXPR_FIELD,
-    ENUM_EXPR_FIELDLESS,
-    ENUM_EXPR_FIELDS,
-    ENUM_EXPR_STRUCT,
-    ENUM_EXPR_TUPLE,
     ENUM_ITEMS,
     ENUM_ITEM,
     ENUM_ITEM_DISCRIMINANT,
@@ -1191,7 +1185,6 @@ public enum RustGrammar implements GrammarRuleKey {
         array(b);
         tuple(b);
         struct(b);
-        enums(b);
         call(b);
         closure(b);
         loops(b);
@@ -1231,7 +1224,6 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(CONTINUE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
 
 
@@ -1266,10 +1258,7 @@ public enum RustGrammar implements GrammarRuleKey {
                         b.sequence(PATH_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-                        b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT))
-
-
+                        b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT))
                 ));
 
         b.rule(EXPRESSION_TERM).is(
@@ -1454,10 +1443,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
                         b.sequence(GROUPED_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
                         b.sequence(ARRAY_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM)),
-                        b.sequence(ENUMERATION_VARIANT_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
-
-
+                        b.sequence(TUPLE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM))
                 ));
 
         b.rule(EXPRESSION_WITH_BLOCK).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
@@ -1599,35 +1585,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(CALL_PARAMS).is(seq(b, EXPRESSION, RustPunctuator.COMMA));
     }
 
-    /* https://doc.rust-lang.org/reference/expressions/enum-variant-expr.html */
-    private static void enums(LexerlessGrammarBuilder b) {
-        b.rule(ENUMERATION_VARIANT_EXPRESSION).is(b.firstOf(
-                ENUM_EXPR_STRUCT,
-                ENUM_EXPR_TUPLE,
-                ENUM_EXPR_FIELDLESS
-        ));
-        b.rule(ENUM_EXPR_STRUCT).is(PATH_IN_EXPRESSION, SPC, "{", SPC,
-                b.optional(ENUM_EXPR_FIELDS, SPC), "}"
-        );
-        b.rule(ENUM_EXPR_FIELDS).is(
-                ENUM_EXPR_FIELD, SPC,
-                b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, ENUM_EXPR_FIELDS), b.optional(RustPunctuator.COMMA, SPC))
-        );
-        b.rule(ENUM_EXPR_FIELD).is(b.firstOf(
-                b.sequence(b.firstOf(IDENTIFIER, TUPLE_INDEX), SPC,
-                        RustPunctuator.COLON, SPC, EXPRESSION),
-                IDENTIFIER
-        ));
-        b.rule(ENUM_EXPR_TUPLE).is(
-                PATH_IN_EXPRESSION, SPC, "(", SPC,
-                b.optional(b.sequence(
-                        EXPRESSION, SPC,
-                        b.zeroOrMore(b.sequence(RustPunctuator.COMMA, SPC, EXPRESSION)),
-                        b.optional(RustPunctuator.COMMA, SPC)
-                )), ")"
-        );
-        b.rule(ENUM_EXPR_FIELDLESS).is(PATH_IN_EXPRESSION);
-    }
+
 
     private static void tuple(LexerlessGrammarBuilder b) {
         b.rule(TUPLE_EXPRESSION).is("(", SPC, b.zeroOrMore(INNER_ATTRIBUTE, SPC),
