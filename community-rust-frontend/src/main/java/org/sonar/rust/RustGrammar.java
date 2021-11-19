@@ -1590,9 +1590,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
     private static void tuple(LexerlessGrammarBuilder b) {
-        b.rule(TUPLE_EXPRESSION).is("(", SPC, b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-                b.optional(TUPLE_ELEMENT), SPC,
-                ")");
+        b.rule(TUPLE_EXPRESSION).is("(", SPC, b.optional(TUPLE_ELEMENT), SPC, ")");
 
         b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.sequence(EXPRESSION, SPC, RustPunctuator.COMMA, SPC)), b.optional(EXPRESSION, SPC));
 
@@ -1822,7 +1820,6 @@ public enum RustGrammar implements GrammarRuleKey {
                 STRUCT_EXPR_UNIT
         ));
         b.rule(STRUCT_EXPR_STRUCT).is(PATH_IN_EXPRESSION, SPC, "{", SPC,
-                b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.optional(b.firstOf(STRUCT_EXPR_FIELDS, STRUCT_BASE)), SPC,
                 "}"
 
@@ -1846,7 +1843,6 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(STRUCT_BASE).is(RustPunctuator.DOTDOT, SPC, EXPRESSION);
         b.rule(STRUCT_EXPR_TUPLE).is(
                 PATH_IN_EXPRESSION, "(", SPC,
-                b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.optional(
                         b.sequence(
                                 EXPRESSION, SPC,
