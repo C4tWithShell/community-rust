@@ -185,7 +185,6 @@ public enum RustGrammar implements GrammarRuleKey {
     MATCH_ARM,
     MATCH_ARMS,
     MATCH_ARM_GUARD,
-    MATCH_ARM_PATTERNS,
     MATCH_EXPRESSION,
     MAYBE_NAMED_FUNCTION_PARAMETERS,
     MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC,
@@ -975,7 +974,11 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void patterns(LexerlessGrammarBuilder b) {
 
-        b.rule(PATTERN).is(b.optional(RustPunctuator.OR), PATTERN_NO_TOP_ALT, b.zeroOrMore(RustPunctuator.OR, PATTERN_NO_TOP_ALT));
+        b.rule(PATTERN).is(
+                b.optional(RustPunctuator.OR, SPC),
+                PATTERN_NO_TOP_ALT, SPC,
+                b.zeroOrMore(b.sequence(RustPunctuator.OR, SPC, PATTERN_NO_TOP_ALT, SPC))
+        );
         b.rule(PATTERN_NO_TOP_ALT).is(b.firstOf(
 
                 RANGE_PATTERN,
@@ -1493,14 +1496,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
         b.rule(MATCH_ARM).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
-                MATCH_ARM_PATTERNS,
+                PATTERN,
                 b.optional(MATCH_ARM_GUARD)
         );
-        b.rule(MATCH_ARM_PATTERNS).is(
-                b.optional(RustPunctuator.OR, SPC),
-                PATTERN, SPC,
-                b.zeroOrMore(b.sequence(RustPunctuator.OR, SPC, PATTERN, SPC))
-        );
+
         b.rule(MATCH_ARM_GUARD).is(RustKeyword.KW_IF, SPC, EXPRESSION);
 
     }
@@ -1559,7 +1558,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 BLOCK_EXPRESSION
         );
         b.rule(PREDICATE_PATTERN_LOOP_EXPRESSION).is(
-                RustKeyword.KW_WHILE, SPC, RustKeyword.KW_LET, SPC, MATCH_ARM_PATTERNS, SPC, RustPunctuator.EQ,
+                RustKeyword.KW_WHILE, SPC, RustKeyword.KW_LET, SPC, PATTERN, SPC, RustPunctuator.EQ,
                 SPC, SCRUTINEE,
                 SPC, BLOCK_EXPRESSION
         );

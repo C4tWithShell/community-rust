@@ -316,7 +316,13 @@ public class PatternTest {
                 .matches("|42")
                 .notMatches("|42|")
                 .matches("|42|43")
+                .matches("foo")
+                .matches("S(z @ 1, _)")
+                .matches("(\"Bacon\", b)")
+                .matches("Some(v @ 1) | Some(v @ 2)")
 
         ;
     }
+
+
 }
