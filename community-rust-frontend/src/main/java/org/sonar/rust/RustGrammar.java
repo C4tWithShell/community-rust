@@ -224,6 +224,7 @@ public enum RustGrammar implements GrammarRuleKey {
     PATH_IN_EXPRESSION,
     PATH_PATTERN,
     PATTERN,
+    PATTERN_NO_TOP_ALT,
     PERCENTEQ_EXPRESSION,
     PLUSEQ_EXPRESSION,
     PREDICATE_LOOP_EXPRESSION,
@@ -973,7 +974,9 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void patterns(LexerlessGrammarBuilder b) {
-        b.rule(PATTERN).is(b.firstOf(
+
+        b.rule(PATTERN).is(b.optional(RustPunctuator.OR), PATTERN_NO_TOP_ALT, b.zeroOrMore(RustPunctuator.OR, PATTERN_NO_TOP_ALT));
+        b.rule(PATTERN_NO_TOP_ALT).is(b.firstOf(
 
                 RANGE_PATTERN,
                 TUPLE_STRUCT_PATTERN,
@@ -1890,7 +1893,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(CLOSURE_PARAMETERS).is(seq(b, CLOSURE_PARAM, RustPunctuator.COMMA));
         b.rule(CLOSURE_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
-                PATTERN, SPC,
+                PATTERN_NO_TOP_ALT, SPC,
                 b.optional(RustPunctuator.COLON, SPC, TYPE)
         );
     }
