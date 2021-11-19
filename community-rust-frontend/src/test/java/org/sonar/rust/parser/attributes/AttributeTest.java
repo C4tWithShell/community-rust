@@ -35,7 +35,6 @@ public class AttributeTest {
                 .matches("foo_bar")
                 .matches("foo_type")
                 .matches("crate_type")
-
         ;
     }
 
@@ -56,6 +55,41 @@ public class AttributeTest {
                 .matches("#[inline]")
                 .matches("#[allow(unrooted_must_root)]")
                 .matches("#[cfg(not(any(target_os = \"macos\", windows)))]")
+        ;
+    }
+
+    @Test
+    public void testMetaWord() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.META_WORD))
+                .matches("no_std")
+        ;
+    }
+
+    @Test
+    public void testMetaNameValueStr() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.META_NAME_VALUE_STR))
+                .matches("doc = \"example\"")
+        ;
+    }
+
+    @Test
+    public void testMetaListPaths() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_PATHS))
+                .matches("allow(unused, clippy::inline_always)")
+        ;
+    }
+
+    @Test
+    public void testMetaListIdents() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_IDENTS))
+                .matches("macro_use(foo, bar)")
+        ;
+    }
+
+    @Test
+    public void testMetaListNameValueStr() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_NAME_VALUE_STR))
+                .matches("link(name = \"CoreFoundation\", kind = \"framework\")")
         ;
     }
 }

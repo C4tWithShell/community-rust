@@ -197,6 +197,14 @@ public enum RustGrammar implements GrammarRuleKey {
     MAYBE_NAMED_FUNCTION_PARAMETERS,
     MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC,
     MAYBE_NAMED_PARAM, STRUCT_FIELDS,
+    META_ITEM,
+    META_ITEM_INNER,
+    META_LIST_IDENTS,
+    META_LIST_NAME_VALUE_STR,
+    META_LIST_PATHS,
+    META_NAME_VALUE_STR,
+    META_SEQ,
+    META_WORD,
     METHOD_CALL_EXPRESSION,
     MINUSEQ_EXPRESSION,
     MODULE,
@@ -1902,8 +1910,20 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(OUTER_ATTRIBUTE).is("#[", SPC, ATTR, SPC, "]");
         b.rule(ATTR).is(SIMPLE_PATH, SPC, b.optional(ATTR_INPUT, SPC));
         b.rule(ATTR_INPUT).is(b.firstOf(DELIM_TOKEN_TREE,
-                b.sequence(RustPunctuator.EQ, SPC,
-                        LITERAL_EXPRESSION)));
+                b.sequence(RustPunctuator.EQ, SPC,EXPRESSION)));
+        b.rule(META_ITEM).is(b.firstOf(
+                b.sequence(SIMPLE_PATH, SPC, RustPunctuator.EQ, SPC, EXPRESSION),
+                b.sequence(SIMPLE_PATH, SPC, "(", SPC, META_SEQ, SPC, ")"),
+                SIMPLE_PATH));
+        b.rule(META_SEQ).is(seq(b,META_ITEM_INNER, RustPunctuator.COMMA));
+        b.rule(META_ITEM_INNER).is(b.firstOf(META_ITEM, EXPRESSION));
+        b.rule(META_WORD).is(IDENTIFIER);
+        b.rule(META_NAME_VALUE_STR).is(IDENTIFIER, SPC, RustPunctuator.EQ, SPC, b.firstOf(STRING_LITERAL, RAW_STRING_LITERAL));
+        b.rule(META_LIST_PATHS).is(IDENTIFIER, "(", b.optional(seq(b,SIMPLE_PATH, RustPunctuator.COMMA)), ")");
+        b.rule(META_LIST_IDENTS).is(IDENTIFIER, "(", b.optional(seq(b,IDENTIFIER, RustPunctuator.COMMA)), ")");
+        b.rule(META_LIST_NAME_VALUE_STR).is(IDENTIFIER, "(", b.optional(seq(b,META_NAME_VALUE_STR, RustPunctuator.COMMA)), ")");
+
+
     }
 
     /* https://doc.rust-lang.org/reference/expressions/closure-expr.html*/
