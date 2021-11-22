@@ -45,11 +45,12 @@ public class IdentifierTest {
     @Test
     public void testNonKeywords() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.NON_KEYWORD_IDENTIFIER))
+                .notMatches("trait") //keyword
+                .notMatches("Self") //keyword
                 .matches("a")
                 .matches("bc")
                 .matches("Abc")
                 .notMatches("as")
-                .notMatches("trait") //keyword
                 .matches("prefix_trait")
                 .matches("traitsuffix")
                 .matches("foo_bar")
@@ -58,6 +59,34 @@ public class IdentifierTest {
                 .matches("_context")
         ;
     }
+
+
+    @Test
+    public void testIdentifierOrKeyword() {
+        Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_OR_KEYWORD))
+                .matches("a")
+                .matches("bc")
+                .matches("Abc")
+                .matches("as")
+                .matches("trait")
+                .matches("super")
+                .notMatches("foo ")
+                .notMatches("r#")
+                .notMatches("r#a")
+                .notMatches("r#_52")
+                .notMatches("r#V123")
+                .notMatches("s#52")
+                .matches("phenotype")
+                .matches("crate_type")
+                .matches("await_token")
+                .matches("if_ok")
+                .matches("foo")
+                .matches("_identifier")
+                .matches("Москва")
+                .matches("東京")
+                ;
+
+        }
 
     @Test
     public void testIdentifier() {

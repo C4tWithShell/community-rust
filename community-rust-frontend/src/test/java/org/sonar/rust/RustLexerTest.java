@@ -70,7 +70,7 @@ public class RustLexerTest {
     public void testParsing() {
 
 
-        String sexpr = "enum Test {}";
+        String sexpr = "const foo : Circle;";
 
 
 

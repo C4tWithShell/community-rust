@@ -185,6 +185,7 @@ public class TypeTest {
                 .matches("impl FnOnce()")
                 .matches("<X as Default>::default()")
                 .matches("Token![#]")
+                .matches("Self")
 
 
 
