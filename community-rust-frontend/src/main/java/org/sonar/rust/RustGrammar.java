@@ -726,16 +726,16 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(INHERENT_IMPL).is(
                 RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC), TYPE, SPC,
                 b.optional(WHERE_CLAUSE, SPC), "{", SPC,
-                b.zeroOrMore(b.firstOf(INNER_ATTRIBUTE, OUTER_ATTRIBUTE), SPC),
+                b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.zeroOrMore(ASSOCIATED_ITEM, SPC), "}"
         );
 
-
         b.rule(TRAIT_IMPL).is(
-                b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC),
-                b.optional(RustPunctuator.NOT), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE, SPC,
+                b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_IMPL, SPC,
+                b.optional(GENERIC_PARAMS, SPC),
+                b.optional(RustPunctuator.NOT,SPC), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE, SPC,
                 b.optional(WHERE_CLAUSE, SPC), "{", SPC,
-                b.zeroOrMore(b.firstOf(INNER_ATTRIBUTE, OUTER_ATTRIBUTE), SPC),
+                b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.zeroOrMore(ASSOCIATED_ITEM, SPC), "}"
         );
 
