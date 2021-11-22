@@ -68,11 +68,7 @@ public class RustLexerTest {
 
     @Test
     public void testParsing() {
-
-
-        String sexpr = "const foo : Circle;";
-
-
+        String sexpr = "const foo : Self;";
 
         //Print out Ast node content for debugging purpose
 

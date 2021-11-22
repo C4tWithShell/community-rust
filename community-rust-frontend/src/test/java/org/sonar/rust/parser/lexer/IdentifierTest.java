@@ -35,28 +35,38 @@ public class IdentifierTest {
                 .matches("r#_52")
                 .matches("r#V123")
                 .notMatches("s#52")
-                //corner cases
+                .matches("r#東京")
+                //corner cases using keywords
                 .notMatches("r#crate")
                 .notMatches("r#self")
                 .notMatches("r#super")
                 .notMatches("r#Self");
+
     }
 
     @Test
     public void testNonKeywords() {
         Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.NON_KEYWORD_IDENTIFIER))
-                .notMatches("trait") //keyword
-                .notMatches("Self") //keyword
                 .matches("a")
                 .matches("bc")
                 .matches("Abc")
-                .notMatches("as")
-                .matches("prefix_trait")
-                .matches("traitsuffix")
-                .matches("foo_bar")
-                .notMatches("a b")
-                .notMatches("a self")
-                .matches("_context")
+                .notMatches("as") //keyword
+                .notMatches("trait") //keyword
+                .notMatches("super") //keyword
+                .notMatches("foo ")
+                .notMatches("r#")
+                .notMatches("r#a")
+                .notMatches("r#_52")
+                .notMatches("r#V123")
+                .matches("phenotype")
+                .matches("crate_type")
+                .matches("await_token")
+                .matches("fnas") //concatenated keywords
+                .matches("if_ok")
+                .matches("foo")
+                .matches("_identifier")
+                .matches("Москва")
+                .matches("東京")
         ;
     }
 
@@ -103,6 +113,7 @@ public class IdentifierTest {
                 .matches("r#_52")
                 .matches("r#V123")
                 .notMatches("s#52")
+                .matches("traitsuffix")
                 .matches("phenotype")
                 .matches("crate_type")
                 .matches("await_token")

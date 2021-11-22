@@ -337,11 +337,13 @@ public enum RustGrammar implements GrammarRuleKey {
     WHERE_CLAUSE_ITEM,
     WILDCARD_PATTERN;
 
-    private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
-    private static final String IDFREGEXP2 = "_[a-zA-Z0-9_]+";
+    //private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
+    //private static final String IDFREGEXP2 = "_[a-zA-Z0-9_]+";
+
+    private static final String IDFREGEXP1 = "[_\\p{L}\\p{Nl}]*";
+    private static final String IDFREGEXP2 = "[\\pL\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}]+";
     private static final String DOLLAR_CRATE_REGEX = "^\\$crate$";
-    private static final String XID_START="[_\\p{L}\\p{Nl}]";
-    private static final String XID_CONTINUE="[\\pL\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}]";
+
 
 
     public static LexerlessGrammarBuilder create() {
@@ -2172,6 +2174,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
     private static void identifiers(LexerlessGrammarBuilder b) {
+       final String XID_START="[_\\p{L}\\p{Nl}]";
+       final String XID_CONTINUE="[\\pL\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}]";
+
         b.rule(IDENTIFIER_OR_KEYWORD).is(b.firstOf(
                 b.sequence(b.regexp(XID_START),b.zeroOrMore(b.regexp(XID_CONTINUE))),
                 b.sequence("_", b.oneOrMore(XID_CONTINUE))));
@@ -2183,16 +2188,17 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.nextNot("Self"),
                 IDENTIFIER_OR_KEYWORD);
 
-
-
         b.rule(NON_KEYWORD_IDENTIFIER).is(b.firstOf(
-                b.regexp("^" + IDFREGEXP1 + exceptKeywords()),
-                b.regexp("^" + IDFREGEXP2 + exceptKeywords())
-
-        ));//Except a strict or reserved keyword
+                b.regexp(XID_START+XID_CONTINUE+"*"+ exceptKeywords()),
+                b.regexp("^_"+XID_CONTINUE+"+"+ exceptKeywords())
+        ));
 
         b.rule(IDENTIFIER).is(b.token(RustTokenType.IDENTIFIER,
                 b.firstOf(RAW_IDENTIFIER, NON_KEYWORD_IDENTIFIER))).skip();
+
+
+
+
     }
 
     private static String exceptKeywords() {
