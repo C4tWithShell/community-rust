@@ -159,7 +159,6 @@ public enum RustGrammar implements GrammarRuleKey {
     LIFETIME_BOUNDS,
     LIFETIME_OR_LABEL,
     LIFETIME_PARAM,
-    LIFETIME_PARAMS,
     LIFETIME_TOKEN,
     LIFETIME_WHERE_CLAUSE_ITEM,
     LINE_COMMENT,
@@ -318,7 +317,6 @@ public enum RustGrammar implements GrammarRuleKey {
     TYPE_CAST_EXPRESSION,
     TYPE_NO_BOUNDS,
     TYPE_PARAM,
-    TYPE_PARAMS,
     TYPE_PARAM_BOUND,
     TYPE_PARAM_BOUNDS,
     TYPE_PATH,
@@ -771,18 +769,12 @@ public enum RustGrammar implements GrammarRuleKey {
 
         ));
 
-        b.rule(GENERIC_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), b.firstOf(LIFETIME_PARAM, CONST_PARAM, TYPE_PARAM)
+        b.rule(GENERIC_PARAM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
+                b.firstOf(LIFETIME_PARAM, CONST_PARAM, TYPE_PARAM)
         );
 
-
-        b.rule(LIFETIME_PARAMS).is(
-                b.zeroOrMore(LIFETIME_PARAM, SPC, RustPunctuator.COMMA, SPC), b.optional(LIFETIME_PARAM, SPC)
-        );
-        b.rule(LIFETIME_PARAM).is(
-                b.optional(OUTER_ATTRIBUTE, SPC), LIFETIME_OR_LABEL, SPC, b.optional(RustPunctuator.COLON, LIFETIME_BOUNDS, SPC)
-        );
-        b.rule(TYPE_PARAMS).is(
-                b.zeroOrMore(TYPE_PARAM, SPC, RustPunctuator.COMMA, SPC), b.optional(TYPE_PARAM, SPC)
+        b.rule(LIFETIME_PARAM).is(LIFETIME_OR_LABEL, SPC,
+                b.optional(RustPunctuator.COLON, SPC, LIFETIME_BOUNDS, SPC)
         );
         b.rule(TYPE_PARAM).is(
                 b.optional(OUTER_ATTRIBUTE, SPC), NON_KEYWORD_IDENTIFIER, SPC,
@@ -802,7 +794,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(FOR_LIFETIMES), TYPE, RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS)
         );
 
-        b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPC, RustPunctuator.LT, SPC, LIFETIME_PARAMS, SPC, RustPunctuator.GT);
+        b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPC, GENERIC_PARAMS);
 
 
     }

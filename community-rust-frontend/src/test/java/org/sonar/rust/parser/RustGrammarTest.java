@@ -42,9 +42,7 @@ public class RustGrammarTest {
                 RustGrammar.EOF,
                 RustGrammar.FUNCTION_QUALIFIERS,
                 RustGrammar.LIFETIME_BOUNDS,
-                RustGrammar.LIFETIME_PARAMS,
-                RustGrammar.SPC,
-                RustGrammar.TYPE_PARAMS
+                RustGrammar.SPC
         ));
 
         for (RustGrammar r : rustGrammars) {
