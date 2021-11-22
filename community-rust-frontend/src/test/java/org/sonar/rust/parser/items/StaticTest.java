@@ -30,6 +30,7 @@ public class StaticTest {
     public void testStatic() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATIC_ITEM))
                 .matches("static mut LEVELS: u32 = 0;")
+                .matches("static mut LEVELS: u32;")
 
 
         ;
