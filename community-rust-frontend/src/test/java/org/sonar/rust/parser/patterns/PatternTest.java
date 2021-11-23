@@ -84,23 +84,33 @@ public class PatternTest {
     }
 
     @Test
-    public void testRangePattern() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN))
+    public void testInclusiveRangePattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.INCLUSIVE_RANGE_PATTERN))
                 .matches("1..=9")
-
-
         ;
+    }
 
+    @Test
+    public void testHalfOpenRangePattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.HALF_OPEN_RANGE_PATTERN))
+                .matches("1..")
+        ;
     }
 
     @Test
     public void testObsoleteRangePattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.OBSOLETE_RANGE_PATTERN))
                 .matches("1...9")
-
-
         ;
+    }
 
+    @Test
+    public void testRangePattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN))
+                .matches("1..=9")
+                .matches("1..")
+                .matches("1...9")
+        ;
     }
 
     @Test
@@ -251,7 +261,6 @@ public class PatternTest {
                 .matches("Token::BackQuote") //path pattern
                 //range patterns
                 .matches("1..=9")
-                .matches("1...9") // obsolete
                 //literal
                 .matches("42")
                 .matches("foo")

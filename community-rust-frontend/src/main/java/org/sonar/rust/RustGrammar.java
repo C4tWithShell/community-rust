@@ -127,6 +127,7 @@ public enum RustGrammar implements GrammarRuleKey {
     GROUPED_EXPRESSION,
     GROUPED_PATTERN,
     GT_EXPRESSION,
+    HALF_OPEN_RANGE_PATTERN,
     HEX_DIGIT,
     HEX_LITERAL,
     IDENTIFIER,
@@ -137,6 +138,7 @@ public enum RustGrammar implements GrammarRuleKey {
     IMPLEMENTATION,
     IMPL_TRAIT_TYPE,
     IMPL_TRAIT_TYPE_ONE_BOUND,
+    INCLUSIVE_RANGE_PATTERN,
     INDEX_EXPRESSION,
     INFERRED_TYPE,
     INFINITE_LOOP_EXPRESSION,
@@ -594,10 +596,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(TYPE_ALIAS).is(
-                RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS), SPC,
+                RustKeyword.KW_TYPE, SPC, IDENTIFIER, SPC, b.optional(GENERIC_PARAMS, SPC),
+                b.optional(RustPunctuator.COLON, SPC, TYPE_PARAM_BOUNDS, SPC),
                 b.optional(WHERE_CLAUSE, SPC),
                 b.optional(RustPunctuator.EQ, SPC, TYPE, SPC),
-                b.optional(RustPunctuator.COLON, b.optional(SPC, TYPE_PARAM_BOUNDS, SPC)),
                 RustPunctuator.SEMI
         );
     }
@@ -913,7 +915,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 LIFETIMES, PUNCTUATION_EXCEPT_DOLLAR));
         b.rule(MACRO_FRAG_SPEC).is(b.firstOf(
                 "block", "expr", "ident", "item", "lifetime", "literal"
-                , "meta", "path", "pat", "stmt", "tt", "ty", "vis"
+                , "meta", "path", "pat_param", "pat", "stmt", "tt", "ty", "vis"
         ));
         b.rule(MACRO_REP_SEP).is(b.firstOf(LITERALS, IDENTIFIER_OR_KEYWORD,
                 LIFETIMES,
@@ -974,13 +976,10 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.zeroOrMore(b.sequence(RustPunctuator.OR, SPC, PATTERN_NO_TOP_ALT, SPC))
         );
         b.rule(PATTERN_NO_TOP_ALT).is(b.firstOf(
-
                 RANGE_PATTERN,
                 TUPLE_STRUCT_PATTERN,
                 STRUCT_PATTERN,
                 MACRO_INVOCATION,
-
-
                 //unambigous PATH_PATTERN,
                 b.firstOf(
                         b.sequence(b.optional(RustPunctuator.PATHSEP),
@@ -992,7 +991,6 @@ public enum RustGrammar implements GrammarRuleKey {
                                         , b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS))),
                                 b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)))
                         , QUALIFIED_PATH_IN_EXPRESSION),
-
                 BYTE_LITERAL,
                 RAW_STRING_LITERAL,
                 BYTE_STRING_LITERAL,
@@ -1000,22 +998,15 @@ public enum RustGrammar implements GrammarRuleKey {
                 IDENTIFIER_PATTERN,
                 BOOLEAN_LITERAL,
                 CHAR_LITERAL,
-
                 STRING_LITERAL,
-
                 b.sequence(b.optional("-"), INTEGER_LITERAL, b.nextNot(RustPunctuator.DOTDOT)),
                 b.sequence(b.optional("-"), FLOAT_LITERAL),
-
                 WILDCARD_PATTERN,
                 REST_PATTERN,
-                OBSOLETE_RANGE_PATTERN,
                 REFERENCE_PATTERN,
-
                 TUPLE_PATTERN,
                 GROUPED_PATTERN,
                 SLICE_PATTERN
-
-
         ));
         b.rule(LITERAL_PATTERN).is(b.firstOf(
                 BOOLEAN_LITERAL,
@@ -1038,8 +1029,10 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(WILDCARD_PATTERN).is(RustPunctuator.UNDERSCORE);
         b.rule(REST_PATTERN).is(RustPunctuator.DOTDOT);
 
-        b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTDOT, RANGE_PATTERN_BOUND));
-        b.rule(RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTEQ, RANGE_PATTERN_BOUND));
+        b.rule(RANGE_PATTERN).is(b.firstOf(OBSOLETE_RANGE_PATTERN,INCLUSIVE_RANGE_PATTERN, HALF_OPEN_RANGE_PATTERN ));
+        b.rule(INCLUSIVE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTEQ, RANGE_PATTERN_BOUND));
+        b.rule(HALF_OPEN_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOT));
+        b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTDOT ,RANGE_PATTERN_BOUND));
         b.rule(RANGE_PATTERN_BOUND).is(b.firstOf(
                 CHAR_LITERAL, BYTE_LITERAL, b.sequence(b.optional("-"), INTEGER_LITERAL),
                 b.sequence(b.optional("-"), FLOAT_LITERAL),
