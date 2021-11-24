@@ -47,6 +47,8 @@ public class CallExpressionTest {
                         "            node,\n" +
                         "            media_element,\n" +
                         "        }")
+                .matches("|| 42")
+                .matches("|i| 42")
 
 
 

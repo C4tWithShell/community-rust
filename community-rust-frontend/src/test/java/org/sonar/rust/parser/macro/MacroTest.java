@@ -3,17 +3,17 @@
  * Copyright (C) 2021 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -100,10 +100,19 @@ public class MacroTest {
     public void testMacroFragSpec() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_FRAG_SPEC))
                 .matches("block")
-                .matches("expr") .matches("ident") .matches("item") .matches("lifetime")
+                .matches("expr")
+                .matches("ident")
+                .matches("item")
+                .matches("lifetime")
                 .matches("literal")
-                 .matches("meta") .matches("pat").matches("path") .matches("stmt")
-                .matches("tt") .matches("ty").matches("vis")
+                .matches("meta")
+                .matches("path")
+                .matches("pat")
+                .matches("pat_param")
+                .matches("stmt")
+                .matches("tt")
+                .matches("ty")
+                .matches("vis")
 
         ;
     }
@@ -117,7 +126,6 @@ public class MacroTest {
                 .notMatches("a+")
                 .notMatches("+a")
                 .notMatches("+a+")
-
 
 
         ;
@@ -138,7 +146,7 @@ public class MacroTest {
                 .matches("($($i:ident)*)")
                 .matches("$($key:expr => $value:expr)+")
                 .matches("$($key:expr => $value:expr),+")
-                ;
+        ;
     }
 
     @Test
@@ -159,14 +167,14 @@ public class MacroTest {
                 .matches("{ $($key:expr => $value:expr)+ }")
                 .matches("{ $($key:expr => $value:expr),+ }")
                 .matches("($($f:ident $(< $($generic:ty),* > )? )::+($($arg:ty),*): Send & Sync)")
-                ;
+        ;
     }
 
 
     @Test
     public void testMacroRules() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES))
-                .matches("($l:tt) => { bar!($l); }" )
+                .matches("($l:tt) => { bar!($l); }")
                 .matches("($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
                         "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
                         "            self.$to(v as _)\n" +
@@ -188,7 +196,7 @@ public class MacroTest {
     @Test
     public void testMacroRulesDef() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEF))
-                .matches("{($l:tt) => { bar!($l); }}" )
+                .matches("{($l:tt) => { bar!($l); }}")
                 .matches("{($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
                         "        $(fn $name(self, v: $ty) -> JsResult<$lt> {\n" +
                         "            self.$to(v as _)\n" +
@@ -260,11 +268,17 @@ public class MacroTest {
                         "    }\n" +
                         "  }\n" +
                         ");")
+                .matches("macro_rules! a {\n" +
+                        "    () => { a!(1); };\n" +
+                        "    (1) => { a!(2); };\n" +
+                        "    (2) => { a!(3); };\n" +
+                        "    (3) => { a!(4); };\n" +
+                        "    (4) => { };\n" +
+                        "}")
 
 
         ;
     }
-
 
 
 }

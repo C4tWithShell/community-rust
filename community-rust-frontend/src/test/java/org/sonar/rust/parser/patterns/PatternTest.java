@@ -3,17 +3,17 @@
  * Copyright (C) 2021 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -40,7 +40,7 @@ public class PatternTest {
 
 
     @Test
-    public void testIdentifierPattern(){
+    public void testIdentifierPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_PATTERN))
                 .matches("e @ 1..=5")
                 .matches("f @ 'a'..='z'")
@@ -52,8 +52,9 @@ public class PatternTest {
         ;
 
     }
+
     @Test
-    public void testWildcardPattern(){
+    public void testWildcardPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.WILDCARD_PATTERN))
                 .matches("_")
 
@@ -62,7 +63,7 @@ public class PatternTest {
     }
 
     @Test
-    public void testRestPattern(){
+    public void testRestPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.REST_PATTERN))
                 .matches("..")
 
@@ -71,7 +72,7 @@ public class PatternTest {
     }
 
     @Test
-    public void testRangePatternBound(){
+    public void testRangePatternBound() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN_BOUND))
                 .matches("1")
                 .matches("'a'")
@@ -83,29 +84,37 @@ public class PatternTest {
     }
 
     @Test
-    public void testRangePattern(){
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN))
+    public void testInclusiveRangePattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.INCLUSIVE_RANGE_PATTERN))
                 .matches("1..=9")
-
-
-
         ;
-
     }
 
     @Test
-    public void testObsoleteRangePattern(){
+    public void testHalfOpenRangePattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.HALF_OPEN_RANGE_PATTERN))
+                .matches("1..")
+        ;
+    }
+
+    @Test
+    public void testObsoleteRangePattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.OBSOLETE_RANGE_PATTERN))
                 .matches("1...9")
-
-
-
         ;
-
     }
 
     @Test
-    public void testReferencePattern(){
+    public void testRangePattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_PATTERN))
+                .matches("1..=9")
+                .matches("1..")
+                .matches("1...9")
+        ;
+    }
+
+    @Test
+    public void testReferencePattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.REFERENCE_PATTERN))
                 .matches("&42")
                 .matches("&&42")
@@ -117,7 +126,7 @@ public class PatternTest {
     }
 
     @Test
-    public void testStructPatternElements(){
+    public void testStructPatternElements() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_ELEMENTS))
                 .matches("..")
                 .matches("x: 10")
@@ -127,13 +136,12 @@ public class PatternTest {
                 .matches("x,y")
 
 
-
         ;
 
     }
 
     @Test
-    public void testStructPatternField(){
+    public void testStructPatternField() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN_FIELD))
                 .matches("1:42")
                 .matches("#[outer]1:42")
@@ -143,13 +151,12 @@ public class PatternTest {
                 .matches("x:10")
 
 
-
         ;
 
     }
 
     @Test
-    public void testStructPattern(){
+    public void testStructPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_PATTERN))
                 .matches("Point{}")
                 .matches("Point{..}")
@@ -161,8 +168,9 @@ public class PatternTest {
         ;
 
     }
+
     @Test
-    public void testTupleStructPattern(){
+    public void testTupleStructPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_STRUCT_PATTERN))
                 .matches("local_var()")
                 .matches("S(z @ 1, _)")
@@ -170,15 +178,12 @@ public class PatternTest {
                 .matches("Error::Engine(box EngineError(EngineErrorInner::Request(e)))")
 
 
-
-
-
         ;
 
     }
 
     @Test
-    public void testTuplePatternItems(){
+    public void testTuplePatternItems() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN_ITEMS))
                 .matches("42,")
                 .matches("..")
@@ -196,9 +201,8 @@ public class PatternTest {
     }
 
 
-
     @Test
-    public void testTuplePattern(){
+    public void testTuplePattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN))
                 .matches("()")
                 .matches("(42,)")
@@ -208,25 +212,23 @@ public class PatternTest {
                 .matches("( field_1, )")
 
 
-
         ;
 
     }
 
     @Test
-    public void testGroupedPattern(){
+    public void testGroupedPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.GROUPED_PATTERN))
                 .matches("(42)")
                 .matches("( foo )")
 
 
-
         ;
 
     }
 
     @Test
-    public void testSlicePattern(){
+    public void testSlicePattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.SLICE_PATTERN))
                 .matches("[]")
                 .matches("[42]")
@@ -236,36 +238,29 @@ public class PatternTest {
                 .notMatches("[b'#'](")
 
 
-
-
         ;
 
     }
 
     @Test
-    public void testPathPattern(){
+    public void testPathPattern() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_PATTERN))
                 .matches("Vec::<u8>::with_capacity")
                 .matches("<S as T1>::f")
                 .matches("Token::BackQuote")
 
 
-
-
-
         ;
 
     }
 
 
-
     @Test
-    public void testPattern() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN))
+    public void testPatternNoTopAlt() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN_NO_TOP_ALT))
                 .matches("Token::BackQuote") //path pattern
                 //range patterns
                 .matches("1..=9")
-                .matches("1...9") // obsolete
                 //literal
                 .matches("42")
                 .matches("foo")
@@ -319,13 +314,24 @@ public class PatternTest {
                 .matches("([b'#'], b'8')")
                 .matches("(b'8', [b'#'])")
                 .matches("OK(_)")
-                //.matches("Err(true_prior)")
+                .matches("Err(true_prior)")
+        ;
+    }
 
-
-
-
-
+    @Test
+    public void testPattern() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN))
+                .matches("42")
+                .matches("|42")
+                .notMatches("|42|")
+                .matches("|42|43")
+                .matches("foo")
+                .matches("S(z @ 1, _)")
+                .matches("(\"Bacon\", b)")
+                .matches("Some(v @ 1) | Some(v @ 2)")
 
         ;
     }
+
+
 }

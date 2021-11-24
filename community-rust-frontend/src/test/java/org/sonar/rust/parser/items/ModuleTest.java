@@ -41,6 +41,30 @@ public class ModuleTest {
                         "    use super::Version;\n" +
                         "    use std::result;\n" +
                         "}")
+                .matches("mod math {\n" +
+                        "    type Complex = (f64, f64);\n" +
+                        "    fn sin(f: f64) -> f64 {\n" +
+                        "        /* ... */\n" +
+                        "    }\n" +
+                        "    fn cos(f: f64) -> f64 {\n" +
+                        "        /* ... */\n" +
+                        "    }\n" +
+                        "    fn tan(f: f64) -> f64 {\n" +
+                        "        /* ... */\n" +
+                        "    }\n" +
+                        "}")
+                .matches("unsafe mod math {\n" +
+                        "    type Complex = (f64, f64);\n" +
+                        "    fn sin(f: f64) -> f64 {\n" +
+                        "        /* ... */\n" +
+                        "    }\n" +
+                        "    fn cos(f: f64) -> f64 {\n" +
+                        "        /* ... */\n" +
+                        "    }\n" +
+                        "    fn tan(f: f64) -> f64 {\n" +
+                        "        /* ... */\n" +
+                        "    }\n" +
+                        "}")
 
         ;
 

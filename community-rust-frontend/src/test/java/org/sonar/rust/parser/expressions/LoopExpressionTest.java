@@ -61,10 +61,13 @@ public class LoopExpressionTest {
                         "    println!(\"Irrefutable patterns are always true\");\n" +
                         "    break;\n" +
                         "}")
+
                 .matches("while let Some(v @ 1) | Some(v @ 2) = vals.pop() {\n" +
                         "    // Prints 2, 2, then 1\n" +
                         "    println!(\"{}\", v);\n" +
                         "}")
+
+
                 .matches("for text in v {\n" +
                         "    println!(\"I like {}.\", text);\n" +
                         "}")

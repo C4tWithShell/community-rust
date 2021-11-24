@@ -195,18 +195,6 @@ public class LifeTimeTest {
         ;
     }
 
-    @Test
-    public void testTypeParams(){
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PARAMS))
-                .matches("")
-                .matches("AAA")
-                .matches("AAA,BBB,CCC")
-                .matches("#[test] AAA")
-                .matches("#[test] AAA, BBB")
-                .matches("#[test] AAA : i32, BBB : f64, CCC : bool")
-                .matches("T")
-        ;
-    }
 
     @Test
     public void testLifetimeParam(){
@@ -220,27 +208,8 @@ public class LifeTimeTest {
                 .notMatches("<'as")
                 .notMatches("<'as>")
                 .notMatches("'trait>")
-                .matches("#[outer]'ABC")
         ;
     }
-
-    @Test
-    public void testLifetimeParams(){
-        assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_PARAMS))
-                .matches("'a")
-                .matches("'a,'b")
-                .matches("'de")
-                .matches("'ABC")
-                .matches("'ABC , 'DEF")
-                .notMatches("'trait")
-                .notMatches("'as")
-                .notMatches("'as>")
-                .notMatches("<'as")
-                .notMatches("<'as>")
-                .matches("#[outer]'ABC")
-        ;
-    }
-
 
     @Test
     public void testLifetimeBounds(){

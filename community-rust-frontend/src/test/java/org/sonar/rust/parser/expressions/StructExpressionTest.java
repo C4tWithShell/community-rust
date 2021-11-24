@@ -45,9 +45,8 @@ public class StructExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_EXPR_TUPLE))
                 .matches("Vec::<u8>::with_capacity()")
                 .matches("collect::<Vec<_>>()")
-                .matches("some_fn::<Cookie>(#![inner])")
+                .matches("some_fn::<Cookie>()")
                 .matches("some_fn::<Cookie>(Cookie)")
-                .matches("some_fn::<Cookie>(#![inner] Cookie)")
         ;
 
     }

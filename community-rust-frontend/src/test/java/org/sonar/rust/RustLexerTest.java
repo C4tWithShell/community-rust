@@ -68,11 +68,7 @@ public class RustLexerTest {
 
     @Test
     public void testParsing() {
-
-
-        String sexpr = "enum Test {}";
-
-
+        String sexpr = "const foo : Self;";
 
         //Print out Ast node content for debugging purpose
 

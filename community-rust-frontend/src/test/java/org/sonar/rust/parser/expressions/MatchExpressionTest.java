@@ -36,17 +36,6 @@ public class MatchExpressionTest {
         ;
     }
 
-    @Test
-    public void tesMatchArmPattern() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_ARM_PATTERNS))
-                .matches("42")
-                .matches("foo")
-                .matches("S(z @ 1, _)")
-                .matches("(\"Bacon\", b)")
-
-
-        ;
-    }
 
     @Test
     public void tesMatchArm() {
