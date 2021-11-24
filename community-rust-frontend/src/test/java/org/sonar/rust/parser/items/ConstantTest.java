@@ -36,6 +36,7 @@ public class ConstantTest {
                 .matches("const STRING: &'static str = \"bitstring\";")
                 .matches("const WHITE: Color = Color(255, 255, 255);")
                 .matches("const MAX: Self;")
+                .matches("const EMPTY: Vec<i32> = Vec::new();")
         ;
 
     }
