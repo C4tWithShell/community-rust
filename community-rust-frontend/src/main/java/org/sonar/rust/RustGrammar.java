@@ -117,6 +117,7 @@ public enum RustGrammar implements GrammarRuleKey {
     FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC,
     FUNCTION_QUALIFIERS,
     FUNCTION_RETURN_TYPE,
+    FUNCTION_TYPE_QUALIFIERS,
     GE_EXPRESSION,
     GENERIC_ARG,
     GENERIC_ARGS,
@@ -1111,10 +1112,13 @@ public enum RustGrammar implements GrammarRuleKey {
     /* https://doc.rust-lang.org/reference/types/function-pointer.html */
     private static void functionpointer(LexerlessGrammarBuilder b) {
         b.rule(BARE_FUNCTION_TYPE).is(
-                b.optional(FOR_LIFETIMES), FUNCTION_QUALIFIERS, SPC, RustKeyword.KW_FN,
+                b.optional(FOR_LIFETIMES), FUNCTION_TYPE_QUALIFIERS, SPC, RustKeyword.KW_FN,
                 "(", SPC, b.optional(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC), SPC, ")", SPC,
                 b.optional(BARE_FUNCTION_RETURN_TYPE)
         );
+
+        b.rule(FUNCTION_TYPE_QUALIFIERS).is(b.optional(RustKeyword.KW_UNSAFE), b.optional(SPC,RustKeyword.KW_EXTERN, SPC, b.optional(ABI)));
+
         b.rule(BARE_FUNCTION_RETURN_TYPE).is(RustPunctuator.RARROW, SPC, TYPE_NO_BOUNDS);
         b.rule(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC).is(b.firstOf(
                 MAYBE_NAMED_FUNCTION_PARAMETERS, MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC
@@ -1145,7 +1149,7 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
         b.rule(LET_STATEMENT).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
-                RustKeyword.KW_LET, SPC, PATTERN, SPC,
+                RustKeyword.KW_LET, SPC, PATTERN_NO_TOP_ALT, SPC,
                 b.optional(RustPunctuator.COLON, SPC, TYPE, SPC),
                 b.optional(RustPunctuator.EQ, SPC, EXPRESSION, SPC),
                 RustPunctuator.SEMI);
@@ -1153,11 +1157,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(EXPRESSION_STATEMENT).is(b.firstOf(
                 b.sequence(EXPRESSION_WITH_BLOCK, b.optional(SPC, RustPunctuator.SEMI)),
                 b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI)
-
-
         ));
-
-
         b.rule(ANY_TOKEN).is(
                 b.firstOf(
                         DELIMITERS,

@@ -41,6 +41,7 @@ public class RustGrammarTest {
                 RustGrammar.COMPILATION_UNIT,
                 RustGrammar.EOF,
                 RustGrammar.FUNCTION_QUALIFIERS,
+                RustGrammar.FUNCTION_TYPE_QUALIFIERS,
                 RustGrammar.LIFETIME_BOUNDS,
                 RustGrammar.SPC
         ));
