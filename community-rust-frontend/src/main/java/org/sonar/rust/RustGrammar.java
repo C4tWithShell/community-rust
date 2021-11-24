@@ -837,8 +837,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void modules(LexerlessGrammarBuilder b) {
         b.rule(MODULE).is(b.firstOf(
-                b.sequence(RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, RustPunctuator.SEMI),
-                b.sequence(RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, "{", SPC,
+                b.sequence(b.optional(RustKeyword.KW_UNSAFE, SPC),RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, RustPunctuator.SEMI),
+                b.sequence(b.optional(RustKeyword.KW_UNSAFE, SPC),RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, "{", SPC,
                         b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                         b.zeroOrMore(ITEM, SPC), "}"
                 )));
