@@ -338,11 +338,7 @@ public enum RustGrammar implements GrammarRuleKey {
     WHERE_CLAUSE_ITEM,
     WILDCARD_PATTERN;
 
-    //private static final String IDFREGEXP1 = "[a-zA-Z][a-zA-Z0-9_]*";
-    //private static final String IDFREGEXP2 = "_[a-zA-Z0-9_]+";
 
-    private static final String IDFREGEXP1 = "[_\\p{L}\\p{Nl}]*";
-    private static final String IDFREGEXP2 = "[\\pL\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}]+";
     private static final String DOLLAR_CRATE_REGEX = "^\\$crate$";
 
 
@@ -2189,8 +2185,6 @@ public enum RustGrammar implements GrammarRuleKey {
             sb.append(kw).append("$");
         }
         sb.append("))");
-
-        //System.out.println(exceptKeywords());
 
         return sb.toString();
 
