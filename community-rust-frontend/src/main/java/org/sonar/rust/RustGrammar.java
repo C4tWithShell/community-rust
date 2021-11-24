@@ -1041,7 +1041,7 @@ public enum RustGrammar implements GrammarRuleKey {
         ));
 
         b.rule(REFERENCE_PATTERN).is(
-                b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND),
+                b.firstOf(RustPunctuator.ANDAND, RustPunctuator.AND),
                 b.optional(RustKeyword.KW_MUT),
                 PATTERN
         );
@@ -1619,8 +1619,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(BORROW_EXPRESSION).is(b.firstOf(
-                b.sequence(b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND), SPC, RustKeyword.KW_MUT, SPC, EXPRESSION),
-                b.sequence(b.firstOf(RustPunctuator.AND, RustPunctuator.ANDAND), SPC, EXPRESSION)
+                b.sequence(b.firstOf(RustPunctuator.ANDAND, RustPunctuator.AND), SPC, RustKeyword.KW_MUT, SPC, EXPRESSION),
+                b.sequence(b.firstOf(RustPunctuator.ANDAND, RustPunctuator.AND), SPC, EXPRESSION)
         ));
         b.rule(DEREFERENCE_EXPRESSION).is(RustPunctuator.STAR, EXPRESSION);
 

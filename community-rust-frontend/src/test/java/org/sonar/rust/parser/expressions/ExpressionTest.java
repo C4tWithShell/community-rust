@@ -59,6 +59,8 @@ public class ExpressionTest {
                         "                    }")
                 .matches("if_ok")
                 .matches("match_ok")
+                .matches("next.iter().all(|i| i == 42)")
+                .matches("i == NUM_MSG")
 
         ;
     }

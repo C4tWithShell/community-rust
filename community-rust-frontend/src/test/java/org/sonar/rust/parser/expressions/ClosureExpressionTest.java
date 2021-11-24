@@ -38,6 +38,17 @@ public class ClosureExpressionTest {
     }
 
     @Test
+    public void testClosureParameter() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAM))
+                .matches("k:i32")
+                .matches("j")
+                .matches("state: Rc<RefCell<OpState>>")
+                .matches("bufs : BufVec")
+                .matches("&i")
+        ;
+    }
+
+    @Test
     public void testClosureExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_EXPRESSION))
                 .matches("|k:i32|->(){println!(\"hello,{}\",k)}")
@@ -54,6 +65,10 @@ public class ClosureExpressionTest {
                         "        a\n" +
                         "            .boxed_local()\n" +
                         "    }")
+                .matches("|&i|{i==NUM_MSG}")
+                .matches("|| i == NUM_MSG")
+                .matches("|i| i == NUM_MSG")
+                //TODO .matches("| &i | i == NUM_MSG")
 
             ;
     }

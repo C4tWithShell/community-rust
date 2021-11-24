@@ -126,6 +126,16 @@ public class IfExpressionTest {
                         "                            }\n" +
                         "                        _ => false,\n" +
                         "                    } {}")
+                .matches("if next.iter().all(|i| i == 42) {\n" +
+                        "                                                  \n" +
+                        "                        break;\n" +
+                        "                     }")
+                /*TODO .matches("if next.iter().all(|&i| i == 42) {\n" +
+                        "                                                  \n" +
+                        "                        break;\n" +
+                        "                     }")
+
+                 */
 
 
         ;
