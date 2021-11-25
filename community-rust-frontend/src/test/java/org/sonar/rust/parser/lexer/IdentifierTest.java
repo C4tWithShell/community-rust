@@ -67,6 +67,7 @@ public class IdentifierTest {
                 .matches("_identifier")
                 .matches("Москва")
                 .matches("東京")
+                .notMatches("i|")
         ;
     }
 
@@ -121,8 +122,8 @@ public class IdentifierTest {
                 .matches("foo")
                 .matches("_identifier")
                 .matches("r#true")
-                //.matches("Москва")
-                //.matches("東京")
+                .matches("Москва")
+                .matches("東京")
 
         ;
 

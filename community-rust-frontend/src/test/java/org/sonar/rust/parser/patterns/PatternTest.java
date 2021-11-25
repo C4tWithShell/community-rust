@@ -33,6 +33,7 @@ public class PatternTest {
                 .matches("42")
                 .matches("'z'")
                 .matches("b'c'")
+                .notMatches("&i| i")
 
 
         ;
@@ -120,6 +121,8 @@ public class PatternTest {
                 .matches("&&42")
                 .matches("&mut 42")
                 .matches("&[u8]")
+                .matches("&i")
+                .notMatches("&i| i")
 
         ;
 
@@ -254,6 +257,15 @@ public class PatternTest {
 
     }
 
+    @Test
+    public void testPatternWithoutRange() {
+        assertThat(RustGrammar.create().build().rule(RustGrammar.PATTERN_WITHOUT_RANGE))
+                .matches("i")
+                .matches("&i")
+        ;
+
+    }
+
 
     @Test
     public void testPatternNoTopAlt() {
@@ -315,6 +327,9 @@ public class PatternTest {
                 .matches("(b'8', [b'#'])")
                 .matches("OK(_)")
                 .matches("Err(true_prior)")
+                .matches("&i")
+                .notMatches("&i|")
+
         ;
     }
 

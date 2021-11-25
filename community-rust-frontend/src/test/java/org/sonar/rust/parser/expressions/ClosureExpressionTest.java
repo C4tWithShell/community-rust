@@ -42,9 +42,10 @@ public class ClosureExpressionTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAM))
                 .matches("k:i32")
                 .matches("j")
-                .matches("state: Rc<RefCell<OpState>>")
+                .matches("state: Rc<RefCell< OpState>>")
                 .matches("bufs : BufVec")
                 .matches("&i")
+                .notMatches("&i| i")
         ;
     }
 
@@ -68,7 +69,7 @@ public class ClosureExpressionTest {
                 .matches("|&i|{i==NUM_MSG}")
                 .matches("|| i == NUM_MSG")
                 .matches("|i| i == NUM_MSG")
-                //TODO .matches("| &i | i == NUM_MSG")
+                .matches("|&i| i == NUM_MSG")
 
             ;
     }

@@ -225,6 +225,7 @@ public enum RustGrammar implements GrammarRuleKey {
     PATH_PATTERN,
     PATTERN,
     PATTERN_NO_TOP_ALT,
+    PATTERN_WITHOUT_RANGE,
     PERCENTEQ_EXPRESSION,
     PLUSEQ_EXPRESSION,
     PREDICATE_LOOP_EXPRESSION,
@@ -732,7 +733,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(TRAIT_IMPL).is(
                 b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_IMPL, SPC,
                 b.optional(GENERIC_PARAMS, SPC),
-                b.optional(RustPunctuator.NOT,SPC), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE, SPC,
+                b.optional(RustPunctuator.NOT, SPC), TYPE_PATH, SPC, RustKeyword.KW_FOR, SPC, TYPE, SPC,
                 b.optional(WHERE_CLAUSE, SPC), "{", SPC,
                 b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                 b.zeroOrMore(ASSOCIATED_ITEM, SPC), "}"
@@ -833,8 +834,8 @@ public enum RustGrammar implements GrammarRuleKey {
 
     private static void modules(LexerlessGrammarBuilder b) {
         b.rule(MODULE).is(b.firstOf(
-                b.sequence(b.optional(RustKeyword.KW_UNSAFE, SPC),RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, RustPunctuator.SEMI),
-                b.sequence(b.optional(RustKeyword.KW_UNSAFE, SPC),RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, "{", SPC,
+                b.sequence(b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, RustPunctuator.SEMI),
+                b.sequence(b.optional(RustKeyword.KW_UNSAFE, SPC), RustKeyword.KW_MOD, SPC, IDENTIFIER, SPC, "{", SPC,
                         b.zeroOrMore(INNER_ATTRIBUTE, SPC),
                         b.zeroOrMore(ITEM, SPC), "}"
                 )));
@@ -974,6 +975,10 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(PATTERN_NO_TOP_ALT).is(b.firstOf(
                 RANGE_PATTERN,
+                PATTERN_WITHOUT_RANGE
+        ));
+
+        b.rule(PATTERN_WITHOUT_RANGE).is(b.firstOf(
                 TUPLE_STRUCT_PATTERN,
                 STRUCT_PATTERN,
                 MACRO_INVOCATION,
@@ -1004,7 +1009,10 @@ public enum RustGrammar implements GrammarRuleKey {
                 TUPLE_PATTERN,
                 GROUPED_PATTERN,
                 SLICE_PATTERN
+
+
         ));
+
         b.rule(LITERAL_PATTERN).is(b.firstOf(
                 BOOLEAN_LITERAL,
                 CHAR_LITERAL,
@@ -1026,10 +1034,10 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(WILDCARD_PATTERN).is(RustPunctuator.UNDERSCORE);
         b.rule(REST_PATTERN).is(RustPunctuator.DOTDOT);
 
-        b.rule(RANGE_PATTERN).is(b.firstOf(OBSOLETE_RANGE_PATTERN,INCLUSIVE_RANGE_PATTERN, HALF_OPEN_RANGE_PATTERN ));
+        b.rule(RANGE_PATTERN).is(b.firstOf(OBSOLETE_RANGE_PATTERN, INCLUSIVE_RANGE_PATTERN, HALF_OPEN_RANGE_PATTERN));
         b.rule(INCLUSIVE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTEQ, RANGE_PATTERN_BOUND));
         b.rule(HALF_OPEN_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOT));
-        b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTDOT ,RANGE_PATTERN_BOUND));
+        b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, RustPunctuator.DOTDOTDOT, RANGE_PATTERN_BOUND));
         b.rule(RANGE_PATTERN_BOUND).is(b.firstOf(
                 CHAR_LITERAL, BYTE_LITERAL, b.sequence(b.optional("-"), INTEGER_LITERAL),
                 b.sequence(b.optional("-"), FLOAT_LITERAL),
@@ -1039,7 +1047,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(REFERENCE_PATTERN).is(
                 b.firstOf(RustPunctuator.ANDAND, RustPunctuator.AND),
                 b.optional(RustKeyword.KW_MUT),
-                PATTERN
+                PATTERN_WITHOUT_RANGE
         );
         b.rule(STRUCT_PATTERN).is(
                 PATH_IN_EXPRESSION, SPC, "{", SPC, b.optional(STRUCT_PATTERN_ELEMENTS), SPC, "}"
@@ -1113,7 +1121,7 @@ public enum RustGrammar implements GrammarRuleKey {
                 b.optional(BARE_FUNCTION_RETURN_TYPE)
         );
 
-        b.rule(FUNCTION_TYPE_QUALIFIERS).is(b.optional(RustKeyword.KW_UNSAFE), b.optional(SPC,RustKeyword.KW_EXTERN, SPC, b.optional(ABI)));
+        b.rule(FUNCTION_TYPE_QUALIFIERS).is(b.optional(RustKeyword.KW_UNSAFE), b.optional(SPC, RustKeyword.KW_EXTERN, SPC, b.optional(ABI)));
 
         b.rule(BARE_FUNCTION_RETURN_TYPE).is(RustPunctuator.RARROW, SPC, TYPE_NO_BOUNDS);
         b.rule(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC).is(b.firstOf(
