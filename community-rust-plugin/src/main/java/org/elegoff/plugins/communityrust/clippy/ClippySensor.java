@@ -65,7 +65,8 @@ public class ClippySensor implements Sensor {
 
         try {
             InputStream in = ClippyJsonReportReader.toJSON(rawReport);
-            ClippyJsonReportReader.read(in, clippyIssue -> saveIssue(context, clippyIssue, unresolvedInputFiles));
+            String projectDir = rawReport.getParent();
+            ClippyJsonReportReader.read(in, projectDir, clippyIssue -> saveIssue(context, clippyIssue, unresolvedInputFiles));
         } catch (IOException | ParseException e) {
             LOG.error("No issues information will be saved as the report file '{}' can't be read. " +
                     e.getClass().getSimpleName() + ": " + e.getMessage(), rawReport, e);
