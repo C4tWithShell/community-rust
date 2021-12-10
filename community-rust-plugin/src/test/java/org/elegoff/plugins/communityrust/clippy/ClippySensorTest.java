@@ -56,7 +56,7 @@ public class ClippySensorTest{
     private static final String CLIPPY_REPORT_TXT = "myreport.txt";
     private static final String UNKNOWN_KEY_REPORT = "synreport.txt";
 
-    private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "clippy");
+    private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "clippy").toAbsolutePath();
 
     private static ClippySensor clippySensor = new ClippySensor();
 
@@ -138,8 +138,9 @@ public class ClippySensorTest{
 
         assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
         assertThat(onlyOneLogElement(logTester.logs(LoggerLevel.WARN)))
-                .isEqualTo("Failed to resolve 1 file path(s) in Clippy report. No issues imported related to file(s): clippy/wrong.rs");
-        assertThat(logTester.logs(LoggerLevel.DEBUG)).containsExactly("Missing information for ruleKey:'clippy::absurd_extreme_comparisons', filePath:'clippy/wrong.rs', message:'null'");
+                .startsWith("Failed to resolve 1 file path(s) in Clippy report. No issues imported related to file(s)");
+        assertThat(logTester.logs(LoggerLevel.DEBUG)).hasSize(1);
+        assertThat(logTester.logs(LoggerLevel.DEBUG).get(0)).startsWith("Missing information for ruleKey:'clippy::absurd_extreme_comparisons'");
     }
 
     @Test
@@ -175,7 +176,6 @@ public class ClippySensorTest{
     }
 
     private static List<ExternalIssue> executeSensorImporting(int majorVersion, int minorVersion, @Nullable String reportFileName) throws IOException {
-        //Path baseDir = PROJECT_DIR.getParent();
         SensorContextTester context = SensorContextTester.create(PROJECT_DIR);
         try (Stream<Path> fileStream = Files.list(PROJECT_DIR)) {
             fileStream.forEach(file -> addFileToContext(context, PROJECT_DIR, file));
