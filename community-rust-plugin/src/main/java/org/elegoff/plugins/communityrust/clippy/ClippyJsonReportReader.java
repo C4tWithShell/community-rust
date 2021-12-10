@@ -22,6 +22,7 @@ package org.elegoff.plugins.communityrust.clippy;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 import java.util.function.Consumer;
 
@@ -34,6 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ClippyJsonReportReader {
     private final JSONParser jsonParser = new JSONParser();
+    private final String projectDir;
     private final Consumer<ClippyIssue> consumer;
     private static final String RESULTS = "results";
     private static final String BEGINJSON = "{\"" + RESULTS + "\": [";
@@ -60,12 +62,13 @@ public class ClippyJsonReportReader {
         String severity;
     }
 
-    private ClippyJsonReportReader(Consumer<ClippyIssue> consumer) {
+    private ClippyJsonReportReader(String projectDir, Consumer<ClippyIssue> consumer) {
+        this.projectDir = projectDir;
         this.consumer = consumer;
     }
 
-    static void read(InputStream in, Consumer<ClippyIssue> consumer) throws IOException, ParseException {
-        new ClippyJsonReportReader(consumer).read(in);
+    static void read(InputStream in, String projectDir, Consumer<ClippyIssue> consumer) throws IOException, ParseException {
+        new ClippyJsonReportReader(projectDir, consumer).read(in);
     }
 
     private void read(InputStream in) throws IOException, ParseException {
@@ -93,7 +96,7 @@ public class ClippyJsonReportReader {
         if ((spans == null) || spans.isEmpty()) return; //Exit silently when JSON is not compliant
 
         JSONObject span = (JSONObject) spans.get(0);
-        clippyIssue.filePath = (String) span.get("file_name");
+        clippyIssue.filePath = Paths.get(this.projectDir, (String) span.get("file_name")).toString();
         clippyIssue.message = (String) message.get(MESSAGE);
         JSONArray children = (JSONArray) message.get("children");
 
