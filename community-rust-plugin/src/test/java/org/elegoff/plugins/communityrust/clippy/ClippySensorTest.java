@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ClippySensorTest{
-    private static final String CLIPPY_FILE = "resources-project:clippy/main.rs";
+    private static final String CLIPPY_FILE = "clippy-project:main.rs";
     private static final String CLIPPY_AEC="external_clippy:clippy::absurd_extreme_comparisons";
     private static final String CLIPPY_REPORT_TXT = "myreport.txt";
     private static final String UNKNOWN_KEY_REPORT = "synreport.txt";
@@ -174,14 +174,14 @@ public class ClippySensorTest{
         org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.DEBUG)).isEmpty();
     }
 
-    private static List<ExternalIssue> executeSensorImporting(int majorVersion, int minorVersion, @Nullable String fileName) throws IOException {
-        Path baseDir = PROJECT_DIR.getParent();
-        SensorContextTester context = SensorContextTester.create(baseDir);
+    private static List<ExternalIssue> executeSensorImporting(int majorVersion, int minorVersion, @Nullable String reportFileName) throws IOException {
+        //Path baseDir = PROJECT_DIR.getParent();
+        SensorContextTester context = SensorContextTester.create(PROJECT_DIR);
         try (Stream<Path> fileStream = Files.list(PROJECT_DIR)) {
-            fileStream.forEach(file -> addFileToContext(context, baseDir, file));
+            fileStream.forEach(file -> addFileToContext(context, PROJECT_DIR, file));
             context.setRuntime(SonarRuntimeImpl.forSonarQube(Version.create(majorVersion, minorVersion), SonarQubeSide.SERVER, SonarEdition.DEVELOPER));
-            if (fileName != null) {
-                String path = PROJECT_DIR.resolve(fileName).toAbsolutePath().toString();
+            if (reportFileName != null) {
+                String path = PROJECT_DIR.resolve(reportFileName).toAbsolutePath().toString();
                 context.settings().setProperty("community.rust.clippy.reportPaths", path);
             }
             clippySensor.execute(context);
