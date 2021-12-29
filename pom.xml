@@ -55,7 +55,7 @@
         <java.version>11</java.version>
         <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
-        <mockito.version>3.6.28</mockito.version>
+        <mockito.version>3.9.0</mockito.version>
         <assertj-core.version>3.19.0</assertj-core.version>
         <jacoco.version>0.8.6</jacoco.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
@@ -66,8 +66,8 @@
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
         <commons.io.version>2.8.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
-        <junit.version>4.13.1</junit.version>
-        <sonar-analyzer-commons.version>1.14.1.690</sonar-analyzer-commons.version>
+        <junit.version>4.13.2</junit.version>
+        <sonar-analyzer-commons.version>1.21.0.829</sonar-analyzer-commons.version>
     </properties>
 
     <dependencyManagement>
