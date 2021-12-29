@@ -58,7 +58,6 @@
         <mockito.version>3.6.28</mockito.version>
         <assertj-core.version>3.19.0</assertj-core.version>
         <jacoco.version>0.8.6</jacoco.version>
-        <logback.version>1.2.3</logback.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
@@ -154,11 +153,6 @@
                 <groupId>org.codehaus.woodstox</groupId>
                 <artifactId>woodstox-core-lgpl</artifactId>
                 <version>${woodstox.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.ant</groupId>
