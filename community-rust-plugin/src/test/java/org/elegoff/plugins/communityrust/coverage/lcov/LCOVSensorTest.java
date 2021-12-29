@@ -78,7 +78,7 @@ public class LCOVSensorTest {
                 .setType(type)
                 .build();
 
-        inputFile.setMetadata(new FileMetadata().readMetadata(new FileInputStream(inputFile.file()), StandardCharsets.UTF_8, inputFile.absolutePath()));
+        inputFile.setMetadata(new FileMetadata(s -> {}).readMetadata(new FileInputStream(inputFile.file()), StandardCharsets.UTF_8, inputFile.absolutePath()));
         context.fileSystem().add(inputFile);
 
         return inputFile;

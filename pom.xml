@@ -30,6 +30,11 @@
             <name>Eric Le Goff</name>
             <email>community-rust@pm.me</email>
         </developer>
+        <developer>
+            <id>p-fruck</id>
+            <name>Philipp Fruck</name>
+            <email>dev@p-fruck.de</email>
+        </developer>
     </developers>
 
     <modules>
@@ -51,14 +56,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonar.version>7.9</sonar.version>
-        <java.version>8</java.version>
+        <sonar.version>8.9.0.43852</sonar.version>
+        <java.version>11</java.version>
         <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
-        <mockito.version>3.6.28</mockito.version>
+        <mockito.version>3.9.0</mockito.version>
         <assertj-core.version>3.19.0</assertj-core.version>
         <jacoco.version>0.8.6</jacoco.version>
-        <logback.version>1.2.3</logback.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
@@ -67,8 +71,8 @@
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
         <commons.io.version>2.8.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
-        <junit.version>4.13.1</junit.version>
-        <sonar-analyzer-commons.version>1.14.1.690</sonar-analyzer-commons.version>
+        <junit.version>4.13.2</junit.version>
+        <sonar-analyzer-commons.version>1.21.0.829</sonar-analyzer-commons.version>
     </properties>
 
     <dependencyManagement>
@@ -156,14 +160,9 @@
                 <version>${woodstox.version}</version>
             </dependency>
             <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.ant</groupId>
                 <artifactId>ant</artifactId>
-                <version>1.10.11</version>
+                <version>1.10.12</version>
             </dependency>
 
             <!-- test dependencies -->
@@ -218,7 +217,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>30.0-jre</version>
+                <version>31.0.1-jre</version>
             </dependency>
 
 
@@ -229,7 +228,12 @@
                 <version>${sonar.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <dependency>
+                <groupId>org.sonarsource.sonarqube</groupId>
+                <artifactId>sonar-plugin-api-impl</artifactId>
+                <version>${sonar.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>
