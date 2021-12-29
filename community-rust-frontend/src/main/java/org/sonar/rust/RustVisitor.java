@@ -20,7 +20,6 @@
  */
 package org.sonar.rust;
 
-import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.AstNodeType;
 import com.sonar.sslr.api.Token;
@@ -33,7 +32,7 @@ public class RustVisitor {
     private RustVisitorContext context;
 
     public Set<AstNodeType> subscribedKinds() {
-        return ImmutableSet.of();
+        return Set.of();
     }
 
     public void visitFile(AstNode node) {
