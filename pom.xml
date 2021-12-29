@@ -30,6 +30,11 @@
             <name>Eric Le Goff</name>
             <email>community-rust@pm.me</email>
         </developer>
+        <developer>
+            <id>p-fruck</id>
+            <name>Philipp Fruck</name>
+            <email>dev@p-fruck.de</email>
+        </developer>
     </developers>
 
     <modules>
@@ -157,7 +162,7 @@
             <dependency>
                 <groupId>org.apache.ant</groupId>
                 <artifactId>ant</artifactId>
-                <version>1.10.11</version>
+                <version>1.10.12</version>
             </dependency>
 
             <!-- test dependencies -->
@@ -212,7 +217,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>30.0-jre</version>
+                <version>31.0.1-jre</version>
             </dependency>
 
 
