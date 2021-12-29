@@ -51,7 +51,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonar.version>7.9</sonar.version>
+        <sonar.version>8.9.0.43852</sonar.version>
         <java.version>11</java.version>
         <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
@@ -229,7 +229,12 @@
                 <version>${sonar.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <dependency>
+                <groupId>org.sonarsource.sonarqube</groupId>
+                <artifactId>sonar-plugin-api-impl</artifactId>
+                <version>${sonar.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>
