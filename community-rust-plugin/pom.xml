@@ -52,28 +52,25 @@
         <dependency>
             <groupId>org.sonarsource.analyzer-commons</groupId>
             <artifactId>sonar-analyzer-commons</artifactId>
-            <version>1.14.0.681</version>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
-            <version>0.9.12</version>
+            <version>0.10.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>5.2.0</version>
+            <version>6.2.7</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.sonarsource.sslr</groupId>
             <artifactId>sslr-testing-harness</artifactId>
-            <version>${sslr.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -163,7 +160,7 @@
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
-                <version>2.7</version>
+                <version>3.2</version>
                 <executions>
                     <execution>
                         <goals>
