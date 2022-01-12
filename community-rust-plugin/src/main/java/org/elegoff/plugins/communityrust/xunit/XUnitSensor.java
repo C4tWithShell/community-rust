@@ -40,7 +40,7 @@ import java.util.List;
 
 
 public class XUnitSensor implements Sensor {
-    public static final String REPORT_PATH_KEY = "sonar.test.reportPath";
+    public static final String REPORT_PATH_KEY = "sonar.rust.test.reportPath";
     public static final String DEFAULT_REPORT_PATH = "rust-test.xml";
     private static final Logger LOG = Loggers.get(XUnitSensor.class);
 

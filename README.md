@@ -23,7 +23,7 @@ set analysis parameter `community.rust.clippy.reportPaths=<CLIPPY REPORT FILE>`
 
 * Optionally import tests measures (`junit` report)
 
-use `sonar.test.reportPath`
+use `sonar.rust.test.reportPath`
 
 * Optionally import coverage measures 
 
