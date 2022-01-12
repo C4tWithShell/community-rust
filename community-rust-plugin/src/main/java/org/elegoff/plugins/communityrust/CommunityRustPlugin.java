@@ -23,6 +23,7 @@ package org.elegoff.plugins.communityrust;
 import org.elegoff.plugins.communityrust.coverage.cobertura.CoberturaSensor;
 import org.elegoff.plugins.communityrust.coverage.lcov.LCOVSensor;
 import org.elegoff.plugins.communityrust.rules.RustRulesDefinition;
+import org.elegoff.plugins.communityrust.xunit.XUnitSensor;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.communityrust.clippy.ClippySensor;
@@ -90,6 +91,18 @@ public class CommunityRustPlugin implements Plugin {
 
 
         );
+
+
+        context.addExtensions(
+                PropertyDefinition.builder(XUnitSensor.REPORT_PATH_KEY)
+                        .name("Path to xunit report(s)")
+                        .description("Path to the report of test execution, relative to project's root. Ant patterns are accepted. The reports have to conform to the junitreport XML format.")
+                        .category("Rust")
+                        .subCategory("Test and Coverage")
+                        .onQualifiers(Qualifiers.PROJECT)
+                        .defaultValue(XUnitSensor.DEFAULT_REPORT_PATH)
+                        .build(),
+                XUnitSensor.class);
 
 
     }

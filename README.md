@@ -20,6 +20,11 @@ It leverages [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) to 
 * Import it into SonarQube
    
 set analysis parameter `community.rust.clippy.reportPaths=<CLIPPY REPORT FILE>`
+
+* Optionally import tests measures (`junit` report)
+
+use `sonar.rust.test.reportPath`
+
 * Optionally import coverage measures 
 
 use either 
