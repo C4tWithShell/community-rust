@@ -39,9 +39,9 @@ public class CommunityRustPluginTest extends TestCase {
     public void testGetExtensions() {
         Version v79 = Version.create(7, 9);
         SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(v79, SonarQubeSide.SERVER, SonarEdition.DEVELOPER);
-        assertThat(extensions(runtime)).hasSize(13);
+        assertThat(extensions(runtime)).hasSize(15);
         assertThat(extensions(runtime)).contains(ClippyRulesDefinition.class);
-        assertThat(extensions(SonarRuntimeImpl.forSonarLint(v79))).hasSize(13);
+        assertThat(extensions(SonarRuntimeImpl.forSonarLint(v79))).hasSize(15);
     }
 
     private static List extensions(SonarRuntime runtime) {
