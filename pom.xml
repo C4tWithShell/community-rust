@@ -35,6 +35,11 @@
             <name>Philipp Fruck</name>
             <email>dev@p-fruck.de</email>
         </developer>
+        <developer>
+            <id>thibaultfalque</id>
+            <name>Thibault Falque</name>
+            <email>thibault.falque@gmail.com</email>
+        </developer>
     </developers>
 
     <modules>
