@@ -23,11 +23,6 @@ public class XUnitSensor implements Sensor {
     public static final String REPORT_PATH_KEY = "sonar.test.reportPath";
     public static final String DEFAULT_REPORT_PATH = "rust-test.xml";
     private static final Logger LOG = Loggers.get(XUnitSensor.class);
-    protected final Configuration conf;
-
-    public XUnitSensor(Configuration conf) {
-        this.conf = conf;
-    }
 
     @Override
     public void describe(SensorDescriptor descriptor) {
@@ -40,8 +35,10 @@ public class XUnitSensor implements Sensor {
 
     @Override
     public void execute(SensorContext context) {
+        Configuration conf = context.config();
         String reportPathPropertyKey = REPORT_PATH_KEY;
         String reportPath = conf.get(reportPathPropertyKey).orElse(DEFAULT_REPORT_PATH);
+
         try {
             List<File> reports = getReports(conf, context.fileSystem().baseDir().getPath(), reportPathPropertyKey, reportPath);
             processReports(context, reports);
