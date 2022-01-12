@@ -62,6 +62,13 @@ public class XUnitSensorTest {
         assertThat(moduleMeasure(CoreMetrics.TEST_FAILURES)).isEqualTo(1);
     }
 
+    @Test
+    public void shouldReportNothingWhenNoReportFound() {
+        settings.setProperty(XUnitSensor.REPORT_PATH_KEY, "notexistingpath");
+        unitSensor.execute(context);
+        assertThat(context.measures(context.module().key())).isEmpty();
+    }
+
     private Integer moduleMeasure(Metric<Integer> metric) {
         return measure(context.module(), metric);
     }
