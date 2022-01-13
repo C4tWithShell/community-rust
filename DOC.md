@@ -77,5 +77,5 @@ This Community Rust plugin doesn't run your tests or generate tests reports for 
 
 Currently, only `junit report` formats are supported :
 
-Insert a parameter `sonar.rust.test.reportPath` into you `sonar-project.properties` file. As an example, one of such tool 
+Insert a parameter `community.rust.test.reportPath` into you `sonar-project.properties` file. As an example, one of such tool 
 for Rust than converts `cargo test` report to `junit report` is [cargo2junit](https://crates.io/crates/cargo2junit).
