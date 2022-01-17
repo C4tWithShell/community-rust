@@ -119,6 +119,7 @@ public class RustSensorTest {
         DefaultInputFile inputFile = executeSensorOnSingleFile("sensor/cpd.rs");
         assertEquals(212, tester.cpdTokens(inputFile.key()).size());
         verify(fileLinesContext).save();
+        assertEquals(Collections.singletonList(TypeOfText.ANNOTATION), tester.highlightingTypeAt(inputFile.key(), 5, 5));
         Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
     }
 

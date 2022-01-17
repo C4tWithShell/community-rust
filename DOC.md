@@ -68,15 +68,20 @@ e.g
 
 But [other coverage tools](https://vladfilippov.com/blog/rust-code-coverage-tools/) might work as well
 
+## Highlighting unit tests
+By default, the plugin will highlight Rust unit tests for functions having attributes `#[test]` or `#[tokio::test]`
+You may configure different attributes with parameter `community.rust.unitttests.attributes`
+
 
 ## Adding test measures
 
 Optionally SonarQube can also display tests measures.
 
-This Community Rust plugin doesn't run your tests or generate tests reports for you. That has to be done before analysis and provided in the form of reports.
+This Community Rust plugin doesn't run your tests or generate tests reports for you. That has to be done before analysis 
+and provided in the form of reports.
 
 Currently, only `junit report` formats are supported :
 
-Insert a parameter `community.rust.test.reportPath` into you `sonar-project.properties` file. As an example, one of such tool 
+Insert a parameter `community.rust.test.reportPath` into you `sonar-project.properties` file. 
+As an example, one of such tool for Rust that converts `cargo test` report to `junit report` is [cargo2junit](https://crates.io/crates/cargo2junit).
 
-for Rust than converts `cargo test` report to `junit report` is [cargo2junit](https://crates.io/crates/cargo2junit).

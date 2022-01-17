@@ -44,6 +44,8 @@ public class CommunityRustPlugin implements Plugin {
     public static final String DEFAULT_LCOV_REPORT_PATHS = "lcov.info";
     public static final String COBERTURA_REPORT_PATHS = "community.rust.cobertura.reportPaths";
     public static final String DEFAULT_COBERTURA_REPORT_PATHS = "cobertura.xml";
+    public static final String UNIT_TEST_ATTRIBUTES = "community.rust.unittests.attributes";
+    public static final String DEFAULT_UNIT_TEST_ATTRIBUTES="test,tokio::test";
 
     @Override
     public void define(Context context) {
@@ -87,9 +89,17 @@ public class CommunityRustPlugin implements Plugin {
                         .subCategory("Test and Coverage")
                         .category("Rust")
                         .multiValues(true)
+                        .build(),
+
+                PropertyDefinition.builder(UNIT_TEST_ATTRIBUTES)
+                        .defaultValue(DEFAULT_UNIT_TEST_ATTRIBUTES)
+                        .name("Unit tests")
+                        .description("Comme separated list of Rust attributes for Unit Tests")
+                        .onQualifiers(Qualifiers.PROJECT)
+                        .subCategory("Test and Coverage")
+                        .category("Rust")
+                        .multiValues(true)
                         .build()
-
-
         );
 
 
