@@ -37,15 +37,11 @@ public class TestCase {
 
     /**
      * Constructs a testcase instance out of following parameters
-     * @param name  The name of this testcase
      * @param status The execution status of the testcase
-     * @param stackTrace The stack trace occurred while executing of this testcase; pass "" if the testcase passed/skipped.
-     * @param errorMessage The error message associated with this testcase of the execution was erroneous; pass "" if not.
      * @param time The execution time in milliseconds
      * @param file The optional file to which this test case applies.
-     * @param testClassname The classname of the test.
      */
-    public TestCase(String name, TestCaseStatus status, String stackTrace, String errorMessage, int time, @Nullable String file, @Nullable  String testClassname) {
+    public TestCase(String name, TestCaseStatus status, String stackTrace, String errorMessage, int time, @Nullable String file, @Nullable String testClassname) {
         this.name = name;
         this.status = status;
         this.stackTrace = stackTrace;
@@ -54,16 +50,18 @@ public class TestCase {
         this.file = file;
         this.testClassname = testClassname;
     }
+
     /**
      * Returns true if this testcase is an error, false otherwise
      */
-    public boolean isError(){
+    public boolean isError() {
         return TestCaseStatus.ERROR.equals(status);
     }
+
     /**
      * Returns true if this testcase is a failure, false otherwise
      */
-    public boolean isFailure(){
+    public boolean isFailure() {
         return TestCaseStatus.FAILURE.equals(status);
     }
 
@@ -80,6 +78,22 @@ public class TestCase {
 
     public String getFile() {
         return file;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public TestCaseStatus getStatus() {
+        return status;
+    }
+
+    public String getStackTrace() {
+        return stackTrace;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     public String getTestClassname() {
