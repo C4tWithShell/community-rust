@@ -123,33 +123,29 @@ public class RustTokensVisitor {
         Set<String> unitTestsAttributes = getUnitTestAttributes();
         int i = 0;
         while (i < parsedTokens.size()) {
-            if ("#".equals(getTokenImage(parsedTokens.get(i))))
-                if (("[".equals(getTokenImage(parsedTokens.get(i + 1)))) && (unitTestsAttributes.contains(getTokenImage(parsedTokens.get(i + 2)))) && ("]".equals(getTokenImage(parsedTokens.get(i + 3)))) && ("fn".equals(getTokenImage(parsedTokens.get(i + 4))))) {
-                    int j = i + 5;
-                    //lookup for opening bracket
-                    while (true) {
-                        if ("{".equals(getTokenImage(parsedTokens.get(j)))) break;
-                        j++;
-                    }
-
-                    int cptOpeningBracket = 1;
-                    //lookup for outer closing bracket (end of test function position)
-                    while (cptOpeningBracket > 0) {
-                        j++;
-                        switch (getTokenImage(parsedTokens.get(j))) {
-                            case "{":
-                                cptOpeningBracket++;
-                                break;
-                            case "}":
-                                cptOpeningBracket--;
-                                break;
-                        }
-
-                    }
-
-                    //all tokens constituting a test function are added to the set
-                    IntStream.rangeClosed(i, j).mapToObj(parsedTokens::get).forEach(testTokens::add);
+            if ("#".equals(getTokenImage(parsedTokens.get(i))) && ("[".equals(getTokenImage(parsedTokens.get(i + 1)))) && (unitTestsAttributes.contains(getTokenImage(parsedTokens.get(i + 2)))) && ("]".equals(getTokenImage(parsedTokens.get(i + 3)))) && ("fn".equals(getTokenImage(parsedTokens.get(i + 4))))) {
+                int j = i + 5;
+                //lookup for opening bracket
+                while (!"{".equals(getTokenImage(parsedTokens.get(j)))) {
+                    j++;
                 }
+
+                int cptOpeningBracket = 1;
+                //lookup for outer closing bracket (end of test function position)
+                while (cptOpeningBracket > 0) {
+                    j++;
+                    String tokenImage = getTokenImage(parsedTokens.get(j));
+                    if ("{".equals(tokenImage)) {
+                        cptOpeningBracket++;
+                    } else if ("}".equals(tokenImage)) {
+                        cptOpeningBracket--;
+                    }
+
+                }
+
+                //all tokens constituting a test function are added to the set
+                IntStream.rangeClosed(i, j).mapToObj(parsedTokens::get).forEach(testTokens::add);
+            }
             i++;
         }
         return testTokens;
