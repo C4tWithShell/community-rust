@@ -25,7 +25,6 @@ import com.sonar.sslr.api.GenericTokenType;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.api.Trivia;
 import org.apache.commons.lang.StringUtils;
-import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.highlighting.NewHighlighting;
@@ -40,7 +39,7 @@ import org.sonarsource.analyzer.commons.TokenLocation;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 public class RustTokensVisitor {
 
@@ -122,35 +121,36 @@ public class RustTokensVisitor {
     private Set<Token> identifyUnitTestTokens(List<Token> parsedTokens) {
         Set<Token> testTokens = new HashSet<>();
         Set<String> unitTestsAttributes = getUnitTestAttributes();
-        for (int i = 0; i < parsedTokens.size(); i++) {
-            if (("#".equals(getTokenImage(parsedTokens.get(i))))
-                    && ("[".equals(getTokenImage(parsedTokens.get(i + 1))))
-                    && (unitTestsAttributes.contains(getTokenImage(parsedTokens.get(i + 2))))
-                    && ("]".equals(getTokenImage(parsedTokens.get(i + 3))))
-                    && ("fn".equals(getTokenImage(parsedTokens.get(i + 4))))) {
-                int j = i + 5;
-                //lookup for opening bracket
-                while (!"{".equals(getTokenImage(parsedTokens.get(j)))) {
-                    j++;
-                }
-
-                int cptOpeningBracket = 1;
-                //lookup for outer closing bracket (end of test function position)
-                while (cptOpeningBracket > 0) {
-                    j++;
-                    if ("{".equals(getTokenImage(parsedTokens.get(j)))) {
-                        cptOpeningBracket++;
+        int i = 0;
+        while (i < parsedTokens.size()) {
+            if ("#".equals(getTokenImage(parsedTokens.get(i))))
+                if (("[".equals(getTokenImage(parsedTokens.get(i + 1)))) && (unitTestsAttributes.contains(getTokenImage(parsedTokens.get(i + 2)))) && ("]".equals(getTokenImage(parsedTokens.get(i + 3)))) && ("fn".equals(getTokenImage(parsedTokens.get(i + 4))))) {
+                    int j = i + 5;
+                    //lookup for opening bracket
+                    while (true) {
+                        if ("{".equals(getTokenImage(parsedTokens.get(j)))) break;
+                        j++;
                     }
-                    if ("}".equals(getTokenImage(parsedTokens.get(j)))) {
-                        cptOpeningBracket--;
-                    }
-                }
 
-                //all tokens constituting a test function are added to the set
-                for (int k = i; k <= j; k++) {
-                    testTokens.add(parsedTokens.get(k));
+                    int cptOpeningBracket = 1;
+                    //lookup for outer closing bracket (end of test function position)
+                    while (cptOpeningBracket > 0) {
+                        j++;
+                        switch (getTokenImage(parsedTokens.get(j))) {
+                            case "{":
+                                cptOpeningBracket++;
+                                break;
+                            case "}":
+                                cptOpeningBracket--;
+                                break;
+                        }
+
+                    }
+
+                    //all tokens constituting a test function are added to the set
+                    IntStream.rangeClosed(i, j).mapToObj(parsedTokens::get).forEach(testTokens::add);
                 }
-            }
+            i++;
         }
         return testTokens;
     }

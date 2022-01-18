@@ -25,7 +25,6 @@ import org.elegoff.plugins.communityrust.coverage.lcov.LCOVSensor;
 import org.elegoff.plugins.communityrust.rules.RustRulesDefinition;
 import org.elegoff.plugins.communityrust.xunit.XUnitSensor;
 import org.sonar.api.Plugin;
-import org.sonar.api.config.Configuration;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.communityrust.clippy.ClippySensor;
 import org.elegoff.plugins.communityrust.clippy.ClippyRulesDefinition;
@@ -33,10 +32,6 @@ import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.elegoff.plugins.communityrust.language.RustQualityProfile;
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.sonar.api.resources.Qualifiers;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This class is the entry point for all extensions. It is referenced in pom.xml.
@@ -50,6 +45,7 @@ public class CommunityRustPlugin implements Plugin {
     public static final String COBERTURA_REPORT_PATHS = "community.rust.cobertura.reportPaths";
     public static final String DEFAULT_COBERTURA_REPORT_PATHS = "cobertura.xml";
     public static final String UNIT_TEST_ATTRIBUTES = "community.rust.unittests.attributes";
+    public static final String TEST_AND_COVERAGE = "Test and Coverage";
     public static final String DEFAULT_UNIT_TEST_ATTRIBUTES="test,tokio::test";
 
     @Override
@@ -80,7 +76,7 @@ public class CommunityRustPlugin implements Plugin {
                         .name("LCOV Files")
                         .description("Paths (absolute or relative) to the files with LCOV data.")
                         .onQualifiers(Qualifiers.PROJECT)
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
                         .category("Rust")
                         .multiValues(true)
                         .build(),
@@ -91,7 +87,7 @@ public class CommunityRustPlugin implements Plugin {
                         .name("LCOV Files")
                         .description("Paths (absolute or relative) to the files with LCOV data.")
                         .onQualifiers(Qualifiers.PROJECT)
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
                         .category("Rust")
                         .multiValues(true)
                         .build(),
@@ -101,7 +97,7 @@ public class CommunityRustPlugin implements Plugin {
                         .name("Unit tests")
                         .description("Comme separated list of Rust attributes for Unit Tests")
                         .onQualifiers(Qualifiers.PROJECT)
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
                         .category("Rust")
                         .multiValues(true)
                         .build()
@@ -113,7 +109,7 @@ public class CommunityRustPlugin implements Plugin {
                         .name("Path to xunit report(s)")
                         .description("Path to the report of test execution, relative to project's root. Ant patterns are accepted. The reports have to conform to the junitreport XML format.")
                         .category("Rust")
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
                         .onQualifiers(Qualifiers.PROJECT)
                         .defaultValue(XUnitSensor.DEFAULT_REPORT_PATH)
                         .build(),
