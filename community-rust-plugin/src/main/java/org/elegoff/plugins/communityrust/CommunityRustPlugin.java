@@ -44,6 +44,9 @@ public class CommunityRustPlugin implements Plugin {
     public static final String DEFAULT_LCOV_REPORT_PATHS = "lcov.info";
     public static final String COBERTURA_REPORT_PATHS = "community.rust.cobertura.reportPaths";
     public static final String DEFAULT_COBERTURA_REPORT_PATHS = "cobertura.xml";
+    public static final String UNIT_TEST_ATTRIBUTES = "community.rust.unittests.attributes";
+    public static final String TEST_AND_COVERAGE = "Test and Coverage";
+    public static final String DEFAULT_UNIT_TEST_ATTRIBUTES="test,tokio::test";
 
     @Override
     public void define(Context context) {
@@ -73,7 +76,7 @@ public class CommunityRustPlugin implements Plugin {
                         .name("LCOV Files")
                         .description("Paths (absolute or relative) to the files with LCOV data.")
                         .onQualifiers(Qualifiers.PROJECT)
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
                         .category("Rust")
                         .multiValues(true)
                         .build(),
@@ -84,12 +87,20 @@ public class CommunityRustPlugin implements Plugin {
                         .name("LCOV Files")
                         .description("Paths (absolute or relative) to the files with LCOV data.")
                         .onQualifiers(Qualifiers.PROJECT)
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
+                        .category("Rust")
+                        .multiValues(true)
+                        .build(),
+
+                PropertyDefinition.builder(UNIT_TEST_ATTRIBUTES)
+                        .defaultValue(DEFAULT_UNIT_TEST_ATTRIBUTES)
+                        .name("Unit tests")
+                        .description("Comme separated list of Rust attributes for Unit Tests")
+                        .onQualifiers(Qualifiers.PROJECT)
+                        .subCategory(TEST_AND_COVERAGE)
                         .category("Rust")
                         .multiValues(true)
                         .build()
-
-
         );
 
 
@@ -98,7 +109,7 @@ public class CommunityRustPlugin implements Plugin {
                         .name("Path to xunit report(s)")
                         .description("Path to the report of test execution, relative to project's root. Ant patterns are accepted. The reports have to conform to the junitreport XML format.")
                         .category("Rust")
-                        .subCategory("Test and Coverage")
+                        .subCategory(TEST_AND_COVERAGE)
                         .onQualifiers(Qualifiers.PROJECT)
                         .defaultValue(XUnitSensor.DEFAULT_REPORT_PATH)
                         .build(),
