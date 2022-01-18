@@ -25,6 +25,7 @@ import org.elegoff.plugins.communityrust.coverage.lcov.LCOVSensor;
 import org.elegoff.plugins.communityrust.rules.RustRulesDefinition;
 import org.elegoff.plugins.communityrust.xunit.XUnitSensor;
 import org.sonar.api.Plugin;
+import org.sonar.api.config.Configuration;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.communityrust.clippy.ClippySensor;
 import org.elegoff.plugins.communityrust.clippy.ClippyRulesDefinition;
@@ -32,6 +33,10 @@ import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.elegoff.plugins.communityrust.language.RustQualityProfile;
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.sonar.api.resources.Qualifiers;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class is the entry point for all extensions. It is referenced in pom.xml.

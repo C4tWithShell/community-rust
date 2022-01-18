@@ -24,10 +24,13 @@ package org.elegoff.plugins.communityrust;
 import com.sonar.sslr.api.GenericTokenType;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.api.Trivia;
+import org.apache.commons.lang.StringUtils;
+import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.highlighting.NewHighlighting;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
+import org.sonar.api.config.Configuration;
 import org.sonar.rust.RustVisitorContext;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustTokenType;
@@ -36,6 +39,8 @@ import org.sonar.sslr.parser.ParserAdapter;
 import org.sonarsource.analyzer.commons.TokenLocation;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RustTokensVisitor {
 
@@ -72,12 +77,7 @@ public class RustTokensVisitor {
         cpdTokens.onFile(inputFile);
 
         List<Token> parsedTokens = lexer.parse(visitorContext.file().content()).getTokens();
-
-        Set<String> testAttributes = new HashSet<String>(){{
-            add("test");
-            add("tokio::test");
-        }};
-        Set<Token> testTokens = identifyUnitTestTokens(parsedTokens,testAttributes );
+        Set<Token> unitTestTokens = identifyUnitTestTokens(parsedTokens);
 
         for (Token token : parsedTokens) {
             final String tokenImage = getTokenImage(token);
@@ -97,18 +97,15 @@ public class RustTokensVisitor {
 
             if (token.getType().equals(RustTokenType.FLOAT_LITERAL)
                     || token.getType().equals(RustTokenType.BOOLEAN_LITERAL)
-                    || token.getType().equals(RustTokenType.INTEGER_LITERAL)
-
-            ) {
+                    || token.getType().equals(RustTokenType.INTEGER_LITERAL)) {
                 highlight(highlighting, tokenLocation, TypeOfText.CONSTANT);
-
             }
 
             for (Trivia trivia : token.getTrivia()) {
                 highlight(highlighting, tokenLocation(trivia.getToken()), TypeOfText.COMMENT);
             }
 
-            if (testTokens.contains(token)) {
+            if (unitTestTokens.contains(token)) {
                 highlight(highlighting, tokenLocation, TypeOfText.ANNOTATION
                 );
             }
@@ -122,12 +119,13 @@ public class RustTokensVisitor {
         cpdTokens.save();
     }
 
-    private Set<Token> identifyUnitTestTokens(List<Token> parsedTokens, Set<String> knownTestAttributes) {
+    private Set<Token> identifyUnitTestTokens(List<Token> parsedTokens) {
         Set<Token> testTokens = new HashSet<>();
+        Set<String> unitTestsAttributes = getUnitTestAttributes();
         for (int i = 0; i < parsedTokens.size(); i++) {
             if (("#".equals(getTokenImage(parsedTokens.get(i))))
                     && ("[".equals(getTokenImage(parsedTokens.get(i + 1))))
-                    && (knownTestAttributes.contains(getTokenImage(parsedTokens.get(i + 2))))
+                    && (unitTestsAttributes.contains(getTokenImage(parsedTokens.get(i + 2))))
                     && ("]".equals(getTokenImage(parsedTokens.get(i + 3))))
                     && ("fn".equals(getTokenImage(parsedTokens.get(i + 4))))) {
                 int j = i + 5;
@@ -155,7 +153,25 @@ public class RustTokensVisitor {
             }
         }
         return testTokens;
+    }
 
+    private Set<String> getUnitTestAttributes() {
+        Configuration config = context.config();
+        String[] attrs = filterEmptyStrings(config.getStringArray(CommunityRustPlugin.UNIT_TEST_ATTRIBUTES));
+        if (attrs.length == 0) {
+            attrs = StringUtils.split(CommunityRustPlugin.DEFAULT_UNIT_TEST_ATTRIBUTES, ",");
+        }
+        return Arrays.stream(attrs).collect(Collectors.toSet());
+    }
+
+    private String[] filterEmptyStrings(String[] stringArray) {
+        List<String> nonEmptyStrings = new ArrayList<>();
+        for (String string : stringArray) {
+            if (StringUtils.isNotBlank(string.trim())) {
+                nonEmptyStrings.add(string.trim());
+            }
+        }
+        return nonEmptyStrings.toArray(new String[nonEmptyStrings.size()]);
     }
 
 }
