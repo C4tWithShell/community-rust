@@ -46,9 +46,6 @@ public class XUnitSensorTest {
     @Rule
     public LogTester logTester = new LogTester();
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
-
     @Before
     public void init() {
 

@@ -50,7 +50,6 @@ public class XUnitSensor implements Sensor {
                 .name("XUnit Sensor for Rust")
                 .onlyOnLanguage(RustLanguage.KEY)
                 .onlyOnFileType(InputFile.Type.MAIN);
-        ;
     }
 
     @Override
@@ -64,7 +63,6 @@ public class XUnitSensor implements Sensor {
             processReports(context, reports);
         } catch (Exception e) {
             LOG.warn("Cannot read report '{}', the following exception occurred: {}", reportPath, e.getMessage());
-            e.printStackTrace();
         }
     }
 

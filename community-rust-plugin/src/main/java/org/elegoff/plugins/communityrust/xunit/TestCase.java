@@ -3,17 +3,17 @@
  * Copyright (C) 2021 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -37,15 +37,11 @@ public class TestCase {
 
     /**
      * Constructs a testcase instance out of following parameters
-     * @param name  The name of this testcase
      * @param status The execution status of the testcase
-     * @param stackTrace The stack trace occurred while executing of this testcase; pass "" if the testcase passed/skipped.
-     * @param errorMessage The error message associated with this testcase of the execution was erroneous; pass "" if not.
      * @param time The execution time in milliseconds
      * @param file The optional file to which this test case applies.
-     * @param testClassname The classname of the test.
      */
-    public TestCase(String name, TestCaseStatus status, String stackTrace, String errorMessage, int time, @Nullable String file, @Nullable  String testClassname) {
+    public TestCase(String name, TestCaseStatus status, String stackTrace, String errorMessage, int time, @Nullable String file, @Nullable String testClassname) {
         this.name = name;
         this.status = status;
         this.stackTrace = stackTrace;
@@ -54,16 +50,18 @@ public class TestCase {
         this.file = file;
         this.testClassname = testClassname;
     }
+
     /**
      * Returns true if this testcase is an error, false otherwise
      */
-    public boolean isError(){
+    public boolean isError() {
         return TestCaseStatus.ERROR.equals(status);
     }
+
     /**
      * Returns true if this testcase is a failure, false otherwise
      */
-    public boolean isFailure(){
+    public boolean isFailure() {
         return TestCaseStatus.FAILURE.equals(status);
     }
 
@@ -80,6 +78,22 @@ public class TestCase {
 
     public String getFile() {
         return file;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public TestCaseStatus getStatus() {
+        return status;
+    }
+
+    public String getStackTrace() {
+        return stackTrace;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     public String getTestClassname() {
