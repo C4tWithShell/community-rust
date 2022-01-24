@@ -82,6 +82,12 @@ and provided in the form of reports.
 
 Currently, only `junit report` formats are supported :
 
-Insert a parameter `community.rust.test.reportPath` into you `sonar-project.properties` file. 
+Insert a parameter `community.rust.test.reportPath` into your `sonar-project.properties` file. 
 As an example, one of such tool for Rust that converts `cargo test` report to `junit report` is [cargo2junit](https://crates.io/crates/cargo2junit).
 
+### Ignore duplications on unit tests
+
+By default the unit tests are included as part as the duplication calculation
+
+You may override the default `false` for the property `community.rust.cpd.ignoretests` either globally from the UI
+(*Administration->Configuration->Rust*) or by setting `community.rust.cpd.ignoretests=true` in your `sonar-project.properties` file.

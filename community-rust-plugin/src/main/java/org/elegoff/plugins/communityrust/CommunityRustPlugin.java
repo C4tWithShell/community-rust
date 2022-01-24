@@ -25,6 +25,7 @@ import org.elegoff.plugins.communityrust.coverage.lcov.LCOVSensor;
 import org.elegoff.plugins.communityrust.rules.RustRulesDefinition;
 import org.elegoff.plugins.communityrust.xunit.XUnitSensor;
 import org.sonar.api.Plugin;
+import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
 import org.elegoff.plugins.communityrust.clippy.ClippySensor;
 import org.elegoff.plugins.communityrust.clippy.ClippyRulesDefinition;
@@ -45,6 +46,8 @@ public class CommunityRustPlugin implements Plugin {
     public static final String COBERTURA_REPORT_PATHS = "community.rust.cobertura.reportPaths";
     public static final String DEFAULT_COBERTURA_REPORT_PATHS = "cobertura.xml";
     public static final String UNIT_TEST_ATTRIBUTES = "community.rust.unittests.attributes";
+    public static final String IGNORE_DUPLICATION_FOR_TESTS = "community.rust.cpd.ignoretests";
+
     public static final String TEST_AND_COVERAGE = "Test and Coverage";
     public static final String DEFAULT_UNIT_TEST_ATTRIBUTES="test,tokio::test";
 
@@ -95,11 +98,20 @@ public class CommunityRustPlugin implements Plugin {
                 PropertyDefinition.builder(UNIT_TEST_ATTRIBUTES)
                         .defaultValue(DEFAULT_UNIT_TEST_ATTRIBUTES)
                         .name("Unit tests")
-                        .description("Comme separated list of Rust attributes for Unit Tests")
+                        .description("Comma separated list of Rust attributes for Unit Tests")
                         .onQualifiers(Qualifiers.PROJECT)
                         .subCategory(TEST_AND_COVERAGE)
                         .category("Rust")
                         .multiValues(true)
+                        .build(),
+                PropertyDefinition.builder(IGNORE_DUPLICATION_FOR_TESTS)
+                        .defaultValue(Boolean.toString(false))
+                        .name("Duplications on Unit tests")
+                        .description("If true, CPD ignores functions identified as unit tests (see " + UNIT_TEST_ATTRIBUTES + ")")
+                        .onQualifiers(Qualifiers.PROJECT)
+                        .subCategory(TEST_AND_COVERAGE)
+                        .category("Rust")
+                        .type(PropertyType.BOOLEAN)
                         .build()
         );
 
