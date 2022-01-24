@@ -81,26 +81,10 @@ public class RustTokensVisitor {
         Set<Token> unitTestTokens = identifyUnitTestTokens(parsedTokens);
 
         for (Token token : parsedTokens) {
-            final String tokenImage = getTokenImage(token);
+
             final var tokenLocation = tokenLocation(token);
 
-            if (token.getType().equals(RustTokenType.CHARACTER_LITERAL)
-                    || token.getType().equals(RustTokenType.STRING_LITERAL)
-                    || token.getType().equals(RustTokenType.RAW_STRING_LITERAL)
-                    || token.getType().equals(RustTokenType.RAW_BYTE_STRING_LITERAL)
-
-            ) {
-                highlight(highlighting, tokenLocation, TypeOfText.STRING);
-
-            } else if (keywords.contains(tokenImage)) {
-                highlight(highlighting, tokenLocation, TypeOfText.KEYWORD);
-            }
-
-            if (token.getType().equals(RustTokenType.FLOAT_LITERAL)
-                    || token.getType().equals(RustTokenType.BOOLEAN_LITERAL)
-                    || token.getType().equals(RustTokenType.INTEGER_LITERAL)) {
-                highlight(highlighting, tokenLocation, TypeOfText.CONSTANT);
-            }
+            highlightToken(token,tokenLocation, highlighting );
 
             for (Trivia trivia : token.getTrivia()) {
                 highlight(highlighting, tokenLocation(trivia.getToken()), TypeOfText.COMMENT);
@@ -111,16 +95,34 @@ public class RustTokensVisitor {
                 );
             }
 
-            if (!GenericTokenType.EOF.equals(token.getType())) {
-                boolean ignoreCpdInTest = true;
-                if (!(unitTestTokens.contains(token) && this.ignoreCPDTests)) {
-                    cpdTokens.addToken(tokenLocation.startLine(), tokenLocation.startLineOffset(), tokenLocation.endLine(), tokenLocation.endLineOffset(), tokenImage);
-                }
+            if (!GenericTokenType.EOF.equals(token.getType()) && !(unitTestTokens.contains(token) && this.ignoreCPDTests)) {
+                cpdTokens.addToken(tokenLocation.startLine(), tokenLocation.startLineOffset(), tokenLocation.endLine(), tokenLocation.endLineOffset(), getTokenImage(token));
             }
         }
 
         highlighting.save();
         cpdTokens.save();
+    }
+
+    private void highlightToken(Token token, TokenLocation tokenLocation, NewHighlighting highlighting){
+        final String tokenImage = getTokenImage(token);
+        if (token.getType().equals(RustTokenType.CHARACTER_LITERAL)
+                || token.getType().equals(RustTokenType.STRING_LITERAL)
+                || token.getType().equals(RustTokenType.RAW_STRING_LITERAL)
+                || token.getType().equals(RustTokenType.RAW_BYTE_STRING_LITERAL)
+
+        ) {
+            highlight(highlighting, tokenLocation, TypeOfText.STRING);
+
+        } else if (keywords.contains(tokenImage)) {
+            highlight(highlighting, tokenLocation, TypeOfText.KEYWORD);
+        }
+
+        if (token.getType().equals(RustTokenType.FLOAT_LITERAL)
+                || token.getType().equals(RustTokenType.BOOLEAN_LITERAL)
+                || token.getType().equals(RustTokenType.INTEGER_LITERAL)) {
+            highlight(highlighting, tokenLocation, TypeOfText.CONSTANT);
+        }
     }
 
     private Set<Token> identifyUnitTestTokens(List<Token> parsedTokens) {
