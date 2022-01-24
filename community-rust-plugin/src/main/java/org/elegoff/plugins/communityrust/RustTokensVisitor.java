@@ -3,17 +3,17 @@
  * Copyright (C) 2021 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
- *
+ * <p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -47,10 +47,12 @@ public class RustTokensVisitor {
     private final Set<String> keywords = new HashSet<>(Arrays.asList(RustKeyword.keywordValues()));
     private final SensorContext context;
     private final ParserAdapter<LexerlessGrammar> lexer;
+    private final boolean ignoreCPDTests;
 
     public RustTokensVisitor(SensorContext context, ParserAdapter<LexerlessGrammar> lexer) {
         this.context = context;
         this.lexer = lexer;
+        this.ignoreCPDTests = context.config().getBoolean(CommunityRustPlugin.IGNORE_DUPLICATION_FOR_TESTS).orElse(false);
     }
 
     private static String getTokenImage(Token token) {
@@ -110,7 +112,10 @@ public class RustTokensVisitor {
             }
 
             if (!GenericTokenType.EOF.equals(token.getType())) {
-                cpdTokens.addToken(tokenLocation.startLine(), tokenLocation.startLineOffset(), tokenLocation.endLine(), tokenLocation.endLineOffset(), tokenImage);
+                boolean ignoreCpdInTest = true;
+                if (!(unitTestTokens.contains(token) && this.ignoreCPDTests)) {
+                    cpdTokens.addToken(tokenLocation.startLine(), tokenLocation.startLineOffset(), tokenLocation.endLine(), tokenLocation.endLineOffset(), tokenImage);
+                }
             }
         }
 
