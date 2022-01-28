@@ -80,6 +80,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#bool_comparison"
   },
   {
+    "key": "clippy::borrow_as_ptr",
+    "name": "Checks for the usage of `&expr as *const T` or `&mut expr as *mut T`, and suggest using `ptr::addr_o",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrow_as_ptr"
+  },
+  {
     "key": "clippy::borrow_interior_mutable_const",
     "name": "Checks if `const` items which is interior mutable (e.g., contains a `Cell`, `Mutex`, `AtomicXxxx`, e",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrow_interior_mutable_const"
@@ -321,7 +326,7 @@
   },
   {
     "key": "clippy::disallowed_methods",
-    "name": "Denies the configured methods and functions in clippy.toml",
+    "name": "Denies the configured methods and functions in clippy.toml  Note: Even though this lint is warn-by-d",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#disallowed_methods"
   },
   {
@@ -331,7 +336,7 @@
   },
   {
     "key": "clippy::disallowed_types",
-    "name": "Denies the configured types in clippy.toml.",
+    "name": "Denies the configured types in clippy.toml.  Note: Even though this lint is warn-by-default, it will",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#disallowed_types"
   },
   {
@@ -755,6 +760,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inherent_to_string_shadow_display"
   },
   {
+    "key": "clippy::init_numbered_fields",
+    "name": "Checks for tuple structs initialized with field syntax. It will however not lint if a base initializ",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#init_numbered_fields"
+  },
+  {
     "key": "clippy::inline_always",
     "name": "Checks for items annotated with `#[inline(always)]`, unless the annotated function is empty or simpl",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inline_always"
@@ -858,6 +868,11 @@
     "key": "clippy::iter_nth_zero",
     "name": "Checks for the use of `iter.nth(0)`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_nth_zero"
+  },
+  {
+    "key": "clippy::iter_overeager_cloned",
+    "name": "Checks for usage of `_.cloned().<func>()` where call to `.cloned()` can be postponed.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_overeager_cloned"
   },
   {
     "key": "clippy::iter_skip_next",
@@ -968,6 +983,11 @@
     "key": "clippy::manual_async_fn",
     "name": "It checks for manual implementations of `async` functions.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_async_fn"
+  },
+  {
+    "key": "clippy::manual_bits",
+    "name": "Checks for uses of `std::mem::size_of::<T>() * 8` when `T::BITS` is available.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_bits"
   },
   {
     "key": "clippy::manual_filter_map",
@@ -1355,6 +1375,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_for_each"
   },
   {
+    "key": "clippy::needless_late_init",
+    "name": "Checks for late initializations that can be replaced by a `let` statement with an initializer.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_late_init"
+  },
+  {
     "key": "clippy::needless_lifetimes",
     "name": "Checks for lifetime annotations which can be removed by relying on lifetime elision.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_lifetimes"
@@ -1436,7 +1461,7 @@
   },
   {
     "key": "clippy::non_ascii_literal",
-    "name": "Checks for non-ASCII characters in string literals.",
+    "name": "Checks for non-ASCII characters in string and char literals.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#non_ascii_literal"
   },
   {
@@ -1446,7 +1471,7 @@
   },
   {
     "key": "clippy::non_send_fields_in_send_ty",
-    "name": "Warns about fields in struct implementing `Send` that are neither `Send` nor `Copy`.",
+    "name": "This lint warns about a `Send` implementation for a type that contains fields that are not safe to b",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#non_send_fields_in_send_ty"
   },
   {
@@ -1601,7 +1626,7 @@
   },
   {
     "key": "clippy::ptr_arg",
-    "name": "This lint checks for function arguments of type `&String` or `&Vec` unless the references are mutabl",
+    "name": "This lint checks for function arguments of type `&String`, `&Vec`, `&PathBuf`, and `Cow<_>`. It will",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ptr_arg"
   },
   {
@@ -1720,11 +1745,6 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_binding_to_reference"
   },
   {
-    "key": "clippy::ref_in_deref",
-    "name": "Checks for references in expressions that use auto dereference.",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_in_deref"
-  },
-  {
     "key": "clippy::ref_option_ref",
     "name": "Checks for usage of `&Option<&T>`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_option_ref"
@@ -1755,6 +1775,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#result_unit_err"
   },
   {
+    "key": "clippy::return_self_not_must_use",
+    "name": "This lint warns when a method returning `Self` doesn't have the `#[must_use]` attribute.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#return_self_not_must_use"
+  },
+  {
     "key": "clippy::reversed_empty_ranges",
     "name": "Checks for range expressions `x..y` where both `x` and `y` are constant and `x` is greater or equal",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#reversed_empty_ranges"
@@ -1771,7 +1796,7 @@
   },
   {
     "key": "clippy::same_name_method",
-    "name": "It lints if a struct has two method with same time: one from a trait, another not from trait.",
+    "name": "It lints if a struct has two methods with the same name: one from a trait, another not from trait.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#same_name_method"
   },
   {
@@ -1843,6 +1868,11 @@
     "key": "clippy::single_char_add_str",
     "name": "Warns when using `push_str`/`insert_str` with a single-character string literal where `push`/`insert",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#single_char_add_str"
+  },
+  {
+    "key": "clippy::single_char_lifetime_names",
+    "name": "Checks for lifetimes with names which are one character long.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#single_char_lifetime_names"
   },
   {
     "key": "clippy::single_char_pattern",
@@ -2116,7 +2146,7 @@
   },
   {
     "key": "clippy::undocumented_unsafe_blocks",
-    "name": "Checks for `unsafe` blocks without a `// Safety: ` comment explaining why the unsafe operations perf",
+    "name": "Checks for `unsafe` blocks without a `// SAFETY: ` comment explaining why the unsafe operations perf",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#undocumented_unsafe_blocks"
   },
   {
@@ -2203,6 +2233,11 @@
     "key": "clippy::unnecessary_sort_by",
     "name": "Detects uses of `Vec::sort_by` passing in a closure which compares the two arguments, either directl",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_sort_by"
+  },
+  {
+    "key": "clippy::unnecessary_to_owned",
+    "name": "Checks for unnecessary calls to [`ToOwned::to_owned`](https://doc.rust-lang.org/std/borrow/trait.ToO",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_to_owned"
   },
   {
     "key": "clippy::unnecessary_unwrap",
