@@ -130,12 +130,18 @@ public class IfExpressionTest {
                         "                                                  \n" +
                         "                        break;\n" +
                         "                     }")
-                /*TODO .matches("if next.iter().all(|&i| i == 42) {\n" +
+                 .matches("if next.iter().all(|&i| i == 42) {\n" +
                         "                                                  \n" +
                         "                        break;\n" +
                         "                     }")
 
-                 */
+                .matches("if *bar == None {\n" +
+                        "        true\n" +
+                        "    } else {\n" +
+                        "        LOG_WARNING!(\"condition is false\");\n" +
+                        "        false\n" +
+                        "    }")
+                
 
 
         ;

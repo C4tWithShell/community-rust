@@ -68,14 +68,7 @@ public class RustLexerTest {
 
     @Test
     public void testParsing() {
-        String sexpr = "pub struct Message<'a> {\n" +
-                "    #[serde(rename = \"c\")]\n" +
-                "    command: Command,\n" +
-                "    #[serde(borrow)]\n" +
-                "    payload: Option<Cow<'a, str>>,\n" +
-                "    #[serde(rename = \"s\")]\n" +
-                "    identifier: Option<u16>,\n" +
-                "}";
+        String sexpr = "*bar == None { true };";
 
         //Print out Ast node content for debugging purpose
 

@@ -1,10 +1,8 @@
-#[derive(Debug, Deserialize, Serialize, Getter)]
-#[serde(deny_unknown_fields)]
-pub struct Message<'a> {
-    #[serde(rename = "c")]
-    command: Command,
-    #[serde(borrow)]
-    payload: Option<Cow<'a, str>>,
-    #[serde(rename = "s")]
-    identifier: Option<u16>,
+fn foo() {
+    if *message.get_payload() == None {
+                             true
+                        } else {
+                             LOG_WARNING!("Payload found for Close command");
+                             false
+                        }
 }
