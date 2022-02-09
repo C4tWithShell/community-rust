@@ -680,7 +680,7 @@ public enum RustGrammar implements GrammarRuleKey {
         );
         b.rule(STRUCT_FIELDS).is(seq(b, STRUCT_FIELD, RustPunctuator.COMMA));
         b.rule(STRUCT_FIELD).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE), SPC,
+                b.zeroOrMore(OUTER_ATTRIBUTE, SPC), SPC,
                 b.optional(VISIBILITY), SPC,
                 IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE
         );
