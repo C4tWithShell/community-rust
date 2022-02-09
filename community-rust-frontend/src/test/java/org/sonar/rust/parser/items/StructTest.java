@@ -39,7 +39,14 @@ public class StructTest {
                         "    pub granted_list: HashSet<T>,\n" +
                         "    pub denied_list: HashSet<T>,\n" +
                         "}")
-
+                .matches("struct Message<'a> {\n" +
+                        "    #[serde(rename = \"c\")]\n" +
+                        "    command: Command,\n" +
+                        "    #[serde(borrow)]\n" +
+                        "    payload: Option<Cow<'a, str>>,\n" +
+                        "    #[serde(rename = \"s\")]\n" +
+                        "    identifier: Option<u16>,\n" +
+                        "}")
         ;
 
     }

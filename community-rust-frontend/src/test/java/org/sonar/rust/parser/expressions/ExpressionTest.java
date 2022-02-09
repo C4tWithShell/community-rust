@@ -29,7 +29,7 @@ public class ExpressionTest {
 
     @Test
     public void testScrutinee() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.SCRUTINEE))
+        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_EXCEPT_STRUCT))
                 .matches("a")
                 .matches("a || b")
                 .matches("a() || b")
