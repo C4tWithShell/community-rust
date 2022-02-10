@@ -124,6 +124,7 @@ public class IdentifierTest {
                 .matches("r#true")
                 .matches("Москва")
                 .matches("東京")
+                .matches("crate_root")
 
         ;
 

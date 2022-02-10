@@ -1994,7 +1994,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(
                 b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
                 b.regexp("^[sS]elf$"),
-                RustKeyword.KW_CRATE,
+                b.sequence(RustKeyword.KW_CRATE,b.nextNot(IDENTIFIER)),
                 b.regexp(DOLLAR_CRATE_REGEX),
                 IDENTIFIER
         ));

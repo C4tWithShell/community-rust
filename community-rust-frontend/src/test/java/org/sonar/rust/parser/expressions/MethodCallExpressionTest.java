@@ -57,7 +57,7 @@ public class MethodCallExpressionTest {
                 .matches("mystruct.myfield")
                 .matches("other.major")
                 .matches("foo().x")
-                //FIXME.matches("(Struct {a: 10, b: 20}).a")
+                .matches("(Struct {a: 10, b: 20}).a")
                 .matches("t.get_error_class")
                 .matches("state.borrow().get_error_class_fn")
                 .matches("self.get_cache_filename(url)")
@@ -170,6 +170,7 @@ public class MethodCallExpressionTest {
                 .matches("a321.into()")
                 .matches("321.await")
                 .matches("321.into()")
+                .matches("crate_root.call(me)")
 
 
         ;

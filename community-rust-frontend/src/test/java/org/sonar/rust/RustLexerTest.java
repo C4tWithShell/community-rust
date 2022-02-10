@@ -68,7 +68,7 @@ public class RustLexerTest {
 
     @Test
     public void testParsing() {
-        String sexpr = "*bar == None { true };";
+        String sexpr = "crate_root.call(me);";
 
         //Print out Ast node content for debugging purpose
 
