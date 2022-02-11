@@ -641,7 +641,7 @@ public enum RustGrammar implements GrammarRuleKey {
 
 
         b.rule(FUNCTION_PARAM).is(
-                b.zeroOrMore(OUTER_ATTRIBUTE), SPC,
+                b.zeroOrMore(OUTER_ATTRIBUTE,SPC), SPC,
                 b.firstOf(FUNCTION_PARAM_PATTERN, RustPunctuator.DOTDOTDOT, TYPE));
 
         b.rule(FUNCTION_PARAM_PATTERN).is(PATTERN_NO_TOP_ALT, SPC, RustPunctuator.COLON,
@@ -1131,7 +1131,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(MAYBE_NAMED_PARAM).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.optional(b.sequence(
-                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON
+                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON, b.nextNot(RustPunctuator.COLON)
                 )), SPC, TYPE
         );
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(
@@ -1732,7 +1732,7 @@ public enum RustGrammar implements GrammarRuleKey {
     }
 
     private static void block(LexerlessGrammarBuilder b) {
-        b.rule(BLOCK_EXPRESSION).is("{", SPC, b.zeroOrMore(INNER_ATTRIBUTE),
+        b.rule(BLOCK_EXPRESSION).is("{", SPC, b.zeroOrMore(INNER_ATTRIBUTE,SPC),
                 SPC, b.optional(STATEMENTS), SPC, "}"
         );
 

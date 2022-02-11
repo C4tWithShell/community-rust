@@ -31,6 +31,12 @@ public class StaticTest {
         assertThat(RustGrammar.create().build().rule(RustGrammar.STATIC_ITEM))
                 .matches("static mut LEVELS: u32 = 0;")
                 .matches("static mut LEVELS: u32;")
+                .matches("static INIT_ARRAY: unsafe extern \"C\" fn(c::c_int, *mut *mut u8, *mut *mut u8) = {\n" +
+                        "    unsafe extern \"C\" fn function(_argc: c::c_int, _argv: *mut *mut u8, envp: *mut *mut u8) {\n" +
+                        "        init_from_envp(envp);\n" +
+                        "    }\n" +
+                        "    function\n" +
+                        "};")
 
 
         ;

@@ -68,7 +68,11 @@ public class RustLexerTest {
 
     @Test
     public void testParsing() {
-        String sexpr = "crate_root.call(me);";
+        String sexpr = "static INIT_ARRAY: unsafe extern \"C\" fn(c::c_int, *mut *mut u8, *mut *mut u8) = {\n" +
+                "    unsafe extern \"C\" fn function(_argc: c::c_int, _argv: *mut *mut u8, envp: *mut *mut u8) {\n" +
+                "    }\n" +
+                "    function\n" +
+                "};";
 
         //Print out Ast node content for debugging purpose
 
