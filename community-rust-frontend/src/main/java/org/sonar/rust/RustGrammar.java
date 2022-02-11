@@ -1131,7 +1131,7 @@ public enum RustGrammar implements GrammarRuleKey {
         b.rule(MAYBE_NAMED_PARAM).is(
                 b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
                 b.optional(b.sequence(
-                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON
+                        b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON, b.nextNot(RustPunctuator.COLON)
                 )), SPC, TYPE
         );
         b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(

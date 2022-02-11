@@ -88,6 +88,8 @@ public class FunctionTest {
                 .matches("x : i32")
                 .matches("x : i32, y:i64")
                 .matches("&self, n:u32")
+                .matches("*mut *mut u8, *mut *mut u8")
+                .matches("c::c_int, *mut *mut u8, *mut *mut u8")
 
         ;
 
