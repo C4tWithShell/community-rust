@@ -20,18 +20,17 @@
  */
 package org.sonar.rust;
 
-
 import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.impl.Parser;
 import org.sonar.sslr.parser.ParserAdapter;
 
 public final class RustParser {
 
-    private RustParser() {
-    }
+  private RustParser() {
+  }
 
-    public static Parser<Grammar> create(RustParserConfiguration conf) {
-        return new ParserAdapter(conf.getCharset(), RustGrammar.create().build());
-    }
+  public static Parser<Grammar> create(RustParserConfiguration conf) {
+    return new ParserAdapter(conf.getCharset(), RustGrammar.create().build());
+  }
 
 }

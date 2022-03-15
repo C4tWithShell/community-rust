@@ -20,52 +20,51 @@
  */
 package org.elegoff.plugins.communityrust.xunit;
 
-import org.codehaus.staxmate.SMInputFactory;
-import org.codehaus.staxmate.in.SMHierarchicCursor;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import org.codehaus.staxmate.SMInputFactory;
+import org.codehaus.staxmate.in.SMHierarchicCursor;
 
 public class StaxParser {
 
-    private SMInputFactory inf;
+  private final SMInputFactory inf;
 
-    private XmlStreamHandler streamHandler;
+  private final XmlStreamHandler streamHandler;
 
-    public StaxParser(XmlStreamHandler streamHandler) {
-        this.streamHandler = streamHandler;
-        XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
+  public StaxParser(XmlStreamHandler streamHandler) {
+    this.streamHandler = streamHandler;
+    XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
 
-        inf = new SMInputFactory(xmlFactory);
+    inf = new SMInputFactory(xmlFactory);
+  }
+
+  public void parse(File xmlFile) throws XMLStreamException {
+    try (FileInputStream input = new FileInputStream(xmlFile)) {
+      parse(input);
+    } catch (IOException e) {
+      throw new XMLStreamException(e);
     }
+  }
 
-    public void parse(File xmlFile) throws XMLStreamException {
-        try (FileInputStream input = new FileInputStream(xmlFile)) {
-            parse(input);
-        } catch (IOException e) {
-            throw new XMLStreamException(e);
-        }
+  public void parse(InputStream xmlInput) throws XMLStreamException {
+    SMHierarchicCursor rootCursor = inf.rootElementCursor(xmlInput);
+    try {
+      streamHandler.stream(rootCursor);
+    } finally {
+      rootCursor.getStreamReader().closeCompletely();
     }
+  }
 
-    public void parse(InputStream xmlInput) throws XMLStreamException {
-        SMHierarchicCursor rootCursor = inf.rootElementCursor(xmlInput);
-        try {
-            streamHandler.stream(rootCursor);
-        } finally {
-            rootCursor.getStreamReader().closeCompletely();
-        }
-    }
-
-    /**
-     * Simple interface for handling XML stream to parse.
-     */
-    @FunctionalInterface
-    public interface XmlStreamHandler {
-        void stream(SMHierarchicCursor rootCursor) throws XMLStreamException;
-    }
+  /**
+   * Simple interface for handling XML stream to parse.
+   */
+  @FunctionalInterface
+  public interface XmlStreamHandler {
+    void stream(SMHierarchicCursor rootCursor) throws XMLStreamException;
+  }
 
 }

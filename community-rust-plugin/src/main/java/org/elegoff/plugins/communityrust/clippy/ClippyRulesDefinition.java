@@ -35,6 +35,6 @@ public class ClippyRulesDefinition implements RulesDefinition {
 
   @Override
   public void define(Context context) {
-      RULE_LOADER.createExternalRuleRepository(context);
+    RULE_LOADER.createExternalRuleRepository(context);
   }
 }

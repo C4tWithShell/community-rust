@@ -20,43 +20,42 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
-import org.sonar.api.batch.fs.InputFile;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.sonar.api.batch.fs.InputFile;
 
 public class InvertPath {
-    private Node root = new Node();
+  private final Node root = new Node();
 
-    void index(InputFile inputFile, String[] path) {
-        var currentNode = root;
-        for (int i = path.length - 1; i >= 0; i--) {
-            currentNode = currentNode.children.computeIfAbsent(path[i], e -> new Node());
-        }
-        currentNode.file = inputFile;
+  private static InputFile getFirstLeaf(Node node) {
+    while (!node.children.isEmpty()) {
+      node = node.children.values().iterator().next();
     }
+    return node.file;
+  }
 
-    InputFile getFileWithSuffix(String[] path) {
-        var currentNode = root;
-
-        for (int i = path.length - 1; i >= 0; i--) {
-            currentNode = currentNode.children.get(path[i]);
-            if (currentNode == null) {
-                return null;
-            }
-        }
-        return getFirstLeaf(currentNode);
+  void index(InputFile inputFile, String[] path) {
+    var currentNode = root;
+    for (int i = path.length - 1; i >= 0; i--) {
+      currentNode = currentNode.children.computeIfAbsent(path[i], e -> new Node());
     }
+    currentNode.file = inputFile;
+  }
 
-    private static InputFile getFirstLeaf(Node node) {
-        while (!node.children.isEmpty()) {
-            node = node.children.values().iterator().next();
-        }
-        return node.file;
-    }
+  InputFile getFileWithSuffix(String[] path) {
+    var currentNode = root;
 
-    static class Node {
-        final Map<String, Node> children = new LinkedHashMap<>();
-        InputFile file = null;
+    for (int i = path.length - 1; i >= 0; i--) {
+      currentNode = currentNode.children.get(path[i]);
+      if (currentNode == null) {
+        return null;
+      }
     }
+    return getFirstLeaf(currentNode);
+  }
+
+  static class Node {
+    final Map<String, Node> children = new LinkedHashMap<>();
+    InputFile file = null;
+  }
 }

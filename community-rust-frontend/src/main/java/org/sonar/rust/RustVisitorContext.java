@@ -23,37 +23,36 @@ package org.sonar.rust;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.RecognitionException;
 
-
 public class RustVisitorContext {
 
-    private final RustFile file;
-    private final AstNode rootTree;
-    private final RecognitionException parsingException;
+  private final RustFile file;
+  private final AstNode rootTree;
+  private final RecognitionException parsingException;
 
-    public RustVisitorContext(RustFile file, AstNode tree) {
-        this(file, tree, null);
-    }
+  public RustVisitorContext(RustFile file, AstNode tree) {
+    this(file, tree, null);
+  }
 
-    public RustVisitorContext(RustFile file, RecognitionException parsingException) {
-        this(file, null, parsingException);
-    }
+  public RustVisitorContext(RustFile file, RecognitionException parsingException) {
+    this(file, null, parsingException);
+  }
 
-    private RustVisitorContext(RustFile file, AstNode rootTree, RecognitionException parsingException) {
-        this.file = file;
-        this.rootTree = rootTree;
-        this.parsingException = parsingException;
-    }
+  private RustVisitorContext(RustFile file, AstNode rootTree, RecognitionException parsingException) {
+    this.file = file;
+    this.rootTree = rootTree;
+    this.parsingException = parsingException;
+  }
 
-    public AstNode rootTree() {
-        return rootTree;
-    }
+  public AstNode rootTree() {
+    return rootTree;
+  }
 
-    public RustFile file() {
-        return file;
-    }
+  public RustFile file() {
+    return file;
+  }
 
-    public RecognitionException parsingException() {
-        return parsingException;
-    }
+  public RecognitionException parsingException() {
+    return parsingException;
+  }
 
 }

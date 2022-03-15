@@ -26,86 +26,85 @@ import org.sonar.sslr.grammar.GrammarRuleKey;
 See https://doc.rust-lang.org/reference/keywords.html
  */
 public enum RustKeyword implements GrammarRuleKey {
-    KW_AS("as"),
-    KW_BREAK("break"),
-    KW_CONST("const"),
-    KW_CONTINUE("continue"),
-    KW_CRATE("crate"),
-    KW_ELSE("else"),
-    KW_ENUM("enum"),
-    KW_EXTERN("extern"),
-    KW_FALSE("false"),
-    KW_FN("fn"),
-    KW_FOR("for"),
-    KW_IF("if"),
-    KW_IMPL("impl"),
-    KW_IN("in"),
-    KW_LET("let"),
-    KW_LOOP("loop"),
-    KW_MATCH("match"),
-    KW_MOD("mod"),
-    KW_MOVE("move"),
-    KW_MUT("mut"),
-    KW_PUB("pub"),
-    KW_REF("ref"),
-    KW_RETURN("return"),
-    KW_SELFVALUE("self"),
-    KW_SELFTYPE("Self"),
-    KW_STATIC("static"),
-    KW_STRUCT("struct"),
-    KW_SUPER("super"),
-    KW_TRAIT("trait"),
-    KW_TRUE("true"),
-    KW_TYPE("type"),
-    KW_UNSAFE("unsafe"),
-    KW_USE("use"),
-    KW_WHERE("where"),
-    KW_WHILE("while"),
-    KW_ASYNC("async"),
-    KW_AWAIT("await"),
-    KW_DYN("dyn"),
-    /* Reserved keywords */
-    KW_ABSTRACT("abstract"),
-    KW_BECOME("become"),
-    KW_BOX("box"),
-    KW_DO(" do"),
-    KW_FINAL("final"),
-    KW_MACRO("macro"),
-    KW_OVERRIDE(" override"),
-    KW_PRIV("priv"),
-    KW_TYPEOF("typeof"),
-    KW_UNSIZED("unsized"),
-    KW_VIRTUAL("virtual"),
-    KW_YIELD("yield"),
-    /*Weak keywords*/
-    KW_UNION ("union"),
-    KW_STATICLIFETIME("'static")
-    ;
+  KW_AS("as"),
+  KW_BREAK("break"),
+  KW_CONST("const"),
+  KW_CONTINUE("continue"),
+  KW_CRATE("crate"),
+  KW_ELSE("else"),
+  KW_ENUM("enum"),
+  KW_EXTERN("extern"),
+  KW_FALSE("false"),
+  KW_FN("fn"),
+  KW_FOR("for"),
+  KW_IF("if"),
+  KW_IMPL("impl"),
+  KW_IN("in"),
+  KW_LET("let"),
+  KW_LOOP("loop"),
+  KW_MATCH("match"),
+  KW_MOD("mod"),
+  KW_MOVE("move"),
+  KW_MUT("mut"),
+  KW_PUB("pub"),
+  KW_REF("ref"),
+  KW_RETURN("return"),
+  KW_SELFVALUE("self"),
+  KW_SELFTYPE("Self"),
+  KW_STATIC("static"),
+  KW_STRUCT("struct"),
+  KW_SUPER("super"),
+  KW_TRAIT("trait"),
+  KW_TRUE("true"),
+  KW_TYPE("type"),
+  KW_UNSAFE("unsafe"),
+  KW_USE("use"),
+  KW_WHERE("where"),
+  KW_WHILE("while"),
+  KW_ASYNC("async"),
+  KW_AWAIT("await"),
+  KW_DYN("dyn"),
+  /* Reserved keywords */
+  KW_ABSTRACT("abstract"),
+  KW_BECOME("become"),
+  KW_BOX("box"),
+  KW_DO(" do"),
+  KW_FINAL("final"),
+  KW_MACRO("macro"),
+  KW_OVERRIDE(" override"),
+  KW_PRIV("priv"),
+  KW_TYPEOF("typeof"),
+  KW_UNSIZED("unsized"),
+  KW_VIRTUAL("virtual"),
+  KW_YIELD("yield"),
+  /* Weak keywords */
+  KW_UNION("union"),
+  KW_STATICLIFETIME("'static");
 
-    private final String value;
+  private final String value;
 
-    RustKeyword(String value) {
-        this.value = value;
+  RustKeyword(String value) {
+    this.value = value;
+  }
+
+  /**
+   * keywords as String.
+   * @return an array containing all keywords as typed in Java
+   */
+  public static String[] keywordValues() {
+    RustKeyword[] keywordsEnum = RustKeyword.values();
+    String[] keywords = new String[keywordsEnum.length];
+    for (int i = 0; i < keywords.length; i++) {
+      keywords[i] = keywordsEnum[i].getValue();
     }
+    return keywords;
+  }
 
-    public String getName() {
-        return name();
-    }
+  public String getName() {
+    return name();
+  }
 
-    public String getValue() {
-        return value;
-    }
-
-    /**
-     * keywords as String.
-     * @return an array containing all keywords as typed in Java
-     */
-    public static String[] keywordValues() {
-        RustKeyword[] keywordsEnum = RustKeyword.values();
-        String[] keywords = new String[keywordsEnum.length];
-        for (int i = 0; i < keywords.length; i++) {
-            keywords[i] = keywordsEnum[i].getValue();
-        }
-        return keywords;
-    }
+  public String getValue() {
+    return value;
+  }
 }

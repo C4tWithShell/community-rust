@@ -20,18 +20,14 @@
  */
 package org.elegoff.plugins.communityrust;
 
-import org.sonar.rust.RustParserConfiguration;
-
 import java.nio.charset.Charset;
-
+import org.sonar.rust.RustParserConfiguration;
 
 public class CommunityRustPluginConfiguration {
 
-
-
-    RustParserConfiguration getParserConfiguration(Charset charset) {
-        return RustParserConfiguration.builder()
-                .setCharset(charset)
-                .build();
-    }
+  RustParserConfiguration getParserConfiguration(Charset charset) {
+    return RustParserConfiguration.builder()
+      .setCharset(charset)
+      .build();
+  }
 }

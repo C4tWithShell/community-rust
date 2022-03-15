@@ -28,36 +28,34 @@ import org.sonar.sslr.parser.ParserAdapter;
 
 public enum RustLexer implements GrammarRuleKey {
 
-    TOKENS;
+  TOKENS;
 
-    public static LexerlessGrammarBuilder create() {
-        LexerlessGrammarBuilder b =RustGrammar.create();
+  public static LexerlessGrammarBuilder create() {
+    LexerlessGrammarBuilder b = RustGrammar.create();
 
-        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN,b.optional(RustGrammar.SPC, RustPunctuator.SEMI),RustGrammar.SPC), RustGrammar.EOF);
+    b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN, b.optional(RustGrammar.SPC, RustPunctuator.SEMI), RustGrammar.SPC), RustGrammar.EOF);
 
-        b.setRootRule(TOKENS);
+    b.setRootRule(TOKENS);
 
-        return b;
-    }
+    return b;
+  }
 
+  private static LexerlessGrammarBuilder create(GrammarRuleKey root) {
+    LexerlessGrammarBuilder b = RustGrammar.create();
 
-    private static LexerlessGrammarBuilder create(GrammarRuleKey root) {
-        LexerlessGrammarBuilder b =RustGrammar.create();
+    b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
 
-        b.rule(TOKENS).is(RustGrammar.SPC, b.zeroOrMore(RustGrammar.ANY_TOKEN), RustGrammar.EOF);
+    b.setRootRule(root);
 
-        b.setRootRule(root);
+    return b;
+  }
 
-        return b;
-    }
+  public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf) {
+    return new ParserAdapter<>(conf.getCharset(), create().build());
+  }
 
-    public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf) {
-        return new ParserAdapter<>(conf.getCharset(), create().build());
-    }
-
-
-    public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf, GrammarRuleKey root) {
-        return new ParserAdapter<>(conf.getCharset(), create(root).build());
-    }
+  public static ParserAdapter<LexerlessGrammar> create(RustParserConfiguration conf, GrammarRuleKey root) {
+    return new ParserAdapter<>(conf.getCharset(), create(root).build());
+  }
 
 }

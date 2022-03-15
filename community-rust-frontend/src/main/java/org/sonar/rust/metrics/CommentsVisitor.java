@@ -23,80 +23,70 @@ package org.sonar.rust.metrics;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.api.Trivia;
-import org.sonar.rust.RustVisitor;
-
 import java.util.HashSet;
 import java.util.Set;
+import org.sonar.rust.RustVisitor;
 
 public class CommentsVisitor extends RustVisitor {
 
+  private Set<Integer> comments;
+  private boolean seenFirstToken;
 
+  public Set<Integer> commentLines() {
+    return comments;
+  }
 
-    private Set<Integer> comments;
-    private boolean seenFirstToken;
+  private void addCommentLine(int line) {
+    comments.add(line);
+  }
 
+  @Override
+  public void visitFile(AstNode astNode) {
+    comments = new HashSet<>();
+    seenFirstToken = false;
+  }
 
-    public Set<Integer> commentLines() {
-        return comments;
-    }
+  @Override
+  public void visitToken(Token token) {
+    if (seenFirstToken) {
+      for (Trivia trivia : token.getTrivia()) {
+        if (trivia.isComment()) {
+          String[] commentLines = getContents(trivia.getToken().getOriginalValue())
+            .split("(\r)?\n|\r", -1);
+          int line = trivia.getToken().getLine();
 
-    private void addCommentLine(int line) {
-        comments.add(line);
-    }
-
-    @Override
-    public void visitFile(AstNode astNode) {
-        comments = new HashSet<>();
-        seenFirstToken = false;
-    }
-
-
-    @Override
-    public void visitToken(Token token) {
-        if (seenFirstToken) {
-            for (Trivia trivia : token.getTrivia()) {
-                if (trivia.isComment()) {
-                    String[] commentLines = getContents(trivia.getToken().getOriginalValue())
-                            .split("(\r)?\n|\r", -1);
-                    int line = trivia.getToken().getLine();
-
-                    for (String commentLine : commentLines) {
-                        if (!isBlank(commentLine)) {
-                            addCommentLine(line);
-                        }
-
-                        line++;
-                    }
-                }
+          for (String commentLine : commentLines) {
+            if (!isBlank(commentLine)) {
+              addCommentLine(line);
             }
-        }
 
-        seenFirstToken = true;
+            line++;
+          }
+        }
+      }
     }
 
+    seenFirstToken = true;
+  }
 
-
-    public boolean isBlank(String line) {
-        for (int i = 0; i < line.length(); i++) {
-            if (Character.isLetterOrDigit(line.charAt(i))) {
-                return false;
-            }
-        }
-
-        return true;
+  public boolean isBlank(String line) {
+    for (int i = 0; i < line.length(); i++) {
+      if (Character.isLetterOrDigit(line.charAt(i))) {
+        return false;
+      }
     }
 
-    public String getContents(String comment) {
-        int l = comment.length();
+    return true;
+  }
 
-        String res ="";
-        if (l>3) {
-            res = comment.substring(2, l - 2);
-        }
-        return res;
+  public String getContents(String comment) {
+    int l = comment.length();
+
+    String res = "";
+    if (l > 3) {
+      res = comment.substring(2, l - 2);
     }
-
-
-
+    return res;
+  }
 
 }

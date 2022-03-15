@@ -28,29 +28,29 @@ import java.util.List;
  */
 public class TestSuite {
 
-    private String key;
-    private List<TestCase> testCases;
+  private final String key;
+  private final List<TestCase> testCases;
 
-    /**
-     * Creates a testsuite instance uniquely identified by the given key
-     *
-     * @param key
-     *          The key to construct a testsuite for
-     */
-    public TestSuite(String key) {
-        this.key = key;
-        this.testCases = new ArrayList<>();
-    }
+  /**
+   * Creates a testsuite instance uniquely identified by the given key
+   *
+   * @param key
+   *          The key to construct a testsuite for
+   */
+  public TestSuite(String key) {
+    this.key = key;
+    this.testCases = new ArrayList<>();
+  }
 
-    public String getKey() {
-        return key;
-    }
+  public String getKey() {
+    return key;
+  }
 
-    public void addTestCase(TestCase tc) {
-        testCases.add(tc);
-    }
+  public void addTestCase(TestCase tc) {
+    testCases.add(tc);
+  }
 
-    public List<TestCase> getTestCases() {
-        return testCases;
-    }
+  public List<TestCase> getTestCases() {
+    return testCases;
+  }
 }

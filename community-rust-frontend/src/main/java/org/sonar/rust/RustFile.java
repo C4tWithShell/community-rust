@@ -20,16 +20,14 @@
  */
 package org.sonar.rust;
 
-
-
 import java.net.URI;
 
 public interface RustFile {
 
-    String name();
+  String name();
 
-    String content();
+  String content();
 
-    URI uri();
+  URI uri();
 
 }

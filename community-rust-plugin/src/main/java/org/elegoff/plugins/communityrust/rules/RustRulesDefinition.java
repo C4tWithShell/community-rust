@@ -20,29 +20,27 @@
  */
 package org.elegoff.plugins.communityrust.rules;
 
+import java.util.List;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.elegoff.plugins.communityrust.language.RustQualityProfile;
 import org.elegoff.rust.checks.CheckList;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-import java.util.List;
-
 public class RustRulesDefinition implements RulesDefinition {
-    /**
-     * Path to the directory/folder containing the descriptor files (JSON and HTML) for the rules
-     */
-    public static final String RULES_DEFINITION_FOLDER = "org/elegoff/I10n/rust/rules";
+  /**
+   * Path to the directory/folder containing the descriptor files (JSON and HTML) for the rules
+   */
+  public static final String RULES_DEFINITION_FOLDER = "org/elegoff/I10n/rust/rules";
 
-
-    @Override
-    public void define(Context context) {
-        NewRepository repository = context.createRepository(CheckList.REPOSITORY_KEY, RustLanguage.KEY).setName("Community RUST");
-        List<Class<?>> checkClasses = CheckList.getRustChecks();
-        RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RULES_DEFINITION_FOLDER, RustQualityProfile.PROFILE_PATH);
-        ruleMetadataLoader.addRulesByAnnotatedClass(repository, checkClasses);
-        repository.rules().stream()
-                .forEach(r -> r.setTemplate(false));
-        repository.done();
-    }
+  @Override
+  public void define(Context context) {
+    NewRepository repository = context.createRepository(CheckList.REPOSITORY_KEY, RustLanguage.KEY).setName("Community RUST");
+    List<Class<?>> checkClasses = CheckList.getRustChecks();
+    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RULES_DEFINITION_FOLDER, RustQualityProfile.PROFILE_PATH);
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, checkClasses);
+    repository.rules().stream()
+      .forEach(r -> r.setTemplate(false));
+    repository.done();
+  }
 }

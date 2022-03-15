@@ -20,6 +20,13 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import javax.annotation.CheckForNull;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.elegoff.plugins.communityrust.coverage.RustFileSystem;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
@@ -33,115 +40,106 @@ import org.sonar.api.utils.WildcardPattern;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
-import javax.annotation.CheckForNull;
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-
-
 public class LCOVSensor implements Sensor {
-        private static final Logger LOG = Loggers.get(LCOVSensor.class);
+  private static final Logger LOG = Loggers.get(LCOVSensor.class);
 
-        @Override
-        public void describe(SensorDescriptor descriptor) {
-            descriptor
-                    .name("LCOV Sensor for Rust coverage")
-                    .onlyOnLanguage(RustLanguage.KEY);
-        }
+  private static void saveCoverageFromLcovFiles(SensorContext context, List<File> lcovFiles) {
+    LOG.info("Importing {}", lcovFiles);
 
-        @Override
-        public void execute(SensorContext context) {
-            String baseDir = context.fileSystem().baseDir().getPath();
-            List<File> lcovFiles = getLcovReports(baseDir, context.config());
+    var fileSystem = context.fileSystem();
+    var mainFilePredicate = fileSystem.predicates().hasLanguages(RustLanguage.KEY);
+    var fileChooser = new FileChooser(fileSystem.inputFiles(mainFilePredicate));
+    var parser = LCOVParser.build(context, lcovFiles, fileChooser);
 
-            if (lcovFiles.isEmpty()) {
-                LOG.warn("No coverage information will be saved because all LCOV files cannot be found.");
-                return;
-            }
-            saveCoverageFromLcovFiles(context, lcovFiles);
-        }
+    Map<InputFile, NewCoverage> coveredFiles = parser.getFileCoverage();
 
-        private static void saveCoverageFromLcovFiles(SensorContext context, List<File> lcovFiles) {
-            LOG.info("Importing {}", lcovFiles);
+    for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext();) {
+      var inputFile = iterator.next();
+      NewCoverage fileCoverage = coveredFiles.get(inputFile);
 
-            var fileSystem = context.fileSystem();
-            var mainFilePredicate = fileSystem.predicates().hasLanguages(RustLanguage.KEY);
-            var fileChooser = new FileChooser(fileSystem.inputFiles(mainFilePredicate));
-            var parser = LCOVParser.build(context, lcovFiles, fileChooser);
-
-            Map<InputFile, NewCoverage> coveredFiles = parser.getFileCoverage();
-
-
-            for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext(); ) {
-                var inputFile = iterator.next();
-                NewCoverage fileCoverage = coveredFiles.get(inputFile);
-
-                if (fileCoverage != null) {
-                    fileCoverage.save();
-                }
-            }
-
-            List<String> unresolvedPaths = parser.unknownPaths();
-            if (!unresolvedPaths.isEmpty()) {
-                LOG.warn(String.format("Could not resolve %d file paths in %s", unresolvedPaths.size(), lcovFiles));
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Unresolved paths:\n" + String.join("\n", unresolvedPaths));
-                } else {
-                    LOG.warn("First unresolved path: " + unresolvedPaths.get(0) + " (Run in DEBUG mode to get full list of unresolved paths)");
-                }
-            }
-
-            int pbCount = parser.pbCount();
-            if (pbCount > 0) {
-                LOG.warn("Found {} inconsistencies in coverage report", pbCount);
-            }
-        }
-
-        @CheckForNull
-        private static File getFile(File baseDir, String path) {
-            var file = new File(path);
-            if (!file.isAbsolute()) {
-                file = new File(baseDir, path);
-            }
-            if (!file.isFile()) {
-                LOG.warn("No coverage information will be saved because LCOV file cannot be found.");
-                LOG.warn("Provided LCOV file path: {}. Seek file with path: {}", path, file.getAbsolutePath());
-                return null;
-            }
-            return file;
-        }
-
-    private static List<File> getLcovReports(String baseDir, Configuration config) {
-        if (!config.hasKey(CommunityRustPlugin.LCOV_REPORT_PATHS)) {
-            return getReports(config, baseDir, CommunityRustPlugin.LCOV_REPORT_PATHS, CommunityRustPlugin.DEFAULT_LCOV_REPORT_PATHS);
-        }
-
-        return Arrays.stream(config.getStringArray(CommunityRustPlugin.LCOV_REPORT_PATHS))
-                .flatMap(path -> getReports(config, baseDir, CommunityRustPlugin.LCOV_REPORT_PATHS, path).stream())
-                .collect(Collectors.toList());
+      if (fileCoverage != null) {
+        fileCoverage.save();
+      }
     }
 
-    public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
-        LOG.debug("Using pattern '{}' to find reports", reportPath);
-
-        var rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
-        List<File> includedFiles = rustFileSystem.getIncludedFiles();
-
-        if (includedFiles.isEmpty()) {
-            if (conf.hasKey(reportPathPropertyKey)) {
-                var file = new File(reportPath);
-                if (!file.exists()) {
-                    LOG.warn("No report was found for {} using pattern {}", reportPathPropertyKey, reportPath);
-                } else {
-                    includedFiles.add(file);
-                }
-            } else {
-                LOG.debug("No report was found for {} using default pattern {}", reportPathPropertyKey, reportPath);
-            }
-        }
-        return includedFiles;
+    List<String> unresolvedPaths = parser.unknownPaths();
+    if (!unresolvedPaths.isEmpty()) {
+      LOG.warn(String.format("Could not resolve %d file paths in %s", unresolvedPaths.size(), lcovFiles));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Unresolved paths:\n" + String.join("\n", unresolvedPaths));
+      } else {
+        LOG.warn("First unresolved path: " + unresolvedPaths.get(0) + " (Run in DEBUG mode to get full list of unresolved paths)");
+      }
     }
 
+    int pbCount = parser.pbCount();
+    if (pbCount > 0) {
+      LOG.warn("Found {} inconsistencies in coverage report", pbCount);
+    }
+  }
 
+  @CheckForNull
+  private static File getFile(File baseDir, String path) {
+    var file = new File(path);
+    if (!file.isAbsolute()) {
+      file = new File(baseDir, path);
+    }
+    if (!file.isFile()) {
+      LOG.warn("No coverage information will be saved because LCOV file cannot be found.");
+      LOG.warn("Provided LCOV file path: {}. Seek file with path: {}", path, file.getAbsolutePath());
+      return null;
+    }
+    return file;
+  }
+
+  private static List<File> getLcovReports(String baseDir, Configuration config) {
+    if (!config.hasKey(CommunityRustPlugin.LCOV_REPORT_PATHS)) {
+      return getReports(config, baseDir, CommunityRustPlugin.LCOV_REPORT_PATHS, CommunityRustPlugin.DEFAULT_LCOV_REPORT_PATHS);
+    }
+
+    return Arrays.stream(config.getStringArray(CommunityRustPlugin.LCOV_REPORT_PATHS))
+      .flatMap(path -> getReports(config, baseDir, CommunityRustPlugin.LCOV_REPORT_PATHS, path).stream())
+      .collect(Collectors.toList());
+  }
+
+  public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
+    LOG.debug("Using pattern '{}' to find reports", reportPath);
+
+    var rustFileSystem = new RustFileSystem(new File(baseDirPath), WildcardPattern.create(reportPath));
+    List<File> includedFiles = rustFileSystem.getIncludedFiles();
+
+    if (includedFiles.isEmpty()) {
+      if (conf.hasKey(reportPathPropertyKey)) {
+        var file = new File(reportPath);
+        if (!file.exists()) {
+          LOG.warn("No report was found for {} using pattern {}", reportPathPropertyKey, reportPath);
+        } else {
+          includedFiles.add(file);
+        }
+      } else {
+        LOG.debug("No report was found for {} using default pattern {}", reportPathPropertyKey, reportPath);
+      }
+    }
+    return includedFiles;
+  }
+
+  @Override
+  public void describe(SensorDescriptor descriptor) {
+    descriptor
+      .name("LCOV Sensor for Rust coverage")
+      .onlyOnLanguage(RustLanguage.KEY);
+  }
+
+  @Override
+  public void execute(SensorContext context) {
+    String baseDir = context.fileSystem().baseDir().getPath();
+    List<File> lcovFiles = getLcovReports(baseDir, context.config());
+
+    if (lcovFiles.isEmpty()) {
+      LOG.warn("No coverage information will be saved because all LCOV files cannot be found.");
+      return;
+    }
+    saveCoverageFromLcovFiles(context, lcovFiles);
+  }
 
 }

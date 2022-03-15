@@ -22,7 +22,6 @@ package org.elegoff.plugins.communityrust.language;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.sonar.api.config.Configuration;
@@ -30,66 +29,62 @@ import org.sonar.api.resources.AbstractLanguage;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
-
 /**
  * This class defines the Rust language.
  */
 public final class RustLanguage extends AbstractLanguage {
 
-    public static final String NAME = "Rust";
-    public static final String KEY = "rust";
+  public static final String NAME = "Rust";
+  public static final String KEY = "rust";
+  private static final Logger LOGGER = Loggers.get(RustLanguage.class);
+  private final Configuration config;
 
-    private final Configuration config;
-    private static final Logger LOGGER = Loggers.get(RustLanguage.class);
+  public RustLanguage(Configuration config) {
+    super(KEY, NAME);
+    this.config = config;
+  }
 
-    public RustLanguage
-            (Configuration config) {
-        super(KEY, NAME);
-        this.config = config;
+  @Override
+  public String[] getFileSuffixes() {
+    String[] suffixes = filterEmptyStrings(config.getStringArray(RustLanguageSettings.FILE_SUFFIXES_KEY));
+    if (suffixes.length == 0) {
+      suffixes = StringUtils.split(RustLanguageSettings.FILE_SUFFIXES_DEFAULT_VALUE, ",");
     }
+    LOGGER.debug("Rust language file suffixes " + suffixes.length + " => " + suffixes[0]);
+    return suffixes;
+  }
 
-    @Override
-    public String[] getFileSuffixes() {
-        String[] suffixes = filterEmptyStrings(config.getStringArray(RustLanguageSettings.FILE_SUFFIXES_KEY));
-        if (suffixes.length == 0) {
-            suffixes = StringUtils.split(RustLanguageSettings.FILE_SUFFIXES_DEFAULT_VALUE, ",");
-        }
-        LOGGER.debug("Rust language file suffixes " + suffixes.length + " => " + suffixes[0]);
-        return suffixes;
+  private String[] filterEmptyStrings(String[] stringArray) {
+    List<String> nonEmptyStrings = new ArrayList<>();
+    for (String string : stringArray) {
+      if (StringUtils.isNotBlank(string.trim())) {
+        nonEmptyStrings.add(string.trim());
+      }
     }
+    return nonEmptyStrings.toArray(new String[nonEmptyStrings.size()]);
+  }
 
-    private String[] filterEmptyStrings(String[] stringArray) {
-        List<String> nonEmptyStrings = new ArrayList<>();
-        for (String string : stringArray) {
-            if (StringUtils.isNotBlank(string.trim())) {
-                nonEmptyStrings.add(string.trim());
-            }
-        }
-        return nonEmptyStrings.toArray(new String[nonEmptyStrings.size()]);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RustLanguage)) {
-            return false;
-        }
-        RustLanguage that = (RustLanguage) o;
-        return KEY.equals(that.getKey());
-
+    if (!(o instanceof RustLanguage)) {
+      return false;
     }
+    RustLanguage that = (RustLanguage) o;
+    return KEY.equals(that.getKey());
 
-    @Override
-    public int hashCode() {
-        return KEY.hashCode();
-    }
+  }
 
-    @Override
-    public String toString() {
-        return NAME;
-    }
+  @Override
+  public int hashCode() {
+    return KEY.hashCode();
+  }
 
+  @Override
+  public String toString() {
+    return NAME;
+  }
 
 }

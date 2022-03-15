@@ -20,22 +20,19 @@
  */
 package org.elegoff.rust.checks;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class CheckList {
-    public static final String REPOSITORY_KEY = "community-rust";
+  public static final String REPOSITORY_KEY = "community-rust";
 
-    private CheckList() {
-    }
+  private CheckList() {
+  }
 
-    public static List<Class<?>> getRustChecks() {
-        return Arrays.asList(
-                LineLengthCheck.class,
-                FunctionParametersCountCheck.class,
-                EmptyEnumCheck.class
-        );
-    }
+  public static List<Class<?>> getRustChecks() {
+    return Arrays.asList(
+      LineLengthCheck.class,
+      FunctionParametersCountCheck.class,
+      EmptyEnumCheck.class);
+  }
 }
-
-
-

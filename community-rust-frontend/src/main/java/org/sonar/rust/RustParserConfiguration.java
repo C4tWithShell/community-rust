@@ -20,50 +20,48 @@
  */
 package org.sonar.rust;
 
-
 import java.nio.charset.Charset;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RustParserConfiguration {
 
-    private final Charset charset;
+  private final Charset charset;
 
+  private RustParserConfiguration(Builder builder) {
+    this.charset = builder.charset;
 
-    private RustParserConfiguration(Builder builder) {
-        this.charset = builder.charset;
+  }
 
-    }
+  public static Builder builder() {
+    return new Builder();
+  }
 
-    public static Builder builder() {
-        return new Builder();
+  public Charset getCharset() {
+    return charset;
+  }
+
+  public static final class Builder {
+
+    private Charset charset = null;
+
+    private Builder() {
     }
 
     public Charset getCharset() {
-        return charset;
+      return charset;
     }
 
-    public static final class Builder {
-
-        private Charset charset = null;
-
-        private Builder() {
-        }
-
-        public Charset getCharset() {
-            return charset;
-        }
-
-        public Builder setCharset(Charset charset) {
-            this.charset = charset;
-            return this;
-        }
-
-        public RustParserConfiguration build() {
-            checkNotNull(charset, "charset is mandatory and cannot be left null");
-            return new RustParserConfiguration(this);
-        }
-
+    public Builder setCharset(Charset charset) {
+      this.charset = charset;
+      return this;
     }
+
+    public RustParserConfiguration build() {
+      checkNotNull(charset, "charset is mandatory and cannot be left null");
+      return new RustParserConfiguration(this);
+    }
+
+  }
 
 }

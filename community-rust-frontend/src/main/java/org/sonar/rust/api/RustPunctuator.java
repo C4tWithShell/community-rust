@@ -24,74 +24,72 @@ import org.sonar.sslr.grammar.GrammarRuleKey;
 
 public enum RustPunctuator implements GrammarRuleKey {
 
+  PLUS("+"),
+  MINUS("-"),
+  STAR("*"),
+  SLASH("/"),
+  PERCENT("%"),
+  CARET("^"),
+  NOT("!"),
+  AND("&"),
+  OR("|"),
+  ANDAND("&&"),
+  OROR("||"),
+  SHL("<<"),
+  SHR(">>"),
+  PLUSEQ("+="),
+  MINUSEQ("-="),
+  STAREQ("*="),
+  SLASHEQ("/="),
+  PERCENTEQ("%="),
+  CARETEQ("^="),
+  ANDEQ("&="),
+  OREQ("|="),
+  SHLEQ("<<="),
+  SHREQ(">>="),
+  EQ("="),
+  EQEQ("=="),
+  NE("!="),
+  GT(">"),
+  LT("<"),
+  GE(">="),
+  LE("<="),
+  AT("@"),
+  UNDERSCORE("_"),
+  DOT("."),
+  DOTDOT(".."),
+  DOTDOTDOT("..."),
+  DOTDOTEQ("..="),
+  COMMA(","),
+  SEMI(";"),
+  COLON(":"),
+  PATHSEP("::"),
+  RARROW("->"),
+  FATARROW("=>"),
+  POUND("#"),
+  DOLLAR("$"),
+  QUESTION("?");
 
-    PLUS("+"),
-    MINUS("-"),
-    STAR("*"),
-    SLASH("/"),
-    PERCENT("%"),
-    CARET("^"),
-    NOT("!"),
-    AND("&"),
-    OR("|"),
-    ANDAND("&&"),
-    OROR("||"),
-    SHL("<<"),
-    SHR(">>"),
-    PLUSEQ("+="),
-    MINUSEQ("-="),
-    STAREQ("*="),
-    SLASHEQ("/="),
-    PERCENTEQ("%="),
-    CARETEQ("^="),
-    ANDEQ("&="),
-    OREQ("|="),
-    SHLEQ("<<="),
-    SHREQ(">>="),
-    EQ("="),
-    EQEQ("=="),
-    NE("!="),
-    GT(">"),
-    LT("<"),
-    GE(">="),
-    LE("<="),
-    AT("@"),
-    UNDERSCORE("_"),
-    DOT("."),
-    DOTDOT(".."),
-    DOTDOTDOT("..."),
-    DOTDOTEQ("..="),
-    COMMA(","),
-    SEMI(";"),
-    COLON(":"),
-    PATHSEP("::"),
-    RARROW("->"),
-    FATARROW("=>"),
-    POUND("#"),
-    DOLLAR("$"),
-    QUESTION("?");
+  private final String value;
 
-    private final String value;
+  RustPunctuator(String value) {
+    this.value = value;
+  }
 
-    RustPunctuator(String value) {
-        this.value = value;
+  public static String[] punctuatorValues() {
+    RustPunctuator[] punctuatorEnum = RustPunctuator.values();
+    String[] punctuators = new String[punctuatorEnum.length];
+    for (int i = 0; i < punctuators.length; i++) {
+      punctuators[i] = punctuatorEnum[i].getValue();
     }
+    return punctuators;
+  }
 
-    public String getName() {
-        return name();
-    }
+  public String getName() {
+    return name();
+  }
 
-    public String getValue() {
-        return value;
-    }
-
-
-    public static String[] punctuatorValues() {
-        RustPunctuator[] punctuatorEnum = RustPunctuator.values();
-        String[] punctuators = new String[punctuatorEnum.length];
-        for (int i = 0; i < punctuators.length; i++) {
-            punctuators[i] = punctuatorEnum[i].getValue();
-        }
-        return punctuators;
-    }
+  public String getValue() {
+    return value;
+  }
 }

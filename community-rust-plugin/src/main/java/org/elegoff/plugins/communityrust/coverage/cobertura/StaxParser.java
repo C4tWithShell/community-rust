@@ -19,65 +19,63 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package org.elegoff.plugins.communityrust.coverage.cobertura;
+
 import com.ctc.wstx.stax.WstxInputFactory;
-
-import org.codehaus.staxmate.SMInputFactory;
-import org.codehaus.staxmate.in.SMHierarchicCursor;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import org.codehaus.staxmate.SMInputFactory;
+import org.codehaus.staxmate.in.SMHierarchicCursor;
 
 public class StaxParser {
 
-    @FunctionalInterface
-    public interface XmlStreamHandler {
-        void stream(SMHierarchicCursor rootCursor) throws XMLStreamException;
-    }
+  private final SMInputFactory inf;
+  private final XmlStreamHandler streamHandler;
 
-    private SMInputFactory inf;
-    private XmlStreamHandler streamHandler;
-
-    public StaxParser(XmlStreamHandler streamHandler) {
-        this.streamHandler = streamHandler;
-        XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
-        if (xmlFactory instanceof WstxInputFactory) {
-            var wstxInputfactory = (WstxInputFactory) xmlFactory;
-            wstxInputfactory.configureForLowMemUsage();
-            wstxInputfactory.getConfig().setUndeclaredEntityResolver((String publicID, String systemID, String baseURI, String namespace) -> namespace);
-        }
-        xmlFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
-        xmlFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-        xmlFactory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, false);
-        inf = new SMInputFactory(xmlFactory);
+  public StaxParser(XmlStreamHandler streamHandler) {
+    this.streamHandler = streamHandler;
+    XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
+    if (xmlFactory instanceof WstxInputFactory) {
+      var wstxInputfactory = (WstxInputFactory) xmlFactory;
+      wstxInputfactory.configureForLowMemUsage();
+      wstxInputfactory.getConfig().setUndeclaredEntityResolver((String publicID, String systemID, String baseURI, String namespace) -> namespace);
     }
+    xmlFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
+    xmlFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+    xmlFactory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, false);
+    inf = new SMInputFactory(xmlFactory);
+  }
 
-    public void parse(File xmlFile) throws XMLStreamException {
-        try(var input = new FileInputStream(xmlFile)) {
-            parse(inf.rootElementCursor(input));
-        } catch (IOException e) {
-            throw new XMLStreamException(e);
-        }
+  public void parse(File xmlFile) throws XMLStreamException {
+    try (var input = new FileInputStream(xmlFile)) {
+      parse(inf.rootElementCursor(input));
+    } catch (IOException e) {
+      throw new XMLStreamException(e);
     }
+  }
 
-    private void parse(SMHierarchicCursor rootCursor) throws XMLStreamException {
-        try {
-            streamHandler.stream(rootCursor);
-        } finally {
-            rootCursor.getStreamReader().closeCompletely();
-        }
+  private void parse(SMHierarchicCursor rootCursor) throws XMLStreamException {
+    try {
+      streamHandler.stream(rootCursor);
+    } finally {
+      rootCursor.getStreamReader().closeCompletely();
     }
+  }
 
-    public void parse(InputStream xmlInput) throws XMLStreamException {
-        SMHierarchicCursor rootCursor = inf.rootElementCursor(xmlInput);
-        try {
-            streamHandler.stream(rootCursor);
-        } finally {
-            rootCursor.getStreamReader().closeCompletely();
-        }
+  public void parse(InputStream xmlInput) throws XMLStreamException {
+    SMHierarchicCursor rootCursor = inf.rootElementCursor(xmlInput);
+    try {
+      streamHandler.stream(rootCursor);
+    } finally {
+      rootCursor.getStreamReader().closeCompletely();
     }
+  }
+
+  @FunctionalInterface
+  public interface XmlStreamHandler {
+    void stream(SMHierarchicCursor rootCursor) throws XMLStreamException;
+  }
 }

@@ -22,32 +22,29 @@ package org.elegoff.rust.checks;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.AstNodeType;
+import java.util.Collections;
+import java.util.Set;
 import org.sonar.check.Rule;
 import org.sonar.rust.RustGrammar;
 
-import java.util.Collections;
-import java.util.Set;
-
 @Rule(key = "EmptyEnum")
 public class EmptyEnumCheck extends RustCheck {
-    @Override
-    public Set<AstNodeType> subscribedKinds() {
-        return Collections.singleton(RustGrammar.ENUMERATION);
-    }
+  @Override
+  public Set<AstNodeType> subscribedKinds() {
+    return Collections.singleton(RustGrammar.ENUMERATION);
+  }
 
-    @Override
-    public void visitNode(AstNode node) {
-        AstNode enumItems = node.getFirstChild(RustGrammar.ENUM_ITEMS);
+  @Override
+  public void visitNode(AstNode node) {
+    AstNode enumItems = node.getFirstChild(RustGrammar.ENUM_ITEMS);
 
-        if (enumItems == null) {
-            raiseIssue(node);
-        }
+    if (enumItems == null) {
+      raiseIssue(node);
     }
+  }
 
-    private void raiseIssue(AstNode node) {
-        addIssue("Either remove or fill this empty enumeration.", node);
-    }
+  private void raiseIssue(AstNode node) {
+    addIssue("Either remove or fill this empty enumeration.", node);
+  }
 
 }
-
-

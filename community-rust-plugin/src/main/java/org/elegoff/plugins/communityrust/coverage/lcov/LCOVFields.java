@@ -21,5 +21,5 @@
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
 public enum LCOVFields {
-    SF, DA, BRDA;
+  SF, DA, BRDA
 }

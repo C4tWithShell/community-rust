@@ -22,40 +22,38 @@ package org.sonar.rust.metrics;
 
 import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustVisitor;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class LinesOfCodeVisitor extends RustVisitor {
 
-    private final ParserAdapter<LexerlessGrammar> lexer;
-    private final Set<Integer> linesOfCode = new HashSet<>();
+  private final ParserAdapter<LexerlessGrammar> lexer;
+  private final Set<Integer> linesOfCode = new HashSet<>();
 
-    public LinesOfCodeVisitor(ParserAdapter<LexerlessGrammar> parser) {
-        this.lexer = parser;
+  public LinesOfCodeVisitor(ParserAdapter<LexerlessGrammar> parser) {
+    this.lexer = parser;
+  }
+
+  @Override
+  public void visitFile(AstNode node) {
+    linesOfCode.clear();
+    List<AstNode> tokens = lexer.parse(getContext().file().content()).getChildren(RustGrammar.ANY_TOKEN);
+
+    for (AstNode token : tokens) {
+      String[] tokenLines = token.getTokenValue().split("(\r)?\n|\r", -1);
+
+      for (int lineOffset = 0; lineOffset < tokenLines.length; lineOffset++) {
+        linesOfCode.add(token.getTokenLine() + lineOffset);
+      }
     }
+  }
 
-    @Override
-    public void visitFile(AstNode node) {
-        linesOfCode.clear();
-        List<AstNode> tokens = lexer.parse(getContext().file().content()).getChildren(RustGrammar.ANY_TOKEN);
-
-
-        for (AstNode token : tokens) {
-            String[] tokenLines = token.getTokenValue().split("(\r)?\n|\r", -1);
-
-            for (int lineOffset = 0; lineOffset < tokenLines.length; lineOffset++) {
-                linesOfCode.add(token.getTokenLine() + lineOffset);
-            }
-        }
-    }
-
-    public Set<Integer> linesOfCode() {
-        return ImmutableSet.copyOf(linesOfCode);
-    }
+  public Set<Integer> linesOfCode() {
+    return ImmutableSet.copyOf(linesOfCode);
+  }
 }

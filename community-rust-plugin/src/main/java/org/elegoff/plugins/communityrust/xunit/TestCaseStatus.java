@@ -21,23 +21,23 @@
 package org.elegoff.plugins.communityrust.xunit;
 
 public enum TestCaseStatus {
-    OK("ok"),
-    ERROR("error"),
-    FAILURE("failure"),
-    SKIPPED("skipped");
-    private final String text;
+  OK("ok"),
+  ERROR("error"),
+  FAILURE("failure"),
+  SKIPPED("skipped");
 
-    TestCaseStatus(String name) {
-        this.text = name;
-    }
+  private final String text;
 
-    @Override
-    public String toString() {
-        return text;
-    }
+  TestCaseStatus(String name) {
+    this.text = name;
+  }
 
-    public static TestCaseStatus getFromIgnoreCaseString(String value) {
-        return TestCaseStatus.valueOf(value.toUpperCase());
-    }
+  public static TestCaseStatus getFromIgnoreCaseString(String value) {
+    return TestCaseStatus.valueOf(value.toUpperCase());
+  }
+
+  @Override
+  public String toString() {
+    return text;
+  }
 }
-

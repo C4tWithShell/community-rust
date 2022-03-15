@@ -23,13 +23,10 @@ package org.elegoff.plugins.communityrust.clippy;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.Sensor;
@@ -46,102 +43,100 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 
 public class ClippySensor implements Sensor {
 
-    private static final Logger LOG = Loggers.get(ClippySensor.class);
-    static final String LINTER_KEY = "clippy";
-    static final String LINTER_NAME = "Clippy";
-    public static final String REPORT_PROPERTY_KEY = "community.rust.clippy.reportPaths";
-    private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
+  public static final String REPORT_PROPERTY_KEY = "community.rust.clippy.reportPaths";
+  static final String LINTER_KEY = "clippy";
+  static final String LINTER_NAME = "Clippy";
+  private static final Logger LOG = Loggers.get(ClippySensor.class);
+  private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
+  private static final int MAX_LOGGED_FILE_NAMES = 20;
 
-    @Override
-    public void execute(SensorContext context) {
-        Set<String> unresolvedInputFiles = new HashSet<>();
-        List<File> reportFiles = ExternalReportProvider.getReportFiles(context, reportPathKey());
-        reportFiles.forEach(report -> importReport(report, context, unresolvedInputFiles));
-        logUnresolvedInputFiles(unresolvedInputFiles);
+  private static void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
+    if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
+      LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
+      return;
     }
 
-    private void importReport(File rawReport, SensorContext context, Set<String> unresolvedInputFiles) {
-        LOG.info("Importing {}", rawReport);
-
-        try {
-            InputStream in = ClippyJsonReportReader.toJSON(rawReport);
-            String projectDir = rawReport.getParent();
-            ClippyJsonReportReader.read(in, projectDir, clippyIssue -> saveIssue(context, clippyIssue, unresolvedInputFiles));
-        } catch (IOException | ParseException e) {
-            LOG.error("No issues information will be saved as the report file '{}' can't be read. " +
-                    e.getClass().getSimpleName() + ": " + e.getMessage(), rawReport, e);
-        }
+    var inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(clippyIssue.filePath));
+    if (inputFile == null) {
+      unresolvedInputFiles.add(clippyIssue.filePath);
+      return;
     }
 
-    private static void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
-        if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
-            LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
-            return;
-        }
+    var newExternalIssue = context.newExternalIssue();
+    newExternalIssue
+      .type(RuleType.CODE_SMELL)
+      .severity(toSonarQubeSeverity(clippyIssue.severity))
+      .remediationEffortMinutes(DEFAULT_CONSTANT_DEBT_MINUTES);
 
-        var inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(clippyIssue.filePath));
-        if (inputFile == null) {
-            unresolvedInputFiles.add(clippyIssue.filePath);
-            return;
-        }
+    NewIssueLocation primaryLocation = newExternalIssue.newLocation()
+      .message(clippyIssue.message)
+      .on(inputFile);
 
-        var newExternalIssue = context.newExternalIssue();
-        newExternalIssue
-                .type(RuleType.CODE_SMELL)
-                .severity(toSonarQubeSeverity(clippyIssue.severity))
-                .remediationEffortMinutes(DEFAULT_CONSTANT_DEBT_MINUTES);
-
-        NewIssueLocation primaryLocation = newExternalIssue.newLocation()
-                .message(clippyIssue.message)
-                .on(inputFile);
-
-        if (clippyIssue.lineNumberStart != null) {
-            primaryLocation.at(inputFile.newRange(clippyIssue.lineNumberStart, clippyIssue.colNumberStart - 1, clippyIssue.lineNumberEnd, clippyIssue.colNumberEnd - 1));
-        }
-
-        newExternalIssue.at(primaryLocation);
-        newExternalIssue.engineId(LINTER_KEY).ruleId(clippyIssue.ruleKey);
-        newExternalIssue.save();
+    if (clippyIssue.lineNumberStart != null) {
+      primaryLocation.at(inputFile.newRange(clippyIssue.lineNumberStart, clippyIssue.colNumberStart - 1, clippyIssue.lineNumberEnd, clippyIssue.colNumberEnd - 1));
     }
 
-    private static Severity toSonarQubeSeverity(String severity) {
-        if ("error".equalsIgnoreCase(severity)) {
-            return Severity.MAJOR;
-        } else
-            return Severity.MINOR;
+    newExternalIssue.at(primaryLocation);
+    newExternalIssue.engineId(LINTER_KEY).ruleId(clippyIssue.ruleKey);
+    newExternalIssue.save();
+  }
+
+  private static Severity toSonarQubeSeverity(String severity) {
+    if ("error".equalsIgnoreCase(severity)) {
+      return Severity.MAJOR;
+    } else
+      return Severity.MINOR;
+  }
+
+  @Override
+  public void execute(SensorContext context) {
+    Set<String> unresolvedInputFiles = new HashSet<>();
+    List<File> reportFiles = ExternalReportProvider.getReportFiles(context, reportPathKey());
+    reportFiles.forEach(report -> importReport(report, context, unresolvedInputFiles));
+    logUnresolvedInputFiles(unresolvedInputFiles);
+  }
+
+  private void importReport(File rawReport, SensorContext context, Set<String> unresolvedInputFiles) {
+    LOG.info("Importing {}", rawReport);
+
+    try {
+      InputStream in = ClippyJsonReportReader.toJSON(rawReport);
+      String projectDir = rawReport.getParent();
+      ClippyJsonReportReader.read(in, projectDir, clippyIssue -> saveIssue(context, clippyIssue, unresolvedInputFiles));
+    } catch (IOException | ParseException e) {
+      LOG.error("No issues information will be saved as the report file '{}' can't be read. " +
+        e.getClass().getSimpleName() + ": " + e.getMessage(), rawReport, e);
     }
+  }
 
-    private static final int MAX_LOGGED_FILE_NAMES = 20;
+  @Override
+  public void describe(SensorDescriptor descriptor) {
+    descriptor
+      .onlyWhenConfiguration(conf -> conf.hasKey(reportPathKey()))
+      .onlyOnLanguage(RustLanguage.KEY)
+      .name("Import of " + linterName() + " issues");
+  }
 
-    @Override
-    public void describe(SensorDescriptor descriptor) {
-        descriptor
-                .onlyWhenConfiguration(conf -> conf.hasKey(reportPathKey()))
-                .onlyOnLanguage(RustLanguage.KEY)
-                .name("Import of " + linterName() + " issues");
+  private void logUnresolvedInputFiles(Set<String> unresolvedInputFiles) {
+    if (unresolvedInputFiles.isEmpty()) {
+      return;
     }
-
-
-    private void logUnresolvedInputFiles(Set<String> unresolvedInputFiles) {
-        if (unresolvedInputFiles.isEmpty()) {
-            return;
-        }
-        String fileList = unresolvedInputFiles.stream().sorted().limit(MAX_LOGGED_FILE_NAMES).collect(Collectors.joining(";"));
-        if (unresolvedInputFiles.size() > MAX_LOGGED_FILE_NAMES) {
-            fileList += ";...";
-        }
-        logger().warn("Failed to resolve {} file path(s) in " + linterName() + " report. No issues imported related to file(s): {}", unresolvedInputFiles.size(), fileList);
+    String fileList = unresolvedInputFiles.stream().sorted().limit(MAX_LOGGED_FILE_NAMES).collect(Collectors.joining(";"));
+    if (unresolvedInputFiles.size() > MAX_LOGGED_FILE_NAMES) {
+      fileList += ";...";
     }
+    logger().warn("Failed to resolve {} file path(s) in " + linterName() + " report. No issues imported related to file(s): {}", unresolvedInputFiles.size(), fileList);
+  }
 
-    protected String linterName() {
-        return LINTER_NAME;
-    }
+  protected String linterName() {
+    return LINTER_NAME;
+  }
 
-    protected String reportPathKey() {
-        return REPORT_PROPERTY_KEY;
-    }
+  protected String reportPathKey() {
+    return REPORT_PROPERTY_KEY;
+  }
 
-    protected Logger logger() {
-        return LOG;
-    }
+  protected Logger logger() {
+    return LOG;
+  }
 }
