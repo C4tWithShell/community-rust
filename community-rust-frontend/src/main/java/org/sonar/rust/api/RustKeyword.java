@@ -26,15 +26,23 @@ import org.sonar.sslr.grammar.GrammarRuleKey;
 See https://doc.rust-lang.org/reference/keywords.html
  */
 public enum RustKeyword implements GrammarRuleKey {
+  KW_ABSTRACT("abstract"), // reserved keyword.
   KW_AS("as"),
+  KW_ASYNC("async"), // added beginning in the 2018 edition.
+  KW_AWAIT("await"), // added beginning in the 2018 edition.
+  KW_BECOME("become"), // reserved keyword.
+  KW_BOX("box"), // reserved keyword.
   KW_BREAK("break"),
   KW_CONST("const"),
   KW_CONTINUE("continue"),
   KW_CRATE("crate"),
+  KW_DO("do"), // reserved keyword.
+  KW_DYN("dyn"), // added beginning in the 2018 edition.
   KW_ELSE("else"),
   KW_ENUM("enum"),
   KW_EXTERN("extern"),
   KW_FALSE("false"),
+  KW_FINAL("final"), // reserved keyword.
   KW_FN("fn"),
   KW_FOR("for"),
   KW_IF("if"),
@@ -42,44 +50,34 @@ public enum RustKeyword implements GrammarRuleKey {
   KW_IN("in"),
   KW_LET("let"),
   KW_LOOP("loop"),
+  KW_MACRO("macro"), // reserved keyword.
   KW_MATCH("match"),
   KW_MOD("mod"),
   KW_MOVE("move"),
   KW_MUT("mut"),
+  KW_OVERRIDE("override"), // reserved keyword.
+  KW_PRIV("priv"), // reserved keyword.
   KW_PUB("pub"),
   KW_REF("ref"),
   KW_RETURN("return"),
-  KW_SELFVALUE("self"),
-  KW_SELFTYPE("Self"),
-  KW_STATIC("static"),
+  KW_SELF_VALUE("self"),
+  KW_SELF_TYPE("Self"),
+  KW_STATIC("static"), // weak
   KW_STRUCT("struct"),
   KW_SUPER("super"),
   KW_TRAIT("trait"),
   KW_TRUE("true"),
+  KW_TRY("try"), // reserver keyword
   KW_TYPE("type"),
+  KW_TYPEOF("typeof"), // reserved keyword.
+  KW_UNION("union"), // weak
   KW_UNSAFE("unsafe"),
+  KW_UNSIZED("unsized"), // reserved keyword
   KW_USE("use"),
+  KW_VIRTUAL("virtual"), // reserved keyword
   KW_WHERE("where"),
   KW_WHILE("while"),
-  KW_ASYNC("async"),
-  KW_AWAIT("await"),
-  KW_DYN("dyn"),
-  /* Reserved keywords */
-  KW_ABSTRACT("abstract"),
-  KW_BECOME("become"),
-  KW_BOX("box"),
-  KW_DO(" do"),
-  KW_FINAL("final"),
-  KW_MACRO("macro"),
-  KW_OVERRIDE(" override"),
-  KW_PRIV("priv"),
-  KW_TYPEOF("typeof"),
-  KW_UNSIZED("unsized"),
-  KW_VIRTUAL("virtual"),
-  KW_YIELD("yield"),
-  /* Weak keywords */
-  KW_UNION("union"),
-  KW_STATICLIFETIME("'static");
+  KW_YIELD("yield"); // reserved keyword
 
   private final String value;
 

@@ -623,9 +623,9 @@ public enum RustGrammar implements GrammarRuleKey {
 
     b.rule(SHORTHAND_SELF).is(
       b.optional(b.firstOf(b.sequence(RustPunctuator.AND, LIFETIME, SPC), RustPunctuator.AND)),
-      b.optional(RustKeyword.KW_MUT, SPC), RustKeyword.KW_SELFVALUE);
+      b.optional(RustKeyword.KW_MUT, SPC), RustKeyword.KW_SELF_VALUE);
 
-    b.rule(TYPED_SELF).is(b.optional(RustKeyword.KW_MUT, SPC), RustKeyword.KW_SELFVALUE, SPC,
+    b.rule(TYPED_SELF).is(b.optional(RustKeyword.KW_MUT, SPC), RustKeyword.KW_SELF_VALUE, SPC,
       RustPunctuator.COLON, SPC, TYPE);
 
   }
@@ -757,7 +757,7 @@ public enum RustGrammar implements GrammarRuleKey {
   private static void visibilityItem(LexerlessGrammarBuilder b) {
     b.rule(VISIBILITY).is(b.firstOf(
       b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_CRATE, SPC, ")"),
-      b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_SELFVALUE, SPC, ")"),
+      b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_SELF_VALUE, SPC, ")"),
       b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_SUPER, SPC, ")"),
       b.sequence(RustKeyword.KW_PUB, SPC, "(", SPC, RustKeyword.KW_IN, SIMPLE_PATH, SPC, ")"),
       RustKeyword.KW_PUB
@@ -768,7 +768,7 @@ public enum RustGrammar implements GrammarRuleKey {
   private static void externcrates(LexerlessGrammarBuilder b) {
     b.rule(EXTERN_CRATE).is(
       RustKeyword.KW_EXTERN, SPC, RustKeyword.KW_CRATE, SPC, CRATE_REF, SPC, b.optional(SPC, AS_CLAUSE, SPC), RustPunctuator.SEMI);
-    b.rule(CRATE_REF).is(b.firstOf(RustKeyword.KW_SELFVALUE, IDENTIFIER));
+    b.rule(CRATE_REF).is(b.firstOf(RustKeyword.KW_SELF_VALUE, IDENTIFIER));
     b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPC, b.firstOf(RustPunctuator.UNDERSCORE, IDENTIFIER));
 
   }
@@ -1799,7 +1799,7 @@ public enum RustGrammar implements GrammarRuleKey {
       b.zeroOrMore(b.sequence(RustPunctuator.PATHSEP, SIMPLE_PATH_SEGMENT)));
     b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
       b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
-      RustKeyword.KW_SELFVALUE, b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
+      RustKeyword.KW_SELF_VALUE, b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
 
     b.rule(PATH_IN_EXPRESSION).is(
       b.optional(RustPunctuator.PATHSEP),
