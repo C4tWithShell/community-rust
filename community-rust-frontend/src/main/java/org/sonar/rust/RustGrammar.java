@@ -769,7 +769,7 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(EXTERN_CRATE).is(
       RustKeyword.KW_EXTERN, SPC, RustKeyword.KW_CRATE, SPC, CRATE_REF, SPC, b.optional(SPC, AS_CLAUSE, SPC), RustPunctuator.SEMI);
     b.rule(CRATE_REF).is(b.firstOf(RustKeyword.KW_SELF_VALUE, IDENTIFIER));
-    b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPC, b.firstOf(RustPunctuator.UNDERSCORE, IDENTIFIER));
+    b.rule(AS_CLAUSE).is(RustKeyword.KW_AS, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE));
 
   }
 

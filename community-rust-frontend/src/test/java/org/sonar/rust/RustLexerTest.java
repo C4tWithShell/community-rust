@@ -24,65 +24,58 @@ import com.google.common.base.Charsets;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.impl.ast.AstXmlPrinter;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.junit.Test;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 import org.sonar.sslr.tests.Assertions;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 import static org.fest.assertions.Assertions.assertThat;
 
 public class RustLexerTest {
-    @Test
-    public void testSize() {
-        assertThat(lex("")).hasSize(1);
-        assertThat(lex("   ")).hasSize(1);
-        assertThat(lex("foo")).hasSize(2);
-    }
+  @Test
+  public void testSize() {
+    assertThat(lex("")).hasSize(1);
+    assertThat(lex("   ")).hasSize(1);
+    assertThat(lex("foo")).hasSize(2);
+  }
 
-    private List<Token> lex(String source) {
-        List<Token> li = RustLexer.create(RustParserConfiguration.builder()
-                .setCharset(Charsets.UTF_8)
-                .build())
-                .parse(source)
-                .getTokens();
+  private List<Token> lex(String source) {
+    List<Token> li = RustLexer.create(RustParserConfiguration.builder()
+      .setCharset(Charsets.UTF_8)
+      .build())
+      .parse(source)
+      .getTokens();
 
-        return li;
-    }
+    return li;
+  }
 
-    @Test
-    public void testTokens() {
-        Assertions.assertThat(RustLexer.create().build().rule(RustLexer.TOKENS))
-                .matches("")
-                .matches("fn")
-                .matches("main()")
-                .matches("fn main() {\n" +
-                        "    println!(\"Hello, world!\");\n" +
-                        "}")
+  @Test
+  public void testTokens() {
+    Assertions.assertThat(RustLexer.create().build().rule(RustLexer.TOKENS))
+      .matches("")
+      .matches("fn")
+      .matches("main()")
+      .matches("fn main() {\n" +
+        "    println!(\"Hello, world!\");\n" +
+        "}")
 
+    ;
+  }
 
-        ;
-    }
+  @Test
+  public void testParsing() {
+    String sexpr = "extern crate foo as _bar;";
 
-    @Test
-    public void testParsing() {
-        String sexpr = "static INIT_ARRAY: unsafe extern \"C\" fn(c::c_int, *mut *mut u8, *mut *mut u8) = {\n" +
-                "    unsafe extern \"C\" fn function(_argc: c::c_int, _argv: *mut *mut u8, envp: *mut *mut u8) {\n" +
-                "    }\n" +
-                "    function\n" +
-                "};";
+    // Print out Ast node content for debugging purpose
 
-        //Print out Ast node content for debugging purpose
+    ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
+    AstNode rootNode = parser.parse(sexpr);
+    org.fest.assertions.Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
+    AstNode astNode = rootNode;
+    // org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
+    System.out.println(AstXmlPrinter.print(astNode));
 
-        ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
-        AstNode rootNode = parser.parse(sexpr);
-        org.fest.assertions.Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
-        AstNode astNode = rootNode;
-        //org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
-        System.out.println(AstXmlPrinter.print(astNode));
-
-
-    }
+  }
 }

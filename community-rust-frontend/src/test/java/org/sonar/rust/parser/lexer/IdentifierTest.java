@@ -26,107 +26,105 @@ import org.sonar.sslr.tests.Assertions;
 
 public class IdentifierTest {
 
+  @Test
+  public void checkRawIdentifier() {
+    Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_IDENTIFIER))
+      .notMatches("r#")
+      .matches("r#a")
+      .matches("r#_52")
+      .matches("r#V123")
+      .notMatches("s#52")
+      .matches("r#東京")
+      // corner cases using keywords
+      .notMatches("r#crate")
+      .notMatches("r#self")
+      .notMatches("r#super")
+      .notMatches("r#Self");
 
-    @Test
-    public void checkRawIdentifier() {
-        Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_IDENTIFIER))
-                .notMatches("r#")
-                .matches("r#a")
-                .matches("r#_52")
-                .matches("r#V123")
-                .notMatches("s#52")
-                .matches("r#東京")
-                //corner cases using keywords
-                .notMatches("r#crate")
-                .notMatches("r#self")
-                .notMatches("r#super")
-                .notMatches("r#Self");
+  }
 
-    }
+  @Test
+  public void testNonKeywords() {
+    Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.NON_KEYWORD_IDENTIFIER))
+      .matches("a")
+      .matches("bc")
+      .matches("Abc")
+      .notMatches("as") // keyword
+      .notMatches("trait") // keyword
+      .notMatches("super") // keyword
+      .notMatches("foo ")
+      .notMatches("r#")
+      .notMatches("r#a")
+      .notMatches("r#_52")
+      .notMatches("r#V123")
+      .matches("phenotype")
+      .matches("crate_type")
+      .matches("await_token")
+      .matches("fnas") // concatenated keywords
+      .matches("if_ok")
+      .matches("foo")
+      .matches("_identifier")
+      .matches("Москва")
+      .matches("東京")
+      .notMatches("i|");
+  }
 
-    @Test
-    public void testNonKeywords() {
-        Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.NON_KEYWORD_IDENTIFIER))
-                .matches("a")
-                .matches("bc")
-                .matches("Abc")
-                .notMatches("as") //keyword
-                .notMatches("trait") //keyword
-                .notMatches("super") //keyword
-                .notMatches("foo ")
-                .notMatches("r#")
-                .notMatches("r#a")
-                .notMatches("r#_52")
-                .notMatches("r#V123")
-                .matches("phenotype")
-                .matches("crate_type")
-                .matches("await_token")
-                .matches("fnas") //concatenated keywords
-                .matches("if_ok")
-                .matches("foo")
-                .matches("_identifier")
-                .matches("Москва")
-                .matches("東京")
-                .notMatches("i|")
-        ;
-    }
+  @Test
+  public void testIdentifierOrKeyword() {
+    Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_OR_KEYWORD))
+      .matches("a")
+      .matches("bc")
+      .matches("Abc")
+      .matches("as")
+      .matches("trait")
+      .matches("super")
+      .notMatches("foo ")
+      .notMatches("r#")
+      .notMatches("r#a")
+      .notMatches("r#_52")
+      .notMatches("r#V123")
+      .notMatches("s#52")
+      .matches("phenotype")
+      .matches("crate_type")
+      .matches("await_token")
+      .matches("if_ok")
+      .matches("foo")
+      .matches("_identifier")
+      .matches("Москва")
+      .matches("東京");
 
+  }
 
-    @Test
-    public void testIdentifierOrKeyword() {
-        Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_OR_KEYWORD))
-                .matches("a")
-                .matches("bc")
-                .matches("Abc")
-                .matches("as")
-                .matches("trait")
-                .matches("super")
-                .notMatches("foo ")
-                .notMatches("r#")
-                .notMatches("r#a")
-                .notMatches("r#_52")
-                .notMatches("r#V123")
-                .notMatches("s#52")
-                .matches("phenotype")
-                .matches("crate_type")
-                .matches("await_token")
-                .matches("if_ok")
-                .matches("foo")
-                .matches("_identifier")
-                .matches("Москва")
-                .matches("東京")
-                ;
+  @Test
+  public void testIdentifier() {
+    Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER))
+      .matches("a")
+      .matches("bc")
+      .matches("Abc")
+      .notMatches("as")
+      .notMatches("trait")
+      .notMatches("super")
+      .notMatches("foo ")
+      .notMatches("r#")
+      .matches("r#a")
+      .matches("r#_52")
+      .matches("r#V123")
+      .notMatches("s#52")
+      .matches("traitsuffix")
+      .matches("phenotype")
+      .matches("crate_type")
+      .matches("await_token")
+      .matches("if_ok")
+      .matches("foo")
+      .matches("_identifier")
+      .matches("r#true")
+      .matches("Москва")
+      .matches("東京")
+      .matches("crate_root")
+      .matches("_bar")
+      .matches("_crate")
 
-        }
+    ;
 
-    @Test
-    public void testIdentifier() {
-        Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER))
-                .matches("a")
-                .matches("bc")
-                .matches("Abc")
-                .notMatches("as")
-                .notMatches("trait")
-                .notMatches("super")
-                .notMatches("foo ")
-                .notMatches("r#")
-                .matches("r#a")
-                .matches("r#_52")
-                .matches("r#V123")
-                .notMatches("s#52")
-                .matches("traitsuffix")
-                .matches("phenotype")
-                .matches("crate_type")
-                .matches("await_token")
-                .matches("if_ok")
-                .matches("foo")
-                .matches("_identifier")
-                .matches("r#true")
-                .matches("Москва")
-                .matches("東京")
-                .matches("crate_root")
-
-        ;
-
-    }
+  }
 }
