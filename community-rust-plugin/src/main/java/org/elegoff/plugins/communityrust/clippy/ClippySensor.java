@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -73,7 +74,12 @@ public class ClippySensor implements Sensor {
       .on(inputFile);
 
     if (clippyIssue.lineNumberStart != null) {
-      primaryLocation.at(inputFile.newRange(clippyIssue.lineNumberStart, clippyIssue.colNumberStart - 1, clippyIssue.lineNumberEnd, clippyIssue.colNumberEnd - 1));
+      if (clippyIssue.lineNumberStart == clippyIssue.lineNumberEnd) {
+        TextRange range = inputFile.selectLine(clippyIssue.lineNumberStart);
+        primaryLocation.at(range);
+      } else {
+        primaryLocation.at(inputFile.newRange(clippyIssue.lineNumberStart, clippyIssue.colNumberStart - 1, clippyIssue.lineNumberEnd, clippyIssue.colNumberEnd - 1));
+      }
     }
 
     newExternalIssue.at(primaryLocation);
