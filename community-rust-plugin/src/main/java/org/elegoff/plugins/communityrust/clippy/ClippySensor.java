@@ -74,7 +74,7 @@ public class ClippySensor implements Sensor {
       .on(inputFile);
 
     if (clippyIssue.lineNumberStart != null) {
-      if (clippyIssue.lineNumberStart == clippyIssue.lineNumberEnd) {
+      if (clippyIssue.lineNumberStart.equals(clippyIssue.lineNumberEnd) && clippyIssue.colNumberStart.equals(clippyIssue.colNumberEnd)) {
         TextRange range = inputFile.selectLine(clippyIssue.lineNumberStart);
         primaryLocation.at(range);
       } else {
