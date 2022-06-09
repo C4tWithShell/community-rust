@@ -1358,14 +1358,26 @@ public enum RustGrammar implements GrammarRuleKey {
 
   // https://doc.rust-lang.org/reference/expressions/match-expr.html
   private static void match(LexerlessGrammarBuilder b) {
+
     b.rule(MATCH_EXPRESSION).is(
       RustKeyword.KW_MATCH, SPC,
-      b.optional(RustKeyword.KW_MATCH, b.next(IDENTIFIER)),
-      SCRUTINEE,
-      SPC, "{", SPC,
-      b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-      b.optional(MATCH_ARMS, SPC),
-      "}");
+      b.firstOf(b.sequence(
+        SCRUTINEE,
+        SPC, "{", SPC,
+        b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+        b.optional(MATCH_ARMS, SPC),
+        "}"),
+        b.sequence(
+          RustKeyword.KW_MATCH, b.next(IDENTIFIER),
+          SCRUTINEE,
+          SPC, "{", SPC,
+          b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+          b.optional(MATCH_ARMS, SPC),
+          "}"))
+
+    )
+
+    ;
 
     b.rule(MATCH_ARMS).is(
       b.oneOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,

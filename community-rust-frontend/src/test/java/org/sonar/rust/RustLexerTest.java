@@ -66,7 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "extern crate foo as _bar;";
+    String sexpr = "match matchsuffix { _ => 42};";
 
     // Print out Ast node content for debugging purpose
 
