@@ -66,7 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "extern crate foo as _bar;";
+    String sexpr = "return _serde :: __private :: Err (< __A ::  Error as _serde :: de :: Error >   :: duplicate_field (\"a\")) ;";
 
     // Print out Ast node content for debugging purpose
 

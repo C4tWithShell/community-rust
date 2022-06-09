@@ -582,8 +582,8 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(USE_DECLARATION).is(RustKeyword.KW_USE, SPC, USE_TREE, SPC, RustPunctuator.SEMI);
 
     b.rule(USE_TREE).is(b.firstOf(
-      b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP), RustPunctuator.STAR),
-      b.sequence(b.optional(b.optional(SIMPLE_PATH), RustPunctuator.PATHSEP),
+      b.sequence(b.optional(b.optional(SIMPLE_PATH), SPC, RustPunctuator.PATHSEP, SPC), RustPunctuator.STAR),
+      b.sequence(b.optional(b.optional(SIMPLE_PATH), SPC, RustPunctuator.PATHSEP, SPC),
         "{", SPC, b.optional(seq(b, USE_TREE, RustPunctuator.COMMA)), SPC, "}"),
       b.sequence(SIMPLE_PATH, SPC, b.optional(
         RustKeyword.KW_AS, SPC, b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE)))));
@@ -906,12 +906,12 @@ public enum RustGrammar implements GrammarRuleKey {
       MACRO_INVOCATION,
       // unambigous PATH_PATTERN,
       b.firstOf(
-        b.sequence(b.optional(RustPunctuator.PATHSEP),
+        b.sequence(b.optional(SPC, RustPunctuator.PATHSEP, SPC),
           // PATH_EXPR_SEGMENT,
           b.sequence(b.firstOf(
             b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
             b.regexp("^[sS]elf$"), RustKeyword.KW_CRATE, b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER), b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS))),
-          b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT))),
+          b.oneOrMore(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, PATH_EXPR_SEGMENT))),
         QUALIFIED_PATH_IN_EXPRESSION),
       BYTE_LITERAL,
       RAW_STRING_LITERAL,
@@ -1358,14 +1358,26 @@ public enum RustGrammar implements GrammarRuleKey {
 
   // https://doc.rust-lang.org/reference/expressions/match-expr.html
   private static void match(LexerlessGrammarBuilder b) {
+
     b.rule(MATCH_EXPRESSION).is(
       RustKeyword.KW_MATCH, SPC,
-      b.optional(RustKeyword.KW_MATCH, b.next(IDENTIFIER)),
-      SCRUTINEE,
-      SPC, "{", SPC,
-      b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-      b.optional(MATCH_ARMS, SPC),
-      "}");
+      b.firstOf(b.sequence(
+        SCRUTINEE,
+        SPC, "{", SPC,
+        b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+        b.optional(MATCH_ARMS, SPC),
+        "}"),
+        b.sequence(
+          RustKeyword.KW_MATCH, b.next(IDENTIFIER),
+          SCRUTINEE,
+          SPC, "{", SPC,
+          b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+          b.optional(MATCH_ARMS, SPC),
+          "}"))
+
+    )
+
+    ;
 
     b.rule(MATCH_ARMS).is(
       b.oneOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,
@@ -1796,18 +1808,18 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(SIMPLE_PATH).is(
       b.optional(RustPunctuator.PATHSEP),
       SIMPLE_PATH_SEGMENT,
-      b.zeroOrMore(b.sequence(RustPunctuator.PATHSEP, SIMPLE_PATH_SEGMENT)));
+      b.zeroOrMore(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, SIMPLE_PATH_SEGMENT)));
     b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
       b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
       RustKeyword.KW_SELF_VALUE, b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
 
     b.rule(PATH_IN_EXPRESSION).is(
-      b.optional(RustPunctuator.PATHSEP),
+      b.optional(SPC, RustPunctuator.PATHSEP, SPC),
       PATH_EXPR_SEGMENT,
-      b.zeroOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)));
+      b.zeroOrMore(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, PATH_EXPR_SEGMENT)));
 
     b.rule(PATH_EXPR_SEGMENT).is(
-      PATH_IDENT_SEGMENT, b.optional(b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS)));
+      PATH_IDENT_SEGMENT, b.optional(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, GENERIC_ARGS)));
 
     b.rule(PATH_IDENT_SEGMENT).is(b.firstOf(
       b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
@@ -1841,13 +1853,13 @@ public enum RustGrammar implements GrammarRuleKey {
       IDENTIFIER, SPC, RustPunctuator.EQ, SPC, TYPE);
 
     b.rule(QUALIFIED_PATH_IN_EXPRESSION).is(
-      QUALIFIED_PATH_TYPE, b.oneOrMore(b.sequence(RustPunctuator.PATHSEP, PATH_EXPR_SEGMENT)));
+      QUALIFIED_PATH_TYPE, b.oneOrMore(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, PATH_EXPR_SEGMENT)));
 
     b.rule(QUALIFIED_PATH_TYPE).is(
       RustPunctuator.LT, SPC, TYPE, b.optional(SPC, RustKeyword.KW_AS, SPC, TYPE_PATH), SPC, RustPunctuator.GT);
 
     b.rule(QUALIFIED_PATH_IN_TYPE).is(QUALIFIED_PATH_TYPE, b.oneOrMore(
-      b.sequence(RustPunctuator.PATHSEP, TYPE_PATH_SEGMENT)
+      b.sequence(SPC, RustPunctuator.PATHSEP, SPC, TYPE_PATH_SEGMENT)
 
     ));
 
@@ -1856,8 +1868,8 @@ public enum RustGrammar implements GrammarRuleKey {
       b.optional(b.firstOf(
         GENERIC_ARGS,
         TYPE_PATH_FN,
-        b.sequence(RustPunctuator.PATHSEP, GENERIC_ARGS),
-        b.sequence(RustPunctuator.PATHSEP, TYPE_PATH_FN))));
+        b.sequence(SPC, RustPunctuator.PATHSEP, SPC, GENERIC_ARGS),
+        b.sequence(SPC, RustPunctuator.PATHSEP, SPC, TYPE_PATH_FN))));
     b.rule(TYPE_PATH_FN).is(
       "(",
       b.optional(TYPE_PATH_FN_INPUTS),
@@ -1869,10 +1881,9 @@ public enum RustGrammar implements GrammarRuleKey {
       b.optional(RustPunctuator.COMMA, SPC));
     b.rule(TYPE_PATH).is(
       // ::? TypePathSegment (:: TypePathSegment)*
-      // b.optional(RustPunctuator.PATHSEP), TYPE_PATH_SEGMENT, b.zeroOrMore(b.sequence(RustPunctuator.PATHSEP, TYPE_PATH_SEGMENT))
-      b.optional(RustPunctuator.PATHSEP),
+      b.optional(SPC, RustPunctuator.PATHSEP, SPC),
       TYPE_PATH_SEGMENT,
-      b.zeroOrMore(RustPunctuator.PATHSEP, TYPE_PATH_SEGMENT)
+      b.zeroOrMore(SPC, RustPunctuator.PATHSEP, SPC, TYPE_PATH_SEGMENT)
 
     );
 
