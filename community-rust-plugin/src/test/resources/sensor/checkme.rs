@@ -1,161 +1,592 @@
-//! Linux auxv support.
-//!
-//! # Safety
-//!
-//! This uses raw pointers to locate and read the kernel-provided auxv array.
-#![allow(unsafe_code)]
+use serde::{Deserialize, Serialize};
 
-use super::super::c;
-use super::super::elf::Elf_Phdr;
-use crate::ffi::ZStr;
-use core::mem::size_of;
-use core::slice;
-use linux_raw_sys::general::{
-    AT_EXECFN, AT_HWCAP, AT_HWCAP2, AT_NULL, AT_PAGESZ, AT_PHDR, AT_PHENT, AT_PHNUM,
-    AT_SYSINFO_EHDR,
-};
-
-#[inline]
-pub(crate) fn page_size() -> usize {
-    auxv().page_size
+pub enum GenericEnum<T, U> {
+    Unit,
+    NewType(T),
+    Seq(T, U),
+    Map { x: T, y: U },
 }
 
-#[inline]
-pub(crate) fn linux_hwcap() -> (usize, usize) {
-    let auxv = auxv();
-    (auxv.hwcap, auxv.hwcap2)
-}
-
-#[inline]
-pub(crate) fn linux_execfn() -> &'static ZStr {
-    unsafe { ZStr::from_ptr(auxv().execfn as *const _) }
-}
-
-#[inline]
-pub(crate) fn exe_phdrs() -> (*const c::c_void, usize) {
-    let auxv = auxv();
-    (auxv.phdr as *const c::c_void, auxv.phnum)
-}
-
-#[inline]
-pub(in super::super) fn exe_phdrs_slice() -> &'static [Elf_Phdr] {
-    let (ptr, len) = exe_phdrs();
-    unsafe { slice::from_raw_parts(ptr as *const Elf_Phdr, len) }
-}
-
-#[inline]
-pub(in super::super) fn sysinfo_ehdr() -> usize {
-    auxv().sysinfo_ehdr
-}
-
-#[inline]
-fn auxv() -> &'static Auxv {
-    // Safety: `AUXV` is initialized from the `.init_array` so it's ready
-    // before any user code calls this.
-    unsafe { &AUXV }
-}
-
-/// A struct for holding fields obtained from the kernel-provided auxv array.
-struct Auxv {
-    page_size: usize,
-    hwcap: usize,
-    hwcap2: usize,
-    sysinfo_ehdr: usize,
-    phdr: usize,
-    phnum: usize,
-    execfn: usize,
-}
-
-/// Data obtained from the kernel-provided auxv array. This is initialized at
-/// program startup below.
-static mut AUXV: Auxv = Auxv {
-    page_size: 0,
-    hwcap: 0,
-    hwcap2: 0,
-    sysinfo_ehdr: 0,
-    phdr: 0,
-    phnum: 0,
-    execfn: 0,
-};
-
-/// GLIBC passes argc, argv, and envp to functions in .init_array, as a
-/// non-standard extension. Use priority 99 so that we run before any
-/// normal user-defined constructor functions.
-#[cfg(all(target_env = "gnu", not(target_vendor = "mustang")))]
-#[used]
-#[link_section = ".init_array.00099"]
-static INIT_ARRAY: unsafe extern "C" fn(c::c_int, *mut *mut u8, *mut *mut u8) = {
-    unsafe extern "C" fn function(_argc: c::c_int, _argv: *mut *mut u8, envp: *mut *mut u8) {
-        init_from_envp(envp);
-    }
-    function
-};
-
-/// For musl etc., assume that `__environ` is available and points to the
-/// original environment from the kernel, so we can find the auxv array in
-/// memory after it. Use priority 99 so that we run before any normal
-/// user-defined constructor functions.
-///
-/// <https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---environ.html>
-#[cfg(not(any(target_env = "gnu", target_vendor = "mustang")))]
-#[used]
-#[link_section = ".init_array.00099"]
-static INIT_ARRAY: unsafe extern "C" fn() = {
-    unsafe extern "C" fn function() {
-        extern "C" {
-            static __environ: *mut *mut u8;
+#[doc(hidden)]
+#[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+const _: () = {
+    #[allow(unused_extern_crates, clippy::useless_attribute)]
+    extern crate serde as _serde;
+    #[automatically_derived]
+    impl<T, U> _serde::Serialize for GenericEnum<T, U>
+        where
+            T: _serde::Serialize,
+            U: _serde::Serialize,
+    {
+        fn serialize<__S>(
+            &self,
+            __serializer: __S,
+        ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+        {
+            match *self {
+                GenericEnum::Unit => _serde::Serializer::serialize_unit_variant(
+                    __serializer,
+                    "GenericEnum",
+                    0u32,
+                    "Unit",
+                ),
+                GenericEnum::NewType(ref __field0) => {
+                    _serde::Serializer::serialize_newtype_variant(
+                        __serializer,
+                        "GenericEnum",
+                        1u32,
+                        "NewType",
+                        __field0,
+                    )
+                }
+                GenericEnum::Seq(ref __field0, ref __field1) => {
+                    let mut __serde_state = match _serde::Serializer::serialize_tuple_variant(
+                        __serializer,
+                        "GenericEnum",
+                        2u32,
+                        "Seq",
+                        0 + 1 + 1,
+                    ) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    };
+                    match _serde::ser::SerializeTupleVariant::serialize_field(
+                        &mut __serde_state,
+                        __field0,
+                    ) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    };
+                    match _serde::ser::SerializeTupleVariant::serialize_field(
+                        &mut __serde_state,
+                        __field1,
+                    ) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    };
+                    _serde::ser::SerializeTupleVariant::end(__serde_state)
+                }
+                GenericEnum::Map { ref x, ref y } => {
+                    let mut __serde_state = match _serde::Serializer::serialize_struct_variant(
+                        __serializer,
+                        "GenericEnum",
+                        3u32,
+                        "Map",
+                        0 + 1 + 1,
+                    ) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    };
+                    match _serde::ser::SerializeStructVariant::serialize_field(
+                        &mut __serde_state,
+                        "x",
+                        x,
+                    ) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    };
+                    match _serde::ser::SerializeStructVariant::serialize_field(
+                        &mut __serde_state,
+                        "y",
+                        y,
+                    ) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    };
+                    _serde::ser::SerializeStructVariant::end(__serde_state)
+                }
+            }
         }
-
-        init_from_envp(__environ)
     }
-    function
 };
-
-/// On mustang, we export a function to be called during initialization.
-#[cfg(target_vendor = "mustang")]
-#[inline]
-pub(crate) unsafe fn init(envp: *mut *mut u8) {
-    init_from_envp(envp);
-}
-
-/// # Safety
-///
-/// This must be passed a pointer to the environment variable buffer
-/// provided by the kernel, which is followed in memory by the auxv array.
-unsafe fn init_from_envp(mut envp: *mut *mut u8) {
-    while !(*envp).is_null() {
-        envp = envp.add(1);
-    }
-    init_from_auxp(envp.add(1).cast())
-}
-
-/// # Safety
-///
-/// This must be passed a pointer to the auxv array provided by the kernel.
-unsafe fn init_from_auxp(mut auxp: *const Elf_auxv_t) {
-    loop {
-        let Elf_auxv_t { a_type, a_val } = *auxp;
-        match a_type as _ {
-            AT_PAGESZ => AUXV.page_size = a_val,
-            AT_HWCAP => AUXV.hwcap = a_val,
-            AT_HWCAP2 => AUXV.hwcap2 = a_val,
-            AT_SYSINFO_EHDR => AUXV.sysinfo_ehdr = a_val,
-            AT_PHDR => AUXV.phdr = a_val,
-            AT_PHNUM => AUXV.phnum = a_val,
-            AT_PHENT => assert_eq!(a_val, size_of::<Elf_Phdr>()),
-            AT_EXECFN => AUXV.execfn = a_val,
-            AT_NULL => break,
-            _ => (),
+#[doc(hidden)]
+#[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+const _: () = {
+    #[allow(unused_extern_crates, clippy::useless_attribute)]
+    extern crate serde as _serde;
+    #[automatically_derived]
+    impl<'de, T, U> _serde::Deserialize<'de> for GenericEnum<T, U>
+        where
+            T: _serde::Deserialize<'de>,
+            U: _serde::Deserialize<'de>,
+    {
+        fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+            where
+                __D: _serde::Deserializer<'de>,
+        {
+            #[allow(non_camel_case_types)]
+            enum __Field {
+                __field0,
+                __field1,
+                __field2,
+                __field3,
+            }
+            struct __FieldVisitor;
+            impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                type Value = __Field;
+                fn expecting(
+                    &self,
+                    __formatter: &mut _serde::__private::Formatter,
+                ) -> _serde::__private::fmt::Result {
+                    _serde::__private::Formatter::write_str(__formatter, "variant identifier")
+                }
+                fn visit_u64<__E>(self, __value: u64) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                {
+                    match __value {
+                        0u64 => _serde::__private::Ok(__Field::__field0),
+                        1u64 => _serde::__private::Ok(__Field::__field1),
+                        2u64 => _serde::__private::Ok(__Field::__field2),
+                        3u64 => _serde::__private::Ok(__Field::__field3),
+                        _ => _serde::__private::Err(_serde::de::Error::invalid_value(
+                            _serde::de::Unexpected::Unsigned(__value),
+                            &"variant index 0 <= i < 4",
+                        )),
+                    }
+                }
+                fn visit_str<__E>(
+                    self,
+                    __value: &str,
+                ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                {
+                    match __value {
+                        "Unit" => _serde::__private::Ok(__Field::__field0),
+                        "NewType" => _serde::__private::Ok(__Field::__field1),
+                        "Seq" => _serde::__private::Ok(__Field::__field2),
+                        "Map" => _serde::__private::Ok(__Field::__field3),
+                        _ => _serde::__private::Err(_serde::de::Error::unknown_variant(
+                            __value, VARIANTS,
+                        )),
+                    }
+                }
+                fn visit_bytes<__E>(
+                    self,
+                    __value: &[u8],
+                ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                {
+                    match __value {
+                        b"Unit" => _serde::__private::Ok(__Field::__field0),
+                        b"NewType" => _serde::__private::Ok(__Field::__field1),
+                        b"Seq" => _serde::__private::Ok(__Field::__field2),
+                        b"Map" => _serde::__private::Ok(__Field::__field3),
+                        _ => {
+                            let __value = &_serde::__private::from_utf8_lossy(__value);
+                            _serde::__private::Err(_serde::de::Error::unknown_variant(
+                                __value, VARIANTS,
+                            ))
+                        }
+                    }
+                }
+            }
+            impl<'de> _serde::Deserialize<'de> for __Field {
+                #[inline]
+                fn deserialize<__D>(
+                    __deserializer: __D,
+                ) -> _serde::__private::Result<Self, __D::Error>
+                    where
+                        __D: _serde::Deserializer<'de>,
+                {
+                    _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                }
+            }
+            struct __Visitor<'de, T, U>
+                where
+                    T: _serde::Deserialize<'de>,
+                    U: _serde::Deserialize<'de>,
+            {
+                marker: _serde::__private::PhantomData<GenericEnum<T, U>>,
+                lifetime: _serde::__private::PhantomData<&'de ()>,
+            }
+            impl<'de, T, U> _serde::de::Visitor<'de> for __Visitor<'de, T, U>
+                where
+                    T: _serde::Deserialize<'de>,
+                    U: _serde::Deserialize<'de>,
+            {
+                type Value = GenericEnum<T, U>;
+                fn expecting(
+                    &self,
+                    __formatter: &mut _serde::__private::Formatter,
+                ) -> _serde::__private::fmt::Result {
+                    _serde::__private::Formatter::write_str(__formatter, "enum GenericEnum")
+                }
+                fn visit_enum<__A>(
+                    self,
+                    __data: __A,
+                ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    where
+                        __A: _serde::de::EnumAccess<'de>,
+                {
+                    match match _serde::de::EnumAccess::variant(__data) {
+                        _serde::__private::Ok(__val) => __val,
+                        _serde::__private::Err(__err) => {
+                            return _serde::__private::Err(__err);
+                        }
+                    } {
+                        (__Field::__field0, __variant) => {
+                            match _serde::de::VariantAccess::unit_variant(__variant) {
+                                _serde::__private::Ok(__val) => __val,
+                                _serde::__private::Err(__err) => {
+                                    return _serde::__private::Err(__err);
+                                }
+                            };
+                            _serde::__private::Ok(GenericEnum::Unit)
+                        }
+                        (__Field::__field1, __variant) => _serde::__private::Result::map(
+                            _serde::de::VariantAccess::newtype_variant::<T>(__variant),
+                            GenericEnum::NewType,
+                        ),
+                        (__Field::__field2, __variant) => {
+                            struct __Visitor<'de, T, U>
+                                where
+                                    T: _serde::Deserialize<'de>,
+                                    U: _serde::Deserialize<'de>,
+                            {
+                                marker: _serde::__private::PhantomData<GenericEnum<T, U>>,
+                                lifetime: _serde::__private::PhantomData<&'de ()>,
+                            }
+                            impl<'de, T, U> _serde::de::Visitor<'de> for __Visitor<'de, T, U>
+                                where
+                                    T: _serde::Deserialize<'de>,
+                                    U: _serde::Deserialize<'de>,
+                            {
+                                type Value = GenericEnum<T, U>;
+                                fn expecting(
+                                    &self,
+                                    __formatter: &mut _serde::__private::Formatter,
+                                ) -> _serde::__private::fmt::Result
+                                {
+                                    _serde::__private::Formatter::write_str(
+                                        __formatter,
+                                        "tuple variant GenericEnum::Seq",
+                                    )
+                                }
+                                #[inline]
+                                fn visit_seq<__A>(
+                                    self,
+                                    mut __seq: __A,
+                                ) -> _serde::__private::Result<Self::Value, __A::Error>
+                                    where
+                                        __A: _serde::de::SeqAccess<'de>,
+                                {
+                                    let __field0 = match match _serde::de::SeqAccess::next_element::<
+                                        T,
+                                    >(
+                                        &mut __seq
+                                    ) {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    } {
+                                        _serde::__private::Some(__value) => __value,
+                                        _serde::__private::None => {
+                                            return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"tuple variant GenericEnum::Seq with 2 elements"));
+                                        }
+                                    };
+                                    let __field1 = match match _serde::de::SeqAccess::next_element::<
+                                        U,
+                                    >(
+                                        &mut __seq
+                                    ) {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    } {
+                                        _serde::__private::Some(__value) => __value,
+                                        _serde::__private::None => {
+                                            return _serde::__private::Err(_serde::de::Error::invalid_length(1usize, &"tuple variant GenericEnum::Seq with 2 elements"));
+                                        }
+                                    };
+                                    _serde::__private::Ok(GenericEnum::Seq(__field0, __field1))
+                                }
+                            }
+                            _serde::de::VariantAccess::tuple_variant(
+                                __variant,
+                                2usize,
+                                __Visitor {
+                                    marker: _serde::__private::PhantomData::<GenericEnum<T, U>>,
+                                    lifetime: _serde::__private::PhantomData,
+                                },
+                            )
+                        }
+                        (__Field::__field3, __variant) => {
+                            #[allow(non_camel_case_types)]
+                            enum __Field {
+                                __field0,
+                                __field1,
+                                __ignore,
+                            }
+                            struct __FieldVisitor;
+                            impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                                type Value = __Field;
+                                fn expecting(
+                                    &self,
+                                    __formatter: &mut _serde::__private::Formatter,
+                                ) -> _serde::__private::fmt::Result
+                                {
+                                    _serde::__private::Formatter::write_str(
+                                        __formatter,
+                                        "field identifier",
+                                    )
+                                }
+                                fn visit_u64<__E>(
+                                    self,
+                                    __value: u64,
+                                ) -> _serde::__private::Result<Self::Value, __E>
+                                    where
+                                        __E: _serde::de::Error,
+                                {
+                                    match __value {
+                                        0u64 => _serde::__private::Ok(__Field::__field0),
+                                        1u64 => _serde::__private::Ok(__Field::__field1),
+                                        _ => _serde::__private::Ok(__Field::__ignore),
+                                    }
+                                }
+                                fn visit_str<__E>(
+                                    self,
+                                    __value: &str,
+                                ) -> _serde::__private::Result<Self::Value, __E>
+                                    where
+                                        __E: _serde::de::Error,
+                                {
+                                    match __value {
+                                        "x" => _serde::__private::Ok(__Field::__field0),
+                                        "y" => _serde::__private::Ok(__Field::__field1),
+                                        _ => _serde::__private::Ok(__Field::__ignore),
+                                    }
+                                }
+                                fn visit_bytes<__E>(
+                                    self,
+                                    __value: &[u8],
+                                ) -> _serde::__private::Result<Self::Value, __E>
+                                    where
+                                        __E: _serde::de::Error,
+                                {
+                                    match __value {
+                                        b"x" => _serde::__private::Ok(__Field::__field0),
+                                        b"y" => _serde::__private::Ok(__Field::__field1),
+                                        _ => _serde::__private::Ok(__Field::__ignore),
+                                    }
+                                }
+                            }
+                            impl<'de> _serde::Deserialize<'de> for __Field {
+                                #[inline]
+                                fn deserialize<__D>(
+                                    __deserializer: __D,
+                                ) -> _serde::__private::Result<Self, __D::Error>
+                                    where
+                                        __D: _serde::Deserializer<'de>,
+                                {
+                                    _serde::Deserializer::deserialize_identifier(
+                                        __deserializer,
+                                        __FieldVisitor,
+                                    )
+                                }
+                            }
+                            struct __Visitor<'de, T, U>
+                                where
+                                    T: _serde::Deserialize<'de>,
+                                    U: _serde::Deserialize<'de>,
+                            {
+                                marker: _serde::__private::PhantomData<GenericEnum<T, U>>,
+                                lifetime: _serde::__private::PhantomData<&'de ()>,
+                            }
+                            impl<'de, T, U> _serde::de::Visitor<'de> for __Visitor<'de, T, U>
+                                where
+                                    T: _serde::Deserialize<'de>,
+                                    U: _serde::Deserialize<'de>,
+                            {
+                                type Value = GenericEnum<T, U>;
+                                fn expecting(
+                                    &self,
+                                    __formatter: &mut _serde::__private::Formatter,
+                                ) -> _serde::__private::fmt::Result
+                                {
+                                    _serde::__private::Formatter::write_str(
+                                        __formatter,
+                                        "struct variant GenericEnum::Map",
+                                    )
+                                }
+                                #[inline]
+                                fn visit_seq<__A>(
+                                    self,
+                                    mut __seq: __A,
+                                ) -> _serde::__private::Result<Self::Value, __A::Error>
+                                    where
+                                        __A: _serde::de::SeqAccess<'de>,
+                                {
+                                    let __field0 = match match _serde::de::SeqAccess::next_element::<
+                                        T,
+                                    >(
+                                        &mut __seq
+                                    ) {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    } {
+                                        _serde::__private::Some(__value) => __value,
+                                        _serde::__private::None => {
+                                            return _serde::__private::Err(_serde::de::Error::invalid_length(0usize, &"struct variant GenericEnum::Map with 2 elements"));
+                                        }
+                                    };
+                                    let __field1 = match match _serde::de::SeqAccess::next_element::<
+                                        U,
+                                    >(
+                                        &mut __seq
+                                    ) {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    } {
+                                        _serde::__private::Some(__value) => __value,
+                                        _serde::__private::None => {
+                                            return _serde::__private::Err(_serde::de::Error::invalid_length(1usize, &"struct variant GenericEnum::Map with 2 elements"));
+                                        }
+                                    };
+                                    _serde::__private::Ok(GenericEnum::Map {
+                                        x: __field0,
+                                        y: __field1,
+                                    })
+                                }
+                                #[inline]
+                                fn visit_map<__A>(
+                                    self,
+                                    mut __map: __A,
+                                ) -> _serde::__private::Result<Self::Value, __A::Error>
+                                    where
+                                        __A: _serde::de::MapAccess<'de>,
+                                {
+                                    let mut __field0: _serde::__private::Option<T> =
+                                        _serde::__private::None;
+                                    let mut __field1: _serde::__private::Option<U> =
+                                        _serde::__private::None;
+                                    while let _serde::__private::Some(__key) =
+                                    match _serde::de::MapAccess::next_key::<__Field>(&mut __map)
+                                    {
+                                        _serde::__private::Ok(__val) => __val,
+                                        _serde::__private::Err(__err) => {
+                                            return _serde::__private::Err(__err);
+                                        }
+                                    }
+                                    {
+                                        match __key {
+                                            __Field::__field0 => {
+                                                if _serde::__private::Option::is_some(&__field0) {
+                                                    return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("x"));
+                                                }
+                                                __field0 = _serde::__private::Some(
+                                                    match _serde::de::MapAccess::next_value::<T>(
+                                                        &mut __map,
+                                                    ) {
+                                                        _serde::__private::Ok(__val) => __val,
+                                                        _serde::__private::Err(__err) => {
+                                                            return _serde::__private::Err(__err);
+                                                        }
+                                                    },
+                                                );
+                                            }
+                                            __Field::__field1 => {
+                                                if _serde::__private::Option::is_some(&__field1) {
+                                                    return _serde::__private::Err(<__A::Error as _serde::de::Error>::duplicate_field("y"));
+                                                }
+                                                __field1 = _serde::__private::Some(
+                                                    match _serde::de::MapAccess::next_value::<U>(
+                                                        &mut __map,
+                                                    ) {
+                                                        _serde::__private::Ok(__val) => __val,
+                                                        _serde::__private::Err(__err) => {
+                                                            return _serde::__private::Err(__err);
+                                                        }
+                                                    },
+                                                );
+                                            }
+                                            _ => {
+                                                let _ = match _serde::de::MapAccess::next_value::<
+                                                    _serde::de::IgnoredAny,
+                                                >(
+                                                    &mut __map
+                                                ) {
+                                                    _serde::__private::Ok(__val) => __val,
+                                                    _serde::__private::Err(__err) => {
+                                                        return _serde::__private::Err(__err);
+                                                    }
+                                                };
+                                            }
+                                        }
+                                    }
+                                    let __field0 = match __field0 {
+                                        _serde::__private::Some(__field0) => __field0,
+                                        _serde::__private::None => {
+                                            match _serde::__private::de::missing_field("x") {
+                                                _serde::__private::Ok(__val) => __val,
+                                                _serde::__private::Err(__err) => {
+                                                    return _serde::__private::Err(__err);
+                                                }
+                                            }
+                                        }
+                                    };
+                                    let __field1 = match __field1 {
+                                        _serde::__private::Some(__field1) => __field1,
+                                        _serde::__private::None => {
+                                            match _serde::__private::de::missing_field("y") {
+                                                _serde::__private::Ok(__val) => __val,
+                                                _serde::__private::Err(__err) => {
+                                                    return _serde::__private::Err(__err);
+                                                }
+                                            }
+                                        }
+                                    };
+                                    _serde::__private::Ok(GenericEnum::Map {
+                                        x: __field0,
+                                        y: __field1,
+                                    })
+                                }
+                            }
+                            const FIELDS: &'static [&'static str] = &["x", "y"];
+                            _serde::de::VariantAccess::struct_variant(
+                                __variant,
+                                FIELDS,
+                                __Visitor {
+                                    marker: _serde::__private::PhantomData::<GenericEnum<T, U>>,
+                                    lifetime: _serde::__private::PhantomData,
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            const VARIANTS: &'static [&'static str] = &["Unit", "NewType", "Seq", "Map"];
+            _serde::Deserializer::deserialize_enum(
+                __deserializer,
+                "GenericEnum",
+                VARIANTS,
+                __Visitor {
+                    marker: _serde::__private::PhantomData::<GenericEnum<T, U>>,
+                    lifetime: _serde::__private::PhantomData,
+                },
+            )
         }
-        auxp = auxp.add(1);
     }
-}
-
-// ELF ABI
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-struct Elf_auxv_t {
-    a_type: usize,
-    a_val: usize,
-}
+};
