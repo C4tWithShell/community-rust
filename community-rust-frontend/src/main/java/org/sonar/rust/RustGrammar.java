@@ -575,6 +575,7 @@ public enum RustGrammar implements GrammarRuleKey {
       b.optional(RustPunctuator.COLON, SPC, TYPE_PARAM_BOUNDS, SPC),
       b.optional(WHERE_CLAUSE, SPC),
       b.optional(RustPunctuator.EQ, SPC, TYPE, SPC),
+      b.optional(WHERE_CLAUSE, SPC),
       RustPunctuator.SEMI);
   }
 

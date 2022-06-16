@@ -27,15 +27,17 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class TypeAliasTest {
 
-    @Test
-    public void testTypeAlias() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_ALIAS))
-                .matches("type Point = (u8, u8);")
-                .matches("type Ok = JsValue<'a>;")
-                .matches("type Snapshot: Snapshot;")
+  @Test
+  public void testTypeAlias() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_ALIAS))
+      .matches("type Point = (u8, u8);")
+      .matches("type Ok = JsValue<'a>;")
+      .matches("type Snapshot: Snapshot;")
+      .matches("type OnMountFuture<'m, M> = impl Future<Output = ()> + 'm;")
+      .matches("type Foo = () where Foo: Copy;")
+      .matches("type OnMountFuture<'m, M> = impl Future<Output = ()> + 'm where M: 'm;")
 
+    ;
 
-        ;
-
-    }
+  }
 }

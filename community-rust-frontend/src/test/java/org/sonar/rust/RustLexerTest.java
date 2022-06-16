@@ -66,7 +66,26 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "return _serde :: __private :: Err (< __A ::  Error as _serde :: de :: Error >   :: duplicate_field (\"a\")) ;";
+    String sexpr = "impl Actor for MyActor {\n" +
+      "            type Message<'m> = Add;\n" +
+
+      "\n" +
+      "            fn on_mount<'m, M>(\n" +
+      "                &'m mut self,\n" +
+      "                _: Address<Add>,\n" +
+      "                mut inbox: M,\n" +
+      "            ) -> Self::OnMountFuture<'m, M>\n" +
+      "            where\n" +
+      "                M: Inbox<Add> + 'm,\n" +
+      "            {\n" +
+      "                async move {\n" +
+      "                    loop {\n" +
+      "                        let message = inbox.next().await;\n" +
+      "                        self.value.fetch_add(message.0, Ordering::SeqCst);\n" +
+      "                    }\n" +
+      "                }\n" +
+      "            }\n" +
+      "        }";
 
     // Print out Ast node content for debugging purpose
 
