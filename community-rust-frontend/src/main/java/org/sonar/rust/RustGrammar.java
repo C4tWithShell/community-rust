@@ -710,7 +710,7 @@ public enum RustGrammar implements GrammarRuleKey {
       b.firstOf(MACRO_INVOCATION_SEMI,
         b.sequence(
           b.optional(VISIBILITY, SPC),
-          b.firstOf(STATIC_ITEM, FUNCTION))));
+          b.firstOf(TYPE_ALIAS, STATIC_ITEM, FUNCTION))));
   }
 
   /* https://doc.rust-lang.org/reference/items/generics.html */

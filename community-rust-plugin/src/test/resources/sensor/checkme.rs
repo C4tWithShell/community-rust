@@ -1,86 +1,130 @@
-#![macro_use]
-#![feature(generic_associated_types)]
-#![feature(type_alias_impl_trait)]
+extern crate std;
 
-#[cfg(feature = "std")]
-mod tests {
-    use core::future::Future;
-    use ector::*;
-    use embassy::executor::Spawner;
-    use std::sync::atomic::{AtomicU32, Ordering};
-    use std::{sync::mpsc, thread, time::Duration};
+use js_sys::{global, Uint8Array};
+use std::thread_local;
+use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
 
-    static INITIALIZED: AtomicU32 = AtomicU32::new(0);
+// Copyright 2018 Developers of the Rand project.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+use crate::Error;
 
-    #[test]
-    fn test_device_setup() {
-        pub struct MyActor {
-            value: &'static AtomicU32,
-        }
 
-        pub struct Add(u32);
-        impl Actor for MyActor {
-            type Message<'m> = Add;
-            type OnMountFuture<'m, M> = impl Future<Output = ()> + 'm where M: 'm + Inbox<Add>;
+// Maximum is 65536 bytes see https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+const BROWSER_CRYPTO_BUFFER_SIZE: usize = 256;
 
-            fn on_mount<'m, M>(
-                &'m mut self,
-                _: Address<Add>,
-                mut inbox: M,
-            ) -> Self::OnMountFuture<'m, M>
-            where
-                M: Inbox<Add> + 'm,
-            {
-                async move {
-                    loop {
-                        let message = inbox.next().await;
-                        self.value.fetch_add(message.0, Ordering::SeqCst);
-                    }
+enum RngSource {
+    Node(NodeCrypto),
+    Browser(BrowserCrypto, Uint8Array),
+}
+
+// JsValues are always per-thread, so we initialize RngSource for each thread.
+//   See: https://github.com/rustwasm/wasm-bindgen/pull/955
+thread_local!(
+    static RNG_SOURCE: Result<RngSource, Error> = getrandom_init();
+);
+
+pub(crate) fn getrandom_inner(dest: &mut [u8]) -> Result<(), Error> {
+    RNG_SOURCE.with(|result| {
+        let source = result.as_ref().map_err(|&e| e)?;
+
+        match source {
+            RngSource::Node(n) => {
+                if n.random_fill_sync(dest).is_err() {
+                    return Err(Error::NODE_RANDOM_FILL_SYNC);
                 }
             }
-        }
+            RngSource::Browser(crypto, buf) => {
+                // getRandomValues does not work with all types of WASM memory,
+                // so we initially write to browser memory to avoid exceptions.
+                for chunk in dest.chunks_mut(BROWSER_CRYPTO_BUFFER_SIZE) {
+                    // The chunk can be smaller than buf's length, so we call to
+                    // JS to create a smaller view of buf without allocation.
+                    let sub_buf = buf.subarray(0, chunk.len() as u32);
 
-        #[embassy::main]
-        async fn main(spawner: Spawner) {
-            static ACTOR: ActorContext<MyActor> = ActorContext::new();
-
-            let a_addr = ACTOR.mount(
-                spawner,
-                MyActor {
-                    value: &INITIALIZED,
-                },
-            );
-
-            let _ = a_addr.try_notify(Add(10));
-        }
-
-        std::thread::spawn(move || {
-            main();
-        });
-
-        panic_after(Duration::from_secs(10), move || {
-            while INITIALIZED.load(Ordering::SeqCst) != 10 {
-                std::thread::sleep(Duration::from_secs(1))
+                    if crypto.get_random_values(&sub_buf).is_err() {
+                        return Err(Error::WEB_GET_RANDOM_VALUES);
+                    }
+                    sub_buf.copy_to(chunk);
+                }
             }
-        })
+        };
+        Ok(())
+    })
+}
+
+fn getrandom_init() -> Result<RngSource, Error> {
+    let global: Global = global().unchecked_into();
+    if is_node(&global) {
+        let crypto = NODE_MODULE
+            .require("crypto")
+            .map_err(|_| Error::NODE_CRYPTO)?;
+        return Ok(RngSource::Node(crypto));
     }
 
-    fn panic_after<T, F>(d: Duration, f: F) -> T
-    where
-        T: Send + 'static,
-        F: FnOnce() -> T,
-        F: Send + 'static,
-    {
-        let (done_tx, done_rx) = mpsc::channel();
-        let handle = thread::spawn(move || {
-            let val = f();
-            done_tx.send(()).expect("Unable to send completion signal");
-            val
-        });
+    // Assume we are in some Web environment (browser or web worker). We get
+    // `self.crypto` (called `msCrypto` on IE), so we can call
+    // `crypto.getRandomValues`. If `crypto` isn't defined, we assume that
+    // we are in an older web browser and the OS RNG isn't available.
+    let crypto = match (global.crypto(), global.ms_crypto()) {
+        (c, _) if c.is_object() => c,
+        (_, c) if c.is_object() => c,
+        _ => return Err(Error::WEB_CRYPTO),
+    };
 
-        match done_rx.recv_timeout(d) {
-            Ok(_) => handle.join().expect("Thread panicked"),
-            Err(_) => panic!("Thread took too long"),
+    let buf = Uint8Array::new_with_length(BROWSER_CRYPTO_BUFFER_SIZE as u32);
+    Ok(RngSource::Browser(crypto, buf))
+}
+
+// Taken from https://www.npmjs.com/package/browser-or-node
+fn is_node(global: &Global) -> bool {
+    let process = global.process();
+    if process.is_object() {
+        let versions = process.versions();
+        if versions.is_object() {
+            return versions.node().is_string();
         }
     }
+    false
+}
+
+#[wasm_bindgen]
+extern "C" {
+    type Global; // Return type of js_sys::global()
+
+    // Web Crypto API (https://www.w3.org/TR/WebCryptoAPI/)
+    #[wasm_bindgen(method, getter, js_name = "msCrypto")]
+    fn ms_crypto(this: &Global) -> BrowserCrypto;
+    #[wasm_bindgen(method, getter)]
+    fn crypto(this: &Global) -> BrowserCrypto;
+    type BrowserCrypto;
+    #[wasm_bindgen(method, js_name = getRandomValues, catch)]
+    fn get_random_values(this: &BrowserCrypto, buf: &Uint8Array) -> Result<(), JsValue>;
+
+    // We use a "module" object here instead of just annotating require() with
+    // js_name = "module.require", so that Webpack doesn't give a warning. See:
+    //   https://github.com/rust-random/getrandom/issues/224
+    type NodeModule;
+    #[wasm_bindgen(js_name = module)]
+    static NODE_MODULE: NodeModule;
+    // Node JS crypto module (https://nodejs.org/api/crypto.html)
+    #[wasm_bindgen(method, catch)]
+    fn require(this: &NodeModule, s: &str) -> Result<NodeCrypto, JsValue>;
+    type NodeCrypto;
+    #[wasm_bindgen(method, js_name = randomFillSync, catch)]
+    fn random_fill_sync(this: &NodeCrypto, buf: &mut [u8]) -> Result<(), JsValue>;
+
+    // Node JS process Object (https://nodejs.org/api/process.html)
+    #[wasm_bindgen(method, getter)]
+    fn process(this: &Global) -> Process;
+    type Process;
+    #[wasm_bindgen(method, getter)]
+    fn versions(this: &Process) -> Versions;
+    type Versions;
+    #[wasm_bindgen(method, getter)]
+    fn node(this: &Versions) -> JsValue;
 }
