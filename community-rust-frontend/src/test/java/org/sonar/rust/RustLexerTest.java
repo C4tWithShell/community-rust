@@ -66,7 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "for foo in bar  {}";
+    String sexpr = "for foo in &bar  {}";
 
     // Print out Ast node content for debugging purpose
 

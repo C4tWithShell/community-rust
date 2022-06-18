@@ -63,6 +63,7 @@ public class ExpressionTest {
       .matches("i == NUM_MSG")
       .matches("foo = &bar")
       .notMatches("foo = &bar{}")
+      .matches("&a.foo()")
 
     ;
   }

@@ -1142,7 +1142,12 @@ public enum RustGrammar implements GrammarRuleKey {
         b.sequence(IF_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(IF_LET_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(CLOSURE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-        b.sequence(RustPunctuator.AND, SPC, SCRUTINEE, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+
+        // Borrow expressions
+        b.sequence(b.firstOf(
+          b.sequence(b.firstOf(RustPunctuator.ANDAND, RustPunctuator.AND), SPC, RustKeyword.KW_MUT, SPC, SCRUTINEE),
+          b.sequence(b.firstOf(RustPunctuator.ANDAND, RustPunctuator.AND), SPC, SCRUTINEE)), b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+
         b.sequence(RustPunctuator.STAR, SPC, SCRUTINEE, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(NEGATION_EXPRESSION_EXCEPT_STRUCT, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
