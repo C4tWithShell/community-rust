@@ -793,7 +793,7 @@ public enum RustGrammar implements GrammarRuleKey {
   /* https://doc.rust-lang.org/reference/macros.html */
   private static void macros(LexerlessGrammarBuilder b) {
     b.rule(MACRO_INVOCATION).is(
-      SIMPLE_PATH, RustPunctuator.NOT, SPC, DELIM_TOKEN_TREE);
+      SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, DELIM_TOKEN_TREE);
 
     b.rule(DELIM_TOKEN_TREE).is(b.firstOf(
       b.sequence("(", SPC, b.zeroOrMore(TOKEN_TREE, SPC), SPC, ")"),
@@ -807,9 +807,9 @@ public enum RustGrammar implements GrammarRuleKey {
         TOKEN_EXCEPT_DELIMITERS,
         DELIM_TOKEN_TREE));
     b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
-      b.sequence(SIMPLE_PATH, RustPunctuator.NOT, SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
-      b.sequence(SIMPLE_PATH, RustPunctuator.NOT, SPC, "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
-      b.sequence(SIMPLE_PATH, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")));
+      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
+      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
+      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")));
     macrosByExample(b);
   }
 
@@ -1142,8 +1142,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.sequence(IF_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(IF_LET_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(CLOSURE_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-        b.sequence(BORROW_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
-        b.sequence(RustPunctuator.STAR, SCRUTINEE, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+        b.sequence(RustPunctuator.AND, SPC, SCRUTINEE, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
+        b.sequence(RustPunctuator.STAR, SPC, SCRUTINEE, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(NEGATION_EXPRESSION_EXCEPT_STRUCT, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(MACRO_INVOCATION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
         b.sequence(RETURN_EXPRESSION, b.zeroOrMore(SPC, EXPRESSION_TERM_EXCEPT_STRUCT)),
