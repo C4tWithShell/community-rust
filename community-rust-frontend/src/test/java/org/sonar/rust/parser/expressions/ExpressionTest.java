@@ -61,6 +61,9 @@ public class ExpressionTest {
       .matches("match_ok")
       .matches("next.iter().all(|i| i == 42)")
       .matches("i == NUM_MSG")
+      .matches("foo = &bar")
+      .notMatches("foo = &bar{}")
+      .matches("&a.foo()")
 
     ;
   }

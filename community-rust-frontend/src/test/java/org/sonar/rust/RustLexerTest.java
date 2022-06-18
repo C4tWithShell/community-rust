@@ -66,8 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "extern \"C\" {\n" +
-      "    type Global; // Return type of js_sys::global()\n}";
+    String sexpr = "for foo in &bar  {}";
 
     // Print out Ast node content for debugging purpose
 

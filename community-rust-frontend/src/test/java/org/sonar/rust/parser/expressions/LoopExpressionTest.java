@@ -27,61 +27,67 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class LoopExpressionTest {
 
-    @Test
-    public void testBreakExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BREAK_EXPRESSION))
-                .matches("break")
-                .matches("break 42")
-                .matches("break foo")
-                .matches("break a.method()")
-                .matches("break 'a b.method()")
-                .matches("break Ok(Poll::Pending)")
-                ;
-    }
+  @Test
+  public void testBreakExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.BREAK_EXPRESSION))
+      .matches("break")
+      .matches("break 42")
+      .matches("break foo")
+      .matches("break a.method()")
+      .matches("break 'a b.method()")
+      .matches("break Ok(Poll::Pending)");
+  }
 
-    @Test
-    public void testContinueExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CONTINUE_EXPRESSION))
-                .matches("continue 'outer")
+  @Test
+  public void testContinueExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.CONTINUE_EXPRESSION))
+      .matches("continue 'outer")
 
-        ;
-    }
+    ;
+  }
 
-    @Test
-    public void testLoopExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.LOOP_EXPRESSION))
-                .matches("while i < 10 {\n" +
-                        "    println!(\"hello\");\n" +
-                        "    i = i + 1;\n" +
-                        "}")
-                .matches("while let Some(y) = x.pop() {\n" +
-                        "    println!(\"y = {}\", y);\n" +
-                        "}")
-                .matches("while let _ = 5 {\n" +
-                        "    println!(\"Irrefutable patterns are always true\");\n" +
-                        "    break;\n" +
-                        "}")
+  @Test
+  public void testIteratorLoopExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ITERATOR_LOOP_EXPRESSION))
+      .matches("for elem in arr {}")
+      .matches("for elem in &mut arr {}")
 
-                .matches("while let Some(v @ 1) | Some(v @ 2) = vals.pop() {\n" +
-                        "    // Prints 2, 2, then 1\n" +
-                        "    println!(\"{}\", v);\n" +
-                        "}")
+    ;
+  }
 
+  @Test
+  public void testLoopExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.LOOP_EXPRESSION))
+      .matches("while i < 10 {\n" +
+        "    println!(\"hello\");\n" +
+        "    i = i + 1;\n" +
+        "}")
+      .matches("while let Some(y) = x.pop() {\n" +
+        "    println!(\"y = {}\", y);\n" +
+        "}")
+      .matches("while let _ = 5 {\n" +
+        "    println!(\"Irrefutable patterns are always true\");\n" +
+        "    break;\n" +
+        "}")
 
-                .matches("for text in v {\n" +
-                        "    println!(\"I like {}.\", text);\n" +
-                        "}")
-                .matches("for n in 1..11 {\n" +
-                        "    sum += n;\n" +
-                        "}")
-                .matches("while i < j {\n" +
-                        "    println!(\"hello\");\n" +
-                        "    i = i + 1;\n" +
-                        "}")
-                .matches("for (i, n) in hist.normalized_bins().enumerate() {\n" +
-                        "        let bin = (n as f64) / (N_SAMPLES as f64) ;\n" +
-                        "        diff[i] = (bin - expected[i]).abs();\n" +
-                        "    }")
-        ;
-    }
+      .matches("while let Some(v @ 1) | Some(v @ 2) = vals.pop() {\n" +
+        "    // Prints 2, 2, then 1\n" +
+        "    println!(\"{}\", v);\n" +
+        "}")
+
+      .matches("for text in v {\n" +
+        "    println!(\"I like {}.\", text);\n" +
+        "}")
+      .matches("for n in 1..11 {\n" +
+        "    sum += n;\n" +
+        "}")
+      .matches("while i < j {\n" +
+        "    println!(\"hello\");\n" +
+        "    i = i + 1;\n" +
+        "}")
+      .matches("for (i, n) in hist.normalized_bins().enumerate() {\n" +
+        "        let bin = (n as f64) / (N_SAMPLES as f64) ;\n" +
+        "        diff[i] = (bin - expected[i]).abs();\n" +
+        "    }");
+  }
 }
