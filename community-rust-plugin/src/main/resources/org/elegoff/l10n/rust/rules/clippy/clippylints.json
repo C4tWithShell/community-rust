@@ -10,6 +10,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#allow_attributes_without_reason"
   },
   {
+    "key": "clippy::almost_complete_letter_range",
+    "name": "Checks for ranges which almost include the entire range of letters from 'a' to 'z', but don't becaus",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#almost_complete_letter_range"
+  },
+  {
     "key": "clippy::almost_swapped",
     "name": "Checks for `foo = bar; bar = foo` sequences.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#almost_swapped"
@@ -25,6 +30,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#as_conversions"
   },
   {
+    "key": "clippy::as_underscore",
+    "name": "Check for the usage of `as _` conversion using inferred type.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#as_underscore"
+  },
+  {
     "key": "clippy::assertions_on_constants",
     "name": "Checks for `assert!(true)` and `assert!(false)` calls.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants"
@@ -38,6 +48,11 @@
     "key": "clippy::async_yields_async",
     "name": "Checks for async blocks that yield values of types that can themselves be awaited.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#async_yields_async"
+  },
+  {
+    "key": "clippy::await_holding_invalid_type",
+    "name": "Allows users to configure types which should not be held across `await` suspension points.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#await_holding_invalid_type"
   },
   {
     "key": "clippy::await_holding_lock",
@@ -90,6 +105,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrow_as_ptr"
   },
   {
+    "key": "clippy::borrow_deref_ref",
+    "name": "Checks for `&*(&T)`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrow_deref_ref"
+  },
+  {
     "key": "clippy::borrow_interior_mutable_const",
     "name": "Checks if `const` items which is interior mutable (e.g., contains a `Cell`, `Mutex`, `AtomicXxxx`, e",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#borrow_interior_mutable_const"
@@ -120,6 +140,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#builtin_type_shadow"
   },
   {
+    "key": "clippy::bytes_count_to_len",
+    "name": "It checks for `str::bytes().count()` and suggests replacing it with `str::len()`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#bytes_count_to_len"
+  },
+  {
     "key": "clippy::bytes_nth",
     "name": "Checks for the use of `.bytes().nth()`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#bytes_nth"
@@ -133,6 +158,11 @@
     "key": "clippy::case_sensitive_file_extension_comparisons",
     "name": "Checks for calls to `ends_with` with possible file extensions and suggests to use a case-insensitive",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#case_sensitive_file_extension_comparisons"
+  },
+  {
+    "key": "clippy::cast_abs_to_unsigned",
+    "name": "Checks for uses of the `abs()` method that cast the result to unsigned.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_abs_to_unsigned"
   },
   {
     "key": "clippy::cast_enum_constructor",
@@ -181,7 +211,7 @@
   },
   {
     "key": "clippy::cast_slice_different_sizes",
-    "name": "asts between raw pointers to slices with differently sized elements.",
+    "name": "Checks for `as` casts between raw pointers to slices with differently sized elements.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#cast_slice_different_sizes"
   },
   {
@@ -310,6 +340,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#declare_interior_mutable_const"
   },
   {
+    "key": "clippy::default_instead_of_iter_empty",
+    "name": "It checks for `std::iter::Empty::default()` and suggests replacing it with `std::iter::empty()`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#default_instead_of_iter_empty"
+  },
+  {
     "key": "clippy::default_numeric_fallback",
     "name": "Checks for usage of unconstrained numeric literals which may cause default numeric fallback in type",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#default_numeric_fallback"
@@ -360,6 +395,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derive_ord_xor_partial_ord"
   },
   {
+    "key": "clippy::derive_partial_eq_without_eq",
+    "name": "Checks for types that derive `PartialEq` and could implement `Eq`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derive_partial_eq_without_eq"
+  },
+  {
     "key": "clippy::disallowed_methods",
     "name": "Denies the configured methods and functions in clippy.toml  Note: Even though this lint is warn-by-d",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#disallowed_methods"
@@ -378,6 +418,11 @@
     "key": "clippy::diverging_sub_expression",
     "name": "Checks for diverging calls that are not match arms or statements.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#diverging_sub_expression"
+  },
+  {
+    "key": "clippy::doc_link_with_quotes",
+    "name": "Detects the syntax `['foo']` in documentation comments (notice quotes instead of backticks) outside",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#doc_link_with_quotes"
   },
   {
     "key": "clippy::doc_markdown",
@@ -410,9 +455,19 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#drop_copy"
   },
   {
+    "key": "clippy::drop_non_drop",
+    "name": "Checks for calls to `std::mem::drop` with a value that does not implement `Drop`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#drop_non_drop"
+  },
+  {
     "key": "clippy::drop_ref",
     "name": "Checks for calls to `std::mem::drop` with a reference instead of an owned value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#drop_ref"
+  },
+  {
+    "key": "clippy::duplicate_mod",
+    "name": "Checks for files that are included as modules multiple times.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#duplicate_mod"
   },
   {
     "key": "clippy::duplicate_underscore_argument",
@@ -428,6 +483,11 @@
     "key": "clippy::else_if_without_else",
     "name": "Checks for usage of if expressions with an `else if` branch, but without a final `else` branch.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#else_if_without_else"
+  },
+  {
+    "key": "clippy::empty_drop",
+    "name": "Checks for empty `Drop` implementations.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_drop"
   },
   {
     "key": "clippy::empty_enum",
@@ -480,9 +540,9 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#erasing_op"
   },
   {
-    "key": "clippy::eval_order_dependence",
-    "name": "Checks for a read and a write to the same variable where whether the read occurs before or after the",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#eval_order_dependence"
+    "key": "clippy::err_expect",
+    "name": "Checks for `.err().expect()` calls on the `Result` type.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#err_expect"
   },
   {
     "key": "clippy::excessive_precision",
@@ -655,6 +715,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#forget_copy"
   },
   {
+    "key": "clippy::forget_non_drop",
+    "name": "Checks for calls to `std::mem::forget` with a value that does not implement `Drop`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#forget_non_drop"
+  },
+  {
     "key": "clippy::forget_ref",
     "name": "Checks for calls to `std::mem::forget` with a reference instead of an owned value.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#forget_ref"
@@ -663,6 +728,11 @@
     "key": "clippy::format_in_format_args",
     "name": "Detects `format!` within the arguments of another macro that does formatting such as `format!` itsel",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#format_in_format_args"
+  },
+  {
+    "key": "clippy::format_push_string",
+    "name": "Detects cases where the result of a `format!` call is appended to an existing `String`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#format_push_string"
   },
   {
     "key": "clippy::from_iter_instead_of_collect",
@@ -683,6 +753,11 @@
     "key": "clippy::future_not_send",
     "name": "This lint requires Future implementations returned from functions and methods to implement the `Send",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#future_not_send"
+  },
+  {
+    "key": "clippy::get_first",
+    "name": "Checks for using `x.get(0)` instead of `x.first()`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#get_first"
   },
   {
     "key": "clippy::get_last_with_len",
@@ -870,6 +945,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#invisible_characters"
   },
   {
+    "key": "clippy::is_digit_ascii_radix",
+    "name": "Finds usages of [`char::is_digit`] (https://doc.rust-lang.org/stable/std/primitive.char.html#method.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#is_digit_ascii_radix"
+  },
+  {
     "key": "clippy::items_after_statements",
     "name": "Checks for items declared after some statement in a block.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#items_after_statements"
@@ -948,6 +1028,11 @@
     "key": "clippy::large_enum_variant",
     "name": "Checks for large size differences between variants on `enum`s.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant"
+  },
+  {
+    "key": "clippy::large_include_file",
+    "name": "Checks for the inclusion of large files via `include_bytes!()` and `include_str!()`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_include_file"
   },
   {
     "key": "clippy::large_stack_arrays",
@@ -1240,6 +1325,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mismatched_target_os"
   },
   {
+    "key": "clippy::mismatching_type_param_order",
+    "name": "Checks for type parameters which are positioned inconsistently between a type definition and impl bl",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mismatching_type_param_order"
+  },
+  {
     "key": "clippy::misrefactored_assign_op",
     "name": "Checks for `a op= a op b` or `a op= b op a` patterns.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#misrefactored_assign_op"
@@ -1295,6 +1385,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mixed_case_hex_literals"
   },
   {
+    "key": "clippy::mixed_read_write_in_expression",
+    "name": "Checks for a read and a write to the same variable where whether the read occurs before or after the",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mixed_read_write_in_expression"
+  },
+  {
     "key": "clippy::mod_module_files",
     "name": "Checks that module layout uses only self named module files, bans `mod.rs` files.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mod_module_files"
@@ -1341,7 +1436,7 @@
   },
   {
     "key": "clippy::mut_from_ref",
-    "name": "This lint checks for functions that take immutable references and return mutable ones.",
+    "name": "This lint checks for functions that take immutable references and return mutable ones. This will not",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mut_from_ref"
   },
   {
@@ -1441,8 +1536,18 @@
   },
   {
     "key": "clippy::needless_option_as_deref",
-    "name": "Checks for no-op uses of Option::{as_deref,as_deref_mut}, for example, `Option<&T>::as_deref()` retu",
+    "name": "Checks for no-op uses of `Option::{as_deref, as_deref_mut}`, for example, `Option<&T>::as_deref()` r",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_option_as_deref"
+  },
+  {
+    "key": "clippy::needless_option_take",
+    "name": "bad?",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_option_take"
+  },
+  {
+    "key": "clippy::needless_parens_on_range_literals",
+    "name": "The lint checks for parenthesis on literals in range statements that are superfluous.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_parens_on_range_literals"
   },
   {
     "key": "clippy::needless_pass_by_value",
@@ -1508,6 +1613,11 @@
     "key": "clippy::no_effect",
     "name": "Checks for statements which have no effect.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#no_effect"
+  },
+  {
+    "key": "clippy::no_effect_replace",
+    "name": "Checks for `replace` statements which have no effect.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#no_effect_replace"
   },
   {
     "key": "clippy::no_effect_underscore_binding",
@@ -1715,6 +1825,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ptr_offset_with_cast"
   },
   {
+    "key": "clippy::pub_use",
+    "name": "Restricts the usage of `pub use ...`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#pub_use"
+  },
+  {
     "key": "clippy::question_mark",
     "name": "Checks for expressions that could be replaced by the question mark operator.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#question_mark"
@@ -1740,9 +1855,19 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#rc_buffer"
   },
   {
+    "key": "clippy::rc_clone_in_vec_init",
+    "name": "Checks for reference-counted pointers (`Arc`, `Rc`, `rc::Weak`, and `sync::Weak`) in `vec![elem; len",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#rc_clone_in_vec_init"
+  },
+  {
     "key": "clippy::rc_mutex",
     "name": "Checks for `Rc<Mutex<T>>`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#rc_mutex"
+  },
+  {
+    "key": "clippy::read_zero_byte_vec",
+    "name": "This lint catches reads into a zero-length `Vec`. Especially in the case of a call to `with_capacity",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#read_zero_byte_vec"
   },
   {
     "key": "clippy::recursive_format_impl",
@@ -1935,6 +2060,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#should_implement_trait"
   },
   {
+    "key": "clippy::significant_drop_in_scrutinee",
+    "name": "Check for temporaries returned from function calls in a match scrutinee that have the `clippy::has_s",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#significant_drop_in_scrutinee"
+  },
+  {
     "key": "clippy::similar_names",
     "name": "Checks for names that are very similar and thus confusing.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#similar_names"
@@ -2090,6 +2220,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_unary_op_formatting"
   },
   {
+    "key": "clippy::swap_ptr_to_ref",
+    "name": "Checks for calls to `core::mem::swap` where either parameter is derived from a pointer",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#swap_ptr_to_ref"
+  },
+  {
     "key": "clippy::tabs_in_doc_comments",
     "name": "Checks doc comments for usage of tab characters.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#tabs_in_doc_comments"
@@ -2195,6 +2330,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#transmuting_null"
   },
   {
+    "key": "clippy::trim_split_whitespace",
+    "name": "Warns about calling `str::trim` (or variants) before `str::split_whitespace`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#trim_split_whitespace"
+  },
+  {
     "key": "clippy::trivial_regex",
     "name": "Checks for trivial [regex](https://crates.io/crates/regex) creation (with `Regex::new`, `RegexBuilde",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#trivial_regex"
@@ -2221,7 +2361,7 @@
   },
   {
     "key": "clippy::undocumented_unsafe_blocks",
-    "name": "Checks for `unsafe` blocks without a `// SAFETY: ` comment explaining why the unsafe operations perf",
+    "name": "Checks for `unsafe` blocks and impls without a `// SAFETY: ` comment explaining why the unsafe opera",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#undocumented_unsafe_blocks"
   },
   {
@@ -2310,6 +2450,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_operation"
   },
   {
+    "key": "clippy::unnecessary_owned_empty_strings",
+    "name": "Detects cases of owned empty strings being passed as an argument to a function expecting `&str`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_owned_empty_strings"
+  },
+  {
     "key": "clippy::unnecessary_self_imports",
     "name": "Checks for imports ending in `::{self}`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_self_imports"
@@ -2388,6 +2533,11 @@
     "key": "clippy::unused_io_amount",
     "name": "Checks for unused written/read amount.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unused_io_amount"
+  },
+  {
+    "key": "clippy::unused_rounding",
+    "name": "Detects cases where a whole-number literal float is being rounded, using the `floor`, `ceil`, or `r",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unused_rounding"
   },
   {
     "key": "clippy::unused_self",
@@ -2481,7 +2631,7 @@
   },
   {
     "key": "clippy::vec_init_then_push",
-    "name": "Checks for calls to `push` immediately after creating a new `Vec`.",
+    "name": "Checks for calls to `push` immediately after creating a new `Vec`.  If the `Vec` is created using `w",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#vec_init_then_push"
   },
   {
