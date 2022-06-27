@@ -1030,16 +1030,14 @@ public enum RustGrammar implements GrammarRuleKey {
 
     b.rule(BARE_FUNCTION_RETURN_TYPE).is(RustPunctuator.RARROW, SPC, TYPE_NO_BOUNDS);
     b.rule(FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC).is(b.firstOf(
-      MAYBE_NAMED_FUNCTION_PARAMETERS, MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC));
+      MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC, MAYBE_NAMED_FUNCTION_PARAMETERS));
     b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS).is(seq(b, MAYBE_NAMED_PARAM, RustPunctuator.COMMA));
     b.rule(MAYBE_NAMED_PARAM).is(
       b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
       b.optional(b.sequence(
         b.firstOf(IDENTIFIER, RustPunctuator.UNDERSCORE), SPC, RustPunctuator.COLON, b.nextNot(RustPunctuator.COLON))),
       SPC, TYPE);
-    b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(
-      b.zeroOrMore(b.sequence(MAYBE_NAMED_PARAM, SPC, RustPunctuator.COMMA, SPC)),
-      MAYBE_NAMED_PARAM, SPC, RustPunctuator.COMMA, SPC, b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOTDOT);
+    b.rule(MAYBE_NAMED_FUNCTION_PARAMETERS_VARIADIC).is(seq(b, MAYBE_NAMED_PARAM, RustPunctuator.COMMA), SPC, b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOTDOT);
 
   }
 

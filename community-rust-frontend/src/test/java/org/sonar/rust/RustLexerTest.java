@@ -66,7 +66,11 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "for foo in &bar  {}";
+    String sexpr = "extern \"C\" {\n" +
+      "    pub fn esetfunc(\n" +
+      "        cb: ::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char,...)>,\n" +
+      "    ) -> ::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char,...)>;\n" +
+      "}";
 
     // Print out Ast node content for debugging purpose
 

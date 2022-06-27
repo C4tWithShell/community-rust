@@ -76,9 +76,42 @@ public class TypeTest {
   }
 
   @Test
+  public void testMaybeNamedParam() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.MAYBE_NAMED_PARAM))
+      .matches("this: *mut iasset")
+      .matches("::c_int")
+      .matches("*const ::c_char")
+
+    ;
+  }
+
+  @Test
+  public void testMaybeNamedFunctionParam() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.MAYBE_NAMED_FUNCTION_PARAMETERS))
+      .matches("this: *mut iasset")
+      .matches("::c_int")
+      .matches("*const ::c_char")
+      .matches("*const ::c_char, ::c_int, *const ::c_char")
+
+    ;
+  }
+
+  @Test
+  public void testFunctionParameterMaybeNamedVariadic() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC))
+      .matches("this: *mut iasset")
+      .matches("::c_int, *const ::c_char")
+      .matches("::c_int, *const ::c_char, ...")
+
+    ;
+  }
+
+  @Test
   public void testBareFunctionType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BARE_FUNCTION_TYPE))
       .matches("extern \"C\" fn(this: *mut iasset) -> i32")
+      .matches("unsafe extern \"C\" fn(::c_int, *const ::c_char)")
+      .matches("unsafe extern \"C\" fn(::c_int, *const ::c_char, ...)")
 
     ;
   }
@@ -178,6 +211,8 @@ public class TypeTest {
       .matches("Token![#]")
       .matches("Self")
       .matches("impl Future<Output = ()> + 'm")
+      .matches("::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char)>")
+      .matches("::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char, ...)>")
 
     ;
   }

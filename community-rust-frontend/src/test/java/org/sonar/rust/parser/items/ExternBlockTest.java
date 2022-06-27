@@ -99,6 +99,11 @@ public class ExternBlockTest {
         "    #[wasm_bindgen(method, getter)]\n" +
         "    fn node(this: &Versions) -> JsValue;\n" +
         "}")
+      .matches("extern \"C\" {\n" +
+        "    pub fn esetfunc(\n" +
+        "        cb: ::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char, ...)>,\n" +
+        "    ) -> ::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char, ...)>;\n" +
+        "}")
 
     ;
 
