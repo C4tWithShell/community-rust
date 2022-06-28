@@ -1954,7 +1954,7 @@ public enum RustGrammar implements GrammarRuleKey {
             "\\\"", ASCII_FOR_STRING, BYTE_ESCAPE, STRING_CONTINUE)),
         "\"")));
 
-    b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\\\", "\\0"));
+    b.rule(BYTE_ESCAPE).is(b.firstOf(b.sequence("\\x", HEX_DIGIT, HEX_DIGIT), "\\n", "\\r", "\\t", "\\\\", "\\'", "\\\"", "\\0"));
 
     b.rule(RAW_BYTE_STRING_LITERAL).is(b.token(RustTokenType.RAW_BYTE_STRING_LITERAL,
       b.sequence("br", RAW_BYTE_STRING_CONTENT)));
