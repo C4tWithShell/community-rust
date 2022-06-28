@@ -2016,7 +2016,12 @@ public enum RustGrammar implements GrammarRuleKey {
 
     b.rule(RAW_STRING_LITERAL).is(b.token(RustTokenType.RAW_STRING_LITERAL,
 
-      b.sequence("r", RAW_STRING_CONTENT)));
+      b.firstOf(
+
+        b.sequence("r", RAW_STRING_CONTENT),
+        b.regexp("r(#+\"[\\s\\S]+?\\\"#.*\\\"#+)")
+
+      )));
 
     b.rule(RAW_STRING_CONTENT).is(
       b.firstOf(
