@@ -27,48 +27,47 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class CompilationUnitTest {
 
-    @Test
-    public void testAnyTokens() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN))
-                .matches("u")
-                .matches("us")
-                .notMatches("fn")
-                .notMatches("use")
-                .matches("foo")
-                .matches("fnac")
-                .matches("test")
-                ;
-    }
+  @Test
+  public void testAnyTokens() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN))
+      .matches("u")
+      .matches("us")
+      .notMatches("fn")
+      .notMatches("use")
+      .matches("foo")
+      .matches("fnac")
+      .matches("test");
+  }
 
-
-
-
-    @Test
-    public void testCompilationUnit() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
-                .matches("use std::fmt;")
-                .matches("use std::hash;")
-                .matches("use std::fmt; \n" +
-                        "use std::hash;")
-                .matches("fn main() {println!(\"Hello, world!\");}")
-                .matches("fn main() {\n" +
-                        "    println!(\"Hello, world!\");\n" +
-                        "}")
-                .matches("/* comment */ fn main() {\n" +
-                        "    println!(\"Hello, world!\");\n" +
-                        "}")
-                .matches(" fn main() {\n" +
-                        " /* comment */\n" +
-                        "    println!(\"Hello, world!\");\n" +
-                        "}")
-                .matches(" fn main() {\n" +
-                        " // line comment \n" +
-                        "    println!(\"Hello, world!\");\n" +
-                        "}")
-                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
-                        "}")
-                .matches("test();")
-                .matches("test() ;")
-      ;
-    }
+  @Test
+  public void testCompilationUnit() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
+      .matches("use std::fmt;")
+      .matches("use std::hash;")
+      .matches("use std::fmt; \n" +
+        "use std::hash;")
+      .matches("fn main() {println!(\"Hello, world!\");}")
+      .matches("fn main() {\n" +
+        "    println!(\"Hello, world!\");\n" +
+        "}")
+      .matches("/* comment */ fn main() {\n" +
+        "    println!(\"Hello, world!\");\n" +
+        "}")
+      .matches(" fn main() {\n" +
+        " /* comment */\n" +
+        "    println!(\"Hello, world!\");\n" +
+        "}")
+      .matches(" fn main() {\n" +
+        " // line comment \n" +
+        "    println!(\"Hello, world!\");\n" +
+        "}")
+      .matches("mod foobar{#![crate_type = \"lib\"]\n" +
+        "}")
+      .matches("test();")
+      .matches("test() ;")
+      .matches("syn_dev::r#mod! {\n" +
+        "    // Write Rust code here and run `cargo check` to have Syn parse it.\n" +
+        "\n" +
+        "}\n");
+  }
 }

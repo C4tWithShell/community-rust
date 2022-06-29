@@ -84,7 +84,13 @@ public class MacroTest {
       .matches("panic!()")
       .matches("println!(\"{}, {}\", word, j)")
       .notMatches("")
-      .matches("Token![#]");
+      .matches("Token![#]")
+      .matches("syn_dev::r#mod! {\n" +
+        "    // Write Rust code here and run `cargo check` to have Syn parse it.\n" +
+        "\n" +
+        "}")
+
+    ;
   }
 
   @Test
