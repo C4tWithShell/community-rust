@@ -66,7 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "let s = str::from_utf8(b\"b\\'\\xc2\\x86  \\x00\\x00\\x00^\\\"\").unwrap();";
+    String sexpr = "let i32_range = range.end as i32 .. foo.start as i32;";
 
     // Print out Ast node content for debugging purpose
 
