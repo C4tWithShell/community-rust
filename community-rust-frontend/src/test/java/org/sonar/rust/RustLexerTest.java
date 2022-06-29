@@ -66,7 +66,24 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "let i32_range = range.end as i32 .. foo.start as i32;";
+    String sexpr = "impl Display for MetricsAllocatorStatistics<AtomicUsize> {\n" +
+      "    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {\n" +
+      "        self.fmt(&MetricsAllocatorStatistics::<usize> {\n" +
+      "            allocations_count:           self.allocations_count.load(Ordering::Relaxed),\n" +
+      "            deallocations_count:         self.deallocations_count.        load(Ordering::Relaxed),\n" +
+      "            zeroed_allocations_count:    self.zeroed_allocations_count.   load(Ordering::Relaxed),\n" +
+      "            reallocations_count:         self.reallocations_count.        load(Ordering::Relaxed),\n" +
+      "            allocated_bytes:             self.allocated_bytes.            load(Ordering::Relaxed),\n" +
+      "            deallocated_bytes:           self.deallocated_bytes.          load(Ordering::Relaxed),\n" +
+      "            zeroed_allocated_bytes:      self.zeroed_allocated_bytes.     load(Ordering::Relaxed),\n" +
+      "            reallocated_originals_bytes: self.reallocated_originals_bytes.load(Ordering::Relaxed),\n" +
+      "            reallocated_news_bytes:      self.reallocated_news_bytes.     load(Ordering::Relaxed),\n" +
+      "            current_used_memory:         self.current_used_memory.        load(Ordering::Relaxed),\n" +
+      "            min_used_memory:             self.min_used_memory.            load(Ordering::Relaxed),\n" +
+      "            max_used_memory:             self.max_used_memory.            load(Ordering::Relaxed),\n" +
+      "        }, f)\n" +
+      "    }\n" +
+      "}";
 
     // Print out Ast node content for debugging purpose
 

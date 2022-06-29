@@ -27,67 +27,63 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class CallExpressionTest {
 
-    @Test
-    public void testCallParams() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_PARAMS))
-                .matches("..")
-                .matches("1i32")
-                .matches("{let y=42;}")
-                .matches("{;}")
-                .matches("0")
-                .matches("3+2")
-                .matches("1 << 1")
-                .matches("foo")
-                .matches("foo + 1")
-                .matches("get()")
-                .matches("get(i)")
-                .matches("get(i) + 1")
-                .matches("m.get(i) + 1")
-                .matches("MediaElementAudioSourceNode {\n" +
-                        "            node,\n" +
-                        "            media_element,\n" +
-                        "        }")
-                .matches("|| 42")
-                .matches("|i| 42")
+  @Test
+  public void testCallParams() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_PARAMS))
+      .matches("..")
+      .matches("1i32")
+      .matches("{let y=42;}")
+      .matches("{;}")
+      .matches("0")
+      .matches("3+2")
+      .matches("1 << 1")
+      .matches("foo")
+      .matches("foo + 1")
+      .matches("get()")
+      .matches("get(i)")
+      .matches("get(i) + 1")
+      .matches("m.get(i) + 1")
+      .matches("MediaElementAudioSourceNode {\n" +
+        "            node,\n" +
+        "            media_element,\n" +
+        "        }")
+      .matches("|| 42")
+      .matches("|i| 42")
 
+    ;
+  }
 
-
-
-        ;
-    }
-
-    @Test
-    public void testCallExpression() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("foo()")
-                .matches("abc()")
-                .matches("add(1i32,2i32)")
-                .matches("add(1i32, 2i32)")
-                .matches("calc(get(i) + 1)")
-                .matches("Vec::new()")
-                .matches("Box::new(42)")
-                .matches("PathBuf::from(\"/demo_dir/\")")
-                .matches("PathBuf::from(r\"C:\\demo_dir\\\")")
-                .matches("Box::new(|j: i32| -> () { println!(\"hello, {}\", j); })")
-                .matches("Identifier::Numeric(n)")
-                .matches("Ok(MediaElementAudioSourceNode {\n" +
-                        "            node,\n" +
-                        "            media_element,\n" +
-                        "        })")
-                .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone())")
-                .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
-                        "        let mut b = 42;\n" +
-                        "    })")
-                .matches("(state.get_error_class_fn)(1)")
-                .matches("(state.borrow().get_error_class_fn)(&error)")
-                .matches("Some(ec - (js_error.start_column.unwrap() - sc))")
-                .matches("Ok(2)")
-                .matches("Ok(())")
-                .matches("f(stdout[..40])")
-                .matches("<X as Default>::default()")
-        ;
-    }
-
+  @Test
+  public void testCallExpression() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("foo()")
+      .matches("abc()")
+      .matches("add(1i32,2i32)")
+      .matches("add(1i32, 2i32)")
+      .matches("calc(get(i) + 1)")
+      .matches("Vec::new()")
+      .matches("Box::new(42)")
+      .matches("PathBuf::from(\"/demo_dir/\")")
+      .matches("PathBuf::from(r\"C:\\demo_dir\\\")")
+      .matches("Box::new(|j: i32| -> () { println!(\"hello, {}\", j); })")
+      .matches("Identifier::Numeric(n)")
+      .matches("Ok(MediaElementAudioSourceNode {\n" +
+        "            node,\n" +
+        "            media_element,\n" +
+        "        })")
+      .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone())")
+      .matches("Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+        "        let mut b = 42;\n" +
+        "    })")
+      .matches("(state.get_error_class_fn)(1)")
+      .matches("(state.borrow().get_error_class_fn)(&error)")
+      .matches("Some(ec - (js_error.start_column.unwrap() - sc))")
+      .matches("Ok(2)")
+      .matches("Ok(())")
+      .matches("f(stdout[..40])")
+      .matches("<X as Default>::default()")
+      .matches("self.allocations_count.          load(Ordering::Relaxed)");
+  }
 
 }
