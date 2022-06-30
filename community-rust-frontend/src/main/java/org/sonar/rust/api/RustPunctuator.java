@@ -68,7 +68,8 @@ public enum RustPunctuator implements GrammarRuleKey {
   FATARROW("=>"),
   POUND("#"),
   DOLLAR("$"),
-  QUESTION("?");
+  QUESTION("?"),
+  TILDE("~");
 
   private final String value;
 

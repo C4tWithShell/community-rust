@@ -89,6 +89,8 @@ public class MacroTest {
         "    // Write Rust code here and run `cargo check` to have Syn parse it.\n" +
         "\n" +
         "}")
+      .matches("Token![const]")
+      .matches("Token![~]")
 
     ;
   }

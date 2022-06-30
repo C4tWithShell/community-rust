@@ -66,10 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "syn_dev::r#mod! {\n" +
-      "    // Write Rust code here and run `cargo check` to have Syn parse it.\n" +
-      "\n" +
-      "}\n";
+    String sexpr = "Token![~]";
 
     // Print out Ast node content for debugging purpose
 
