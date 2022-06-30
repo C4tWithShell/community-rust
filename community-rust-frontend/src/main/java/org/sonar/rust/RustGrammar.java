@@ -687,7 +687,9 @@ public enum RustGrammar implements GrammarRuleKey {
   private static void implItem(LexerlessGrammarBuilder b) {
     b.rule(IMPLEMENTATION).is(b.firstOf(INHERENT_IMPL, TRAIT_IMPL));
     b.rule(INHERENT_IMPL).is(
-      RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC), TYPE, SPC,
+      RustKeyword.KW_IMPL, SPC, b.optional(GENERIC_PARAMS, SPC),
+      b.optional(RustPunctuator.NOT, SPC), // unstable !!
+      TYPE, SPC,
       b.optional(WHERE_CLAUSE, SPC), "{", SPC,
       b.zeroOrMore(INNER_ATTRIBUTE, SPC),
       b.zeroOrMore(ASSOCIATED_ITEM, SPC), "}");
