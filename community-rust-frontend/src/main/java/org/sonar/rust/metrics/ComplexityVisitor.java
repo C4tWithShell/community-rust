@@ -20,9 +20,10 @@
  */
 package org.sonar.rust.metrics;
 
-import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.AstNodeType;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustVisitor;
@@ -42,9 +43,8 @@ public class ComplexityVisitor extends RustVisitor {
 
   @Override
   public Set<AstNodeType> subscribedKinds() {
-    return ImmutableSet.<AstNodeType>builder()
-      .add(RustGrammar.STATEMENT)
-      .build();
+    return new HashSet<>(Arrays.asList(
+      RustGrammar.STATEMENT));
   }
 
   @Override

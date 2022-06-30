@@ -21,8 +21,7 @@
 package org.sonar.rust;
 
 import java.nio.charset.Charset;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 public class RustParserConfiguration {
 
@@ -58,7 +57,7 @@ public class RustParserConfiguration {
     }
 
     public RustParserConfiguration build() {
-      checkNotNull(charset, "charset is mandatory and cannot be left null");
+      Objects.requireNonNull(charset, "charset is mandatory and cannot be left null");
       return new RustParserConfiguration(this);
     }
 

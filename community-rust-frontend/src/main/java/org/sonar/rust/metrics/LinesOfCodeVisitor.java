@@ -20,8 +20,8 @@
  */
 package org.sonar.rust.metrics;
 
-import com.google.common.collect.ImmutableSet;
 import com.sonar.sslr.api.AstNode;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -54,6 +54,6 @@ public class LinesOfCodeVisitor extends RustVisitor {
   }
 
   public Set<Integer> linesOfCode() {
-    return ImmutableSet.copyOf(linesOfCode);
+    return Collections.unmodifiableSet(new HashSet<>(linesOfCode));
   }
 }
