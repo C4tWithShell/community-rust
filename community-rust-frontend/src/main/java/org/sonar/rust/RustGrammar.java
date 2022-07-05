@@ -605,6 +605,7 @@ public enum RustGrammar implements GrammarRuleKey {
       b.optional(RustKeyword.KW_CONST, SPC),
       b.optional(RustKeyword.KW_ASYNC, SPC),
       b.optional(RustKeyword.KW_UNSAFE, SPC),
+      b.optional("default", SPC), // weak keyword
       b.optional(RustKeyword.KW_EXTERN, SPC, b.optional(ABI)));
 
     b.rule(ABI).is(b.firstOf(RAW_STRING_LITERAL, STRING_LITERAL));

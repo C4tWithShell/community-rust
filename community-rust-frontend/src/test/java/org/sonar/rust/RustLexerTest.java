@@ -66,7 +66,11 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "Token![~]";
+    String sexpr = "impl<T: Encode> Encode for Vec<T> {\n" +
+      "    default fn is_empty(&self) -> bool {\n" +
+      "        Vec::is_empty(self)\n" +
+      "    }\n" +
+      "}";
 
     // Print out Ast node content for debugging purpose
 

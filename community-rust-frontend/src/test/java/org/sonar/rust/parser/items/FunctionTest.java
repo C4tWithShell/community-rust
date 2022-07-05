@@ -37,6 +37,7 @@ public class FunctionTest {
       .matches("async unsafe")
       .matches("async")
       .matches("extern \"C\"")
+      .matches("default")
 
     ;
 

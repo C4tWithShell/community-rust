@@ -183,6 +183,15 @@ public class ImplementationTest {
         "        deserializer.deserialize_any(IdentifierVisitor)\n" +
         "    }\n" +
         "}")
+      .matches("impl<T: Encode> Encode for Vec<T> {\n" +
+        "    default fn is_empty(&self) -> bool {\n" +
+        "        Vec::is_empty(self)\n" +
+        "    }\n" +
+        "\n" +
+        "    default fn into_cbor_value(self) -> Value {\n" +
+        "        Value::Array(self.into_iter().map(Encode::into_cbor_value).collect())\n" +
+        "    }\n" +
+        "}")
 
     ;
 
