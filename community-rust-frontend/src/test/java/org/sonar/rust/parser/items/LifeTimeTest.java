@@ -170,9 +170,11 @@ public class LifeTimeTest {
   public void testTypeParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PARAM))
       .matches("AAA")
-      .matches("#[test] AAA")
-      .matches("#[test] AAA : i32")
-      .matches("T");
+      .matches("AAA : 'a")
+      .matches("AAA : 'a = u32")
+
+    ;
+
   }
 
   @Test

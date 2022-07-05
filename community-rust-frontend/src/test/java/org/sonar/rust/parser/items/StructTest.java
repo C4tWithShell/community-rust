@@ -26,29 +26,31 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class StructTest {
-    @Test
-    public void testStruct() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT))
-                .matches("struct Point {x:i32, y: i32}")
-                .matches("struct UnaryPermission<T: Eq + Hash> {\n" +
-                        "    #[serde(skip)]\n" +
-                        "    pub name: &'static str,\n" +
-                        "    #[serde(skip)]\n" +
-                        "    pub description: &'static str,\n" +
-                        "    pub global_state: PermissionState,\n" +
-                        "    pub granted_list: HashSet<T>,\n" +
-                        "    pub denied_list: HashSet<T>,\n" +
-                        "}")
-                .matches("struct Message<'a> {\n" +
-                        "    #[serde(rename = \"c\")]\n" +
-                        "    command: Command,\n" +
-                        "    #[serde(borrow)]\n" +
-                        "    payload: Option<Cow<'a, str>>,\n" +
-                        "    #[serde(rename = \"s\")]\n" +
-                        "    identifier: Option<u16>,\n" +
-                        "}")
-        ;
+  @Test
+  public void testStruct() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT))
+      .matches("struct Point {x:i32, y: i32}")
+      .matches("struct UnaryPermission<T: Eq + Hash> {\n" +
+        "    #[serde(skip)]\n" +
+        "    pub name: &'static str,\n" +
+        "    #[serde(skip)]\n" +
+        "    pub description: &'static str,\n" +
+        "    pub global_state: PermissionState,\n" +
+        "    pub granted_list: HashSet<T>,\n" +
+        "    pub denied_list: HashSet<T>,\n" +
+        "}")
+      .matches("struct Message<'a> {\n" +
+        "    #[serde(rename = \"c\")]\n" +
+        "    command: Command,\n" +
+        "    #[serde(borrow)]\n" +
+        "    payload: Option<Cow<'a, str>>,\n" +
+        "    #[serde(rename = \"s\")]\n" +
+        "    identifier: Option<u16>,\n" +
+        "}")
+      .matches("struct DateTime<const DUR: u32 = 1, const IS_UTC: bool = false> {\n" +
+        "    time: i64,\n" +
+        "}");
 
-    }
+  }
 
 }

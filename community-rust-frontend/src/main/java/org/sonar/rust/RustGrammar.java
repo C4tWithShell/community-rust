@@ -734,11 +734,14 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(LIFETIME_PARAM).is(LIFETIME_OR_LABEL, SPC,
       b.optional(RustPunctuator.COLON, SPC, LIFETIME_BOUNDS, SPC));
     b.rule(TYPE_PARAM).is(
-      b.optional(OUTER_ATTRIBUTE, SPC), NON_KEYWORD_IDENTIFIER, SPC,
+      IDENTIFIER, SPC,
       b.optional(RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS), SPC),
       b.optional(RustPunctuator.EQ, SPC, TYPE));
 
-    b.rule(CONST_PARAM).is(RustKeyword.KW_CONST, SPC, IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE);
+    b.rule(CONST_PARAM).is(RustKeyword.KW_CONST, SPC, IDENTIFIER, SPC, RustPunctuator.COLON, SPC, TYPE,
+      b.optional(RustPunctuator.EQ, SPC, b.firstOf(BLOCK_EXPRESSION, IDENTIFIER, b.sequence(b.optional(RustPunctuator.MINUS), LITERALS)))
+
+    );
     b.rule(WHERE_CLAUSE).is(
       RustKeyword.KW_WHERE, b.zeroOrMore(b.sequence(WHERE_CLAUSE_ITEM, SPC, RustPunctuator.COMMA, SPC)), b.optional(WHERE_CLAUSE_ITEM));
     b.rule(WHERE_CLAUSE_ITEM).is(b.firstOf(
