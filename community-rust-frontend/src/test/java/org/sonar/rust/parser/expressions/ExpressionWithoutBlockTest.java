@@ -26,104 +26,100 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class ExpressionWithoutBlockTest {
-    @Test
-    public void testExpressionWithoutBlock() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITHOUT_BLOCK))
-                .notMatches("== b")
-                .matches("&7")
-                .matches("& Value")
-                .matches("&mut array")
-                .matches("&& 10")
-                .matches("& & 10")
-                .matches("&&&& mut 10")
-                .matches("&& && mut 10")
-                .matches("& & & & mut 10")
+  @Test
+  public void testExpressionWithoutBlock() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITHOUT_BLOCK))
+      .notMatches("== b")
+      .matches("&7")
+      .matches("& Value")
+      .matches("&mut array")
+      .matches("&& 10")
+      .matches("& & 10")
+      .matches("&&&& mut 10")
+      .matches("&& && mut 10")
+      .matches("& & & & mut 10")
 
-                .matches("*thing") //deref
+      .matches("*thing") // deref
 
-                .matches("foo?")//err propagation
-                .matches("None?")
-                .matches("Some(42)?")
+      .matches("foo?")// err propagation
+      .matches("None?")
+      .matches("Some(42)?")
 
-                .matches("!foo")//negation expression
-                .matches("-5")
-                .matches("-bar")
-                .notMatches("== b")
-                //arith expr
-                .matches("1<<0")
-                .matches("1+1")
-                .matches("1+1+1+1")
-                .matches("3*2")
-                .matches("3*2*8")
-                .matches("22/7")
-                .matches("2^4")
-                .matches("1-3")
-                .matches("1-3-2")
-                .matches("22 % 7")
-                .matches("m.get(i) + 1")
-                //comparisons
-                .matches("a == b")
-                .matches("small < big")
-                //lazy bool
-                .matches("false || true")
-                //type cast
-                .matches("value as f64")
-                //assignment
-                .matches("value = 42")
-                //compound assignment
-                .matches("counter += 1")
+      .matches("!foo")// negation expression
+      .matches("-5")
+      .matches("-bar")
+      .notMatches("== b")
+      // arith expr
+      .matches("1<<0")
+      .matches("1+1")
+      .matches("1+1+1+1")
+      .matches("3*2")
+      .matches("3*2*8")
+      .matches("22/7")
+      .matches("2^4")
+      .matches("1-3")
+      .matches("1-3-2")
+      .matches("22 % 7")
+      .matches("m.get(i) + 1")
+      // comparisons
+      .matches("a == b")
+      .matches("small < big")
+      // lazy bool
+      .matches("false || true")
+      // type cast
+      .matches("value as f64")
+      // assignment
+      .matches("value = 42")
+      // compound assignment
+      .matches("counter += 1")
 
+      // TODO grouped expression
+      // TODO ArrayExpression
+      // TODO AwaitExpression
+      // TODO IndexExpression
+      // TODO TupleExpression
+      // TODO TupleIndexingExpression
+      // TODO StructExpression
+      .matches("mystruct{}")
+      // TODO EnumerationVariantExpression
+      // CallExpression
 
-                //TODO grouped expression
-                //TODO   ArrayExpression
-                //TODO   AwaitExpression
-                //TODO   IndexExpression
-                //TODO   TupleExpression
-                //TODO   TupleIndexingExpression
-                //TODO   StructExpression
-                .matches("mystruct{}")
-                //TODO   EnumerationVariantExpression
-                //  CallExpression
+      .matches("foo()")
+      .matches("abc()")
+      .matches("add(1i32,2i32)")
+      // MethodCallExpression
+      //
+      //
+      .matches("async move {}.local()")
+      .matches("\"123\".parse()")
+      .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
+      // FieldExpression
+      .matches("other.major")
+      // TODO ClosureExpression
+      // ContinueExpression
+      .matches("continue 'outer")
+      // TODO BreakExpression
+      // TODO RangeExpression
+      // ReturnExpression
+      .matches("return 42")
+      .matches("return None")
+      // MacroInvocation
+      .matches("panic!()")
+      .matches("println!(\"{}, {}\", word, j)")
 
+      .matches("calc(get(i) + 1)")
+      .matches("Numeric(n)")
+      .matches("Vec::new")
+      .matches("Identifier::Numeric")
+      .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
+      .matches("async move {}.await")
+      .matches("async move {}.local()")
+      .matches("async {}.inc()")
 
-                .matches("foo()")
-                .matches("abc()")
-                .matches("add(1i32,2i32)")
-                //MethodCallExpression
-                //
-                //
-                .matches("async move {}.local()")
-                .matches("\"123\".parse()")
-                .matches("node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()")
-                //FieldExpression
-                .matches("other.major")
-                //TODO ClosureExpression
-                //ContinueExpression
-                .matches("continue 'outer")
-                //TODO BreakExpression
-                //TODO RangeExpression
-                //ReturnExpression
-                .matches("return 42")
-                .matches("return None")
-                //MacroInvocation
-                .matches("panic!()")
-                .matches("println!(\"{}, {}\", word, j)")
+      .matches("async move {}\n" +
+        "           .boxed()")
+      .matches("'b'")
 
-
-                .matches("calc(get(i) + 1)")
-                .matches("Numeric(n)")
-                .matches("Vec::new")
-                .matches("Identifier::Numeric")
-                .matches("&[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
-                .matches("async move {}.await")
-                .matches("async move {}.local()")
-                .matches("async {}.inc()")
-
-                .matches("async move {}\n" +
-                        "           .boxed()")
-                .matches("'b'")
-
-
-        ;
-    }
+    ;
+  }
 }

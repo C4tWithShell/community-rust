@@ -69,6 +69,7 @@ public class PathTest {
       .matches("Identifier::Numeric")
       .notMatches("match")
       .matches("Token::BackQuote")
+      .notMatches("let")
 
     ;
   }
@@ -158,7 +159,8 @@ public class PathTest {
       .matches("$crate")
       .matches("abc")
       .matches("r#a")
-      .matches("U213");
+      .matches("U213")
+      .notMatches("let");
 
   }
 

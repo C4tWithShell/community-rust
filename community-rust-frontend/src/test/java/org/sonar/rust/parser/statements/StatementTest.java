@@ -115,19 +115,18 @@ public class StatementTest {
   public void testStatements() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENTS))
 
-      // single statement
       .matches(";")
       .matches("let y=42;")
       .matches("let e = JsError {\n" +
-        "      message: \"TypeError: baz\".to_string(),\n" +
-        "      source_line: Some(\"foo\".to_string()),\n" +
-        "      script_resource_name: Some(\"foo_bar.ts\".to_string()),\n" +
-        "      line_number: Some(4),\n" +
-        "      start_column: Some(16),\n" +
-        "      end_column: None,\n" +
-        "      frames: vec![],\n" +
-        "      stack: None,\n" +
-        "    };")
+        " message: \"TypeError: baz\".to_string(),\n" +
+        " source_line: Some(\"foo\".to_string()),\n" +
+        " script_resource_name: Some(\"foo_bar.ts\".to_string()),\n" +
+        " line_number: Some(4),\n" +
+        " start_column: Some(16),\n" +
+        " end_column: None,\n" +
+        " frames: vec![],\n" +
+        " stack: None,\n" +
+        " };")
       .matches("extern crate pcre;")
 
       // multi statements
@@ -170,6 +169,14 @@ public class StatementTest {
         "assert_eq!(state.borrow::<MyStruct>().value, 110);")
       .matches("mystruct{};")
       .matches("test() ;")
+      .matches("quote!{}.into()")
+      .matches("let a=42; c.d()")
+      .matches("let a=42; let b = 43;c.d()")
+      .matches("let a=42; quote!{}.into()")
+      .matches("let a=42; let b = 43;quote!{}.into()")
+      .matches("extern crate foo; let b = 43;quote!{}.into()")
+      .matches("let a=42;\n extern crate bar;\nquote!{}.into()")
+      .matches("let a=42;\n extern crate bar;\nc.d()")
 
     ;
   }
