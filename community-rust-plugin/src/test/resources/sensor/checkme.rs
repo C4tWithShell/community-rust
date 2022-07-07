@@ -1,211 +1,189 @@
-use super::TokenStreamExt;
+//! A macro for defining `#[cfg]` if-else statements.
+//!
+//! The macro provided by this crate, `cfg_if`, is similar to the `if/elif` C
+//! preprocessor macro by allowing definition of a cascade of `#[cfg]` cases,
+//! emitting the implementation which matches first.
+//!
+//! This allows you to conveniently provide a long list `#[cfg]`'d blocks of code
+//! without having to rewrite each clause multiple times.
+//!
+//! # Example
+//!
+//! ```
+//! cfg_if::cfg_if! {
+//!     if #[cfg(unix)] {
+//!         fn foo() { /* unix specific functionality */ }
+//!     } else if #[cfg(target_pointer_width = "32")] {
+//!         fn foo() { /* non-unix, 32-bit functionality */ }
+//!     } else {
+//!         fn foo() { /* fallback implementation */ }
+//!     }
+//! }
+//!
+//! # fn main() {}
+//! ```
 
-use std::borrow::Cow;
-use std::iter;
-use std::rc::Rc;
+#![no_std]
+#![doc(html_root_url = "https://docs.rs/cfg-if")]
+#![deny(missing_docs)]
+#![cfg_attr(test, deny(warnings))]
 
-use proc_macro2::{Group, Ident, Literal, Punct, Span, TokenStream, TokenTree};
-
-/// Types that can be interpolated inside a `quote!` invocation.
-///
-/// [`quote!`]: macro.quote.html
-pub trait ToTokens {
-    /// Write `self` to the given `TokenStream`.
-    ///
-    /// The token append methods provided by the [`TokenStreamExt`] extension
-    /// trait may be useful for implementing `ToTokens`.
-    ///
-    /// [`TokenStreamExt`]: trait.TokenStreamExt.html
-    ///
-    /// # Example
-    ///
-    /// Example implementation for a struct representing Rust paths like
-    /// `std::cmp::PartialEq`:
-    ///
-    /// ```
-    /// use proc_macro2::{TokenTree, Spacing, Span, Punct, TokenStream};
-    /// use quote::{TokenStreamExt, ToTokens};
-    ///
-    /// pub struct Path {
-    ///     pub global: bool,
-    ///     pub segments: Vec<PathSegment>,
-    /// }
-    ///
-    /// impl ToTokens for Path {
-    ///     fn to_tokens(&self, tokens: &mut TokenStream) {
-    ///         for (i, segment) in self.segments.iter().enumerate() {
-    ///             if i > 0 || self.global {
-    ///                 // Double colon `::`
-    ///                 tokens.append(Punct::new(':', Spacing::Joint));
-    ///                 tokens.append(Punct::new(':', Spacing::Alone));
-    ///             }
-    ///             segment.to_tokens(tokens);
-    ///         }
-    ///     }
-    /// }
-    /// #
-    /// # pub struct PathSegment;
-    /// #
-    /// # impl ToTokens for PathSegment {
-    /// #     fn to_tokens(&self, tokens: &mut TokenStream) {
-    /// #         unimplemented!()
-    /// #     }
-    /// # }
-    /// ```
-    fn to_tokens(&self, tokens: &mut TokenStream);
-
-    /// Convert `self` directly into a `TokenStream` object.
-    ///
-    /// This method is implicitly implemented using `to_tokens`, and acts as a
-    /// convenience method for consumers of the `ToTokens` trait.
-    fn to_token_stream(&self) -> TokenStream {
-        let mut tokens = TokenStream::new();
-        self.to_tokens(&mut tokens);
-        tokens
-    }
-
-    /// Convert `self` directly into a `TokenStream` object.
-    ///
-    /// This method is implicitly implemented using `to_tokens`, and acts as a
-    /// convenience method for consumers of the `ToTokens` trait.
-    fn into_token_stream(self) -> TokenStream
-    where
-        Self: Sized,
-    {
-        self.to_token_stream()
-    }
-}
-
-impl<'a, T: ?Sized + ToTokens> ToTokens for &'a T {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        (**self).to_tokens(tokens);
-    }
-}
-
-impl<'a, T: ?Sized + ToTokens> ToTokens for &'a mut T {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        (**self).to_tokens(tokens);
-    }
-}
-
-impl<'a, T: ?Sized + ToOwned + ToTokens> ToTokens for Cow<'a, T> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        (**self).to_tokens(tokens);
-    }
-}
-
-impl<T: ?Sized + ToTokens> ToTokens for Box<T> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        (**self).to_tokens(tokens);
-    }
-}
-
-impl<T: ?Sized + ToTokens> ToTokens for Rc<T> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        (**self).to_tokens(tokens);
-    }
-}
-
-impl<T: ToTokens> ToTokens for Option<T> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        if let Some(ref t) = *self {
-            t.to_tokens(tokens);
-        }
-    }
-}
-
-impl ToTokens for str {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append(Literal::string(self));
-    }
-}
-
-impl ToTokens for String {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        self.as_str().to_tokens(tokens);
-    }
-}
-
-macro_rules! primitive {
-    ($($t:ident => $name:ident)*) => {
+/// The main macro provided by this crate. See crate documentation for more
+/// information.
+#[macro_export]
+macro_rules! cfg_if {
+    // match if/else chains with a final `else`
+    (
         $(
-            impl ToTokens for $t {
-                fn to_tokens(&self, tokens: &mut TokenStream) {
-                    tokens.append(Literal::$name(*self));
-                }
-            }
+            if #[cfg( $i_meta:meta )] { $( $i_tokens:tt )* }
+        ) else+
+        else { $( $e_tokens:tt )* }
+    ) => {
+        $crate::cfg_if! {
+            @__items () ;
+            $(
+                (( $i_meta ) ( $( $i_tokens )* )) ,
+            )+
+            (() ( $( $e_tokens )* )) ,
+        }
+    };
+
+    // match if/else chains lacking a final `else`
+    (
+        if #[cfg( $i_meta:meta )] { $( $i_tokens:tt )* }
+        $(
+            else if #[cfg( $e_meta:meta )] { $( $e_tokens:tt )* }
         )*
+    ) => {
+        $crate::cfg_if! {
+            @__items () ;
+            (( $i_meta ) ( $( $i_tokens )* )) ,
+            $(
+                (( $e_meta ) ( $( $e_tokens )* )) ,
+            )*
+        }
+    };
+
+    // Internal and recursive macro to emit all the items
+    //
+    // Collects all the previous cfgs in a list at the beginning, so they can be
+    // negated. After the semicolon is all the remaining items.
+    (@__items ( $( $_:meta , )* ) ; ) => {};
+    (
+        @__items ( $( $no:meta , )* ) ;
+        (( $( $yes:meta )? ) ( $( $tokens:tt )* )) ,
+        $( $rest:tt , )*
+    ) => {
+        // Emit all items within one block, applying an appropriate #[cfg]. The
+        // #[cfg] will require all `$yes` matchers specified and must also negate
+        // all previous matchers.
+        #[cfg(all(
+            $( $yes , )?
+            not(any( $( $no ),* ))
+        ))]
+        $crate::cfg_if! { @__identity $( $tokens )* }
+
+        // Recurse to emit all other items in `$rest`, and when we do so add all
+        // our `$yes` matchers to the list of `$no` matchers as future emissions
+        // will have to negate everything we just matched as well.
+        $crate::cfg_if! {
+            @__items ( $( $no , )* $( $yes , )? ) ;
+            $( $rest , )*
+        }
+    };
+
+    // Internal macro to make __apply work out right for different match types,
+    // because of how macros match/expand stuff.
+    (@__identity $( $tokens:tt )* ) => {
+        $( $tokens )*
     };
 }
 
-primitive! {
-    i8 => i8_suffixed
-    i16 => i16_suffixed
-    i32 => i32_suffixed
-    i64 => i64_suffixed
-    i128 => i128_suffixed
-    isize => isize_suffixed
-
-    u8 => u8_suffixed
-    u16 => u16_suffixed
-    u32 => u32_suffixed
-    u64 => u64_suffixed
-    u128 => u128_suffixed
-    usize => usize_suffixed
-
-    f32 => f32_suffixed
-    f64 => f64_suffixed
-}
-
-impl ToTokens for char {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append(Literal::character(*self));
-    }
-}
-
-impl ToTokens for bool {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let word = if *self { "true" } else { "false" };
-        tokens.append(Ident::new(word, Span::call_site()));
-    }
-}
-
-impl ToTokens for Group {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append(self.clone());
-    }
-}
-
-impl ToTokens for Ident {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append(self.clone());
-    }
-}
-
-impl ToTokens for Punct {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append(self.clone());
-    }
-}
-
-impl ToTokens for Literal {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append(self.clone());
-    }
-}
-
-impl ToTokens for TokenTree {
-    fn to_tokens(&self, dst: &mut TokenStream) {
-        dst.append(self.clone());
-    }
-}
-
-impl ToTokens for TokenStream {
-    fn to_tokens(&self, dst: &mut TokenStream) {
-        dst.extend(iter::once(self.clone()));
+#[cfg(test)]
+mod tests {
+    cfg_if! {
+        if #[cfg(test)] {
+            use core::option::Option as Option2;
+            fn works1() -> Option2<u32> { Some(1) }
+        } else {
+            fn works1() -> Option<u32> { None }
+        }
     }
 
-    fn into_token_stream(self) -> TokenStream {
-        self
+    cfg_if! {
+        if #[cfg(foo)] {
+            fn works2() -> bool { false }
+        } else if #[cfg(test)] {
+            fn works2() -> bool { true }
+        } else {
+            fn works2() -> bool { false }
+        }
+    }
+
+    cfg_if! {
+        if #[cfg(foo)] {
+            fn works3() -> bool { false }
+        } else {
+            fn works3() -> bool { true }
+        }
+    }
+
+    cfg_if! {
+        if #[cfg(test)] {
+            use core::option::Option as Option3;
+            fn works4() -> Option3<u32> { Some(1) }
+        }
+    }
+
+    cfg_if! {
+        if #[cfg(foo)] {
+            fn works5() -> bool { false }
+        } else if #[cfg(test)] {
+            fn works5() -> bool { true }
+        }
+    }
+
+    #[test]
+    fn it_works() {
+        assert!(works1().is_some());
+        assert!(works2());
+        assert!(works3());
+        assert!(works4().is_some());
+        assert!(works5());
+    }
+
+    #[test]
+    #[allow(clippy::assertions_on_constants)]
+    fn test_usage_within_a_function() {
+        cfg_if! {if #[cfg(debug_assertions)] {
+            // we want to put more than one thing here to make sure that they
+            // all get configured properly.
+            assert!(cfg!(debug_assertions));
+            assert_eq!(4, 2+2);
+        } else {
+            assert!(works1().is_some());
+            assert_eq!(10, 5+5);
+        }}
+    }
+
+    trait Trait {
+        fn blah(&self);
+    }
+
+    #[allow(dead_code)]
+    struct Struct;
+
+    impl Trait for Struct {
+        cfg_if! {
+            if #[cfg(feature = "blah")] {
+                fn blah(&self) {
+                    unimplemented!();
+                }
+            } else {
+                fn blah(&self) {
+                    unimplemented!();
+                }
+            }
+        }
     }
 }

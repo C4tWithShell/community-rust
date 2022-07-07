@@ -344,7 +344,8 @@ public enum RustGrammar implements GrammarRuleKey {
     LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
     b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-      b.zeroOrMore(b.firstOf(STATEMENT, MACRO_INVOCATION), SPC),
+      b.zeroOrMore(STATEMENT, SPC),
+      b.zeroOrMore(MACRO_INVOCATION, SPC),
       EOF);
 
     punctuators(b);
@@ -817,7 +818,7 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
       b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
       b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
-      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "};")));
+      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")));
     macrosByExample(b);
   }
 
