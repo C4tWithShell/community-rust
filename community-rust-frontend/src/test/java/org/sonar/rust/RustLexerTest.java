@@ -66,9 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "pub struct DateTime<const DUR: u32 = 1 , const IS_UTC: bool = false> {\n" +
-      "     time: i64,\n" +
-      " }";
+    String sexpr = "fn foo() {quote! {j}.into()}";
 
     // Print out Ast node content for debugging purpose
 

@@ -177,7 +177,10 @@ public class StatementTest {
       // TODO .matches("extern crate foo; let b = 43;quote!{}.into()")
       // TODO .matches("let a=42;\n extern crate bar;\nquote!{}.into()")
       .matches("let a=42;\n extern crate bar;\nc.d()")
-    // TODO .matches("quote!{}.into();let a=42;\n extern crate bar;\nquote!{}.into()")
+      // TODO .matches("quote!{}.into();let a=42;\n extern crate bar;\nquote!{}.into()")
+      .matches("quote!(i).into()")
+      .matches("quote![j].into()")
+      .matches("quote!{k}.into()")
 
     ;
   }

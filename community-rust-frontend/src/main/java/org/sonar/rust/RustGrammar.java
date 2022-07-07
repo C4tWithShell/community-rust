@@ -818,7 +818,7 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(MACRO_INVOCATION_SEMI).is(b.firstOf(
       b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "(", b.zeroOrMore(SPC, TOKEN_TREE, SPC), ");"),
       b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "[", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "];"),
-      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "}")));
+      b.sequence(SIMPLE_PATH, SPC, RustPunctuator.NOT, SPC, "{", b.zeroOrMore(SPC, TOKEN_TREE, SPC), "};")));
     macrosByExample(b);
   }
 

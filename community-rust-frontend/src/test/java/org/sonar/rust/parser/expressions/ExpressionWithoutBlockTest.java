@@ -38,7 +38,6 @@ public class ExpressionWithoutBlockTest {
       .matches("&&&& mut 10")
       .matches("&& && mut 10")
       .matches("& & & & mut 10")
-
       .matches("*thing") // deref
 
       .matches("foo?")// err propagation
@@ -119,6 +118,9 @@ public class ExpressionWithoutBlockTest {
       .matches("async move {}\n" +
         "           .boxed()")
       .matches("'b'")
+      .matches("quote!(i).into()")
+      .matches("quote![j].into()")
+      .matches("quote!{k}.into()")
 
     ;
   }
