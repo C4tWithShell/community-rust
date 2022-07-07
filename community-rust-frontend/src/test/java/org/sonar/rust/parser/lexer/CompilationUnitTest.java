@@ -26,14 +26,16 @@ import org.sonar.rust.RustGrammar;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class CompilationUnitTest {
-    @Test
-    public void reallife() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
-                .matches("")
-                .matches("println!(\"hello\");")
-                .matches("let n=42;")
+  @Test
+  public void reallife() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
+      .matches("")
+      .matches("println!(\"hello\");")
+      .matches("let n=42;")
+      .matches("q!{ }")
+      .matches("let n=42;q!{ }")
+      .matches("q!{ }\nlet n=42;")
 
-
-                ;
-    }
+    ;
+  }
 }

@@ -66,7 +66,24 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "fn foo() {quote! {j}.into()}";
+    String sexpr = "primitive! {\n" +
+      "    i8 => i8_suffixed\n" +
+      "    i16 => i16_suffixed\n" +
+      "    i32 => i32_suffixed\n" +
+      "    i64 => i64_suffixed\n" +
+      "    i128 => i128_suffixed\n" +
+      "    isize => isize_suffixed\n" +
+      "\n" +
+      "    u8 => u8_suffixed\n" +
+      "    u16 => u16_suffixed\n" +
+      "    u32 => u32_suffixed\n" +
+      "    u64 => u64_suffixed\n" +
+      "    u128 => u128_suffixed\n" +
+      "    usize => usize_suffixed\n" +
+      "\n" +
+      "    f32 => f32_suffixed\n" +
+      "    f64 => f64_suffixed\n" +
+      "}";
 
     // Print out Ast node content for debugging purpose
 

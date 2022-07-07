@@ -344,8 +344,7 @@ public enum RustGrammar implements GrammarRuleKey {
     LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
 
     b.rule(COMPILATION_UNIT).is(SPC, b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-      b.zeroOrMore(STATEMENT, SPC),
-      b.zeroOrMore(MACRO_INVOCATION, SPC),
+      b.zeroOrMore(b.firstOf(STATEMENT, MACRO_INVOCATION), SPC),
       EOF);
 
     punctuators(b);
