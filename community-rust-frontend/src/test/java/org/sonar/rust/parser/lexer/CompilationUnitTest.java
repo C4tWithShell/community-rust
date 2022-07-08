@@ -34,7 +34,20 @@ public class CompilationUnitTest {
       .matches("let n=42;")
       .matches("q!{ }")
       .matches("let n=42;q!{ }")
-    // TODO.matches("q!{ }\nlet n=42;")
+      // TODO.matches("q!{ }\nlet n=42;")
+      .matches("impl Trait for Struct {\n" +
+        "    cfg_if! {\n" +
+        "            if #[cfg(feature = \"blah\")] {\n" +
+        "                fn blah(&self) {\n" +
+        "                    unimplemented!();\n" +
+        "                }\n" +
+        "            } else {\n" +
+        "                fn blah(&self) {\n" +
+        "                    unimplemented!();\n" +
+        "                }\n" +
+        "            }\n" +
+        "        }\n" +
+        "}")
 
     ;
   }

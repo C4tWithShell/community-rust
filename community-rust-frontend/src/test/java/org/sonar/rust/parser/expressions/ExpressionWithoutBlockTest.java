@@ -118,6 +118,7 @@ public class ExpressionWithoutBlockTest {
       .matches("async move {}\n" +
         "           .boxed()")
       .matches("'b'")
+      .matches("quote!{}.into()")
       .matches("quote!(i).into()")
       .matches("quote![j].into()")
       .matches("quote!{k}.into()")
