@@ -74,7 +74,8 @@ public class MacroTest {
       .matches("println!(\"hello,{}\", j);")
       .matches("println!(\"{}, {}\", word, j);")
       .notMatches("")
-      .matches("assert_eq!(state.borrow::<MyStruct>().value, 110);");
+      .matches("assert_eq!(state.borrow::<MyStruct>().value, 110);")
+      .matches("quote!{k}");
   }
 
   @Test
@@ -91,6 +92,7 @@ public class MacroTest {
         "}")
       .matches("Token![const]")
       .matches("Token![~]")
+      .matches("quote!{k}")
 
     ;
   }
@@ -329,6 +331,7 @@ public class MacroTest {
         "    (3) => { a!(4); };\n" +
         "    (4) => { };\n" +
         "}")
+      .notMatches("quote!{k}")
 
     ;
   }

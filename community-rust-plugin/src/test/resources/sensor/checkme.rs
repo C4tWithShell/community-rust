@@ -1,1337 +1,988 @@
-use super::*;
-use crate::punctuated::{Iter, IterMut, Punctuated};
-#[cfg(all(feature = "printing", feature = "extra-traits"))]
-use std::fmt::{self, Debug};
-#[cfg(all(feature = "printing", feature = "extra-traits"))]
-use std::hash::{Hash, Hasher};
+//! [![github]](https://github.com/dtolnay/syn)&ensp;[![crates-io]](https://crates.io/crates/syn)&ensp;[![docs-rs]](crate)
+//!
+//! [github]: https://img.shields.io/badge/github-8da0cb?style=for-the-badge&labelColor=555555&logo=github
+//! [crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
+//! [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
+//!
+//! <br>
+//!
+//! Syn is a parsing library for parsing a stream of Rust tokens into a syntax
+//! tree of Rust source code.
+//!
+//! Currently this library is geared toward use in Rust procedural macros, but
+//! contains some APIs that may be useful more generally.
+//!
+//! - **Data structures** — Syn provides a complete syntax tree that can
+//!   represent any valid Rust source code. The syntax tree is rooted at
+//!   [`syn::File`] which represents a full source file, but there are other
+//!   entry points that may be useful to procedural macros including
+//!   [`syn::Item`], [`syn::Expr`] and [`syn::Type`].
+//!
+//! - **Derives** — Of particular interest to derive macros is
+//!   [`syn::DeriveInput`] which is any of the three legal input items to a
+//!   derive macro. An example below shows using this type in a library that can
+//!   derive implementations of a user-defined trait.
+//!
+//! - **Parsing** — Parsing in Syn is built around [parser functions] with the
+//!   signature `fn(ParseStream) -> Result<T>`. Every syntax tree node defined
+//!   by Syn is individually parsable and may be used as a building block for
+//!   custom syntaxes, or you may dream up your own brand new syntax without
+//!   involving any of our syntax tree types.
+//!
+//! - **Location information** — Every token parsed by Syn is associated with a
+//!   `Span` that tracks line and column information back to the source of that
+//!   token. These spans allow a procedural macro to display detailed error
+//!   messages pointing to all the right places in the user's code. There is an
+//!   example of this below.
+//!
+//! - **Feature flags** — Functionality is aggressively feature gated so your
+//!   procedural macros enable only what they need, and do not pay in compile
+//!   time for all the rest.
+//!
+//! [`syn::File`]: File
+//! [`syn::Item`]: Item
+//! [`syn::Expr`]: Expr
+//! [`syn::Type`]: Type
+//! [`syn::DeriveInput`]: DeriveInput
+//! [parser functions]: mod@parse
+//!
+//! <br>
+//!
+//! # Example of a derive macro
+//!
+//! The canonical derive macro using Syn looks like this. We write an ordinary
+//! Rust function tagged with a `proc_macro_derive` attribute and the name of
+//! the trait we are deriving. Any time that derive appears in the user's code,
+//! the Rust compiler passes their data structure as tokens into our macro. We
+//! get to execute arbitrary Rust code to figure out what to do with those
+//! tokens, then hand some tokens back to the compiler to compile into the
+//! user's crate.
+//!
+//! [`TokenStream`]: proc_macro::TokenStream
+//!
+//! ```toml
+//! [dependencies]
+//! syn = "1.0"
+//! quote = "1.0"
+//!
+//! [lib]
+//! proc-macro = true
+//! ```
+//!
+//! ```
+//! # extern crate proc_macro;
+//! #
+//! use proc_macro::TokenStream;
+//! use quote::quote;
+//! use syn::{parse_macro_input, DeriveInput};
+//!
+//! # const IGNORE_TOKENS: &str = stringify! {
+//! #[proc_macro_derive(MyMacro)]
+//! # };
+//! pub fn my_macro(input: TokenStream) -> TokenStream {
+//!     // Parse the input tokens into a syntax tree
+//!     let input = parse_macro_input!(input as DeriveInput);
+//!
+//!     // Build the output, possibly using quasi-quotation
+//!     let expanded = quote! {
+//!         // ...
+//!     };
+//!
+//!     // Hand the output tokens back to the compiler
+//!     TokenStream::from(expanded)
+//! }
+//! ```
+//!
+//! The [`heapsize`] example directory shows a complete working implementation
+//! of a derive macro. It works on any Rust compiler 1.31+. The example derives
+//! a `HeapSize` trait which computes an estimate of the amount of heap memory
+//! owned by a value.
+//!
+//! [`heapsize`]: https://github.com/dtolnay/syn/tree/master/examples/heapsize
+//!
+//! ```
+//! pub trait HeapSize {
+//!     /// Total number of bytes of heap memory owned by `self`.
+//!     fn heap_size_of_children(&self) -> usize;
+//! }
+//! ```
+//!
+//! The derive macro allows users to write `#[derive(HeapSize)]` on data
+//! structures in their program.
+//!
+//! ```
+//! # const IGNORE_TOKENS: &str = stringify! {
+//! #[derive(HeapSize)]
+//! # };
+//! struct Demo<'a, T: ?Sized> {
+//!     a: Box<T>,
+//!     b: u8,
+//!     c: &'a str,
+//!     d: String,
+//! }
+//! ```
+//!
+//! <p><br></p>
+//!
+//! # Spans and error reporting
+//!
+//! The token-based procedural macro API provides great control over where the
+//! compiler's error messages are displayed in user code. Consider the error the
+//! user sees if one of their field types does not implement `HeapSize`.
+//!
+//! ```
+//! # const IGNORE_TOKENS: &str = stringify! {
+//! #[derive(HeapSize)]
+//! # };
+//! struct Broken {
+//!     ok: String,
+//!     bad: std::thread::Thread,
+//! }
+//! ```
+//!
+//! By tracking span information all the way through the expansion of a
+//! procedural macro as shown in the `heapsize` example, token-based macros in
+//! Syn are able to trigger errors that directly pinpoint the source of the
+//! problem.
+//!
+//! ```text
+//! error[E0277]: the trait bound `std::thread::Thread: HeapSize` is not satisfied
+//!  --> src/main.rs:7:5
+//!   |
+//! 7 |     bad: std::thread::Thread,
+//!   |     ^^^^^^^^^^^^^^^^^^^^^^^^ the trait `HeapSize` is not implemented for `Thread`
+//! ```
+//!
+//! <br>
+//!
+//! # Parsing a custom syntax
+//!
+//! The [`lazy-static`] example directory shows the implementation of a
+//! `functionlike!(...)` procedural macro in which the input tokens are parsed
+//! using Syn's parsing API.
+//!
+//! [`lazy-static`]: https://github.com/dtolnay/syn/tree/master/examples/lazy-static
+//!
+//! The example reimplements the popular `lazy_static` crate from crates.io as a
+//! procedural macro.
+//!
+//! ```
+//! # macro_rules! lazy_static {
+//! #     ($($tt:tt)*) => {}
+//! # }
+//! #
+//! lazy_static! {
+//!     static ref USERNAME: Regex = Regex::new("^[a-z0-9_-]{3,16}$").unwrap();
+//! }
+//! ```
+//!
+//! The implementation shows how to trigger custom warnings and error messages
+//! on the macro input.
+//!
+//! ```text
+//! warning: come on, pick a more creative name
+//!   --> src/main.rs:10:16
+//!    |
+//! 10 |     static ref FOO: String = "lazy_static".to_owned();
+//!    |                ^^^
+//! ```
+//!
+//! <br>
+//!
+//! # Testing
+//!
+//! When testing macros, we often care not just that the macro can be used
+//! successfully but also that when the macro is provided with invalid input it
+//! produces maximally helpful error messages. Consider using the [`trybuild`]
+//! crate to write tests for errors that are emitted by your macro or errors
+//! detected by the Rust compiler in the expanded code following misuse of the
+//! macro. Such tests help avoid regressions from later refactors that
+//! mistakenly make an error no longer trigger or be less helpful than it used
+//! to be.
+//!
+//! [`trybuild`]: https://github.com/dtolnay/trybuild
+//!
+//! <br>
+//!
+//! # Debugging
+//!
+//! When developing a procedural macro it can be helpful to look at what the
+//! generated code looks like. Use `cargo rustc -- -Zunstable-options
+//! --pretty=expanded` or the [`cargo expand`] subcommand.
+//!
+//! [`cargo expand`]: https://github.com/dtolnay/cargo-expand
+//!
+//! To show the expanded code for some crate that uses your procedural macro,
+//! run `cargo expand` from that crate. To show the expanded code for one of
+//! your own test cases, run `cargo expand --test the_test_case` where the last
+//! argument is the name of the test file without the `.rs` extension.
+//!
+//! This write-up by Brandon W Maister discusses debugging in more detail:
+//! [Debugging Rust's new Custom Derive system][debugging].
+//!
+//! [debugging]: https://quodlibetor.github.io/posts/debugging-rusts-new-custom-derive-system/
+//!
+//! <br>
+//!
+//! # Optional features
+//!
+//! Syn puts a lot of functionality behind optional features in order to
+//! optimize compile time for the most common use cases. The following features
+//! are available.
+//!
+//! - **`derive`** *(enabled by default)* — Data structures for representing the
+//!   possible input to a derive macro, including structs and enums and types.
+//! - **`full`** — Data structures for representing the syntax tree of all valid
+//!   Rust source code, including items and expressions.
+//! - **`parsing`** *(enabled by default)* — Ability to parse input tokens into
+//!   a syntax tree node of a chosen type.
+//! - **`printing`** *(enabled by default)* — Ability to print a syntax tree
+//!   node as tokens of Rust source code.
+//! - **`visit`** — Trait for traversing a syntax tree.
+//! - **`visit-mut`** — Trait for traversing and mutating in place a syntax
+//!   tree.
+//! - **`fold`** — Trait for transforming an owned syntax tree.
+//! - **`clone-impls`** *(enabled by default)* — Clone impls for all syntax tree
+//!   types.
+//! - **`extra-traits`** — Debug, Eq, PartialEq, Hash impls for all syntax tree
+//!   types.
+//! - **`proc-macro`** *(enabled by default)* — Runtime dependency on the
+//!   dynamic library libproc_macro from rustc toolchain.
 
-ast_struct! {
-    /// Lifetimes and type parameters attached to a declaration of a function,
-    /// enum, trait, etc.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct Generics {
-        pub lt_token: Option<Token![<]>,
-        pub params: Punctuated<GenericParam, Token![,]>,
-        pub gt_token: Option<Token![>]>,
-        pub where_clause: Option<WhereClause>,
-    }
-}
-
-ast_enum_of_structs! {
-    /// A generic type parameter, lifetime, or const generic: `T: Into<String>`,
-    /// `'a: 'b`, `const LEN: usize`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    ///
-    /// # Syntax tree enum
-    ///
-    /// This type is a [syntax tree enum].
-    ///
-    /// [syntax tree enum]: Expr#syntax-tree-enums
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub enum GenericParam {
-        /// A generic type parameter: `T: Into<String>`.
-        Type(TypeParam),
-
-        /// A lifetime definition: `'a: 'b + 'c + 'd`.
-        Lifetime(LifetimeDef),
-
-        /// A const generic parameter: `const LENGTH: usize`.
-        Const(ConstParam),
-    }
-}
-
-ast_struct! {
-    /// A generic type parameter: `T: Into<String>`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct TypeParam {
-        pub attrs: Vec<Attribute>,
-        pub ident: Ident,
-        pub colon_token: Option<Token![:]>,
-        pub bounds: Punctuated<TypeParamBound, Token![+]>,
-        pub eq_token: Option<Token![=]>,
-        pub default: Option<Type>,
-    }
-}
-
-ast_struct! {
-    /// A lifetime definition: `'a: 'b + 'c + 'd`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct LifetimeDef {
-        pub attrs: Vec<Attribute>,
-        pub lifetime: Lifetime,
-        pub colon_token: Option<Token![:]>,
-        pub bounds: Punctuated<Lifetime, Token![+]>,
-    }
-}
-
-ast_struct! {
-    /// A const generic parameter: `const LENGTH: usize`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct ConstParam {
-        pub attrs: Vec<Attribute>,
-        pub const_token: Token![const],
-        pub ident: Ident,
-        pub colon_token: Token![:],
-        pub ty: Type,
-        pub eq_token: Option<Token![=]>,
-        pub default: Option<Expr>,
-    }
-}
-
-impl Default for Generics {
-    fn default() -> Self {
-        Generics {
-            lt_token: None,
-            params: Punctuated::new(),
-            gt_token: None,
-            where_clause: None,
-        }
-    }
-}
-
-impl Generics {
-    /// Returns an
-    /// <code
-    ///   style="padding-right:0;">Iterator&lt;Item = &amp;</code><a
-    ///   href="struct.TypeParam.html"><code
-    ///   style="padding-left:0;padding-right:0;">TypeParam</code></a><code
-    ///   style="padding-left:0;">&gt;</code>
-    /// over the type parameters in `self.params`.
-    pub fn type_params(&self) -> TypeParams {
-        TypeParams(self.params.iter())
-    }
-
-    /// Returns an
-    /// <code
-    ///   style="padding-right:0;">Iterator&lt;Item = &amp;mut </code><a
-    ///   href="struct.TypeParam.html"><code
-    ///   style="padding-left:0;padding-right:0;">TypeParam</code></a><code
-    ///   style="padding-left:0;">&gt;</code>
-    /// over the type parameters in `self.params`.
-    pub fn type_params_mut(&mut self) -> TypeParamsMut {
-        TypeParamsMut(self.params.iter_mut())
-    }
-
-    /// Returns an
-    /// <code
-    ///   style="padding-right:0;">Iterator&lt;Item = &amp;</code><a
-    ///   href="struct.LifetimeDef.html"><code
-    ///   style="padding-left:0;padding-right:0;">LifetimeDef</code></a><code
-    ///   style="padding-left:0;">&gt;</code>
-    /// over the lifetime parameters in `self.params`.
-    pub fn lifetimes(&self) -> Lifetimes {
-        Lifetimes(self.params.iter())
-    }
-
-    /// Returns an
-    /// <code
-    ///   style="padding-right:0;">Iterator&lt;Item = &amp;mut </code><a
-    ///   href="struct.LifetimeDef.html"><code
-    ///   style="padding-left:0;padding-right:0;">LifetimeDef</code></a><code
-    ///   style="padding-left:0;">&gt;</code>
-    /// over the lifetime parameters in `self.params`.
-    pub fn lifetimes_mut(&mut self) -> LifetimesMut {
-        LifetimesMut(self.params.iter_mut())
-    }
-
-    /// Returns an
-    /// <code
-    ///   style="padding-right:0;">Iterator&lt;Item = &amp;</code><a
-    ///   href="struct.ConstParam.html"><code
-    ///   style="padding-left:0;padding-right:0;">ConstParam</code></a><code
-    ///   style="padding-left:0;">&gt;</code>
-    /// over the constant parameters in `self.params`.
-    pub fn const_params(&self) -> ConstParams {
-        ConstParams(self.params.iter())
-    }
-
-    /// Returns an
-    /// <code
-    ///   style="padding-right:0;">Iterator&lt;Item = &amp;mut </code><a
-    ///   href="struct.ConstParam.html"><code
-    ///   style="padding-left:0;padding-right:0;">ConstParam</code></a><code
-    ///   style="padding-left:0;">&gt;</code>
-    /// over the constant parameters in `self.params`.
-    pub fn const_params_mut(&mut self) -> ConstParamsMut {
-        ConstParamsMut(self.params.iter_mut())
-    }
-
-    /// Initializes an empty `where`-clause if there is not one present already.
-    pub fn make_where_clause(&mut self) -> &mut WhereClause {
-        self.where_clause.get_or_insert_with(|| WhereClause {
-            where_token: <Token![where]>::default(),
-            predicates: Punctuated::new(),
-        })
-    }
-}
-
-pub struct TypeParams<'a>(Iter<'a, GenericParam>);
-
-impl<'a> Iterator for TypeParams<'a> {
-    type Item = &'a TypeParam;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.0.next() {
-            Some(item) => item,
-            None => return None,
-        };
-        if let GenericParam::Type(type_param) = next {
-            Some(type_param)
-        } else {
-            self.next()
-        }
-    }
-}
-
-pub struct TypeParamsMut<'a>(IterMut<'a, GenericParam>);
-
-impl<'a> Iterator for TypeParamsMut<'a> {
-    type Item = &'a mut TypeParam;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.0.next() {
-            Some(item) => item,
-            None => return None,
-        };
-        if let GenericParam::Type(type_param) = next {
-            Some(type_param)
-        } else {
-            self.next()
-        }
-    }
-}
-
-pub struct Lifetimes<'a>(Iter<'a, GenericParam>);
-
-impl<'a> Iterator for Lifetimes<'a> {
-    type Item = &'a LifetimeDef;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.0.next() {
-            Some(item) => item,
-            None => return None,
-        };
-        if let GenericParam::Lifetime(lifetime) = next {
-            Some(lifetime)
-        } else {
-            self.next()
-        }
-    }
-}
-
-pub struct LifetimesMut<'a>(IterMut<'a, GenericParam>);
-
-impl<'a> Iterator for LifetimesMut<'a> {
-    type Item = &'a mut LifetimeDef;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.0.next() {
-            Some(item) => item,
-            None => return None,
-        };
-        if let GenericParam::Lifetime(lifetime) = next {
-            Some(lifetime)
-        } else {
-            self.next()
-        }
-    }
-}
-
-pub struct ConstParams<'a>(Iter<'a, GenericParam>);
-
-impl<'a> Iterator for ConstParams<'a> {
-    type Item = &'a ConstParam;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.0.next() {
-            Some(item) => item,
-            None => return None,
-        };
-        if let GenericParam::Const(const_param) = next {
-            Some(const_param)
-        } else {
-            self.next()
-        }
-    }
-}
-
-pub struct ConstParamsMut<'a>(IterMut<'a, GenericParam>);
-
-impl<'a> Iterator for ConstParamsMut<'a> {
-    type Item = &'a mut ConstParam;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.0.next() {
-            Some(item) => item,
-            None => return None,
-        };
-        if let GenericParam::Const(const_param) = next {
-            Some(const_param)
-        } else {
-            self.next()
-        }
-    }
-}
-
-/// Returned by `Generics::split_for_impl`.
-///
-/// *This type is available only if Syn is built with the `"derive"` or `"full"`
-/// feature and the `"printing"` feature.*
-#[cfg(feature = "printing")]
-#[cfg_attr(
-    doc_cfg,
-    doc(cfg(all(any(feature = "full", feature = "derive"), feature = "printing")))
+// Syn types in rustdoc of other crates get linked to here.
+#![doc(html_root_url = "https://docs.rs/syn/1.0.98")]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
+#![allow(non_camel_case_types)]
+#![allow(
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::default_trait_access,
+    clippy::doc_markdown,
+    clippy::expl_impl_clone_on_copy,
+    clippy::explicit_auto_deref,
+    clippy::if_not_else,
+    clippy::inherent_to_string,
+    clippy::large_enum_variant,
+    clippy::let_underscore_drop,
+    clippy::manual_assert,
+    clippy::match_on_vec_items,
+    clippy::match_same_arms,
+    clippy::match_wildcard_for_single_variants, // clippy bug: https://github.com/rust-lang/rust-clippy/issues/6984
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::module_name_repetitions,
+    clippy::must_use_candidate,
+    clippy::needless_doctest_main,
+    clippy::needless_pass_by_value,
+    clippy::never_loop,
+    clippy::redundant_else,
+    clippy::return_self_not_must_use,
+    clippy::similar_names,
+    clippy::single_match_else,
+    clippy::too_many_arguments,
+    clippy::too_many_lines,
+    clippy::trivially_copy_pass_by_ref,
+    clippy::unnecessary_unwrap,
+    clippy::used_underscore_binding,
+    clippy::wildcard_imports
 )]
-pub struct ImplGenerics<'a>(&'a Generics);
 
-/// Returned by `Generics::split_for_impl`.
-///
-/// *This type is available only if Syn is built with the `"derive"` or `"full"`
-/// feature and the `"printing"` feature.*
-#[cfg(feature = "printing")]
-#[cfg_attr(
-    doc_cfg,
-    doc(cfg(all(any(feature = "full", feature = "derive"), feature = "printing")))
-)]
-pub struct TypeGenerics<'a>(&'a Generics);
-
-/// Returned by `TypeGenerics::as_turbofish`.
-///
-/// *This type is available only if Syn is built with the `"derive"` or `"full"`
-/// feature and the `"printing"` feature.*
-#[cfg(feature = "printing")]
-#[cfg_attr(
-    doc_cfg,
-    doc(cfg(all(any(feature = "full", feature = "derive"), feature = "printing")))
-)]
-pub struct Turbofish<'a>(&'a Generics);
+#[cfg(all(
+    not(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "wasi"))),
+    feature = "proc-macro"
+))]
+extern crate proc_macro;
+extern crate proc_macro2;
 
 #[cfg(feature = "printing")]
-impl Generics {
-    /// Split a type's generics into the pieces required for impl'ing a trait
-    /// for that type.
-    ///
-    /// ```
-    /// # use proc_macro2::{Span, Ident};
-    /// # use quote::quote;
-    /// #
-    /// # let generics: syn::Generics = Default::default();
-    /// # let name = Ident::new("MyType", Span::call_site());
-    /// #
-    /// let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-    /// quote! {
-    ///     impl #impl_generics MyTrait for #name #ty_generics #where_clause {
-    ///         // ...
-    ///     }
-    /// }
-    /// # ;
-    /// ```
-    ///
-    /// *This method is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature and the `"printing"` feature.*
-    #[cfg_attr(
-        doc_cfg,
-        doc(cfg(all(any(feature = "full", feature = "derive"), feature = "printing")))
-    )]
-    pub fn split_for_impl(&self) -> (ImplGenerics, TypeGenerics, Option<&WhereClause>) {
-        (
-            ImplGenerics(self),
-            TypeGenerics(self),
-            self.where_clause.as_ref(),
-        )
-    }
-}
+extern crate quote;
 
-#[cfg(feature = "printing")]
-macro_rules! generics_wrapper_impls {
-    ($ty:ident) => {
-        #[cfg(feature = "clone-impls")]
-        #[cfg_attr(doc_cfg, doc(cfg(feature = "clone-impls")))]
-        impl<'a> Clone for $ty<'a> {
-            fn clone(&self) -> Self {
-                $ty(self.0)
-            }
-        }
-
-        #[cfg(feature = "extra-traits")]
-        #[cfg_attr(doc_cfg, doc(cfg(feature = "extra-traits")))]
-        impl<'a> Debug for $ty<'a> {
-            fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter
-                    .debug_tuple(stringify!($ty))
-                    .field(self.0)
-                    .finish()
-            }
-        }
-
-        #[cfg(feature = "extra-traits")]
-        #[cfg_attr(doc_cfg, doc(cfg(feature = "extra-traits")))]
-        impl<'a> Eq for $ty<'a> {}
-
-        #[cfg(feature = "extra-traits")]
-        #[cfg_attr(doc_cfg, doc(cfg(feature = "extra-traits")))]
-        impl<'a> PartialEq for $ty<'a> {
-            fn eq(&self, other: &Self) -> bool {
-                self.0 == other.0
-            }
-        }
-
-        #[cfg(feature = "extra-traits")]
-        #[cfg_attr(doc_cfg, doc(cfg(feature = "extra-traits")))]
-        impl<'a> Hash for $ty<'a> {
-            fn hash<H: Hasher>(&self, state: &mut H) {
-                self.0.hash(state);
-            }
-        }
-    };
-}
-
-#[cfg(feature = "printing")]
-generics_wrapper_impls!(ImplGenerics);
-#[cfg(feature = "printing")]
-generics_wrapper_impls!(TypeGenerics);
-#[cfg(feature = "printing")]
-generics_wrapper_impls!(Turbofish);
-
-#[cfg(feature = "printing")]
-impl<'a> TypeGenerics<'a> {
-    /// Turn a type's generics like `<X, Y>` into a turbofish like `::<X, Y>`.
-    ///
-    /// *This method is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature and the `"printing"` feature.*
-    pub fn as_turbofish(&self) -> Turbofish {
-        Turbofish(self.0)
-    }
-}
-
-ast_struct! {
-    /// A set of bound lifetimes: `for<'a, 'b, 'c>`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct BoundLifetimes {
-        pub for_token: Token![for],
-        pub lt_token: Token![<],
-        pub lifetimes: Punctuated<LifetimeDef, Token![,]>,
-        pub gt_token: Token![>],
-    }
-}
-
-impl Default for BoundLifetimes {
-    fn default() -> Self {
-        BoundLifetimes {
-            for_token: Default::default(),
-            lt_token: Default::default(),
-            lifetimes: Punctuated::new(),
-            gt_token: Default::default(),
-        }
-    }
-}
-
-impl LifetimeDef {
-    pub fn new(lifetime: Lifetime) -> Self {
-        LifetimeDef {
-            attrs: Vec::new(),
-            lifetime,
-            colon_token: None,
-            bounds: Punctuated::new(),
-        }
-    }
-}
-
-impl From<Ident> for TypeParam {
-    fn from(ident: Ident) -> Self {
-        TypeParam {
-            attrs: vec![],
-            ident,
-            colon_token: None,
-            bounds: Punctuated::new(),
-            eq_token: None,
-            default: None,
-        }
-    }
-}
-
-ast_enum_of_structs! {
-    /// A trait or lifetime used as a bound on a type parameter.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub enum TypeParamBound {
-        Trait(TraitBound),
-        Lifetime(Lifetime),
-    }
-}
-
-ast_struct! {
-    /// A trait used as a bound on a type parameter.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct TraitBound {
-        pub paren_token: Option<token::Paren>,
-        pub modifier: TraitBoundModifier,
-        /// The `for<'a>` in `for<'a> Foo<&'a T>`
-        pub lifetimes: Option<BoundLifetimes>,
-        /// The `Foo<&'a T>` in `for<'a> Foo<&'a T>`
-        pub path: Path,
-    }
-}
-
-ast_enum! {
-    /// A modifier on a trait bound, currently only used for the `?` in
-    /// `?Sized`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub enum TraitBoundModifier {
-        None,
-        Maybe(Token![?]),
-    }
-}
-
-ast_struct! {
-    /// A `where` clause in a definition: `where T: Deserialize<'de>, D:
-    /// 'static`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct WhereClause {
-        pub where_token: Token![where],
-        pub predicates: Punctuated<WherePredicate, Token![,]>,
-    }
-}
-
-ast_enum_of_structs! {
-    /// A single predicate in a `where` clause: `T: Deserialize<'de>`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
-    /// feature.*
-    ///
-    /// # Syntax tree enum
-    ///
-    /// This type is a [syntax tree enum].
-    ///
-    /// [syntax tree enum]: Expr#syntax-tree-enums
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub enum WherePredicate {
-        /// A type predicate in a `where` clause: `for<'c> Foo<'c>: Trait<'c>`.
-        Type(PredicateType),
-
-        /// A lifetime predicate in a `where` clause: `'a: 'b + 'c`.
-        Lifetime(PredicateLifetime),
-
-        /// An equality predicate in a `where` clause (unsupported).
-        Eq(PredicateEq),
-    }
-}
-
-ast_struct! {
-    /// A type predicate in a `where` clause: `for<'c> Foo<'c>: Trait<'c>`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct PredicateType {
-        /// Any lifetimes from a `for` binding
-        pub lifetimes: Option<BoundLifetimes>,
-        /// The type being bounded
-        pub bounded_ty: Type,
-        pub colon_token: Token![:],
-        /// Trait and lifetime bounds (`Clone+Send+'static`)
-        pub bounds: Punctuated<TypeParamBound, Token![+]>,
-    }
-}
-
-ast_struct! {
-    /// A lifetime predicate in a `where` clause: `'a: 'b + 'c`.
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct PredicateLifetime {
-        pub lifetime: Lifetime,
-        pub colon_token: Token![:],
-        pub bounds: Punctuated<Lifetime, Token![+]>,
-    }
-}
-
-ast_struct! {
-    /// An equality predicate in a `where` clause (unsupported).
-    ///
-    /// *This type is available only if Syn is built with the `"derive"` or
-    /// `"full"` feature.*
-    #[cfg_attr(doc_cfg, doc(cfg(any(feature = "full", feature = "derive"))))]
-    pub struct PredicateEq {
-        pub lhs_ty: Type,
-        pub eq_token: Token![=],
-        pub rhs_ty: Type,
-    }
-}
+#[macro_use]
+mod macros;
 
 #[cfg(feature = "parsing")]
-pub mod parsing {
-    use super::*;
-    use crate::ext::IdentExt;
-    use crate::parse::{Parse, ParseStream, Result};
+#[macro_use]
+mod group;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for Generics {
-        fn parse(input: ParseStream) -> Result<Self> {
-            if !input.peek(Token![<]) {
-                return Ok(Generics::default());
-            }
+#[macro_use]
+pub mod token;
 
-            let lt_token: Token![<] = input.parse()?;
+mod ident;
+pub use crate::ident::Ident;
 
-            let mut params = Punctuated::new();
-            loop {
-                if input.peek(Token![>]) {
-                    break;
-                }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod attr;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::attr::{
+    AttrStyle, Attribute, AttributeArgs, Meta, MetaList, MetaNameValue, NestedMeta,
+};
 
-                let attrs = input.call(Attribute::parse_outer)?;
-                let lookahead = input.lookahead1();
-                if lookahead.peek(Lifetime) {
-                    params.push_value(GenericParam::Lifetime(LifetimeDef {
-                        attrs,
-                        ..input.parse()?
-                    }));
-                } else if lookahead.peek(Ident) {
-                    params.push_value(GenericParam::Type(TypeParam {
-                        attrs,
-                        ..input.parse()?
-                    }));
-                } else if lookahead.peek(Token![const]) {
-                    params.push_value(GenericParam::Const(ConstParam {
-                        attrs,
-                        ..input.parse()?
-                    }));
-                } else if input.peek(Token![_]) {
-                    params.push_value(GenericParam::Type(TypeParam {
-                        attrs,
-                        ident: input.call(Ident::parse_any)?,
-                        colon_token: None,
-                        bounds: Punctuated::new(),
-                        eq_token: None,
-                        default: None,
-                    }));
-                } else {
-                    return Err(lookahead.error());
-                }
+mod bigint;
 
-                if input.peek(Token![>]) {
-                    break;
-                }
-                let punct = input.parse()?;
-                params.push_punct(punct);
-            }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod data;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::data::{
+    Field, Fields, FieldsNamed, FieldsUnnamed, Variant, VisCrate, VisPublic, VisRestricted,
+    Visibility,
+};
 
-            let gt_token: Token![>] = input.parse()?;
+#[cfg(any(feature = "full", feature = "derive"))]
+mod expr;
+#[cfg(feature = "full")]
+pub use crate::expr::{
+    Arm, FieldValue, GenericMethodArgument, Label, MethodTurbofish, RangeLimits,
+};
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::expr::{
+    Expr, ExprArray, ExprAssign, ExprAssignOp, ExprAsync, ExprAwait, ExprBinary, ExprBlock,
+    ExprBox, ExprBreak, ExprCall, ExprCast, ExprClosure, ExprContinue, ExprField, ExprForLoop,
+    ExprGroup, ExprIf, ExprIndex, ExprLet, ExprLit, ExprLoop, ExprMacro, ExprMatch, ExprMethodCall,
+    ExprParen, ExprPath, ExprRange, ExprReference, ExprRepeat, ExprReturn, ExprStruct, ExprTry,
+    ExprTryBlock, ExprTuple, ExprType, ExprUnary, ExprUnsafe, ExprWhile, ExprYield, Index, Member,
+};
 
-            Ok(Generics {
-                lt_token: Some(lt_token),
-                params,
-                gt_token: Some(gt_token),
-                where_clause: None,
-            })
-        }
-    }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod generics;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::generics::{
+    BoundLifetimes, ConstParam, GenericParam, Generics, LifetimeDef, PredicateEq,
+    PredicateLifetime, PredicateType, TraitBound, TraitBoundModifier, TypeParam, TypeParamBound,
+    WhereClause, WherePredicate,
+};
+#[cfg(all(any(feature = "full", feature = "derive"), feature = "printing"))]
+pub use crate::generics::{ImplGenerics, Turbofish, TypeGenerics};
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for GenericParam {
-        fn parse(input: ParseStream) -> Result<Self> {
-            let attrs = input.call(Attribute::parse_outer)?;
+#[cfg(feature = "full")]
+mod item;
+#[cfg(feature = "full")]
+pub use crate::item::{
+    FnArg, ForeignItem, ForeignItemFn, ForeignItemMacro, ForeignItemStatic, ForeignItemType,
+    ImplItem, ImplItemConst, ImplItemMacro, ImplItemMethod, ImplItemType, Item, ItemConst,
+    ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2, ItemMod,
+    ItemStatic, ItemStruct, ItemTrait, ItemTraitAlias, ItemType, ItemUnion, ItemUse, Receiver,
+    Signature, TraitItem, TraitItemConst, TraitItemMacro, TraitItemMethod, TraitItemType, UseGlob,
+    UseGroup, UseName, UsePath, UseRename, UseTree,
+};
 
-            let lookahead = input.lookahead1();
-            if lookahead.peek(Ident) {
-                Ok(GenericParam::Type(TypeParam {
-                    attrs,
-                    ..input.parse()?
-                }))
-            } else if lookahead.peek(Lifetime) {
-                Ok(GenericParam::Lifetime(LifetimeDef {
-                    attrs,
-                    ..input.parse()?
-                }))
-            } else if lookahead.peek(Token![const]) {
-                Ok(GenericParam::Const(ConstParam {
-                    attrs,
-                    ..input.parse()?
-                }))
-            } else {
-                Err(lookahead.error())
-            }
-        }
-    }
+#[cfg(feature = "full")]
+mod file;
+#[cfg(feature = "full")]
+pub use crate::file::File;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for LifetimeDef {
-        fn parse(input: ParseStream) -> Result<Self> {
-            let has_colon;
-            Ok(LifetimeDef {
-                attrs: input.call(Attribute::parse_outer)?,
-                lifetime: input.parse()?,
-                colon_token: {
-                    if input.peek(Token![:]) {
-                        has_colon = true;
-                        Some(input.parse()?)
-                    } else {
-                        has_colon = false;
-                        None
-                    }
-                },
-                bounds: {
-                    let mut bounds = Punctuated::new();
-                    if has_colon {
-                        loop {
-                            if input.peek(Token![,]) || input.peek(Token![>]) {
-                                break;
-                            }
-                            let value = input.parse()?;
-                            bounds.push_value(value);
-                            if !input.peek(Token![+]) {
-                                break;
-                            }
-                            let punct = input.parse()?;
-                            bounds.push_punct(punct);
-                        }
-                    }
-                    bounds
-                },
-            })
-        }
-    }
+mod lifetime;
+pub use crate::lifetime::Lifetime;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for BoundLifetimes {
-        fn parse(input: ParseStream) -> Result<Self> {
-            Ok(BoundLifetimes {
-                for_token: input.parse()?,
-                lt_token: input.parse()?,
-                lifetimes: {
-                    let mut lifetimes = Punctuated::new();
-                    while !input.peek(Token![>]) {
-                        lifetimes.push_value(input.parse()?);
-                        if input.peek(Token![>]) {
-                            break;
-                        }
-                        lifetimes.push_punct(input.parse()?);
-                    }
-                    lifetimes
-                },
-                gt_token: input.parse()?,
-            })
-        }
-    }
+mod lit;
+pub use crate::lit::{
+    Lit, LitBool, LitByte, LitByteStr, LitChar, LitFloat, LitInt, LitStr, StrStyle,
+};
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for Option<BoundLifetimes> {
-        fn parse(input: ParseStream) -> Result<Self> {
-            if input.peek(Token![for]) {
-                input.parse().map(Some)
-            } else {
-                Ok(None)
-            }
-        }
-    }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod mac;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::mac::{Macro, MacroDelimiter};
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for TypeParam {
-        fn parse(input: ParseStream) -> Result<Self> {
-            let attrs = input.call(Attribute::parse_outer)?;
-            let ident: Ident = input.parse()?;
-            let colon_token: Option<Token![:]> = input.parse()?;
+#[cfg(any(feature = "full", feature = "derive"))]
+mod derive;
+#[cfg(feature = "derive")]
+pub use crate::derive::{Data, DataEnum, DataStruct, DataUnion, DeriveInput};
 
-            let begin_bound = input.fork();
-            let mut is_maybe_const = false;
-            let mut bounds = Punctuated::new();
-            if colon_token.is_some() {
-                loop {
-                    if input.peek(Token![,]) || input.peek(Token![>]) || input.peek(Token![=]) {
-                        break;
-                    }
-                    if input.peek(Token![~]) && input.peek2(Token![const]) {
-                        input.parse::<Token![~]>()?;
-                        input.parse::<Token![const]>()?;
-                        is_maybe_const = true;
-                    }
-                    let value: TypeParamBound = input.parse()?;
-                    bounds.push_value(value);
-                    if !input.peek(Token![+]) {
-                        break;
-                    }
-                    let punct: Token![+] = input.parse()?;
-                    bounds.push_punct(punct);
-                }
-            }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod op;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::op::{BinOp, UnOp};
 
-            let mut eq_token: Option<Token![=]> = input.parse()?;
-            let mut default = if eq_token.is_some() {
-                Some(input.parse::<Type>()?)
-            } else {
-                None
-            };
+#[cfg(feature = "full")]
+mod stmt;
+#[cfg(feature = "full")]
+pub use crate::stmt::{Block, Local, Stmt};
 
-            if is_maybe_const {
-                bounds.clear();
-                eq_token = None;
-                default = Some(Type::Verbatim(verbatim::between(begin_bound, input)));
-            }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod ty;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::ty::{
+    Abi, BareFnArg, ReturnType, Type, TypeArray, TypeBareFn, TypeGroup, TypeImplTrait, TypeInfer,
+    TypeMacro, TypeNever, TypeParen, TypePath, TypePtr, TypeReference, TypeSlice, TypeTraitObject,
+    TypeTuple, Variadic,
+};
 
-            Ok(TypeParam {
-                attrs,
-                ident,
-                colon_token,
-                bounds,
-                eq_token,
-                default,
-            })
-        }
-    }
+#[cfg(feature = "full")]
+mod pat;
+#[cfg(feature = "full")]
+pub use crate::pat::{
+    FieldPat, Pat, PatBox, PatIdent, PatLit, PatMacro, PatOr, PatPath, PatRange, PatReference,
+    PatRest, PatSlice, PatStruct, PatTuple, PatTupleStruct, PatType, PatWild,
+};
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for TypeParamBound {
-        fn parse(input: ParseStream) -> Result<Self> {
-            if input.peek(Lifetime) {
-                return input.parse().map(TypeParamBound::Lifetime);
-            }
+#[cfg(any(feature = "full", feature = "derive"))]
+mod path;
+#[cfg(any(feature = "full", feature = "derive"))]
+pub use crate::path::{
+    AngleBracketedGenericArguments, Binding, Constraint, GenericArgument,
+    ParenthesizedGenericArguments, Path, PathArguments, PathSegment, QSelf,
+};
 
-            if input.peek(token::Paren) {
-                let content;
-                let paren_token = parenthesized!(content in input);
-                let mut bound: TraitBound = content.parse()?;
-                bound.paren_token = Some(paren_token);
-                return Ok(TypeParamBound::Trait(bound));
-            }
+#[cfg(feature = "parsing")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
+pub mod buffer;
+#[cfg(feature = "parsing")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
+pub mod ext;
+pub mod punctuated;
+#[cfg(all(any(feature = "full", feature = "derive"), feature = "extra-traits"))]
+mod tt;
 
-            input.parse().map(TypeParamBound::Trait)
-        }
-    }
+// Not public API except the `parse_quote!` macro.
+#[cfg(feature = "parsing")]
+#[doc(hidden)]
+pub mod parse_quote;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for TraitBound {
-        fn parse(input: ParseStream) -> Result<Self> {
-            #[cfg(feature = "full")]
-            let tilde_const = if input.peek(Token![~]) && input.peek2(Token![const]) {
-                let tilde_token = input.parse::<Token![~]>()?;
-                let const_token = input.parse::<Token![const]>()?;
-                Some((tilde_token, const_token))
-            } else {
-                None
-            };
+// Not public API except the `parse_macro_input!` macro.
+#[cfg(all(
+    not(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "wasi"))),
+    feature = "parsing",
+    feature = "proc-macro"
+))]
+#[doc(hidden)]
+pub mod parse_macro_input;
 
-            let modifier: TraitBoundModifier = input.parse()?;
-            let lifetimes: Option<BoundLifetimes> = input.parse()?;
+#[cfg(all(feature = "parsing", feature = "printing"))]
+#[cfg_attr(doc_cfg, doc(cfg(all(feature = "parsing", feature = "printing"))))]
+pub mod spanned;
 
-            let mut path: Path = input.parse()?;
-            if path.segments.last().unwrap().arguments.is_empty()
-                && (input.peek(token::Paren) || input.peek(Token![::]) && input.peek3(token::Paren))
-            {
-                input.parse::<Option<Token![::]>>()?;
-                let args: ParenthesizedGenericArguments = input.parse()?;
-                let parenthesized = PathArguments::Parenthesized(args);
-                path.segments.last_mut().unwrap().arguments = parenthesized;
-            }
+#[cfg(all(feature = "parsing", feature = "full"))]
+mod whitespace;
 
-            #[cfg(feature = "full")]
-            {
-                if let Some((tilde_token, const_token)) = tilde_const {
-                    path.segments.insert(
-                        0,
-                        PathSegment {
-                            ident: Ident::new("const", const_token.span),
-                            arguments: PathArguments::None,
-                        },
-                    );
-                    let (_const, punct) = path.segments.pairs_mut().next().unwrap().into_tuple();
-                    *punct.unwrap() = Token![::](tilde_token.span);
-                }
-            }
+mod gen {
+    /// Syntax tree traversal to walk a shared borrow of a syntax tree.
+    ///
+    /// Each method of the [`Visit`] trait is a hook that can be overridden to
+    /// customize the behavior when visiting the corresponding type of node. By
+    /// default, every method recursively visits the substructure of the input
+    /// by invoking the right visitor method of each of its fields.
+    ///
+    /// [`Visit`]: visit::Visit
+    ///
+    /// ```
+    /// # use syn::{Attribute, BinOp, Expr, ExprBinary};
+    /// #
+    /// pub trait Visit<'ast> {
+    ///     /* ... */
+    ///
+    ///     fn visit_expr_binary(&mut self, node: &'ast ExprBinary) {
+    ///         visit_expr_binary(self, node);
+    ///     }
+    ///
+    ///     /* ... */
+    ///     # fn visit_attribute(&mut self, node: &'ast Attribute);
+    ///     # fn visit_expr(&mut self, node: &'ast Expr);
+    ///     # fn visit_bin_op(&mut self, node: &'ast BinOp);
+    /// }
+    ///
+    /// pub fn visit_expr_binary<'ast, V>(v: &mut V, node: &'ast ExprBinary)
+    /// where
+    ///     V: Visit<'ast> + ?Sized,
+    /// {
+    ///     for attr in &node.attrs {
+    ///         v.visit_attribute(attr);
+    ///     }
+    ///     v.visit_expr(&*node.left);
+    ///     v.visit_bin_op(&node.op);
+    ///     v.visit_expr(&*node.right);
+    /// }
+    ///
+    /// /* ... */
+    /// ```
+    ///
+    /// *This module is available only if Syn is built with the `"visit"` feature.*
+    ///
+    /// <br>
+    ///
+    /// # Example
+    ///
+    /// This visitor will print the name of every freestanding function in the
+    /// syntax tree, including nested functions.
+    ///
+    /// ```
+    /// // [dependencies]
+    /// // quote = "1.0"
+    /// // syn = { version = "1.0", features = ["full", "visit"] }
+    ///
+    /// use quote::quote;
+    /// use syn::visit::{self, Visit};
+    /// use syn::{File, ItemFn};
+    ///
+    /// struct FnVisitor;
+    ///
+    /// impl<'ast> Visit<'ast> for FnVisitor {
+    ///     fn visit_item_fn(&mut self, node: &'ast ItemFn) {
+    ///         println!("Function with name={}", node.sig.ident);
+    ///
+    ///         // Delegate to the default impl to visit any nested functions.
+    ///         visit::visit_item_fn(self, node);
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     let code = quote! {
+    ///         pub fn f() {
+    ///             fn g() {}
+    ///         }
+    ///     };
+    ///
+    ///     let syntax_tree: File = syn::parse2(code).unwrap();
+    ///     FnVisitor.visit_file(&syntax_tree);
+    /// }
+    /// ```
+    ///
+    /// The `'ast` lifetime on the input references means that the syntax tree
+    /// outlives the complete recursive visit call, so the visitor is allowed to
+    /// hold on to references into the syntax tree.
+    ///
+    /// ```
+    /// use quote::quote;
+    /// use syn::visit::{self, Visit};
+    /// use syn::{File, ItemFn};
+    ///
+    /// struct FnVisitor<'ast> {
+    ///     functions: Vec<&'ast ItemFn>,
+    /// }
+    ///
+    /// impl<'ast> Visit<'ast> for FnVisitor<'ast> {
+    ///     fn visit_item_fn(&mut self, node: &'ast ItemFn) {
+    ///         self.functions.push(node);
+    ///         visit::visit_item_fn(self, node);
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     let code = quote! {
+    ///         pub fn f() {
+    ///             fn g() {}
+    ///         }
+    ///     };
+    ///
+    ///     let syntax_tree: File = syn::parse2(code).unwrap();
+    ///     let mut visitor = FnVisitor { functions: Vec::new() };
+    ///     visitor.visit_file(&syntax_tree);
+    ///     for f in visitor.functions {
+    ///         println!("Function with name={}", f.sig.ident);
+    ///     }
+    /// }
+    /// ```
+    #[cfg(feature = "visit")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "visit")))]
+    #[rustfmt::skip]
+    pub mod visit;
 
-            Ok(TraitBound {
-                paren_token: None,
-                modifier,
-                lifetimes,
-                path,
-            })
-        }
-    }
+    /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in
+    /// place.
+    ///
+    /// Each method of the [`VisitMut`] trait is a hook that can be overridden
+    /// to customize the behavior when mutating the corresponding type of node.
+    /// By default, every method recursively visits the substructure of the
+    /// input by invoking the right visitor method of each of its fields.
+    ///
+    /// [`VisitMut`]: visit_mut::VisitMut
+    ///
+    /// ```
+    /// # use syn::{Attribute, BinOp, Expr, ExprBinary};
+    /// #
+    /// pub trait VisitMut {
+    ///     /* ... */
+    ///
+    ///     fn visit_expr_binary_mut(&mut self, node: &mut ExprBinary) {
+    ///         visit_expr_binary_mut(self, node);
+    ///     }
+    ///
+    ///     /* ... */
+    ///     # fn visit_attribute_mut(&mut self, node: &mut Attribute);
+    ///     # fn visit_expr_mut(&mut self, node: &mut Expr);
+    ///     # fn visit_bin_op_mut(&mut self, node: &mut BinOp);
+    /// }
+    ///
+    /// pub fn visit_expr_binary_mut<V>(v: &mut V, node: &mut ExprBinary)
+    /// where
+    ///     V: VisitMut + ?Sized,
+    /// {
+    ///     for attr in &mut node.attrs {
+    ///         v.visit_attribute_mut(attr);
+    ///     }
+    ///     v.visit_expr_mut(&mut *node.left);
+    ///     v.visit_bin_op_mut(&mut node.op);
+    ///     v.visit_expr_mut(&mut *node.right);
+    /// }
+    ///
+    /// /* ... */
+    /// ```
+    ///
+    /// *This module is available only if Syn is built with the `"visit-mut"`
+    /// feature.*
+    ///
+    /// <br>
+    ///
+    /// # Example
+    ///
+    /// This mut visitor replace occurrences of u256 suffixed integer literals
+    /// like `999u256` with a macro invocation `bigint::u256!(999)`.
+    ///
+    /// ```
+    /// // [dependencies]
+    /// // quote = "1.0"
+    /// // syn = { version = "1.0", features = ["full", "visit-mut"] }
+    ///
+    /// use quote::quote;
+    /// use syn::visit_mut::{self, VisitMut};
+    /// use syn::{parse_quote, Expr, File, Lit, LitInt};
+    ///
+    /// struct BigintReplace;
+    ///
+    /// impl VisitMut for BigintReplace {
+    ///     fn visit_expr_mut(&mut self, node: &mut Expr) {
+    ///         if let Expr::Lit(expr) = &node {
+    ///             if let Lit::Int(int) = &expr.lit {
+    ///                 if int.suffix() == "u256" {
+    ///                     let digits = int.base10_digits();
+    ///                     let unsuffixed: LitInt = syn::parse_str(digits).unwrap();
+    ///                     *node = parse_quote!(bigint::u256!(#unsuffixed));
+    ///                     return;
+    ///                 }
+    ///             }
+    ///         }
+    ///
+    ///         // Delegate to the default impl to visit nested expressions.
+    ///         visit_mut::visit_expr_mut(self, node);
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     let code = quote! {
+    ///         fn main() {
+    ///             let _ = 999u256;
+    ///         }
+    ///     };
+    ///
+    ///     let mut syntax_tree: File = syn::parse2(code).unwrap();
+    ///     BigintReplace.visit_file_mut(&mut syntax_tree);
+    ///     println!("{}", quote!(#syntax_tree));
+    /// }
+    /// ```
+    #[cfg(feature = "visit-mut")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "visit-mut")))]
+    #[rustfmt::skip]
+    pub mod visit_mut;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for TraitBoundModifier {
-        fn parse(input: ParseStream) -> Result<Self> {
-            if input.peek(Token![?]) {
-                input.parse().map(TraitBoundModifier::Maybe)
-            } else {
-                Ok(TraitBoundModifier::None)
-            }
-        }
-    }
+    /// Syntax tree traversal to transform the nodes of an owned syntax tree.
+    ///
+    /// Each method of the [`Fold`] trait is a hook that can be overridden to
+    /// customize the behavior when transforming the corresponding type of node.
+    /// By default, every method recursively visits the substructure of the
+    /// input by invoking the right visitor method of each of its fields.
+    ///
+    /// [`Fold`]: fold::Fold
+    ///
+    /// ```
+    /// # use syn::{Attribute, BinOp, Expr, ExprBinary};
+    /// #
+    /// pub trait Fold {
+    ///     /* ... */
+    ///
+    ///     fn fold_expr_binary(&mut self, node: ExprBinary) -> ExprBinary {
+    ///         fold_expr_binary(self, node)
+    ///     }
+    ///
+    ///     /* ... */
+    ///     # fn fold_attribute(&mut self, node: Attribute) -> Attribute;
+    ///     # fn fold_expr(&mut self, node: Expr) -> Expr;
+    ///     # fn fold_bin_op(&mut self, node: BinOp) -> BinOp;
+    /// }
+    ///
+    /// pub fn fold_expr_binary<V>(v: &mut V, node: ExprBinary) -> ExprBinary
+    /// where
+    ///     V: Fold + ?Sized,
+    /// {
+    ///     ExprBinary {
+    ///         attrs: node
+    ///             .attrs
+    ///             .into_iter()
+    ///             .map(|attr| v.fold_attribute(attr))
+    ///             .collect(),
+    ///         left: Box::new(v.fold_expr(*node.left)),
+    ///         op: v.fold_bin_op(node.op),
+    ///         right: Box::new(v.fold_expr(*node.right)),
+    ///     }
+    /// }
+    ///
+    /// /* ... */
+    /// ```
+    ///
+    /// *This module is available only if Syn is built with the `"fold"` feature.*
+    ///
+    /// <br>
+    ///
+    /// # Example
+    ///
+    /// This fold inserts parentheses to fully parenthesizes any expression.
+    ///
+    /// ```
+    /// // [dependencies]
+    /// // quote = "1.0"
+    /// // syn = { version = "1.0", features = ["fold", "full"] }
+    ///
+    /// use quote::quote;
+    /// use syn::fold::{fold_expr, Fold};
+    /// use syn::{token, Expr, ExprParen};
+    ///
+    /// struct ParenthesizeEveryExpr;
+    ///
+    /// impl Fold for ParenthesizeEveryExpr {
+    ///     fn fold_expr(&mut self, expr: Expr) -> Expr {
+    ///         Expr::Paren(ExprParen {
+    ///             attrs: Vec::new(),
+    ///             expr: Box::new(fold_expr(self, expr)),
+    ///             paren_token: token::Paren::default(),
+    ///         })
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     let code = quote! { a() + b(1) * c.d };
+    ///     let expr: Expr = syn::parse2(code).unwrap();
+    ///     let parenthesized = ParenthesizeEveryExpr.fold_expr(expr);
+    ///     println!("{}", quote!(#parenthesized));
+    ///
+    ///     // Output: (((a)()) + (((b)((1))) * ((c).d)))
+    /// }
+    /// ```
+    #[cfg(feature = "fold")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "fold")))]
+    #[rustfmt::skip]
+    pub mod fold;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for ConstParam {
-        fn parse(input: ParseStream) -> Result<Self> {
-            let mut default = None;
-            Ok(ConstParam {
-                attrs: input.call(Attribute::parse_outer)?,
-                const_token: input.parse()?,
-                ident: input.parse()?,
-                colon_token: input.parse()?,
-                ty: input.parse()?,
-                eq_token: {
-                    if input.peek(Token![=]) {
-                        let eq_token = input.parse()?;
-                        default = Some(path::parsing::const_argument(input)?);
-                        Some(eq_token)
-                    } else {
-                        None
-                    }
-                },
-                default,
-            })
-        }
-    }
+    #[cfg(feature = "clone-impls")]
+    #[rustfmt::skip]
+    mod clone;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for WhereClause {
-        fn parse(input: ParseStream) -> Result<Self> {
-            Ok(WhereClause {
-                where_token: input.parse()?,
-                predicates: {
-                    let mut predicates = Punctuated::new();
-                    loop {
-                        if input.is_empty()
-                            || input.peek(token::Brace)
-                            || input.peek(Token![,])
-                            || input.peek(Token![;])
-                            || input.peek(Token![:]) && !input.peek(Token![::])
-                            || input.peek(Token![=])
-                        {
-                            break;
-                        }
-                        let value = input.parse()?;
-                        predicates.push_value(value);
-                        if !input.peek(Token![,]) {
-                            break;
-                        }
-                        let punct = input.parse()?;
-                        predicates.push_punct(punct);
-                    }
-                    predicates
-                },
-            })
-        }
-    }
+    #[cfg(feature = "extra-traits")]
+    #[rustfmt::skip]
+    mod eq;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for Option<WhereClause> {
-        fn parse(input: ParseStream) -> Result<Self> {
-            if input.peek(Token![where]) {
-                input.parse().map(Some)
-            } else {
-                Ok(None)
-            }
-        }
-    }
+    #[cfg(feature = "extra-traits")]
+    #[rustfmt::skip]
+    mod hash;
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
-    impl Parse for WherePredicate {
-        fn parse(input: ParseStream) -> Result<Self> {
-            if input.peek(Lifetime) && input.peek2(Token![:]) {
-                Ok(WherePredicate::Lifetime(PredicateLifetime {
-                    lifetime: input.parse()?,
-                    colon_token: input.parse()?,
-                    bounds: {
-                        let mut bounds = Punctuated::new();
-                        loop {
-                            if input.is_empty()
-                                || input.peek(token::Brace)
-                                || input.peek(Token![,])
-                                || input.peek(Token![;])
-                                || input.peek(Token![:])
-                                || input.peek(Token![=])
-                            {
-                                break;
-                            }
-                            let value = input.parse()?;
-                            bounds.push_value(value);
-                            if !input.peek(Token![+]) {
-                                break;
-                            }
-                            let punct = input.parse()?;
-                            bounds.push_punct(punct);
-                        }
-                        bounds
-                    },
-                }))
-            } else {
-                Ok(WherePredicate::Type(PredicateType {
-                    lifetimes: input.parse()?,
-                    bounded_ty: input.parse()?,
-                    colon_token: input.parse()?,
-                    bounds: {
-                        let mut bounds = Punctuated::new();
-                        loop {
-                            if input.is_empty()
-                                || input.peek(token::Brace)
-                                || input.peek(Token![,])
-                                || input.peek(Token![;])
-                                || input.peek(Token![:]) && !input.peek(Token![::])
-                                || input.peek(Token![=])
-                            {
-                                break;
-                            }
-                            let value = input.parse()?;
-                            bounds.push_value(value);
-                            if !input.peek(Token![+]) {
-                                break;
-                            }
-                            let punct = input.parse()?;
-                            bounds.push_punct(punct);
-                        }
-                        bounds
-                    },
-                }))
-            }
-        }
-    }
+    #[cfg(feature = "extra-traits")]
+    #[rustfmt::skip]
+    mod debug;
+
+    #[cfg(any(feature = "full", feature = "derive"))]
+    #[path = "../gen_helper.rs"]
+    mod helper;
+}
+pub use crate::gen::*;
+
+// Not public API.
+#[doc(hidden)]
+#[path = "export.rs"]
+pub mod __private;
+
+mod custom_keyword;
+mod custom_punctuation;
+mod sealed;
+mod span;
+mod thread;
+
+#[cfg(feature = "parsing")]
+mod lookahead;
+
+#[cfg(feature = "parsing")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
+pub mod parse;
+
+#[cfg(feature = "full")]
+mod reserved;
+
+#[cfg(all(any(feature = "full", feature = "derive"), feature = "parsing"))]
+mod verbatim;
+
+#[cfg(all(any(feature = "full", feature = "derive"), feature = "printing"))]
+mod print;
+
+////////////////////////////////////////////////////////////////////////////////
+
+// https://github.com/rust-lang/rust/issues/62830
+#[cfg(feature = "parsing")]
+mod rustdoc_workaround {
+    pub use crate::parse::{self as parse_module};
 }
 
-#[cfg(feature = "printing")]
-mod printing {
-    use super::*;
-    use crate::attr::FilterAttrs;
-    use crate::print::TokensOrDefault;
-    #[cfg(feature = "full")]
-    use crate::punctuated::Pair;
-    use proc_macro2::TokenStream;
-    #[cfg(feature = "full")]
-    use proc_macro2::TokenTree;
-    use quote::{ToTokens, TokenStreamExt};
+////////////////////////////////////////////////////////////////////////////////
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for Generics {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            if self.params.is_empty() {
-                return;
-            }
+mod error;
+pub use crate::error::{Error, Result};
 
-            TokensOrDefault(&self.lt_token).to_tokens(tokens);
+/// Parse tokens of source code into the chosen syntax tree node.
+///
+/// This is preferred over parsing a string because tokens are able to preserve
+/// information about where in the user's code they were originally written (the
+/// "span" of the token), possibly allowing the compiler to produce better error
+/// messages.
+///
+/// This function parses a `proc_macro::TokenStream` which is the type used for
+/// interop with the compiler in a procedural macro. To parse a
+/// `proc_macro2::TokenStream`, use [`syn::parse2`] instead.
+///
+/// [`syn::parse2`]: parse2
+///
+/// *This function is available only if Syn is built with both the `"parsing"` and
+/// `"proc-macro"` features.*
+///
+/// # Examples
+///
+/// ```
+/// # extern crate proc_macro;
+/// #
+/// use proc_macro::TokenStream;
+/// use quote::quote;
+/// use syn::DeriveInput;
+///
+/// # const IGNORE_TOKENS: &str = stringify! {
+/// #[proc_macro_derive(MyMacro)]
+/// # };
+/// pub fn my_macro(input: TokenStream) -> TokenStream {
+///     // Parse the tokens into a syntax tree
+///     let ast: DeriveInput = syn::parse(input).unwrap();
+///
+///     // Build the output, possibly using quasi-quotation
+///     let expanded = quote! {
+///         /* ... */
+///     };
+///
+///     // Convert into a token stream and return it
+///     expanded.into()
+/// }
+/// ```
+#[cfg(all(
+    not(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "wasi"))),
+    feature = "parsing",
+    feature = "proc-macro"
+))]
+#[cfg_attr(doc_cfg, doc(cfg(all(feature = "parsing", feature = "proc-macro"))))]
+pub fn parse<T: parse::Parse>(tokens: proc_macro::TokenStream) -> Result<T> {
+    parse::Parser::parse(T::parse, tokens)
+}
 
-            // Print lifetimes before types and consts, regardless of their
-            // order in self.params.
-            //
-            // TODO: ordering rules for const parameters vs type parameters have
-            // not been settled yet. https://github.com/rust-lang/rust/issues/44580
-            let mut trailing_or_empty = true;
-            for param in self.params.pairs() {
-                if let GenericParam::Lifetime(_) = **param.value() {
-                    param.to_tokens(tokens);
-                    trailing_or_empty = param.punct().is_some();
-                }
-            }
-            for param in self.params.pairs() {
-                match **param.value() {
-                    GenericParam::Type(_) | GenericParam::Const(_) => {
-                        if !trailing_or_empty {
-                            <Token![,]>::default().to_tokens(tokens);
-                            trailing_or_empty = true;
-                        }
-                        param.to_tokens(tokens);
-                    }
-                    GenericParam::Lifetime(_) => {}
-                }
-            }
+/// Parse a proc-macro2 token stream into the chosen syntax tree node.
+///
+/// This function will check that the input is fully parsed. If there are
+/// any unparsed tokens at the end of the stream, an error is returned.
+///
+/// This function parses a `proc_macro2::TokenStream` which is commonly useful
+/// when the input comes from a node of the Syn syntax tree, for example the
+/// body tokens of a [`Macro`] node. When in a procedural macro parsing the
+/// `proc_macro::TokenStream` provided by the compiler, use [`syn::parse`]
+/// instead.
+///
+/// [`syn::parse`]: parse()
+///
+/// *This function is available only if Syn is built with the `"parsing"` feature.*
+#[cfg(feature = "parsing")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
+pub fn parse2<T: parse::Parse>(tokens: proc_macro2::TokenStream) -> Result<T> {
+    parse::Parser::parse2(T::parse, tokens)
+}
 
-            TokensOrDefault(&self.gt_token).to_tokens(tokens);
-        }
+/// Parse a string of Rust code into the chosen syntax tree node.
+///
+/// *This function is available only if Syn is built with the `"parsing"` feature.*
+///
+/// # Hygiene
+///
+/// Every span in the resulting syntax tree will be set to resolve at the macro
+/// call site.
+///
+/// # Examples
+///
+/// ```
+/// use syn::{Expr, Result};
+///
+/// fn run() -> Result<()> {
+///     let code = "assert_eq!(u8::max_value(), 255)";
+///     let expr = syn::parse_str::<Expr>(code)?;
+///     println!("{:#?}", expr);
+///     Ok(())
+/// }
+/// #
+/// # run().unwrap();
+/// ```
+#[cfg(feature = "parsing")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "parsing")))]
+pub fn parse_str<T: parse::Parse>(s: &str) -> Result<T> {
+    parse::Parser::parse_str(T::parse, s)
+}
+
+// FIXME the name parse_file makes it sound like you might pass in a path to a
+// file, rather than the content.
+/// Parse the content of a file of Rust code.
+///
+/// This is different from `syn::parse_str::<File>(content)` in two ways:
+///
+/// - It discards a leading byte order mark `\u{FEFF}` if the file has one.
+/// - It preserves the shebang line of the file, such as `#!/usr/bin/env rustx`.
+///
+/// If present, either of these would be an error using `from_str`.
+///
+/// *This function is available only if Syn is built with the `"parsing"` and
+/// `"full"` features.*
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::error::Error;
+/// use std::fs::File;
+/// use std::io::Read;
+///
+/// fn run() -> Result<(), Box<Error>> {
+///     let mut file = File::open("path/to/code.rs")?;
+///     let mut content = String::new();
+///     file.read_to_string(&mut content)?;
+///
+///     let ast = syn::parse_file(&content)?;
+///     if let Some(shebang) = ast.shebang {
+///         println!("{}", shebang);
+///     }
+///     println!("{} items", ast.items.len());
+///
+///     Ok(())
+/// }
+/// #
+/// # run().unwrap();
+/// ```
+#[cfg(all(feature = "parsing", feature = "full"))]
+#[cfg_attr(doc_cfg, doc(cfg(all(feature = "parsing", feature = "full"))))]
+pub fn parse_file(mut content: &str) -> Result<File> {
+    // Strip the BOM if it is present
+    const BOM: &str = "\u{feff}";
+    if content.starts_with(BOM) {
+        content = &content[BOM.len()..];
     }
 
-    impl<'a> ToTokens for ImplGenerics<'a> {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            if self.0.params.is_empty() {
-                return;
-            }
-
-            TokensOrDefault(&self.0.lt_token).to_tokens(tokens);
-
-            // Print lifetimes before types and consts, regardless of their
-            // order in self.params.
-            //
-            // TODO: ordering rules for const parameters vs type parameters have
-            // not been settled yet. https://github.com/rust-lang/rust/issues/44580
-            let mut trailing_or_empty = true;
-            for param in self.0.params.pairs() {
-                if let GenericParam::Lifetime(_) = **param.value() {
-                    param.to_tokens(tokens);
-                    trailing_or_empty = param.punct().is_some();
-                }
-            }
-            for param in self.0.params.pairs() {
-                if let GenericParam::Lifetime(_) = **param.value() {
-                    continue;
-                }
-                if !trailing_or_empty {
-                    <Token![,]>::default().to_tokens(tokens);
-                    trailing_or_empty = true;
-                }
-                match *param.value() {
-                    GenericParam::Lifetime(_) => unreachable!(),
-                    GenericParam::Type(param) => {
-                        // Leave off the type parameter defaults
-                        tokens.append_all(param.attrs.outer());
-                        param.ident.to_tokens(tokens);
-                        if !param.bounds.is_empty() {
-                            TokensOrDefault(&param.colon_token).to_tokens(tokens);
-                            param.bounds.to_tokens(tokens);
-                        }
-                    }
-                    GenericParam::Const(param) => {
-                        // Leave off the const parameter defaults
-                        tokens.append_all(param.attrs.outer());
-                        param.const_token.to_tokens(tokens);
-                        param.ident.to_tokens(tokens);
-                        param.colon_token.to_tokens(tokens);
-                        param.ty.to_tokens(tokens);
-                    }
-                }
-                param.punct().to_tokens(tokens);
-            }
-
-            TokensOrDefault(&self.0.gt_token).to_tokens(tokens);
-        }
-    }
-
-    impl<'a> ToTokens for TypeGenerics<'a> {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            if self.0.params.is_empty() {
-                return;
-            }
-
-            TokensOrDefault(&self.0.lt_token).to_tokens(tokens);
-
-            // Print lifetimes before types and consts, regardless of their
-            // order in self.params.
-            //
-            // TODO: ordering rules for const parameters vs type parameters have
-            // not been settled yet. https://github.com/rust-lang/rust/issues/44580
-            let mut trailing_or_empty = true;
-            for param in self.0.params.pairs() {
-                if let GenericParam::Lifetime(def) = *param.value() {
-                    // Leave off the lifetime bounds and attributes
-                    def.lifetime.to_tokens(tokens);
-                    param.punct().to_tokens(tokens);
-                    trailing_or_empty = param.punct().is_some();
-                }
-            }
-            for param in self.0.params.pairs() {
-                if let GenericParam::Lifetime(_) = **param.value() {
-                    continue;
-                }
-                if !trailing_or_empty {
-                    <Token![,]>::default().to_tokens(tokens);
-                    trailing_or_empty = true;
-                }
-                match *param.value() {
-                    GenericParam::Lifetime(_) => unreachable!(),
-                    GenericParam::Type(param) => {
-                        // Leave off the type parameter defaults
-                        param.ident.to_tokens(tokens);
-                    }
-                    GenericParam::Const(param) => {
-                        // Leave off the const parameter defaults
-                        param.ident.to_tokens(tokens);
-                    }
-                }
-                param.punct().to_tokens(tokens);
-            }
-
-            TokensOrDefault(&self.0.gt_token).to_tokens(tokens);
-        }
-    }
-
-    impl<'a> ToTokens for Turbofish<'a> {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            if !self.0.params.is_empty() {
-                <Token![::]>::default().to_tokens(tokens);
-                TypeGenerics(self.0).to_tokens(tokens);
-            }
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for BoundLifetimes {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            self.for_token.to_tokens(tokens);
-            self.lt_token.to_tokens(tokens);
-            self.lifetimes.to_tokens(tokens);
-            self.gt_token.to_tokens(tokens);
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for LifetimeDef {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            tokens.append_all(self.attrs.outer());
-            self.lifetime.to_tokens(tokens);
-            if !self.bounds.is_empty() {
-                TokensOrDefault(&self.colon_token).to_tokens(tokens);
-                self.bounds.to_tokens(tokens);
+    let mut shebang = None;
+    if content.starts_with("#!") {
+        let rest = whitespace::skip(&content[2..]);
+        if !rest.starts_with('[') {
+            if let Some(idx) = content.find('\n') {
+                shebang = Some(content[..idx].to_string());
+                content = &content[idx..];
+            } else {
+                shebang = Some(content.to_string());
+                content = "";
             }
         }
     }
 
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for TypeParam {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            tokens.append_all(self.attrs.outer());
-            self.ident.to_tokens(tokens);
-            if !self.bounds.is_empty() {
-                TokensOrDefault(&self.colon_token).to_tokens(tokens);
-                self.bounds.to_tokens(tokens);
-            }
-            if let Some(default) = &self.default {
-                #[cfg(feature = "full")]
-                {
-                    if self.eq_token.is_none() {
-                        if let Type::Verbatim(default) = default {
-                            let mut iter = default.clone().into_iter().peekable();
-                            while let Some(token) = iter.next() {
-                                if let TokenTree::Punct(q) = token {
-                                    if q.as_char() == '~' {
-                                        if let Some(TokenTree::Ident(c)) = iter.peek() {
-                                            if c == "const" {
-                                                if self.bounds.is_empty() {
-                                                    TokensOrDefault(&self.colon_token)
-                                                        .to_tokens(tokens);
-                                                }
-                                                return default.to_tokens(tokens);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                TokensOrDefault(&self.eq_token).to_tokens(tokens);
-                default.to_tokens(tokens);
-            }
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for TraitBound {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            let to_tokens = |tokens: &mut TokenStream| {
-                #[cfg(feature = "full")]
-                let skip = match self.path.segments.pairs().next() {
-                    Some(Pair::Punctuated(t, p)) if t.ident == "const" => {
-                        Token![~](p.spans[0]).to_tokens(tokens);
-                        t.to_tokens(tokens);
-                        1
-                    }
-                    _ => 0,
-                };
-                self.modifier.to_tokens(tokens);
-                self.lifetimes.to_tokens(tokens);
-                #[cfg(feature = "full")]
-                {
-                    self.path.leading_colon.to_tokens(tokens);
-                    tokens.append_all(self.path.segments.pairs().skip(skip));
-                }
-                #[cfg(not(feature = "full"))]
-                {
-                    self.path.to_tokens(tokens);
-                }
-            };
-            match &self.paren_token {
-                Some(paren) => paren.surround(tokens, to_tokens),
-                None => to_tokens(tokens),
-            }
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for TraitBoundModifier {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            match self {
-                TraitBoundModifier::None => {}
-                TraitBoundModifier::Maybe(t) => t.to_tokens(tokens),
-            }
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for ConstParam {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            tokens.append_all(self.attrs.outer());
-            self.const_token.to_tokens(tokens);
-            self.ident.to_tokens(tokens);
-            self.colon_token.to_tokens(tokens);
-            self.ty.to_tokens(tokens);
-            if let Some(default) = &self.default {
-                TokensOrDefault(&self.eq_token).to_tokens(tokens);
-                default.to_tokens(tokens);
-            }
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for WhereClause {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            if !self.predicates.is_empty() {
-                self.where_token.to_tokens(tokens);
-                self.predicates.to_tokens(tokens);
-            }
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for PredicateType {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            self.lifetimes.to_tokens(tokens);
-            self.bounded_ty.to_tokens(tokens);
-            self.colon_token.to_tokens(tokens);
-            self.bounds.to_tokens(tokens);
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for PredicateLifetime {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            self.lifetime.to_tokens(tokens);
-            self.colon_token.to_tokens(tokens);
-            self.bounds.to_tokens(tokens);
-        }
-    }
-
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "printing")))]
-    impl ToTokens for PredicateEq {
-        fn to_tokens(&self, tokens: &mut TokenStream) {
-            self.lhs_ty.to_tokens(tokens);
-            self.eq_token.to_tokens(tokens);
-            self.rhs_ty.to_tokens(tokens);
-        }
-    }
+    let mut file: File = parse_str(content)?;
+    file.shebang = shebang;
+    Ok(file)
 }

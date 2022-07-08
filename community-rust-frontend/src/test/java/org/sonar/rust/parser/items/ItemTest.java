@@ -149,6 +149,10 @@ public class ItemTest {
         "pub struct DateTime<const DUR: u32 = 1, const IS_UTC: bool = false> {\n" +
         "    time: i64,\n" +
         "}")
+      .matches("quote!{}")
+      .matches("quote!(i);")
+      .matches("quote![j];")
+      .matches("quote!{k}")
 
     ;
   }
