@@ -98,6 +98,8 @@ public class MatchExpressionTest {
       .matches("Err(true_prior) => {\n" +
         "                    prior = true_prior;\n" +
         "                }")
+      .matches("foo => unsafe {42}")
+      .matches("foo => unsafe {42}.bar()")
 
     ;
 

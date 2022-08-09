@@ -1392,9 +1392,28 @@ public enum RustGrammar implements GrammarRuleKey {
 
     ;
 
+    /*
+     * BLOCK_EXPRESSION,
+     * MATCH_EXPRESSION,
+     * ASYNC_BLOCK_EXPRESSION,
+     * UNSAFE_BLOCK_EXPRESSION,
+     * LOOP_EXPRESSION,
+     * IF_EXPRESSION,
+     * IF_LET_EXPRESSION
+     */
+
     b.rule(MATCH_ARMS).is(
       b.oneOrMore(MATCH_ARM, SPC, RustPunctuator.FATARROW, SPC,
-        b.firstOf(b.sequence(EXPRESSION_WITH_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC)),
+        b.firstOf(
+
+          b.sequence(UNSAFE_BLOCK_EXPRESSION, SPC, EXPRESSION_TERM, b.optional(RustPunctuator.COMMA, SPC)),
+          b.sequence(MATCH_EXPRESSION, SPC, EXPRESSION_TERM, b.optional(RustPunctuator.COMMA, SPC)),
+          b.sequence(ASYNC_BLOCK_EXPRESSION, SPC, EXPRESSION_TERM, b.optional(RustPunctuator.COMMA, SPC)),
+          b.sequence(IF_LET_EXPRESSION, SPC, EXPRESSION_TERM, b.optional(RustPunctuator.COMMA, SPC)),
+          b.sequence(LOOP_EXPRESSION, SPC, EXPRESSION_TERM, b.optional(RustPunctuator.COMMA, SPC)),
+          b.sequence(IF_EXPRESSION, SPC, EXPRESSION_TERM, b.optional(RustPunctuator.COMMA, SPC)),
+
+          b.sequence(EXPRESSION_WITH_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC)),
           b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, b.optional(RustPunctuator.COMMA, SPC)))));
 
     b.rule(MATCH_ARM).is(
