@@ -27,7 +27,7 @@ import org.sonar.check.RuleProperty;
 @Rule(key = "LineLength")
 public class LineLengthCheck extends RustCheck {
 
-  private static final int DEFAULT_MAXIMUM_LINE_LENHGTH = 120;
+  private static final int DEFAULT_MAXIMUM_LINE_LENHGTH = 240;
 
   @RuleProperty(
     key = "maximumLineLength",

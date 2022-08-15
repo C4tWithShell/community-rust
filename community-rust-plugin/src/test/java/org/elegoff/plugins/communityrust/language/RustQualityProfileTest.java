@@ -23,18 +23,15 @@ package org.elegoff.plugins.communityrust.language;
 import junit.framework.TestCase;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 
-
-
-public class RustQualityProfileTest extends TestCase{
-    public void testDefine() {
-        BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-        RustQualityProfile qp = new RustQualityProfile();
-        qp.define(context);
-        BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("rust", "Community Rust");
-        assertNotNull(profile);
-        assertTrue(profile.isDefault());
-        assertEquals(3, profile.rules().size());
-    }
-
+public class RustQualityProfileTest extends TestCase {
+  public void testDefine() {
+    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
+    RustQualityProfile qp = new RustQualityProfile();
+    qp.define(context);
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("rust", "Community Rust");
+    assertNotNull(profile);
+    assertTrue(profile.isDefault());
+    assertEquals(1, profile.rules().size());
+  }
 
 }

@@ -1,8 +1,6 @@
 {
   "name": "Community Rust",
   "ruleKeys": [
-    "LineLength",
-    "FunctionParametersCount",
-    "EmptyEnum"
+    "LineLength"
   ]
 }
