@@ -77,7 +77,7 @@
         <commons.io.version>2.11.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.13.2</junit.version>
-        <sonar-analyzer-commons.version>1.21.0.829</sonar-analyzer-commons.version>
+        <sonar-analyzer-commons.version>1.25.0.1003</sonar-analyzer-commons.version>
         <sonar.orchestrator.version>3.35.1.2719</sonar.orchestrator.version>
 
     </properties>

@@ -22,42 +22,46 @@ package org.elegoff.plugins.communityrust.rules;
 
 import org.elegoff.rust.checks.CheckList;
 import org.junit.Test;
+import org.sonar.api.SonarEdition;
+import org.sonar.api.SonarQubeSide;
+import org.sonar.api.SonarRuntime;
+import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.server.rule.RulesDefinition.Context;
 import org.sonar.api.server.rule.RulesDefinition.Repository;
+import org.sonar.api.utils.Version;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-
 public class RustRulesDefinitionTest {
 
-    private Context context = new Context();
+  private static final SonarRuntime SONAR_RUNTIME_9_8 = SonarRuntimeImpl.forSonarQube(Version.create(9, 8), SonarQubeSide.SERVER, SonarEdition.COMMUNITY);
+  private final Context context = new Context();
 
-    @Test
-    public void test() {
-        Repository repository = createRepository();
+  @Test
+  public void test() {
+    Repository repository = createRepository();
 
-        assertThat(repository.name()).isEqualTo("Community RUST");
-        assertThat(repository.language()).isEqualTo("rust");
-        assertThat(repository.rules()).hasSize(CheckList.getRustChecks().size());
+    assertThat(repository.name()).isEqualTo("Community RUST");
+    assertThat(repository.language()).isEqualTo("rust");
+    assertThat(repository.rules()).hasSize(CheckList.getRustChecks().size());
 
-        RulesDefinition.Rule emptyEnumRule = repository.rule("EmptyEnum");
-        assertThat(emptyEnumRule).isNotNull();
-        assertThat(emptyEnumRule.name()).isEqualTo("Enum should not be left empty");
-        assertThat(emptyEnumRule.template()).isFalse();
+    RulesDefinition.Rule emptyEnumRule = repository.rule("EmptyEnum");
+    assertThat(emptyEnumRule).isNotNull();
+    assertThat(emptyEnumRule.name()).isEqualTo("Enum should not be left empty");
+    assertThat(emptyEnumRule.template()).isFalse();
 
-        assertThat(repository.rule("LineLength").template()).isFalse();
+    assertThat(repository.rule("LineLength").template()).isFalse();
 
-        for (RulesDefinition.Rule rule : repository.rules()) {
-            for (RulesDefinition.Param param : rule.params()) {
-                assertThat(param.description()).as("description for " + param.key()).isNotEmpty();
-            }
-        }
+    for (RulesDefinition.Rule rule : repository.rules()) {
+      for (RulesDefinition.Param param : rule.params()) {
+        assertThat(param.description()).as("description for " + param.key()).isNotEmpty();
+      }
     }
+  }
 
-   
-    private Repository createRepository() {
-        new RustRulesDefinition().define(context);
-        return context.repository("community-rust");
-    }
+  private Repository createRepository() {
+    new RustRulesDefinition(SONAR_RUNTIME_9_8).define(context);
+    return context.repository("community-rust");
+  }
 }

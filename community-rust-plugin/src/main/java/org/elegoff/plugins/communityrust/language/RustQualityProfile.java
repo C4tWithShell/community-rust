@@ -30,7 +30,7 @@ import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
  */
 public final class RustQualityProfile implements BuiltInQualityProfilesDefinition {
 
-  public static final String PROFILE_PATH = RustRulesDefinition.RULES_DEFINITION_FOLDER + "/built-in-profile.json";
+  public static final String PROFILE_PATH = RustRulesDefinition.RESOURCE_BASE_PATH + "/built-in-profile.json";
   static final String PROFILE_NAME = "Community Rust";
 
   @Override
