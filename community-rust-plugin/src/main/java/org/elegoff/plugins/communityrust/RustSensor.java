@@ -58,7 +58,7 @@ public class RustSensor implements Sensor {
   public RustSensor(CheckFactory checkFactory, FileLinesContextFactory fileLinesContextFactory) {
     this.checks = checkFactory
       .<RustCheck>create(CheckList.REPOSITORY_KEY)
-      .addAnnotatedChecks((Iterable) CheckList.getRustChecks());
+      .addAnnotatedChecks(CheckList.getRustChecks());
     this.fileLinesContextFactory = fileLinesContextFactory;
   }
 
