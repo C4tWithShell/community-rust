@@ -301,7 +301,7 @@ public enum RustGrammar implements GrammarRuleKey {
   TRAIT_IMPL,
   TRAIT_OBJECT_TYPE,
   TRAIT_OBJECT_TYPE_ONE_BOUND,
-  TUPLE_ELEMENT,
+  TUPLE_ELEMENTS,
   TUPLE_EXPRESSION,
   TUPLE_FIELD,
   TUPLE_FIELDS,
@@ -611,7 +611,7 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(ABI).is(b.firstOf(RAW_STRING_LITERAL, STRING_LITERAL));
     b.rule(FUNCTION_PARAMETERS).is(
       b.firstOf(b.sequence(SELF_PARAM, b.optional(RustPunctuator.COMMA), SPC,
-        b.optional(seq(b, FUNCTION_PARAM, RustPunctuator.COMMA))),
+          b.optional(seq(b, FUNCTION_PARAM, RustPunctuator.COMMA))),
         seq(b, FUNCTION_PARAM, RustPunctuator.COMMA)));
 
     b.rule(FUNCTION_PARAM).is(
@@ -1375,11 +1375,11 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(MATCH_EXPRESSION).is(
       RustKeyword.KW_MATCH, SPC,
       b.firstOf(b.sequence(
-        SCRUTINEE,
-        SPC, "{", SPC,
-        b.zeroOrMore(INNER_ATTRIBUTE, SPC),
-        b.optional(MATCH_ARMS, SPC),
-        "}"),
+          SCRUTINEE,
+          SPC, "{", SPC,
+          b.zeroOrMore(INNER_ATTRIBUTE, SPC),
+          b.optional(MATCH_ARMS, SPC),
+          "}"),
         b.sequence(
           RustKeyword.KW_MATCH, b.next(IDENTIFIER),
           SCRUTINEE,
@@ -1495,9 +1495,14 @@ public enum RustGrammar implements GrammarRuleKey {
   }
 
   private static void tuple(LexerlessGrammarBuilder b) {
-    b.rule(TUPLE_EXPRESSION).is("(", SPC, b.optional(TUPLE_ELEMENT), SPC, ")");
+    b.rule(TUPLE_EXPRESSION).is("(", SPC, b.optional(TUPLE_ELEMENTS), SPC, ")");
 
-    b.rule(TUPLE_ELEMENT).is(b.oneOrMore(b.sequence(EXPRESSION, SPC, RustPunctuator.COMMA, SPC)), b.optional(EXPRESSION, SPC));
+    b.rule(TUPLE_ELEMENTS).is(b.oneOrMore(
+        b.sequence(b.firstOf(
+            b.sequence(RustPunctuator.DOTDOT, b.next(RustPunctuator.COMMA)), EXPRESSION),
+          SPC, RustPunctuator.COMMA, SPC)),
+
+      b.optional(EXPRESSION, SPC));
 
     b.rule(TUPLE_INDEXING_EXPRESSION).is(EXPRESSION, RustPunctuator.DOT, TUPLE_INDEX);
 
@@ -1606,13 +1611,13 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(ASSIGNMENT_EXPRESSION).is(EXPRESSION, SPC, RustPunctuator.EQ, SPC, EXPRESSION);
 
     b.rule(COMPOUND_ASSIGNMENT_EXPRESSION).is(b.firstOf(
-      PLUSEQ_EXPRESSION,
-      MINUSEQ_EXPRESSION,
-      STAREQ_EXPRESSION,
-      SLASHEQ_EXPRESSION,
-      PERCENTEQ_EXPRESSION,
-      ANDEQ_EXPRESSION,
-      OREQ_EXPRESSION),
+        PLUSEQ_EXPRESSION,
+        MINUSEQ_EXPRESSION,
+        STAREQ_EXPRESSION,
+        SLASHEQ_EXPRESSION,
+        PERCENTEQ_EXPRESSION,
+        ANDEQ_EXPRESSION,
+        OREQ_EXPRESSION),
       CARETEQ_EXPRESSION,
       SHLEQ_EXPRESSION,
       SHREQ_EXPRESSION);
@@ -1638,14 +1643,14 @@ public enum RustGrammar implements GrammarRuleKey {
 
       b.firstOf(
         b.sequence(b.oneOrMore(
-          b.firstOf(
-            b.sequence(RustPunctuator.SEMI, SPC),
-            b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI, SPC),
-            b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(SPC, RustPunctuator.SEMI), SPC),
-            b.sequence(MACRO_INVOCATION, SPC, EXPRESSION_TERM),
-            b.sequence(ITEM, SPC),
-            b.sequence(LET_STATEMENT, SPC),
-            b.sequence(MACRO_INVOCATION_SEMI, SPC))),
+            b.firstOf(
+              b.sequence(RustPunctuator.SEMI, SPC),
+              b.sequence(EXPRESSION_WITHOUT_BLOCK, SPC, RustPunctuator.SEMI, SPC),
+              b.sequence(EXPRESSION_WITH_BLOCK, b.nextNot(SPC, RustPunctuator.DOT), b.optional(SPC, RustPunctuator.SEMI), SPC),
+              b.sequence(MACRO_INVOCATION, SPC, EXPRESSION_TERM),
+              b.sequence(ITEM, SPC),
+              b.sequence(LET_STATEMENT, SPC),
+              b.sequence(MACRO_INVOCATION_SEMI, SPC))),
           SPC, b.firstOf(
             b.sequence(EXPRESSION_WITHOUT_BLOCK, b.nextNot(SPC, RustPunctuator.SEMI)),
             b.sequence(EXPRESSION_WITH_BLOCK, SPC, EXPRESSION_TERM, b.nextNot(SPC, RustPunctuator.SEMI))

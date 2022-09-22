@@ -28,33 +28,40 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 public class TupleExpressionTest {
 
 
+  @Test
+  public void testTupleElements() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_ELEMENTS))
+      .matches("42,")
+      .matches("42 ,")
+      .matches("42,")
+      .matches("0.0,")
+      .matches("value,")
+      .matches("40+3,")
+      .matches("..4,")
+      .matches("3..,")
+      .matches("0..top() ,")
+      .matches("..,")
 
-    @Test
-    public void testTupleElement() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_ELEMENT))
-                .matches("42,")
-                .matches("0.0,")
 
+    ;
+  }
 
-        ;
-    }
+  @Test
+  public void testTupleIndexingExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("point.1")
+      .matches("self.0")
+    ;
+  }
 
-    @Test
-    public void testTupleIndexingExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("point.1")
-                .matches("self.0")
-        ;
-    }
+  @Test
+  public void testTupleExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_EXPRESSION))
+      .matches("(0.0,4.5)")
+      .matches("(0.0, 4.5)")
+      .matches("(\"a\", 4usize, true)")
+      .matches("()")
 
-    @Test
-    public void testTupleExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_EXPRESSION))
-                .matches("(0.0,4.5)")
-                .matches("(0.0, 4.5)")
-                .matches("(\"a\", 4usize, true)")
-                .matches("()")
-
-        ;
-    }
+    ;
+  }
 }

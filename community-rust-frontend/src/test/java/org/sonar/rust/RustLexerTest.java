@@ -43,8 +43,8 @@ public class RustLexerTest {
 
   private List<Token> lex(String source) {
     List<Token> li = RustLexer.create(RustParserConfiguration.builder()
-      .setCharset(Charsets.UTF_8)
-      .build())
+        .setCharset(Charsets.UTF_8)
+        .build())
       .parse(source)
       .getTokens();
 
@@ -66,8 +66,8 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "let av_frame = unsafe { av_frame_alloc().as_mut() }\n" +
-      "            .ok_or_else(|| anyhow!(\"Unable to allocate frame\"))?;";
+    String sexpr = "let edge_gradient = |i, j|\n" +
+      "           g.index((dotdot , i)) * (4.0 * psi[j]) + g.index((dotdot, j)) * (4.0 * psi[i]);";
 
     // Print out Ast node content for debugging purpose
 
