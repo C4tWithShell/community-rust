@@ -177,6 +177,12 @@ public class IfExpressionTest {
         "};\n" +
         "& fallthrough_arm_tokens\n" +
         "}")
+      .matches("if let [\n" +
+        "a,\n" +
+        "b,\n" +
+        "c,\n" +
+        "d\n" +
+        "] = values {}")
 
     ;
   }
