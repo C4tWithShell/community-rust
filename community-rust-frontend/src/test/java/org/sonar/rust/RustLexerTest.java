@@ -66,8 +66,7 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "let edge_gradient = |i, j|\n" +
-      "           g.index((dotdot , i)) * (4.0 * psi[j]) + g.index((dotdot, j)) * (4.0 * psi[i]);";
+    String sexpr = "for i in 0.. {}";
 
     // Print out Ast node content for debugging purpose
 

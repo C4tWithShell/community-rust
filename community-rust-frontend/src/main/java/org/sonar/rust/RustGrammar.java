@@ -1249,7 +1249,8 @@ public enum RustGrammar implements GrammarRuleKey {
       b.firstOf(
         b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.endOfInput()),
         b.sequence(RustPunctuator.DOTDOTEQ, SCRUTINEE),
-        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), b.optional(SPC, SCRUTINEE)),
+        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), SPC, b.next("{")),
+        b.sequence(RustPunctuator.DOTDOT, b.nextNot(RustPunctuator.EQ), SPC, SCRUTINEE),
         b.sequence(RustPunctuator.DOT, RustKeyword.KW_AWAIT, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
         b.sequence(RustPunctuator.DOT, PATH_EXPR_SEGMENT, SPC, "(", SPC, b.optional(CALL_PARAMS, SPC), ")", SPC, EXPRESSION_TERM_EXCEPT_STRUCT),
         b.sequence(RustPunctuator.DOT, TUPLE_INDEX, SPC, EXPRESSION_TERM_EXCEPT_STRUCT),

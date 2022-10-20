@@ -64,6 +64,8 @@ public class ExpressionTest {
       .matches("foo = &bar")
       .notMatches("foo = &bar{}")
       .matches("&a.foo()")
+      .matches("0..42")
+      .matches("0..")
 
     ;
   }

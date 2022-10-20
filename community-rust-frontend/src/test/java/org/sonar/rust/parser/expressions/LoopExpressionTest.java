@@ -51,6 +51,8 @@ public class LoopExpressionTest {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ITERATOR_LOOP_EXPRESSION))
       .matches("for elem in arr {}")
       .matches("for elem in &mut arr {}")
+      .matches("for e in 0..42 {}")
+      .matches("for f in 0.. {}")
 
     ;
   }
