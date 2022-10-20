@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021 Eric Le Goff
+ * Copyright (C) 2021-2022 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *

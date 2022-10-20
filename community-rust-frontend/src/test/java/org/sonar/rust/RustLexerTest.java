@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021 Eric Le Goff
+ * Copyright (C) 2021-2022 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *
@@ -31,7 +31,7 @@ import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 import org.sonar.sslr.tests.Assertions;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RustLexerTest {
   @Test
@@ -72,7 +72,7 @@ public class RustLexerTest {
 
     ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
     AstNode rootNode = parser.parse(sexpr);
-    org.fest.assertions.Assertions.assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
+    assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
     AstNode astNode = rootNode;
     // org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
     System.out.println(AstXmlPrinter.print(astNode));

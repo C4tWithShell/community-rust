@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021 Eric Le Goff
+ * Copyright (C) 2021-2022 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *
@@ -28,19 +28,17 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class SpacingTest {
 
-    @Test
-    public void reallife() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.SPC))
-                .matches("/*foo*/")
-                .matches("/*foo \n bar*/")
-
-
-                .matches(" ")
-                .matches("")
-                .matches("\t")
-                .matches("\r")
-                .matches("\n")
-                .matches("\r\n");
-    }
+  @Test
+  public void reallife() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.SPC))
+      .matches("/*foo*/")
+      .matches("/*foo \n bar*/")
+      .matches(" ")
+      .matches("")
+      .matches("\t")
+      .matches("\r")
+      .matches("\n")
+      .matches("\r\n");
+  }
 
 }

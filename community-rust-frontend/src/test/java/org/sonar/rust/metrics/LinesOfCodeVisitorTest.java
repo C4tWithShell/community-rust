@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021 Eric Le Goff
+ * Copyright (C) 2021-2022 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *
@@ -21,6 +21,9 @@
 package org.sonar.rust.metrics;
 
 import com.sonar.sslr.api.AstNode;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import org.junit.Test;
 import org.sonar.rust.RustFile;
 import org.sonar.rust.RustGrammar;
@@ -28,45 +31,41 @@ import org.sonar.rust.RustVisitorContext;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.Set;
-
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LinesOfCodeVisitorTest {
 
 
-    @Test
-    public void testVisit(){
+  @Test
+  public void testVisit() {
 
-        ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
-        AstNode rootNode = parser.parse("");
-        LinesOfCodeVisitor lcv = new LinesOfCodeVisitor(parser);
-        RustFile source = new RustFile() {
-            @Override
-            public String name() {
-                return null;
-            }
+    ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
+    AstNode rootNode = parser.parse("");
+    LinesOfCodeVisitor lcv = new LinesOfCodeVisitor(parser);
+    RustFile source = new RustFile() {
+      @Override
+      public String name() {
+        return null;
+      }
 
-            @Override
-            public String content() {
-                return "";
-            }
+      @Override
+      public String content() {
+        return "";
+      }
 
-            @Override
-            public URI uri() {
-                return null;
-            }
-        };
-        RustVisitorContext context = new RustVisitorContext(source, rootNode);
-       lcv.setContext(context);
-        lcv.visitFile(rootNode);
-        Set<Integer> lines = lcv.linesOfCode();
+      @Override
+      public URI uri() {
+        return null;
+      }
+    };
+    RustVisitorContext context = new RustVisitorContext(source, rootNode);
+    lcv.setContext(context);
+    lcv.visitFile(rootNode);
+    Set<Integer> lines = lcv.linesOfCode();
 
-        assertThat(lines).hasSize(0);
+    assertThat(lines).hasSize(0);
 
 
-    }
+  }
 
 }

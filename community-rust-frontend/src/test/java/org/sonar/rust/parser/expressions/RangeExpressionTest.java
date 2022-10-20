@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021 Eric Le Goff
+ * Copyright (C) 2021-2022 Eric Le Goff
  * mailto:community-rust AT pm DOT me
  * http://github.com/elegoff/sonar-rust
  *
@@ -20,87 +20,81 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import com.sonar.sslr.api.AstNode;
-import org.fest.assertions.Assertions;
 import org.junit.Test;
 import org.sonar.rust.RustGrammar;
-import org.sonar.sslr.parser.LexerlessGrammar;
-import org.sonar.sslr.parser.ParserAdapter;
-
-import java.nio.charset.StandardCharsets;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class RangeExpressionTest {
 
-    @Test
-    public void testRangeExpr() {
+  @Test
+  public void testRangeExpr() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPR))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("1..2")
-                .matches("start..end")
-                .matches("0..(4 - (len & 3)) & 3")
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("1..2")
+      .matches("start..end")
+      .matches("0..(4 - (len & 3)) & 3")
 
-        ;
-    }
+    ;
+  }
 
-    @Test
-    public void testRangeFrom() {
-        //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("1..")
+  @Test
+  public void testRangeFrom() {
+    //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("1..")
 
-        ;
-    }
+    ;
+  }
 
-    @Test
-    public void testRangeTo() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_TO_EXPR))
-                .matches("..42")
+  @Test
+  public void testRangeTo() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_TO_EXPR))
+      .matches("..42")
 
-        ;
-    }
+    ;
+  }
 
-    @Test
-    public void testRangeFull() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FULL_EXPR))
-                .matches("..")
+  @Test
+  public void testRangeFull() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FULL_EXPR))
+      .matches("..")
 
-        ;
-    }
+    ;
+  }
 
-    @Test
-    public void testRangeInclusive() {
-        //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
-       assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("40..=42")
+  @Test
+  public void testRangeInclusive() {
+    //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("40..=42")
 
-        ;
-    }
+    ;
+  }
 
-    @Test
-    public void testRangeToInclusive() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_TO_INCLUSIVE_EXPR))
-                .matches("..=7")
+  @Test
+  public void testRangeToInclusive() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_TO_INCLUSIVE_EXPR))
+      .matches("..=7")
 
-        ;
-    }
+    ;
+  }
 
 
-    @Test
-    public void testRangeExpression() {
+  @Test
+  public void testRangeExpression() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("1..2")// std::ops::Range
-                .matches("..4")// std::ops::RangeTo
-                .matches("..")// std::ops::RangeFull
-                .matches("3..")// std::ops::RangeFrom
-                .matches("..=7")// std::ops::RangeToInclusive
-                .matches("0..top()")
-                .matches("0..(4 - (len & 3)) & 3")
-                .matches("5..=6")// std::ops::RangeInclusive
-        ;
-    }
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("1..2")// std::ops::Range
+      .matches("..4")// std::ops::RangeTo
+      .matches("..")// std::ops::RangeFull
+      .matches("3..")// std::ops::RangeFrom
+      .matches("..=7")// std::ops::RangeToInclusive
+      .matches("0..top()")
+      .matches("0..(4 - (len & 3)) & 3")
+      .matches("5..=6")// std::ops::RangeInclusive
+    ;
+  }
 
 
 }
