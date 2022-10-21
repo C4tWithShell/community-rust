@@ -63,7 +63,7 @@ public class LinesOfCodeVisitorTest {
     lcv.visitFile(rootNode);
     Set<Integer> lines = lcv.linesOfCode();
 
-    assertThat(lines).hasSize(0);
+    assertThat(lines).isEmpty();
 
 
   }
