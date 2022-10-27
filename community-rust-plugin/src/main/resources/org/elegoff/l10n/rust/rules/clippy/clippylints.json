@@ -795,6 +795,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#from_over_into"
   },
   {
+    "key": "clippy::from_raw_with_void_ptr",
+    "name": "Checks if we're passing a `c_void` raw pointer to `{Box,Rc,Arc,Weak}::from_raw(_)`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#from_raw_with_void_ptr"
+  },
+  {
     "key": "clippy::from_str_radix_10",
     "name": "Checks for function invocations of the form `primitive::from_str_radix(s, 10)`",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#from_str_radix_10"
@@ -1135,13 +1140,8 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_and_return"
   },
   {
-    "key": "clippy::let_underscore_drop",
-    "name": "Checks for `let _ = <expr>` where expr has a type that implements `Drop`",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_underscore_drop"
-  },
-  {
     "key": "clippy::let_underscore_lock",
-    "name": "Checks for `let _ = sync_lock`. This supports `mutex` and `rwlock` in `std::sync` and `parking_lot`.",
+    "name": "Checks for `let _ = sync_lock`. This supports `mutex` and `rwlock` in `parking_lot`. For `std` locks",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#let_underscore_lock"
   },
   {
@@ -1223,6 +1223,11 @@
     "key": "clippy::manual_instant_elapsed",
     "name": "Lints subtraction between `Instant::now()` and another `Instant`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_instant_elapsed"
+  },
+  {
+    "key": "clippy::manual_let_else",
+    "name": "Warn of cases where `let...else` could be used",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_let_else"
   },
   {
     "key": "clippy::manual_map",
@@ -2143,6 +2148,16 @@
     "key": "clippy::search_is_some",
     "name": "Checks for an iterator or string search (such as `find()`, `position()`, or `rposition()`) followed",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#search_is_some"
+  },
+  {
+    "key": "clippy::seek_from_current",
+    "name": "Checks an argument of `seek` method of `Seek` trait and if it start seek from `SeekFrom::Current(0)",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#seek_from_current"
+  },
+  {
+    "key": "clippy::seek_to_start_instead_of_rewind",
+    "name": "Checks for jumps to the start of a stream that implements `Seek` and uses the `seek` method providi",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#seek_to_start_instead_of_rewind"
   },
   {
     "key": "clippy::self_assignment",
