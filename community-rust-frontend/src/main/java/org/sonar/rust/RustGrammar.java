@@ -1062,7 +1062,7 @@ public enum RustGrammar implements GrammarRuleKey {
       b.zeroOrMore(OUTER_ATTRIBUTE, SPC),
       RustKeyword.KW_LET, SPC, PATTERN_NO_TOP_ALT, SPC,
       b.optional(RustPunctuator.COLON, SPC, TYPE, SPC),
-      b.optional(RustPunctuator.EQ, SPC, EXPRESSION, SPC),
+      b.optional(RustPunctuator.EQ, SPC, EXPRESSION, SPC, b.optional(RustKeyword.KW_ELSE, SPC, BLOCK_EXPRESSION)),
       RustPunctuator.SEMI);
 
     b.rule(EXPRESSION_STATEMENT).is(b.firstOf(

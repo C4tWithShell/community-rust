@@ -62,6 +62,9 @@ public class StatementTest {
       .matches("let ref mut refmut = fut.await;")
       .matches("let x = i32;")
       .matches("let zero = <X as Default>::default();")
+      .matches("let Some(f1) = pieces.next() else {\n" +
+        "        return Err(de::Error::invalid_length(0, &\"2\"));\n" +
+        "    };")
 
     ;
   }

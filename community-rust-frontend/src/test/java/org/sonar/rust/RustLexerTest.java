@@ -66,17 +66,9 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "fn into(self) -> (String, ::prisma_client_rust::PrismaValue) {\n" +
-      "            match self { SetParam :: SetId(value) => (\"id\" . to_string() , :: prisma_client_rust :: PrismaValue :: String(value)) , " +
-      "SetParam :: SetUsername(value) => (\"username\" . to_string () , :: prisma_client_rust :: PrismaValue :: String(value)) , " +
-      "SetParam :: SetEmail(value) => (\"email\" . to_string () , :: prisma_client_rust :: PrismaValue :: String(value)) , " +
-      "SetParam :: SetFirstName(value) => (\"first_name\" . to_string () , :: prisma_client_rust :: PrismaValue :: String(value)) , " +
-      "SetParam :: SetLastName(value) => (\"last_name\" . to_string () , :: prisma_client_rust :: PrismaValue :: String(value)) , " +
-      "SetParam :: SetIsActive(value) => (\"is_active\" . to_string () , :: prisma_client_rust :: PrismaValue :: Boolean(value)) , " +
-      "SetParam :: SetCreated(value) => (\"created\" . to_string () , :: prisma_client_rust :: PrismaValue :: DateTime(value)) , " +
-      "SetParam :: SetUpdated(value) => (\"updated\" . to_string() , value . map(| value | :: prisma_client_rust :: PrismaValue :: DateTime(value)) . unwrap_or(:: prisma_client_rust :: PrismaValue :: Null)) , " +
-      "SetParam :: ConnectAccounts(where_params) =>(\"accounts\" . to_string() , :: prisma_client_rust :: PrismaValue :: Object(vec ! [(\"connect\" . to_string() , :: prisma_client_rust :: PrismaValue :: List(where_params . into_iter() . map(Into :: < super :: account :: WhereParam > :: into) . map(:: prisma_client_rust :: WhereInput :: serialize) . map(:: prisma_client_rust :: SerializedWhereInput :: transform_equals) . map(| v | :: prisma_client_rust :: PrismaValue :: Object(vec ! [v])) . collect()))])) , SetParam :: DisconnectAccounts(where_params) =>(\"accounts\" . to_string() , :: prisma_client_rust :: PrismaValue :: Object(vec ! [(\"disconnect\" . to_string() , :: prisma_client_rust :: PrismaValue :: List(where_params . into_iter() . map(Into :: < super :: account :: WhereParam > :: into) . map(:: prisma_client_rust :: WhereInput :: serialize) . map(:: prisma_client_rust :: SerializedWhereInput :: transform_equals) . map(| v | :: prisma_client_rust :: PrismaValue :: Object(vec ! [v])) . collect()))])) , SetParam :: SetAccounts(where_params) => (\"accounts\" . to_string() , :: prisma_client_rust :: PrismaValue :: Object(vec ! [(\"set\" . to_string() , :: prisma_client_rust :: PrismaValue :: List(where_params . into_iter() . map(Into :: < super :: account :: WhereParam > :: into) . map(:: prisma_client_rust :: WhereInput :: serialize) . map(:: prisma_client_rust :: SerializedWhereInput :: transform_equals) . map(| v | :: prisma_client_rust :: PrismaValue :: Object(vec ! [v])) . collect()))])) }\n" +
-      "        }";
+    String sexpr = "  let Some(f1) = pieces.next() else {\n" +
+      "        return Err(de::Error::invalid_length(0, &\"2\"));\n" +
+      "    };";
 
     // Print out Ast node content for debugging purpose
 
