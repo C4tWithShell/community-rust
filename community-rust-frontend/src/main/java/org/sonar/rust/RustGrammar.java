@@ -825,7 +825,7 @@ public enum RustGrammar implements GrammarRuleKey {
   /* https://doc.rust-lang.org/reference/macros-by-example.html */
   private static void macrosByExample(LexerlessGrammarBuilder b) {
     b.rule(MACRO_RULES_DEFINITION).is(
-      "macro_rules!", SPC, IDENTIFIER, SPC, MACRO_RULES_DEF);
+      "macro_rules", SPC, RustPunctuator.NOT, SPC, IDENTIFIER, SPC, MACRO_RULES_DEF);
     b.rule(MACRO_RULES_DEF).is(b.firstOf(
       b.sequence("(", SPC, MACRO_RULES, SPC, ")", SPC, RustPunctuator.SEMI),
       b.sequence("[", SPC, MACRO_RULES, SPC, "]", SPC, RustPunctuator.SEMI),
@@ -840,10 +840,10 @@ public enum RustGrammar implements GrammarRuleKey {
 
     b.rule(MACRO_MATCH).is(b.firstOf(
 
-      b.sequence("$", IDENTIFIER, SPC, RustPunctuator.COLON, SPC, MACRO_FRAG_SPEC),
+      b.sequence("$", SPC, IDENTIFIER, SPC, RustPunctuator.COLON, SPC, MACRO_FRAG_SPEC),
 
-      b.sequence("$", SPC, "(", SPC, b.oneOrMore(MACRO_MATCH, SPC), ")", b.optional(SPC, MACRO_REP_SEP, SPC) // MacroRepSep
-        , b.firstOf("+", "*", "?")),
+      b.sequence("$", SPC, "(", SPC, b.oneOrMore(MACRO_MATCH, SPC), ")", b.optional(SPC, MACRO_REP_SEP, SPC), // MacroRepSep
+        SPC, b.firstOf("+", "*", "?")),
       TOKEN_MACRO,
       MACRO_MATCHER));
 
@@ -996,7 +996,7 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(STRUCT_PATTERN_ETCETERA).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), RustPunctuator.DOTDOT);
 
     b.rule(TUPLE_STRUCT_PATTERN).is(
-      PATH_IN_EXPRESSION, "(", SPC, b.optional(RustKeyword.KW_BOX, SPC), b.optional(TUPLE_STRUCT_ITEMS), ")");
+      PATH_IN_EXPRESSION, SPC, "(", SPC, b.optional(RustKeyword.KW_BOX, SPC), b.optional(TUPLE_STRUCT_ITEMS), ")");
     b.rule(TUPLE_STRUCT_ITEMS).is(seq(b, PATTERN, RustPunctuator.COMMA));
 
     b.rule(TUPLE_PATTERN).is("(", SPC, b.optional(TUPLE_PATTERN_ITEMS), SPC, ")");
