@@ -748,7 +748,7 @@ public enum RustGrammar implements GrammarRuleKey {
       LIFETIME_WHERE_CLAUSE_ITEM, TYPE_BOUND_CLAUSE_ITEM));
     b.rule(LIFETIME_WHERE_CLAUSE_ITEM).is(LIFETIME, SPC, RustPunctuator.COLON, SPC, LIFETIME_BOUNDS);
     b.rule(TYPE_BOUND_CLAUSE_ITEM).is(
-      b.optional(FOR_LIFETIMES), TYPE, RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS));
+      b.optional(FOR_LIFETIMES), SPC, TYPE, SPC, RustPunctuator.COLON, b.optional(TYPE_PARAM_BOUNDS));
 
     b.rule(FOR_LIFETIMES).is(RustKeyword.KW_FOR, SPC, GENERIC_PARAMS);
 

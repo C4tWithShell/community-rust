@@ -1,2826 +1,651 @@
-#![allow(
-    clippy::cast_lossless,
-    clippy::derive_partial_eq_without_eq,
-    clippy::from_over_into,
-    // Clippy bug: https://github.com/rust-lang/rust-clippy/issues/7422
-    clippy::nonstandard_macro_braces,
-    clippy::too_many_lines,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::type_repetition_in_bounds
-)]
+#![macro_use]
+extern crate ark_relations;
 
-use serde::de::{self, MapAccess, Unexpected, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+pub mod fields {
+    use ark_ff::{BitIteratorLE, Field, PrimeField, UniformRand};
+    use ark_r1cs_std::prelude::*;
+    use ark_relations::r1cs::{ConstraintSystem, SynthesisError};
+    use ark_std::{test_rng, vec::Vec};
 
-use std::collections::{BTreeMap, HashMap};
-use std::convert::TryFrom;
-use std::fmt;
-use std::marker::PhantomData;
-
-use serde_test::{
-    assert_de_tokens, assert_de_tokens_error, assert_ser_tokens, assert_ser_tokens_error,
-    assert_tokens, Token,
-};
-
-trait MyDefault: Sized {
-    fn my_default() -> Self;
-}
-
-trait ShouldSkip: Sized {
-    fn should_skip(&self) -> bool;
-}
-
-trait SerializeWith: Sized {
-    fn serialize_with<S>(&self, ser: S) -> Result<S::Ok, S::Error>
+    pub fn field_test<F, ConstraintF, AF>() -> Result<(), SynthesisError>
     where
-        S: Serializer;
-}
-
-trait DeserializeWith: Sized {
-    fn deserialize_with<'de, D>(de: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>;
-}
-
-impl MyDefault for i32 {
-    fn my_default() -> Self {
-        123
-    }
-}
-
-impl ShouldSkip for i32 {
-    fn should_skip(&self) -> bool {
-        *self == 123
-    }
-}
-
-impl SerializeWith for i32 {
-    fn serialize_with<S>(&self, ser: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        F: Field,
+        ConstraintF: PrimeField,
+        AF: FieldVar<F, ConstraintF>,
+        AF: TwoBitLookupGadget<ConstraintF, TableConstant = F>,
+        for<'a> &'a AF: FieldOpsBounds<'a, F, AF>,
     {
-        if *self == 123 {
-            true.serialize(ser)
-        } else {
-            false.serialize(ser)
-        }
-    }
-}
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let cs = ConstraintSystem::<ConstraintF>::new_ref();
 
-impl DeserializeWith for i32 {
-    fn deserialize_with<'de, D>(de: D) -> Result<Self, D::Error>
+            let mut rng = test_rng();
+            let a_native = F::rand(&mut rng);
+            let b_native = F::rand(&mut rng);
+            let a = AF::new_variable(ark_relations::ns!(cs, "generate_a"), || Ok(a_native), mode)?;
+            let b = AF::new_variable(ark_relations::ns!(cs, "generate_b"), || Ok(b_native), mode)?;
+            let b_const = AF::new_constant(ark_relations::ns!(cs, "b_as_constant"), b_native)?;
+
+            let zero = AF::zero();
+            let zero_native = zero.value()?;
+            zero.enforce_equal(&zero)?;
+
+            let one = AF::one();
+            let one_native = one.value()?;
+            one.enforce_equal(&one)?;
+
+            one.enforce_not_equal(&zero)?;
+
+            let one_dup = &zero + &one;
+            one_dup.enforce_equal(&one)?;
+
+            let two = &one + &one;
+            two.enforce_equal(&two)?;
+            two.enforce_equal(&one.double()?)?;
+            two.enforce_not_equal(&one)?;
+            two.enforce_not_equal(&zero)?;
+
+            // a + 0 = a
+            let a_plus_zero = &a + &zero;
+            assert_eq!(a_plus_zero.value()?, a_native);
+            a_plus_zero.enforce_equal(&a)?;
+            a_plus_zero.enforce_not_equal(&a.double()?)?;
+
+            // a - 0 = a
+            let a_minus_zero = &a - &zero;
+            assert_eq!(a_minus_zero.value()?, a_native);
+            a_minus_zero.enforce_equal(&a)?;
+
+            // a - a = 0
+            let a_minus_a = &a - &a;
+            assert_eq!(a_minus_a.value()?, zero_native);
+            a_minus_a.enforce_equal(&zero)?;
+
+            // a + b = b + a
+            let a_b = &a + &b;
+            let b_a = &b + &a;
+            assert_eq!(a_b.value()?, a_native + &b_native);
+            a_b.enforce_equal(&b_a)?;
+
+            // (a + b) + a = a + (b + a)
+            let ab_a = &a_b + &a;
+            let a_ba = &a + &b_a;
+            assert_eq!(ab_a.value()?, a_native + &b_native + &a_native);
+            ab_a.enforce_equal(&a_ba)?;
+
+            let b_times_a_plus_b = &a_b * &b;
+            let b_times_b_plus_a = &b_a * &b;
+            assert_eq!(
+                b_times_a_plus_b.value()?,
+                b_native * &(b_native + &a_native)
+            );
+            assert_eq!(
+                b_times_a_plus_b.value()?,
+                (b_native + &a_native) * &b_native
+            );
+            assert_eq!(
+                b_times_a_plus_b.value()?,
+                (a_native + &b_native) * &b_native
+            );
+            b_times_b_plus_a.enforce_equal(&b_times_a_plus_b)?;
+
+            // a * 1 = a
+            assert_eq!((&a * &one).value()?, a_native * &one_native);
+
+            // a * b = b * a
+            let ab = &a * &b;
+            let ba = &b * &a;
+            assert_eq!(ab.value()?, ba.value()?);
+            assert_eq!(ab.value()?, a_native * &b_native);
+
+            let ab_const = &a * &b_const;
+            let b_const_a = &b_const * &a;
+            assert_eq!(ab_const.value()?, b_const_a.value()?);
+            assert_eq!(ab_const.value()?, ab.value()?);
+            assert_eq!(ab_const.value()?, a_native * &b_native);
+
+            // (a * b) * a = a * (b * a)
+            let ab_a = &ab * &a;
+            let a_ba = &a * &ba;
+            assert_eq!(ab_a.value()?, a_ba.value()?);
+            assert_eq!(ab_a.value()?, a_native * &b_native * &a_native);
+
+            let aa = &a * &a;
+            let a_squared = a.square()?;
+            a_squared.enforce_equal(&aa)?;
+            assert_eq!(aa.value()?, a_squared.value()?);
+            assert_eq!(aa.value()?, a_native.square());
+
+            let aa = &a * a_native;
+            a_squared.enforce_equal(&aa)?;
+            assert_eq!(aa.value()?, a_squared.value()?);
+            assert_eq!(aa.value()?, a_native.square());
+
+            let a_b2 = &a + b_native;
+            a_b.enforce_equal(&a_b2)?;
+            assert_eq!(a_b.value()?, a_b2.value()?);
+
+            let a_inv = a.inverse()?;
+            a_inv.mul_equals(&a, &one)?;
+            assert_eq!(a_inv.value()?, a.value()?.inverse().unwrap());
+            assert_eq!(a_inv.value()?, a_native.inverse().unwrap());
+
+            let a_b_inv = a.mul_by_inverse(&b)?;
+            a_b_inv.mul_equals(&b, &a)?;
+            assert_eq!(a_b_inv.value()?, a_native * b_native.inverse().unwrap());
+
+            // a * a * a = a^3
+            let bits = BitIteratorLE::without_trailing_zeros([3u64])
+                .map(Boolean::constant)
+                .collect::<Vec<_>>();
+            assert_eq!(a_native.pow([0x3]), a.pow_le(&bits)?.value()?);
+
+            // a * a * a = a^3
+            assert_eq!(a_native.pow([0x3]), a.pow_by_constant(&[0x3])?.value()?);
+            assert!(cs.is_satisfied().unwrap());
+
+            let mut constants = [F::zero(); 4];
+            for c in &mut constants {
+                *c = UniformRand::rand(&mut test_rng());
+            }
+            let bits = [
+                Boolean::<ConstraintF>::constant(false),
+                Boolean::constant(true),
+            ];
+            let lookup_result = AF::two_bit_lookup(&bits, constants.as_ref())?;
+            assert_eq!(lookup_result.value()?, constants[2]);
+            assert!(cs.is_satisfied().unwrap());
+
+            let f = F::from(1u128 << 64);
+            let f_bits = ark_ff::BitIteratorLE::new(&[0u64, 1u64]).collect::<Vec<_>>();
+            let fv = AF::new_variable(ark_relations::ns!(cs, "alloc u128"), || Ok(f), mode)?;
+            assert_eq!(fv.to_bits_le()?.value().unwrap()[..128], f_bits[..128]);
+            assert!(cs.is_satisfied().unwrap());
+
+            let r_native: F = UniformRand::rand(&mut test_rng());
+
+            let r = AF::new_variable(ark_relations::ns!(cs, "r_native"), || Ok(r_native), mode)
+                .unwrap();
+            let _ = r.to_non_unique_bits_le()?;
+            assert!(cs.is_satisfied().unwrap());
+            let _ = r.to_bits_le()?;
+            assert!(cs.is_satisfied().unwrap());
+
+            let ab_false = &a + (AF::from(Boolean::Constant(false)) * b_native);
+            let ab_true = &a + (AF::from(Boolean::Constant(true)) * b_native);
+            assert_eq!(ab_false.value()?, a_native);
+            assert_eq!(ab_true.value()?, a_native + &b_native);
+
+            if !cs.is_satisfied().unwrap() {
+                panic!(
+                    "Unsatisfied in mode {:?}.\n{:?}",
+                    mode,
+                    cs.which_is_unsatisfied().unwrap()
+                );
+            }
+            assert!(cs.is_satisfied().unwrap());
+        }
+        Ok(())
+    }
+
+    pub fn frobenius_tests<F: Field, ConstraintF, AF>(maxpower: usize) -> Result<(), SynthesisError>
     where
-        D: Deserializer<'de>,
+        F: Field,
+        ConstraintF: Field,
+        AF: FieldVar<F, ConstraintF>,
+        for<'a> &'a AF: FieldOpsBounds<'a, F, AF>,
     {
-        if Deserialize::deserialize(de)? {
-            Ok(123)
-        } else {
-            Ok(2)
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct DefaultStruct<A, B, C, D, E>
-where
-    C: MyDefault,
-    E: MyDefault,
-{
-    a1: A,
-    #[serde(default)]
-    a2: B,
-    #[serde(default = "MyDefault::my_default")]
-    a3: C,
-    #[serde(skip_deserializing)]
-    a4: D,
-    #[serde(skip_deserializing, default = "MyDefault::my_default")]
-    a5: E,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct DefaultTupleStruct<A, B, C>(
-    A,
-    #[serde(default)] B,
-    #[serde(default = "MyDefault::my_default")] C,
-)
-where
-    C: MyDefault;
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct CollectOther {
-    a: u32,
-    b: u32,
-    #[serde(flatten)]
-    extra: HashMap<String, u32>,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct FlattenStructEnumWrapper {
-    #[serde(flatten)]
-    data: FlattenStructEnum,
-    #[serde(flatten)]
-    extra: HashMap<String, String>,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum FlattenStructEnum {
-    InsertInteger { index: u32, value: u32 },
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct FlattenStructTagContentEnumWrapper {
-    outer: u32,
-    #[serde(flatten)]
-    data: FlattenStructTagContentEnumNewtype,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct FlattenStructTagContentEnumNewtype(pub FlattenStructTagContentEnum);
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "type", content = "value")]
-enum FlattenStructTagContentEnum {
-    InsertInteger { index: u32, value: u32 },
-    NewtypeVariant(FlattenStructTagContentEnumNewtypeVariant),
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct FlattenStructTagContentEnumNewtypeVariant {
-    value: u32,
-}
-
-#[test]
-fn test_default_struct() {
-    assert_de_tokens(
-        &DefaultStruct {
-            a1: 1,
-            a2: 2,
-            a3: 3,
-            a4: 0,
-            a5: 123,
-        },
-        &[
-            Token::Struct {
-                name: "DefaultStruct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a2"),
-            Token::I32(2),
-            Token::Str("a3"),
-            Token::I32(3),
-            Token::Str("a4"),
-            Token::I32(4),
-            Token::Str("a5"),
-            Token::I32(5),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &DefaultStruct {
-            a1: 1,
-            a2: 0,
-            a3: 123,
-            a4: 0,
-            a5: 123,
-        },
-        &[
-            Token::Struct {
-                name: "DefaultStruct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_default_tuple() {
-    assert_de_tokens(
-        &DefaultTupleStruct(1, 2, 3),
-        &[
-            Token::TupleStruct {
-                name: "DefaultTupleStruct",
-                len: 3,
-            },
-            Token::I32(1),
-            Token::I32(2),
-            Token::I32(3),
-            Token::TupleStructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &DefaultTupleStruct(1, 0, 123),
-        &[
-            Token::TupleStruct {
-                name: "DefaultTupleStruct",
-                len: 3,
-            },
-            Token::I32(1),
-            Token::TupleStructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-enum DefaultStructVariant<A, B, C, D, E>
-where
-    C: MyDefault,
-    E: MyDefault,
-{
-    Struct {
-        a1: A,
-        #[serde(default)]
-        a2: B,
-        #[serde(default = "MyDefault::my_default")]
-        a3: C,
-        #[serde(skip_deserializing)]
-        a4: D,
-        #[serde(skip_deserializing, default = "MyDefault::my_default")]
-        a5: E,
-    },
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-enum DefaultTupleVariant<A, B, C>
-where
-    C: MyDefault,
-{
-    Tuple(
-        A,
-        #[serde(default)] B,
-        #[serde(default = "MyDefault::my_default")] C,
-    ),
-}
-
-#[test]
-fn test_default_struct_variant() {
-    assert_de_tokens(
-        &DefaultStructVariant::Struct {
-            a1: 1,
-            a2: 2,
-            a3: 3,
-            a4: 0,
-            a5: 123,
-        },
-        &[
-            Token::StructVariant {
-                name: "DefaultStructVariant",
-                variant: "Struct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a2"),
-            Token::I32(2),
-            Token::Str("a3"),
-            Token::I32(3),
-            Token::Str("a4"),
-            Token::I32(4),
-            Token::Str("a5"),
-            Token::I32(5),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &DefaultStructVariant::Struct {
-            a1: 1,
-            a2: 0,
-            a3: 123,
-            a4: 0,
-            a5: 123,
-        },
-        &[
-            Token::StructVariant {
-                name: "DefaultStructVariant",
-                variant: "Struct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::StructVariantEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_default_tuple_variant() {
-    assert_de_tokens(
-        &DefaultTupleVariant::Tuple(1, 2, 3),
-        &[
-            Token::TupleVariant {
-                name: "DefaultTupleVariant",
-                variant: "Tuple",
-                len: 3,
-            },
-            Token::I32(1),
-            Token::I32(2),
-            Token::I32(3),
-            Token::TupleVariantEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &DefaultTupleVariant::Tuple(1, 0, 123),
-        &[
-            Token::TupleVariant {
-                name: "DefaultTupleVariant",
-                variant: "Tuple",
-                len: 3,
-            },
-            Token::I32(1),
-            Token::TupleVariantEnd,
-        ],
-    );
-}
-
-// Does not implement std::default::Default.
-#[derive(Debug, PartialEq, Deserialize)]
-struct NoStdDefault(i8);
-
-impl MyDefault for NoStdDefault {
-    fn my_default() -> Self {
-        NoStdDefault(123)
-    }
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-struct ContainsNoStdDefault<A: MyDefault> {
-    #[serde(default = "MyDefault::my_default")]
-    a: A,
-}
-
-// Tests that a struct field does not need to implement std::default::Default if
-// it is annotated with `default=...`.
-#[test]
-fn test_no_std_default() {
-    assert_de_tokens(
-        &ContainsNoStdDefault {
-            a: NoStdDefault(123),
-        },
-        &[
-            Token::Struct {
-                name: "ContainsNoStdDefault",
-                len: 1,
-            },
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &ContainsNoStdDefault { a: NoStdDefault(8) },
-        &[
-            Token::Struct {
-                name: "ContainsNoStdDefault",
-                len: 1,
-            },
-            Token::Str("a"),
-            Token::NewtypeStruct {
-                name: "NoStdDefault",
-            },
-            Token::I8(8),
-            Token::StructEnd,
-        ],
-    );
-}
-
-// Does not implement Deserialize.
-#[derive(Debug, PartialEq)]
-struct NotDeserializeStruct(i8);
-
-impl Default for NotDeserializeStruct {
-    fn default() -> Self {
-        NotDeserializeStruct(123)
-    }
-}
-
-impl DeserializeWith for NotDeserializeStruct {
-    fn deserialize_with<'de, D>(_: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        panic!()
-    }
-}
-
-// Does not implement Deserialize.
-#[derive(Debug, PartialEq)]
-enum NotDeserializeEnum {
-    Trouble,
-}
-
-impl MyDefault for NotDeserializeEnum {
-    fn my_default() -> Self {
-        NotDeserializeEnum::Trouble
-    }
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-struct ContainsNotDeserialize<A, B, C: DeserializeWith, E: MyDefault> {
-    #[serde(skip_deserializing)]
-    a: A,
-    #[serde(skip_deserializing, default)]
-    b: B,
-    #[serde(deserialize_with = "DeserializeWith::deserialize_with", default)]
-    c: C,
-    #[serde(skip_deserializing, default = "MyDefault::my_default")]
-    e: E,
-}
-
-// Tests that a struct field does not need to implement Deserialize if it is
-// annotated with skip_deserializing, whether using the std Default or a
-// custom default.
-#[test]
-fn test_elt_not_deserialize() {
-    assert_de_tokens(
-        &ContainsNotDeserialize {
-            a: NotDeserializeStruct(123),
-            b: NotDeserializeStruct(123),
-            c: NotDeserializeStruct(123),
-            e: NotDeserializeEnum::Trouble,
-        },
-        &[
-            Token::Struct {
-                name: "ContainsNotDeserialize",
-                len: 1,
-            },
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct DenyUnknown {
-    a1: i32,
-}
-
-#[test]
-fn test_ignore_unknown() {
-    // 'Default' allows unknown. Basic smoke test of ignore...
-    assert_de_tokens(
-        &DefaultStruct {
-            a1: 1,
-            a2: 2,
-            a3: 3,
-            a4: 0,
-            a5: 123,
-        },
-        &[
-            Token::Struct {
-                name: "DefaultStruct",
-                len: 3,
-            },
-            Token::Str("whoops1"),
-            Token::I32(2),
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("whoops2"),
-            Token::Seq { len: Some(1) },
-            Token::I32(2),
-            Token::SeqEnd,
-            Token::Str("a2"),
-            Token::I32(2),
-            Token::Str("whoops3"),
-            Token::I32(2),
-            Token::Str("a3"),
-            Token::I32(3),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens_error::<DenyUnknown>(
-        &[
-            Token::Struct {
-                name: "DenyUnknown",
-                len: 1,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("whoops"),
-        ],
-        "unknown field `whoops`, expected `a1`",
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename = "Superhero")]
-struct RenameStruct {
-    a1: i32,
-    #[serde(rename = "a3")]
-    a2: i32,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename(serialize = "SuperheroSer", deserialize = "SuperheroDe"))]
-struct RenameStructSerializeDeserialize {
-    a1: i32,
-    #[serde(rename(serialize = "a4", deserialize = "a5"))]
-    a2: i32,
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct AliasStruct {
-    a1: i32,
-    #[serde(alias = "a3")]
-    a2: i32,
-    #[serde(alias = "a5", rename = "a6")]
-    a4: i32,
-}
-
-#[test]
-fn test_rename_struct() {
-    assert_tokens(
-        &RenameStruct { a1: 1, a2: 2 },
-        &[
-            Token::Struct {
-                name: "Superhero",
-                len: 2,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a3"),
-            Token::I32(2),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &RenameStructSerializeDeserialize { a1: 1, a2: 2 },
-        &[
-            Token::Struct {
-                name: "SuperheroSer",
-                len: 2,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a4"),
-            Token::I32(2),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &RenameStructSerializeDeserialize { a1: 1, a2: 2 },
-        &[
-            Token::Struct {
-                name: "SuperheroDe",
-                len: 2,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a5"),
-            Token::I32(2),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &AliasStruct {
-            a1: 1,
-            a2: 2,
-            a4: 3,
-        },
-        &[
-            Token::Struct {
-                name: "AliasStruct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a2"),
-            Token::I32(2),
-            Token::Str("a5"),
-            Token::I32(3),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &AliasStruct {
-            a1: 1,
-            a2: 2,
-            a4: 3,
-        },
-        &[
-            Token::Struct {
-                name: "AliasStruct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a3"),
-            Token::I32(2),
-            Token::Str("a6"),
-            Token::I32(3),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_unknown_field_rename_struct() {
-    assert_de_tokens_error::<AliasStruct>(
-        &[
-            Token::Struct {
-                name: "AliasStruct",
-                len: 3,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::Str("a3"),
-            Token::I32(2),
-            Token::Str("a4"),
-            Token::I32(3),
-        ],
-        "unknown field `a4`, expected one of `a1`, `a2`, `a6`",
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename = "Superhero")]
-enum RenameEnum {
-    #[serde(rename = "bruce_wayne")]
-    Batman,
-    #[serde(rename = "clark_kent")]
-    Superman(i8),
-    #[serde(rename = "diana_prince")]
-    WonderWoman(i8, i8),
-    #[serde(rename = "barry_allan")]
-    Flash {
-        #[serde(rename = "b")]
-        a: i32,
-    },
-}
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
-#[serde(rename(serialize = "SuperheroSer", deserialize = "SuperheroDe"))]
-enum RenameEnumSerializeDeserialize<A> {
-    #[serde(rename(serialize = "dick_grayson", deserialize = "jason_todd"))]
-    Robin {
-        a: i8,
-        #[serde(rename(serialize = "c"))]
-        #[serde(rename(deserialize = "d"))]
-        b: A,
-    },
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields)]
-enum AliasEnum {
-    #[serde(rename = "sailor_moon", alias = "usagi_tsukino")]
-    SailorMoon {
-        a: i8,
-        #[serde(alias = "c")]
-        b: i8,
-        #[serde(alias = "e", rename = "f")]
-        d: i8,
-    },
-}
-
-#[test]
-fn test_rename_enum() {
-    assert_tokens(
-        &RenameEnum::Batman,
-        &[Token::UnitVariant {
-            name: "Superhero",
-            variant: "bruce_wayne",
-        }],
-    );
-
-    assert_tokens(
-        &RenameEnum::Superman(0),
-        &[
-            Token::NewtypeVariant {
-                name: "Superhero",
-                variant: "clark_kent",
-            },
-            Token::I8(0),
-        ],
-    );
-
-    assert_tokens(
-        &RenameEnum::WonderWoman(0, 1),
-        &[
-            Token::TupleVariant {
-                name: "Superhero",
-                variant: "diana_prince",
-                len: 2,
-            },
-            Token::I8(0),
-            Token::I8(1),
-            Token::TupleVariantEnd,
-        ],
-    );
-
-    assert_tokens(
-        &RenameEnum::Flash { a: 1 },
-        &[
-            Token::StructVariant {
-                name: "Superhero",
-                variant: "barry_allan",
-                len: 1,
-            },
-            Token::Str("b"),
-            Token::I32(1),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &RenameEnumSerializeDeserialize::Robin {
-            a: 0,
-            b: String::new(),
-        },
-        &[
-            Token::StructVariant {
-                name: "SuperheroSer",
-                variant: "dick_grayson",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(0),
-            Token::Str("c"),
-            Token::Str(""),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &RenameEnumSerializeDeserialize::Robin {
-            a: 0,
-            b: String::new(),
-        },
-        &[
-            Token::StructVariant {
-                name: "SuperheroDe",
-                variant: "jason_todd",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(0),
-            Token::Str("d"),
-            Token::Str(""),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &AliasEnum::SailorMoon { a: 0, b: 1, d: 2 },
-        &[
-            Token::StructVariant {
-                name: "AliasEnum",
-                variant: "sailor_moon",
-                len: 3,
-            },
-            Token::Str("a"),
-            Token::I8(0),
-            Token::Str("b"),
-            Token::I8(1),
-            Token::Str("e"),
-            Token::I8(2),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &AliasEnum::SailorMoon { a: 0, b: 1, d: 2 },
-        &[
-            Token::StructVariant {
-                name: "AliasEnum",
-                variant: "usagi_tsukino",
-                len: 3,
-            },
-            Token::Str("a"),
-            Token::I8(0),
-            Token::Str("c"),
-            Token::I8(1),
-            Token::Str("f"),
-            Token::I8(2),
-            Token::StructVariantEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_unknown_field_rename_enum() {
-    assert_de_tokens_error::<AliasEnum>(
-        &[Token::StructVariant {
-            name: "AliasEnum",
-            variant: "SailorMoon",
-            len: 3,
-        }],
-        "unknown variant `SailorMoon`, expected `sailor_moon`",
-    );
-
-    assert_de_tokens_error::<AliasEnum>(
-        &[
-            Token::StructVariant {
-                name: "AliasEnum",
-                variant: "usagi_tsukino",
-                len: 3,
-            },
-            Token::Str("a"),
-            Token::I8(0),
-            Token::Str("c"),
-            Token::I8(1),
-            Token::Str("d"),
-            Token::I8(2),
-        ],
-        "unknown field `d`, expected one of `a`, `b`, `f`",
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-struct SkipSerializingStruct<'a, B, C>
-where
-    C: ShouldSkip,
-{
-    a: &'a i8,
-    #[serde(skip_serializing)]
-    b: B,
-    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
-    c: C,
-}
-
-#[test]
-fn test_skip_serializing_struct() {
-    let a = 1;
-    assert_ser_tokens(
-        &SkipSerializingStruct { a: &a, b: 2, c: 3 },
-        &[
-            Token::Struct {
-                name: "SkipSerializingStruct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("c"),
-            Token::I32(3),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SkipSerializingStruct {
-            a: &a,
-            b: 2,
-            c: 123,
-        },
-        &[
-            Token::Struct {
-                name: "SkipSerializingStruct",
-                len: 1,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-struct SkipSerializingTupleStruct<'a, B, C>(
-    &'a i8,
-    #[serde(skip_serializing)] B,
-    #[serde(skip_serializing_if = "ShouldSkip::should_skip")] C,
-)
-where
-    C: ShouldSkip;
-
-#[test]
-fn test_skip_serializing_tuple_struct() {
-    let a = 1;
-    assert_ser_tokens(
-        &SkipSerializingTupleStruct(&a, 2, 3),
-        &[
-            Token::TupleStruct {
-                name: "SkipSerializingTupleStruct",
-                len: 2,
-            },
-            Token::I8(1),
-            Token::I32(3),
-            Token::TupleStructEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SkipSerializingTupleStruct(&a, 2, 123),
-        &[
-            Token::TupleStruct {
-                name: "SkipSerializingTupleStruct",
-                len: 1,
-            },
-            Token::I8(1),
-            Token::TupleStructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct SkipStruct<B> {
-    a: i8,
-    #[serde(skip)]
-    b: B,
-}
-
-#[test]
-fn test_skip_struct() {
-    assert_ser_tokens(
-        &SkipStruct { a: 1, b: 2 },
-        &[
-            Token::Struct {
-                name: "SkipStruct",
-                len: 1,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &SkipStruct { a: 1, b: 0 },
-        &[
-            Token::Struct {
-                name: "SkipStruct",
-                len: 1,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-enum SkipSerializingEnum<'a, B, C>
-where
-    C: ShouldSkip,
-{
-    Struct {
-        a: &'a i8,
-        #[serde(skip_serializing)]
-        _b: B,
-        #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
-        c: C,
-    },
-    Tuple(
-        &'a i8,
-        #[serde(skip_serializing)] B,
-        #[serde(skip_serializing_if = "ShouldSkip::should_skip")] C,
-    ),
-}
-
-#[test]
-fn test_skip_serializing_enum() {
-    let a = 1;
-    assert_ser_tokens(
-        &SkipSerializingEnum::Struct { a: &a, _b: 2, c: 3 },
-        &[
-            Token::StructVariant {
-                name: "SkipSerializingEnum",
-                variant: "Struct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("c"),
-            Token::I32(3),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SkipSerializingEnum::Struct {
-            a: &a,
-            _b: 2,
-            c: 123,
-        },
-        &[
-            Token::StructVariant {
-                name: "SkipSerializingEnum",
-                variant: "Struct",
-                len: 1,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SkipSerializingEnum::Tuple(&a, 2, 3),
-        &[
-            Token::TupleVariant {
-                name: "SkipSerializingEnum",
-                variant: "Tuple",
-                len: 2,
-            },
-            Token::I8(1),
-            Token::I32(3),
-            Token::TupleVariantEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SkipSerializingEnum::Tuple(&a, 2, 123),
-        &[
-            Token::TupleVariant {
-                name: "SkipSerializingEnum",
-                variant: "Tuple",
-                len: 1,
-            },
-            Token::I8(1),
-            Token::TupleVariantEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq)]
-struct NotSerializeStruct(i8);
-
-#[derive(Debug, PartialEq)]
-enum NotSerializeEnum {
-    Trouble,
-}
-
-impl SerializeWith for NotSerializeEnum {
-    fn serialize_with<S>(&self, ser: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        "trouble".serialize(ser)
-    }
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-struct ContainsNotSerialize<'a, B, C, D>
-where
-    B: 'a,
-    D: SerializeWith,
-{
-    a: &'a Option<i8>,
-    #[serde(skip_serializing)]
-    b: &'a B,
-    #[serde(skip_serializing)]
-    c: Option<C>,
-    #[serde(serialize_with = "SerializeWith::serialize_with")]
-    d: D,
-}
-
-#[test]
-fn test_elt_not_serialize() {
-    let a = 1;
-    assert_ser_tokens(
-        &ContainsNotSerialize {
-            a: &Some(a),
-            b: &NotSerializeStruct(2),
-            c: Some(NotSerializeEnum::Trouble),
-            d: NotSerializeEnum::Trouble,
-        },
-        &[
-            Token::Struct {
-                name: "ContainsNotSerialize",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::Some,
-            Token::I8(1),
-            Token::Str("d"),
-            Token::Str("trouble"),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-struct SerializeWithStruct<'a, B>
-where
-    B: SerializeWith,
-{
-    a: &'a i8,
-    #[serde(serialize_with = "SerializeWith::serialize_with")]
-    b: B,
-}
-
-#[test]
-fn test_serialize_with_struct() {
-    let a = 1;
-    assert_ser_tokens(
-        &SerializeWithStruct { a: &a, b: 2 },
-        &[
-            Token::Struct {
-                name: "SerializeWithStruct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(false),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SerializeWithStruct { a: &a, b: 123 },
-        &[
-            Token::Struct {
-                name: "SerializeWithStruct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(true),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-enum SerializeWithEnum<'a, B>
-where
-    B: SerializeWith,
-{
-    Struct {
-        a: &'a i8,
-        #[serde(serialize_with = "SerializeWith::serialize_with")]
-        b: B,
-    },
-}
-
-#[test]
-fn test_serialize_with_enum() {
-    let a = 1;
-    assert_ser_tokens(
-        &SerializeWithEnum::Struct { a: &a, b: 2 },
-        &[
-            Token::StructVariant {
-                name: "SerializeWithEnum",
-                variant: "Struct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(false),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &SerializeWithEnum::Struct { a: &a, b: 123 },
-        &[
-            Token::StructVariant {
-                name: "SerializeWithEnum",
-                variant: "Struct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(true),
-            Token::StructVariantEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-enum WithVariant {
-    #[serde(serialize_with = "serialize_unit_variant_as_i8")]
-    #[serde(deserialize_with = "deserialize_i8_as_unit_variant")]
-    Unit,
-
-    #[serde(serialize_with = "SerializeWith::serialize_with")]
-    #[serde(deserialize_with = "DeserializeWith::deserialize_with")]
-    Newtype(i32),
-
-    #[serde(serialize_with = "serialize_variant_as_string")]
-    #[serde(deserialize_with = "deserialize_string_as_variant")]
-    Tuple(String, u8),
-
-    #[serde(serialize_with = "serialize_variant_as_string")]
-    #[serde(deserialize_with = "deserialize_string_as_variant")]
-    Struct { f1: String, f2: u8 },
-}
-
-fn serialize_unit_variant_as_i8<S>(serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_i8(0)
-}
-
-fn deserialize_i8_as_unit_variant<'de, D>(deserializer: D) -> Result<(), D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let n = i8::deserialize(deserializer)?;
-    match n {
-        0 => Ok(()),
-        _ => Err(de::Error::invalid_value(Unexpected::Signed(n as i64), &"0")),
-    }
-}
-
-fn serialize_variant_as_string<S>(f1: &str, f2: &u8, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(format!("{f1};{f2:?}").as_str())
-}
-
-fn deserialize_string_as_variant<'de, D>(deserializer: D) -> Result<(String, u8), D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    let mut pieces = s.split(';');
-    let Some(f1) = pieces.next() else {
-        return Err(de::Error::invalid_length(0, &"2"));
-    };
-    let Some(f2) = pieces.next() else {
-        return Err(de::Error::invalid_length(1, &"2"));
-    };
-    let Ok(f2) = f2.parse() else {
-        return Err(de::Error::invalid_value(
-            Unexpected::Str(f2),
-            &"an 8-bit signed integer",
-        ));
-    };
-    Ok((f1.into(), f2))
-}
-
-#[test]
-fn test_serialize_with_variant() {
-    assert_ser_tokens(
-        &WithVariant::Unit,
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Unit",
-            },
-            Token::I8(0),
-        ],
-    );
-
-    assert_ser_tokens(
-        &WithVariant::Newtype(123),
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Newtype",
-            },
-            Token::Bool(true),
-        ],
-    );
-
-    assert_ser_tokens(
-        &WithVariant::Tuple("hello".into(), 0),
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Tuple",
-            },
-            Token::Str("hello;0"),
-        ],
-    );
-
-    assert_ser_tokens(
-        &WithVariant::Struct {
-            f1: "world".into(),
-            f2: 1,
-        },
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Struct",
-            },
-            Token::Str("world;1"),
-        ],
-    );
-}
-
-#[test]
-fn test_deserialize_with_variant() {
-    assert_de_tokens(
-        &WithVariant::Unit,
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Unit",
-            },
-            Token::I8(0),
-        ],
-    );
-
-    assert_de_tokens(
-        &WithVariant::Newtype(123),
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Newtype",
-            },
-            Token::Bool(true),
-        ],
-    );
-
-    assert_de_tokens(
-        &WithVariant::Tuple("hello".into(), 0),
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Tuple",
-            },
-            Token::Str("hello;0"),
-        ],
-    );
-
-    assert_de_tokens(
-        &WithVariant::Struct {
-            f1: "world".into(),
-            f2: 1,
-        },
-        &[
-            Token::NewtypeVariant {
-                name: "WithVariant",
-                variant: "Struct",
-            },
-            Token::Str("world;1"),
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-struct DeserializeWithStruct<B>
-where
-    B: DeserializeWith,
-{
-    a: i8,
-    #[serde(deserialize_with = "DeserializeWith::deserialize_with")]
-    b: B,
-}
-
-#[test]
-fn test_deserialize_with_struct() {
-    assert_de_tokens(
-        &DeserializeWithStruct { a: 1, b: 2 },
-        &[
-            Token::Struct {
-                name: "DeserializeWithStruct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(false),
-            Token::StructEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &DeserializeWithStruct { a: 1, b: 123 },
-        &[
-            Token::Struct {
-                name: "DeserializeWithStruct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(true),
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-enum DeserializeWithEnum<B>
-where
-    B: DeserializeWith,
-{
-    Struct {
-        a: i8,
-        #[serde(deserialize_with = "DeserializeWith::deserialize_with")]
-        b: B,
-    },
-}
-
-#[test]
-fn test_deserialize_with_enum() {
-    assert_de_tokens(
-        &DeserializeWithEnum::Struct { a: 1, b: 2 },
-        &[
-            Token::StructVariant {
-                name: "DeserializeWithEnum",
-                variant: "Struct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(false),
-            Token::StructVariantEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &DeserializeWithEnum::Struct { a: 1, b: 123 },
-        &[
-            Token::StructVariant {
-                name: "DeserializeWithEnum",
-                variant: "Struct",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(1),
-            Token::Str("b"),
-            Token::Bool(true),
-            Token::StructVariantEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_missing_renamed_field_struct() {
-    assert_de_tokens_error::<RenameStruct>(
-        &[
-            Token::Struct {
-                name: "Superhero",
-                len: 2,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::StructEnd,
-        ],
-        "missing field `a3`",
-    );
-
-    assert_de_tokens_error::<RenameStructSerializeDeserialize>(
-        &[
-            Token::Struct {
-                name: "SuperheroDe",
-                len: 2,
-            },
-            Token::Str("a1"),
-            Token::I32(1),
-            Token::StructEnd,
-        ],
-        "missing field `a5`",
-    );
-}
-
-#[test]
-fn test_missing_renamed_field_enum() {
-    assert_de_tokens_error::<RenameEnum>(
-        &[
-            Token::StructVariant {
-                name: "Superhero",
-                variant: "barry_allan",
-                len: 1,
-            },
-            Token::StructVariantEnd,
-        ],
-        "missing field `b`",
-    );
-
-    assert_de_tokens_error::<RenameEnumSerializeDeserialize<i8>>(
-        &[
-            Token::StructVariant {
-                name: "SuperheroDe",
-                variant: "jason_todd",
-                len: 2,
-            },
-            Token::Str("a"),
-            Token::I8(0),
-            Token::StructVariantEnd,
-        ],
-        "missing field `d`",
-    );
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-enum InvalidLengthEnum {
-    A(i32, i32, i32),
-    B(#[serde(skip_deserializing)] i32, i32, i32),
-}
-
-#[test]
-fn test_invalid_length_enum() {
-    assert_de_tokens_error::<InvalidLengthEnum>(
-        &[
-            Token::TupleVariant {
-                name: "InvalidLengthEnum",
-                variant: "A",
-                len: 3,
-            },
-            Token::I32(1),
-            Token::TupleVariantEnd,
-        ],
-        "invalid length 1, expected tuple variant InvalidLengthEnum::A with 3 elements",
-    );
-    assert_de_tokens_error::<InvalidLengthEnum>(
-        &[
-            Token::TupleVariant {
-                name: "InvalidLengthEnum",
-                variant: "B",
-                len: 3,
-            },
-            Token::I32(1),
-            Token::TupleVariantEnd,
-        ],
-        "invalid length 1, expected tuple variant InvalidLengthEnum::B with 2 elements",
-    );
-}
-
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(into = "EnumToU32", from = "EnumToU32")]
-struct StructFromEnum(Option<u32>);
-
-impl Into<EnumToU32> for StructFromEnum {
-    fn into(self) -> EnumToU32 {
-        match self {
-            StructFromEnum(v) => v.into(),
-        }
-    }
-}
-
-impl From<EnumToU32> for StructFromEnum {
-    fn from(v: EnumToU32) -> Self {
-        StructFromEnum(v.into())
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(into = "Option<u32>", from = "Option<u32>")]
-enum EnumToU32 {
-    One,
-    Two,
-    Three,
-    Four,
-    Nothing,
-}
-
-impl Into<Option<u32>> for EnumToU32 {
-    fn into(self) -> Option<u32> {
-        match self {
-            EnumToU32::One => Some(1),
-            EnumToU32::Two => Some(2),
-            EnumToU32::Three => Some(3),
-            EnumToU32::Four => Some(4),
-            EnumToU32::Nothing => None,
-        }
-    }
-}
-
-impl From<Option<u32>> for EnumToU32 {
-    fn from(v: Option<u32>) -> Self {
-        match v {
-            Some(1) => EnumToU32::One,
-            Some(2) => EnumToU32::Two,
-            Some(3) => EnumToU32::Three,
-            Some(4) => EnumToU32::Four,
-            _ => EnumToU32::Nothing,
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, PartialEq, Debug)]
-#[serde(try_from = "u32")]
-enum TryFromU32 {
-    One,
-    Two,
-}
-
-impl TryFrom<u32> for TryFromU32 {
-    type Error = String;
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(TryFromU32::One),
-            2 => Ok(TryFromU32::Two),
-            _ => Err("out of range".to_owned()),
-        }
-    }
-}
-
-#[test]
-fn test_from_into_traits() {
-    assert_ser_tokens(&EnumToU32::One, &[Token::Some, Token::U32(1)]);
-    assert_ser_tokens(&EnumToU32::Nothing, &[Token::None]);
-    assert_de_tokens(&EnumToU32::Two, &[Token::Some, Token::U32(2)]);
-    assert_ser_tokens(&StructFromEnum(Some(5)), &[Token::None]);
-    assert_ser_tokens(&StructFromEnum(None), &[Token::None]);
-    assert_de_tokens(&StructFromEnum(Some(2)), &[Token::Some, Token::U32(2)]);
-    assert_de_tokens(&TryFromU32::Two, &[Token::U32(2)]);
-    assert_de_tokens_error::<TryFromU32>(&[Token::U32(5)], "out of range");
-}
-
-#[test]
-fn test_collect_other() {
-    let mut extra = HashMap::new();
-    extra.insert("c".into(), 3);
-    assert_tokens(
-        &CollectOther { a: 1, b: 2, extra },
-        &[
-            Token::Map { len: None },
-            Token::Str("a"),
-            Token::U32(1),
-            Token::Str("b"),
-            Token::U32(2),
-            Token::Str("c"),
-            Token::U32(3),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_struct_enum() {
-    let mut extra = HashMap::new();
-    extra.insert("extra_key".into(), "extra value".into());
-    let change_request = FlattenStructEnumWrapper {
-        data: FlattenStructEnum::InsertInteger {
-            index: 0,
-            value: 42,
-        },
-        extra,
-    };
-    assert_de_tokens(
-        &change_request,
-        &[
-            Token::Map { len: None },
-            Token::Str("insert_integer"),
-            Token::Map { len: None },
-            Token::Str("index"),
-            Token::U32(0),
-            Token::Str("value"),
-            Token::U32(42),
-            Token::MapEnd,
-            Token::Str("extra_key"),
-            Token::Str("extra value"),
-            Token::MapEnd,
-        ],
-    );
-    assert_ser_tokens(
-        &change_request,
-        &[
-            Token::Map { len: None },
-            Token::Str("insert_integer"),
-            Token::Struct {
-                len: 2,
-                name: "insert_integer",
-            },
-            Token::Str("index"),
-            Token::U32(0),
-            Token::Str("value"),
-            Token::U32(42),
-            Token::StructEnd,
-            Token::Str("extra_key"),
-            Token::Str("extra value"),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_struct_tag_content_enum() {
-    let change_request = FlattenStructTagContentEnumWrapper {
-        outer: 42,
-        data: FlattenStructTagContentEnumNewtype(FlattenStructTagContentEnum::InsertInteger {
-            index: 0,
-            value: 42,
-        }),
-    };
-    assert_de_tokens(
-        &change_request,
-        &[
-            Token::Map { len: None },
-            Token::Str("outer"),
-            Token::U32(42),
-            Token::Str("type"),
-            Token::Str("insert_integer"),
-            Token::Str("value"),
-            Token::Map { len: None },
-            Token::Str("index"),
-            Token::U32(0),
-            Token::Str("value"),
-            Token::U32(42),
-            Token::MapEnd,
-            Token::MapEnd,
-        ],
-    );
-    assert_ser_tokens(
-        &change_request,
-        &[
-            Token::Map { len: None },
-            Token::Str("outer"),
-            Token::U32(42),
-            Token::Str("type"),
-            Token::Str("insert_integer"),
-            Token::Str("value"),
-            Token::Struct {
-                len: 2,
-                name: "insert_integer",
-            },
-            Token::Str("index"),
-            Token::U32(0),
-            Token::Str("value"),
-            Token::U32(42),
-            Token::StructEnd,
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_struct_tag_content_enum_newtype() {
-    let change_request = FlattenStructTagContentEnumWrapper {
-        outer: 42,
-        data: FlattenStructTagContentEnumNewtype(FlattenStructTagContentEnum::NewtypeVariant(
-            FlattenStructTagContentEnumNewtypeVariant { value: 23 },
-        )),
-    };
-    assert_de_tokens(
-        &change_request,
-        &[
-            Token::Map { len: None },
-            Token::Str("outer"),
-            Token::U32(42),
-            Token::Str("type"),
-            Token::Str("newtype_variant"),
-            Token::Str("value"),
-            Token::Map { len: None },
-            Token::Str("value"),
-            Token::U32(23),
-            Token::MapEnd,
-            Token::MapEnd,
-        ],
-    );
-    assert_ser_tokens(
-        &change_request,
-        &[
-            Token::Map { len: None },
-            Token::Str("outer"),
-            Token::U32(42),
-            Token::Str("type"),
-            Token::Str("newtype_variant"),
-            Token::Str("value"),
-            Token::Struct {
-                len: 1,
-                name: "FlattenStructTagContentEnumNewtypeVariant",
-            },
-            Token::Str("value"),
-            Token::U32(23),
-            Token::StructEnd,
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_unknown_field_in_flatten() {
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct Outer {
-        dummy: String,
-        #[serde(flatten)]
-        inner: Inner,
-    }
-
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct Inner {
-        foo: HashMap<String, u32>,
-    }
-
-    assert_de_tokens_error::<Outer>(
-        &[
-            Token::Struct {
-                name: "Outer",
-                len: 1,
-            },
-            Token::Str("dummy"),
-            Token::Str("23"),
-            Token::Str("foo"),
-            Token::Map { len: None },
-            Token::Str("a"),
-            Token::U32(1),
-            Token::Str("b"),
-            Token::U32(2),
-            Token::MapEnd,
-            Token::Str("bar"),
-            Token::U32(23),
-            Token::StructEnd,
-        ],
-        "unknown field `bar`",
-    );
-}
-
-#[test]
-fn test_complex_flatten() {
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct Outer {
-        y: u32,
-        #[serde(flatten)]
-        first: First,
-        #[serde(flatten)]
-        second: Second,
-        z: u32,
-    }
-
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct First {
-        a: u32,
-        b: bool,
-        c: Vec<String>,
-        d: String,
-        e: Option<u64>,
-    }
-
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct Second {
-        f: u32,
-    }
-
-    assert_de_tokens(
-        &Outer {
-            y: 0,
-            first: First {
-                a: 1,
-                b: true,
-                c: vec!["a".into(), "b".into()],
-                d: "c".into(),
-                e: Some(2),
-            },
-            second: Second { f: 3 },
-            z: 4,
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("y"),
-            Token::U32(0),
-            Token::Str("a"),
-            Token::U32(1),
-            Token::Str("b"),
-            Token::Bool(true),
-            Token::Str("c"),
-            Token::Seq { len: Some(2) },
-            Token::Str("a"),
-            Token::Str("b"),
-            Token::SeqEnd,
-            Token::Str("d"),
-            Token::Str("c"),
-            Token::Str("e"),
-            Token::U64(2),
-            Token::Str("f"),
-            Token::U32(3),
-            Token::Str("z"),
-            Token::U32(4),
-            Token::MapEnd,
-        ],
-    );
-
-    assert_ser_tokens(
-        &Outer {
-            y: 0,
-            first: First {
-                a: 1,
-                b: true,
-                c: vec!["a".into(), "b".into()],
-                d: "c".into(),
-                e: Some(2),
-            },
-            second: Second { f: 3 },
-            z: 4,
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("y"),
-            Token::U32(0),
-            Token::Str("a"),
-            Token::U32(1),
-            Token::Str("b"),
-            Token::Bool(true),
-            Token::Str("c"),
-            Token::Seq { len: Some(2) },
-            Token::Str("a"),
-            Token::Str("b"),
-            Token::SeqEnd,
-            Token::Str("d"),
-            Token::Str("c"),
-            Token::Str("e"),
-            Token::Some,
-            Token::U64(2),
-            Token::Str("f"),
-            Token::U32(3),
-            Token::Str("z"),
-            Token::U32(4),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_map_twice() {
-    #[derive(Debug, PartialEq, Deserialize)]
-    struct Outer {
-        #[serde(flatten)]
-        first: BTreeMap<String, String>,
-        #[serde(flatten)]
-        between: Inner,
-        #[serde(flatten)]
-        second: BTreeMap<String, String>,
-    }
-
-    #[derive(Debug, PartialEq, Deserialize)]
-    struct Inner {
-        y: String,
-    }
-
-    assert_de_tokens(
-        &Outer {
-            first: {
-                let mut first = BTreeMap::new();
-                first.insert("x".to_owned(), "X".to_owned());
-                first.insert("y".to_owned(), "Y".to_owned());
-                first
-            },
-            between: Inner { y: "Y".to_owned() },
-            second: {
-                let mut second = BTreeMap::new();
-                second.insert("x".to_owned(), "X".to_owned());
-                second
-            },
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("x"),
-            Token::Str("X"),
-            Token::Str("y"),
-            Token::Str("Y"),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_unit() {
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct Response<T> {
-        #[serde(flatten)]
-        data: T,
-        status: usize,
-    }
-
-    assert_tokens(
-        &Response {
-            data: (),
-            status: 0,
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("status"),
-            Token::U64(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_unsupported_type() {
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct Outer {
-        outer: String,
-        #[serde(flatten)]
-        inner: String,
-    }
-
-    assert_ser_tokens_error(
-        &Outer {
-            outer: "foo".into(),
-            inner: "bar".into(),
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("outer"),
-            Token::Str("foo"),
-        ],
-        "can only flatten structs and maps (got a string)",
-    );
-    assert_de_tokens_error::<Outer>(
-        &[
-            Token::Map { len: None },
-            Token::Str("outer"),
-            Token::Str("foo"),
-            Token::Str("a"),
-            Token::Str("b"),
-            Token::MapEnd,
-        ],
-        "can only flatten structs and maps",
-    );
-}
-
-#[test]
-fn test_non_string_keys() {
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct TestStruct {
-        name: String,
-        age: u32,
-        #[serde(flatten)]
-        mapping: HashMap<u32, u32>,
-    }
-
-    let mut mapping = HashMap::new();
-    mapping.insert(0, 42);
-    assert_tokens(
-        &TestStruct {
-            name: "peter".into(),
-            age: 3,
-            mapping,
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("name"),
-            Token::Str("peter"),
-            Token::Str("age"),
-            Token::U32(3),
-            Token::U32(0),
-            Token::U32(42),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_lifetime_propagation_for_flatten() {
-    #[derive(Deserialize, Serialize, Debug, PartialEq)]
-    struct A<T> {
-        #[serde(flatten)]
-        t: T,
-    }
-
-    #[derive(Deserialize, Serialize, Debug, PartialEq)]
-    struct B<'a> {
-        #[serde(flatten, borrow)]
-        t: HashMap<&'a str, u32>,
-    }
-
-    #[derive(Deserialize, Serialize, Debug, PartialEq)]
-    struct C<'a> {
-        #[serde(flatten, borrow)]
-        t: HashMap<&'a [u8], u32>,
-    }
-
-    let mut owned_map = HashMap::new();
-    owned_map.insert("x".to_string(), 42u32);
-    assert_tokens(
-        &A { t: owned_map },
-        &[
-            Token::Map { len: None },
-            Token::Str("x"),
-            Token::U32(42),
-            Token::MapEnd,
-        ],
-    );
-
-    let mut borrowed_map = HashMap::new();
-    borrowed_map.insert("x", 42u32);
-    assert_ser_tokens(
-        &B {
-            t: borrowed_map.clone(),
-        },
-        &[
-            Token::Map { len: None },
-            Token::BorrowedStr("x"),
-            Token::U32(42),
-            Token::MapEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &B { t: borrowed_map },
-        &[
-            Token::Map { len: None },
-            Token::BorrowedStr("x"),
-            Token::U32(42),
-            Token::MapEnd,
-        ],
-    );
-
-    let mut borrowed_map = HashMap::new();
-    borrowed_map.insert(&b"x"[..], 42u32);
-    assert_ser_tokens(
-        &C {
-            t: borrowed_map.clone(),
-        },
-        &[
-            Token::Map { len: None },
-            Token::Seq { len: Some(1) },
-            Token::U8(120),
-            Token::SeqEnd,
-            Token::U32(42),
-            Token::MapEnd,
-        ],
-    );
-
-    assert_de_tokens(
-        &C { t: borrowed_map },
-        &[
-            Token::Map { len: None },
-            Token::BorrowedBytes(b"x"),
-            Token::U32(42),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_enum_newtype() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct S {
-        #[serde(flatten)]
-        flat: E,
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    enum E {
-        Q(HashMap<String, String>),
-    }
-
-    let e = E::Q({
-        let mut map = HashMap::new();
-        map.insert("k".to_owned(), "v".to_owned());
-        map
-    });
-    let s = S { flat: e };
-
-    assert_tokens(
-        &s,
-        &[
-            Token::Map { len: None },
-            Token::Str("Q"),
-            Token::Map { len: Some(1) },
-            Token::Str("k"),
-            Token::Str("v"),
-            Token::MapEnd,
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_internally_tagged() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct S {
-        #[serde(flatten)]
-        x: X,
-        #[serde(flatten)]
-        y: Y,
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(tag = "typeX")]
-    enum X {
-        A { a: i32 },
-        B { b: i32 },
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(tag = "typeY")]
-    enum Y {
-        C { c: i32 },
-        D { d: i32 },
-    }
-
-    let s = S {
-        x: X::B { b: 1 },
-        y: Y::D { d: 2 },
-    };
-
-    assert_tokens(
-        &s,
-        &[
-            Token::Map { len: None },
-            Token::Str("typeX"),
-            Token::Str("B"),
-            Token::Str("b"),
-            Token::I32(1),
-            Token::Str("typeY"),
-            Token::Str("D"),
-            Token::Str("d"),
-            Token::I32(2),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_externally_tagged_enum_containing_flatten() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    enum Data {
-        A {
-            a: i32,
-            #[serde(flatten)]
-            flat: Flat,
-        },
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Flat {
-        b: i32,
-    }
-
-    let data = Data::A {
-        a: 0,
-        flat: Flat { b: 0 },
-    };
-
-    assert_tokens(
-        &data,
-        &[
-            Token::NewtypeVariant {
-                name: "Data",
-                variant: "A",
-            },
-            Token::Map { len: None },
-            Token::Str("a"),
-            Token::I32(0),
-            Token::Str("b"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_internally_tagged_enum_containing_flatten() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(tag = "t")]
-    enum Data {
-        A {
-            a: i32,
-            #[serde(flatten)]
-            flat: Flat,
-        },
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Flat {
-        b: i32,
-    }
-
-    let data = Data::A {
-        a: 0,
-        flat: Flat { b: 0 },
-    };
-
-    assert_tokens(
-        &data,
-        &[
-            Token::Map { len: None },
-            Token::Str("t"),
-            Token::Str("A"),
-            Token::Str("a"),
-            Token::I32(0),
-            Token::Str("b"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_internally_tagged_enum_new_type_with_unit() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(tag = "t")]
-    enum Data {
-        A(()),
-    }
-
-    assert_tokens(
-        &Data::A(()),
-        &[
-            Token::Map { len: Some(1) },
-            Token::Str("t"),
-            Token::Str("A"),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_adjacently_tagged_enum_containing_flatten() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(tag = "t", content = "c")]
-    enum Data {
-        A {
-            a: i32,
-            #[serde(flatten)]
-            flat: Flat,
-        },
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Flat {
-        b: i32,
-    }
-
-    let data = Data::A {
-        a: 0,
-        flat: Flat { b: 0 },
-    };
-
-    assert_tokens(
-        &data,
-        &[
-            Token::Struct {
-                name: "Data",
-                len: 2,
-            },
-            Token::Str("t"),
-            Token::Str("A"),
-            Token::Str("c"),
-            Token::Map { len: None },
-            Token::Str("a"),
-            Token::I32(0),
-            Token::Str("b"),
-            Token::I32(0),
-            Token::MapEnd,
-            Token::StructEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_untagged_enum_containing_flatten() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(untagged)]
-    enum Data {
-        A {
-            a: i32,
-            #[serde(flatten)]
-            flat: Flat,
-        },
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Flat {
-        b: i32,
-    }
-
-    let data = Data::A {
-        a: 0,
-        flat: Flat { b: 0 },
-    };
-
-    assert_tokens(
-        &data,
-        &[
-            Token::Map { len: None },
-            Token::Str("a"),
-            Token::I32(0),
-            Token::Str("b"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_untagged_enum() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Outer {
-        #[serde(flatten)]
-        inner: Inner,
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(untagged)]
-    enum Inner {
-        Variant { a: i32 },
-    }
-
-    let data = Outer {
-        inner: Inner::Variant { a: 0 },
-    };
-
-    assert_tokens(
-        &data,
-        &[
-            Token::Map { len: None },
-            Token::Str("a"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_option() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Outer {
-        #[serde(flatten)]
-        inner1: Option<Inner1>,
-        #[serde(flatten)]
-        inner2: Option<Inner2>,
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Inner1 {
-        inner1: i32,
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Inner2 {
-        inner2: i32,
-    }
-
-    assert_tokens(
-        &Outer {
-            inner1: Some(Inner1 { inner1: 1 }),
-            inner2: Some(Inner2 { inner2: 2 }),
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("inner1"),
-            Token::I32(1),
-            Token::Str("inner2"),
-            Token::I32(2),
-            Token::MapEnd,
-        ],
-    );
-
-    assert_tokens(
-        &Outer {
-            inner1: Some(Inner1 { inner1: 1 }),
-            inner2: None,
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("inner1"),
-            Token::I32(1),
-            Token::MapEnd,
-        ],
-    );
-
-    assert_tokens(
-        &Outer {
-            inner1: None,
-            inner2: Some(Inner2 { inner2: 2 }),
-        },
-        &[
-            Token::Map { len: None },
-            Token::Str("inner2"),
-            Token::I32(2),
-            Token::MapEnd,
-        ],
-    );
-
-    assert_tokens(
-        &Outer {
-            inner1: None,
-            inner2: None,
-        },
-        &[Token::Map { len: None }, Token::MapEnd],
-    );
-}
-
-#[test]
-fn test_transparent_struct() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(transparent)]
-    struct Transparent {
-        #[serde(skip)]
-        a: bool,
-        b: u32,
-        #[serde(skip)]
-        c: bool,
-        d: PhantomData<()>,
-    }
-
-    assert_tokens(
-        &Transparent {
-            a: false,
-            b: 1,
-            c: false,
-            d: PhantomData,
-        },
-        &[Token::U32(1)],
-    );
-}
-
-#[test]
-fn test_transparent_tuple_struct() {
-    #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    #[serde(transparent)]
-    struct Transparent(
-        #[serde(skip)] bool,
-        u32,
-        #[serde(skip)] bool,
-        PhantomData<()>,
-    );
-
-    assert_tokens(&Transparent(false, 1, false, PhantomData), &[Token::U32(1)]);
-}
-
-#[test]
-fn test_internally_tagged_unit_enum_with_unknown_fields() {
-    #[derive(Deserialize, PartialEq, Debug)]
-    #[serde(tag = "t")]
-    enum Data {
-        A,
-    }
-
-    let data = Data::A;
-
-    assert_de_tokens(
-        &data,
-        &[
-            Token::Map { len: None },
-            Token::Str("t"),
-            Token::Str("A"),
-            Token::Str("b"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flattened_internally_tagged_unit_enum_with_unknown_fields() {
-    #[derive(Deserialize, PartialEq, Debug)]
-    struct S {
-        #[serde(flatten)]
-        x: X,
-        #[serde(flatten)]
-        y: Y,
-    }
-
-    #[derive(Deserialize, PartialEq, Debug)]
-    #[serde(tag = "typeX")]
-    enum X {
-        A,
-    }
-
-    #[derive(Deserialize, PartialEq, Debug)]
-    #[serde(tag = "typeY")]
-    enum Y {
-        B { c: u32 },
-    }
-
-    let s = S {
-        x: X::A,
-        y: Y::B { c: 0 },
-    };
-
-    assert_de_tokens(
-        &s,
-        &[
-            Token::Map { len: None },
-            Token::Str("typeX"),
-            Token::Str("A"),
-            Token::Str("typeY"),
-            Token::Str("B"),
-            Token::Str("c"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
-}
-
-#[test]
-fn test_flatten_any_after_flatten_struct() {
-    #[derive(PartialEq, Debug)]
-    struct Any;
-
-    impl<'de> Deserialize<'de> for Any {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
-        {
-            struct AnyVisitor;
-
-            impl<'de> Visitor<'de> for AnyVisitor {
-                type Value = Any;
-
-                fn expecting(&self, _formatter: &mut fmt::Formatter) -> fmt::Result {
-                    unimplemented!()
-                }
-
-                fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
-                where
-                    M: MapAccess<'de>,
-                {
-                    while let Some((Any, Any)) = map.next_entry()? {}
-                    Ok(Any)
-                }
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let cs = ConstraintSystem::<ConstraintF>::new_ref();
+            let mut rng = test_rng();
+            for i in 0..=maxpower {
+                let mut a = F::rand(&mut rng);
+                let mut a_gadget = AF::new_variable(ark_relations::ns!(cs, "a"), || Ok(a), mode)?;
+                a_gadget.frobenius_map_in_place(i)?;
+                a.frobenius_map_in_place(i);
+
+                assert_eq!(a_gadget.value()?, a);
             }
 
-            deserializer.deserialize_any(AnyVisitor)
+            assert!(cs.is_satisfied().unwrap());
         }
+        Ok(())
     }
+}
 
-    #[derive(Deserialize, PartialEq, Debug)]
-    struct Outer {
-        #[serde(flatten)]
-        inner: Inner,
-        #[serde(flatten)]
-        extra: Any,
-    }
-
-    #[derive(Deserialize, PartialEq, Debug)]
-    struct Inner {
-        inner: i32,
-    }
-
-    let s = Outer {
-        inner: Inner { inner: 0 },
-        extra: Any,
+pub mod curves {
+    use ark_ec::{
+        short_weierstrass::Projective as SWProjective, twisted_edwards::Projective as TEProjective,
+        CurveGroup, Group,
     };
+    use ark_ff::{BitIteratorLE, Field, One, PrimeField};
+    use ark_relations::r1cs::{ConstraintSystem, SynthesisError};
+    use ark_std::{test_rng, vec::Vec, UniformRand};
 
-    assert_de_tokens(
-        &s,
-        &[
-            Token::Map { len: None },
-            Token::Str("inner"),
-            Token::I32(0),
-            Token::MapEnd,
-        ],
-    );
+    use ark_r1cs_std::prelude::*;
+
+    pub fn group_test<C, ConstraintF, GG>() -> Result<(), SynthesisError>
+    where
+        C: CurveGroup,
+        ConstraintF: Field,
+        GG: CurveVar<C, ConstraintF>,
+        for<'a> &'a GG: GroupOpsBounds<'a, C, GG>,
+    {
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let cs = ConstraintSystem::<ConstraintF>::new_ref();
+
+            let mut rng = test_rng();
+            let a_native = C::rand(&mut rng);
+            let b_native = C::rand(&mut rng);
+            let a = GG::new_variable(ark_relations::ns!(cs, "generate_a"), || Ok(a_native), mode)
+                .unwrap();
+            let b = GG::new_variable(ark_relations::ns!(cs, "generate_b"), || Ok(b_native), mode)
+                .unwrap();
+
+            let zero = GG::zero();
+            assert_eq!(zero.value()?, zero.value()?);
+
+            // a == a
+            assert_eq!(a.value()?, a.value()?);
+            // a + 0 = a
+            assert_eq!((&a + &zero).value()?, a.value()?);
+            // a - 0 = a
+            assert_eq!((&a - &zero).value()?, a.value()?);
+            // a - a = 0
+            assert_eq!((&a - &a).value()?, zero.value()?);
+            // a + b = b + a
+            let a_b = &a + &b;
+            let b_a = &b + &a;
+            assert_eq!(a_b.value()?, b_a.value()?);
+            a_b.enforce_equal(&b_a)?;
+            assert!(cs.is_satisfied().unwrap());
+
+            // (a + b) + a = a + (b + a)
+            let ab_a = &a_b + &a;
+            let a_ba = &a + &b_a;
+            assert_eq!(ab_a.value()?, a_ba.value()?);
+            ab_a.enforce_equal(&a_ba)?;
+            assert!(cs.is_satisfied().unwrap());
+
+            // a.double() = a + a
+            let a_a = &a + &a;
+            let mut a2 = a.clone();
+            a2.double_in_place()?;
+            a2.enforce_equal(&a_a)?;
+            assert_eq!(a2.value()?, a_native.double());
+            assert_eq!(a_a.value()?, a_native.double());
+            assert_eq!(a2.value()?, a_a.value()?);
+            assert!(cs.is_satisfied().unwrap());
+
+            // b.double() = b + b
+            let mut b2 = b.clone();
+            b2.double_in_place()?;
+            let b_b = &b + &b;
+            b2.enforce_equal(&b_b)?;
+            assert!(cs.is_satisfied().unwrap());
+            assert_eq!(b2.value()?, b_b.value()?);
+
+            let _ = a.to_bytes()?;
+            assert!(cs.is_satisfied().unwrap());
+            let _ = a.to_non_unique_bytes()?;
+            assert!(cs.is_satisfied().unwrap());
+
+            let _ = b.to_bytes()?;
+            let _ = b.to_non_unique_bytes()?;
+            if !cs.is_satisfied().unwrap() {
+                panic!(
+                    "Unsatisfied in mode {:?}.\n{:?}",
+                    mode,
+                    cs.which_is_unsatisfied().unwrap()
+                );
+            }
+            assert!(cs.is_satisfied().unwrap());
+
+            let modulus = <C::ScalarField as PrimeField>::MODULUS.as_ref().to_vec();
+            let mut max = modulus.clone();
+            for limb in &mut max {
+                *limb = u64::MAX;
+            }
+
+            let modulus_num_bits_mod_64 = <C::ScalarField as PrimeField>::MODULUS_BIT_SIZE % 64;
+            if modulus_num_bits_mod_64 != 0 {
+                *max.last_mut().unwrap() >>= 64 - modulus_num_bits_mod_64;
+            }
+            let scalars = [
+                C::ScalarField::rand(&mut rng)
+                    .into_bigint()
+                    .as_ref()
+                    .to_vec(),
+                vec![u64::rand(&mut rng)],
+                (-C::ScalarField::one()).into_bigint().as_ref().to_vec(),
+                <C::ScalarField as PrimeField>::MODULUS.as_ref().to_vec(),
+                max,
+                vec![0; 50],
+                vec![1000012341233u64; 36],
+            ];
+
+            let mut input = vec![];
+
+            // Check scalar mul with edge cases
+            for scalar in scalars.iter() {
+                let native_result = a_native.mul_bigint(scalar);
+                let native_result = native_result.into_affine();
+
+                let scalar_bits: Vec<bool> = BitIteratorLE::new(&scalar).collect();
+                input =
+                    Vec::new_witness(ark_relations::ns!(cs, "bits"), || Ok(scalar_bits)).unwrap();
+                let result = a
+                    .scalar_mul_le(input.iter())
+                    .expect(&format!("Mode: {:?}", mode));
+                let result_val = result.value()?.into_affine();
+                assert_eq!(
+                    result_val, native_result,
+                    "gadget & native values are diff. after scalar mul {:?}",
+                    scalar,
+                );
+                assert!(cs.is_satisfied().unwrap());
+            }
+
+            let result = zero.scalar_mul_le(input.iter())?;
+            let result_val = result.value()?.into_affine();
+            result.enforce_equal(&zero)?;
+            assert_eq!(
+                result_val,
+                C::zero().into_affine(),
+                "gadget & native values are diff. after scalar mul of zero"
+            );
+            assert!(cs.is_satisfied().unwrap());
+        }
+        Ok(())
+    }
+
+    pub fn sw_test<P, GG>() -> Result<(), SynthesisError>
+    where
+        P: ark_ec::models::short_weierstrass::SWCurveConfig,
+        GG: CurveVar<SWProjective<P>, <P::BaseField as Field>::BasePrimeField>,
+        for<'a> &'a GG: GroupOpsBounds<'a, SWProjective<P>, GG>,
+    {
+        group_test::<SWProjective<P>, _, GG>()?;
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let mut rng = test_rng();
+
+            let cs = ConstraintSystem::<<P::BaseField as Field>::BasePrimeField>::new_ref();
+
+            let a = SWProjective::<P>::rand(&mut rng);
+            let b = SWProjective::<P>::rand(&mut rng);
+            let a_affine = a.into_affine();
+            let b_affine = b.into_affine();
+
+            let ns = ark_relations::ns!(cs, "allocating variables");
+            let mut gadget_a = GG::new_variable(cs.clone(), || Ok(a), mode)?;
+            let gadget_b = GG::new_variable(cs.clone(), || Ok(b), mode)?;
+            let zero = GG::zero();
+            drop(ns);
+            assert_eq!(gadget_a.value()?.into_affine().x, a_affine.x);
+            assert_eq!(gadget_a.value()?.into_affine().y, a_affine.y);
+            assert_eq!(gadget_b.value()?.into_affine().x, b_affine.x);
+            assert_eq!(gadget_b.value()?.into_affine().y, b_affine.y);
+            assert_eq!(cs.which_is_unsatisfied().unwrap(), None);
+
+            // Check addition
+            let ab = a + &b;
+            let ab_affine = ab.into_affine();
+            let gadget_ab = &gadget_a + &gadget_b;
+            let gadget_ba = &gadget_b + &gadget_a;
+            gadget_ba.enforce_equal(&gadget_ab)?;
+
+            let ab_val = gadget_ab.value()?.into_affine();
+            assert_eq!(ab_val, ab_affine, "Result of addition is unequal");
+            assert!(cs.is_satisfied().unwrap());
+
+            let gadget_a_zero = &gadget_a + &zero;
+            gadget_a_zero.enforce_equal(&gadget_a)?;
+
+            // Check doubling
+            let aa = &a.double();
+            let aa_affine = aa.into_affine();
+            gadget_a.double_in_place()?;
+            let aa_val = gadget_a.value()?.into_affine();
+            assert_eq!(
+                aa_val, aa_affine,
+                "Gadget and native values are unequal after double."
+            );
+            assert!(cs.is_satisfied().unwrap());
+
+            if !cs.is_satisfied().unwrap() {
+                panic!(
+                    "Unsatisfied in mode {:?}.\n{:?}",
+                    mode,
+                    cs.which_is_unsatisfied().unwrap()
+                );
+            }
+
+            assert!(cs.is_satisfied().unwrap());
+        }
+        Ok(())
+    }
+
+    pub fn te_test<P, GG>() -> Result<(), SynthesisError>
+    where
+        P: ark_ec::twisted_edwards::TECurveConfig,
+        GG: CurveVar<TEProjective<P>, <P::BaseField as Field>::BasePrimeField>,
+        for<'a> &'a GG: GroupOpsBounds<'a, TEProjective<P>, GG>,
+    {
+        group_test::<TEProjective<P>, _, GG>()?;
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let mut rng = test_rng();
+
+            let cs = ConstraintSystem::<<P::BaseField as Field>::BasePrimeField>::new_ref();
+
+            let a = TEProjective::<P>::rand(&mut rng);
+            let b = TEProjective::<P>::rand(&mut rng);
+            let a_affine = a.into_affine();
+            let b_affine = b.into_affine();
+
+            let ns = ark_relations::ns!(cs, "allocating variables");
+            let mut gadget_a = GG::new_variable(cs.clone(), || Ok(a), mode)?;
+            let gadget_b = GG::new_variable(cs.clone(), || Ok(b), mode)?;
+            drop(ns);
+
+            assert_eq!(gadget_a.value()?.into_affine().x, a_affine.x);
+            assert_eq!(gadget_a.value()?.into_affine().y, a_affine.y);
+            assert_eq!(gadget_b.value()?.into_affine().x, b_affine.x);
+            assert_eq!(gadget_b.value()?.into_affine().y, b_affine.y);
+            assert_eq!(cs.which_is_unsatisfied()?, None);
+
+            // Check addition
+            let ab = a + &b;
+            let ab_affine = ab.into_affine();
+            let gadget_ab = &gadget_a + &gadget_b;
+            let gadget_ba = &gadget_b + &gadget_a;
+            gadget_ba.enforce_equal(&gadget_ab)?;
+
+            let ab_val = gadget_ab.value()?.into_affine();
+            assert_eq!(ab_val, ab_affine, "Result of addition is unequal");
+            assert!(cs.is_satisfied().unwrap());
+
+            // Check doubling
+            let aa = &a.double();
+            let aa_affine = aa.into_affine();
+            gadget_a.double_in_place()?;
+            let aa_val = gadget_a.value()?.into_affine();
+            assert_eq!(
+                aa_val, aa_affine,
+                "Gadget and native values are unequal after double."
+            );
+            assert!(cs.is_satisfied().unwrap());
+
+            if !cs.is_satisfied().unwrap() {
+                panic!(
+                    "Unsatisfied in mode {:?}.\n{:?}",
+                    mode,
+                    cs.which_is_unsatisfied().unwrap()
+                );
+            }
+
+            assert!(cs.is_satisfied().unwrap());
+        }
+        Ok(())
+    }
 }
 
-#[test]
-fn test_expecting_message() {
-    #[derive(Deserialize, PartialEq, Debug)]
-    #[serde(expecting = "something strange...")]
-    struct Unit;
+pub mod pairing {
+    use ark_ec::{
+        pairing::{Pairing, PairingOutput},
+        AffineRepr, CurveGroup,
+    };
+    use ark_ff::{BitIteratorLE, Field, PrimeField};
+    use ark_r1cs_std::prelude::*;
+    use ark_relations::r1cs::{ConstraintSystem, SynthesisError};
+    use ark_std::{test_rng, vec::Vec, UniformRand};
 
-    #[derive(Deserialize)]
-    #[serde(expecting = "something strange...")]
-    struct Newtype(bool);
+    #[allow(dead_code)]
+    pub fn bilinearity_test<E: Pairing, P: PairingVar<E>>() -> Result<(), SynthesisError>
+    where
+        for<'a> &'a P::G1Var: GroupOpsBounds<'a, E::G1, P::G1Var>,
+        for<'a> &'a P::G2Var: GroupOpsBounds<'a, E::G2, P::G2Var>,
+        for<'a> &'a P::GTVar: FieldOpsBounds<'a, E::TargetField, P::GTVar>,
+    {
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let cs = ConstraintSystem::<<E::G1 as CurveGroup>::BaseField>::new_ref();
 
-    #[derive(Deserialize)]
-    #[serde(expecting = "something strange...")]
-    struct Tuple(u32, bool);
+            let mut rng = test_rng();
+            let a = E::G1::rand(&mut rng);
+            let b = E::G2::rand(&mut rng);
+            let s = E::ScalarField::rand(&mut rng);
 
-    #[derive(Deserialize)]
-    #[serde(expecting = "something strange...")]
-    struct Struct {
-        question: String,
-        answer: u32,
+            let mut sa = a;
+            sa *= s;
+            let mut sb = b;
+            sb *= s;
+
+            let a_g = P::G1Var::new_variable(cs.clone(), || Ok(a.into_affine()), mode)?;
+            let b_g = P::G2Var::new_variable(cs.clone(), || Ok(b.into_affine()), mode)?;
+            let sa_g = P::G1Var::new_variable(cs.clone(), || Ok(sa.into_affine()), mode)?;
+            let sb_g = P::G2Var::new_variable(cs.clone(), || Ok(sb.into_affine()), mode)?;
+
+            let mut _preparation_num_constraints = cs.num_constraints();
+            let a_prep_g = P::prepare_g1(&a_g)?;
+            let b_prep_g = P::prepare_g2(&b_g)?;
+            _preparation_num_constraints = cs.num_constraints() - _preparation_num_constraints;
+
+            let sa_prep_g = P::prepare_g1(&sa_g)?;
+            let sb_prep_g = P::prepare_g2(&sb_g)?;
+
+            let (ans1_g, ans1_n) = {
+                let _ml_constraints = cs.num_constraints();
+                let ml_g = P::miller_loop(&[sa_prep_g], &[b_prep_g.clone()])?;
+                let _fe_constraints = cs.num_constraints();
+                let ans_g = P::final_exponentiation(&ml_g)?;
+                let ans_n = E::pairing(sa, b);
+                (ans_g, ans_n)
+            };
+
+            let (ans2_g, ans2_n) = {
+                let ans_g = P::pairing(a_prep_g.clone(), sb_prep_g)?;
+                let ans_n = E::pairing(a, sb);
+                (ans_g, ans_n)
+            };
+
+            let (ans3_g, ans3_n) = {
+                let s_iter = BitIteratorLE::without_trailing_zeros(s.into_bigint())
+                    .map(Boolean::constant)
+                    .collect::<Vec<_>>();
+
+                let mut ans_g = P::pairing(a_prep_g, b_prep_g)?;
+                let mut ans_n = E::pairing(a, b);
+                ans_n = PairingOutput(ans_n.0.pow(s.into_bigint()));
+                ans_g = ans_g.pow_le(&s_iter)?;
+
+                (ans_g, ans_n)
+            };
+
+            ans1_g.enforce_equal(&ans2_g)?;
+            ans2_g.enforce_equal(&ans3_g)?;
+
+            assert_eq!(ans1_g.value()?, ans1_n.0, "Failed native test 1");
+            assert_eq!(ans2_g.value()?, ans2_n.0, "Failed native test 2");
+            assert_eq!(ans3_g.value()?, ans3_n.0, "Failed native test 3");
+
+            assert_eq!(ans1_n.0, ans2_n.0, "Failed ans1_native == ans2_native");
+            assert_eq!(ans2_n.0, ans3_n.0, "Failed ans2_native == ans3_native");
+            assert_eq!(ans1_g.value()?, ans3_g.value()?, "Failed ans1 == ans3");
+            assert_eq!(ans1_g.value()?, ans2_g.value()?, "Failed ans1 == ans2");
+            assert_eq!(ans2_g.value()?, ans3_g.value()?, "Failed ans2 == ans3");
+
+            if !cs.is_satisfied().unwrap() {
+                panic!(
+                    "Unsatisfied in mode {:?}.\n{:?}",
+                    mode,
+                    cs.which_is_unsatisfied().unwrap()
+                );
+            }
+
+            assert!(cs.is_satisfied().unwrap(), "cs is not satisfied");
+        }
+        Ok(())
     }
 
-    assert_de_tokens_error::<Unit>(
-        &[Token::Str("Unit")],
-        r#"invalid type: string "Unit", expected something strange..."#,
-    );
+    #[allow(dead_code)]
+    pub fn g2_prepare_consistency_test<E: Pairing, P: PairingVar<E>>() -> Result<(), SynthesisError>
+    {
+        let test_g2_elem = E::G2Affine::generator();
+        let test_g2_prepared = E::G2Prepared::from(test_g2_elem.clone());
 
-    assert_de_tokens_error::<Newtype>(
-        &[Token::Str("Newtype")],
-        r#"invalid type: string "Newtype", expected something strange..."#,
-    );
+        let modes = [
+            AllocationMode::Input,
+            AllocationMode::Witness,
+            AllocationMode::Constant,
+        ];
+        for &mode in &modes {
+            let cs = ConstraintSystem::new_ref();
 
-    assert_de_tokens_error::<Tuple>(
-        &[Token::Str("Tuple")],
-        r#"invalid type: string "Tuple", expected something strange..."#,
-    );
+            let test_g2_gadget =
+                P::G2Var::new_witness(cs.clone(), || Ok(test_g2_elem.clone())).unwrap();
 
-    assert_de_tokens_error::<Struct>(
-        &[Token::Str("Struct")],
-        r#"invalid type: string "Struct", expected something strange..."#,
-    );
-}
+            let prepared_test_g2_gadget = P::prepare_g2(&test_g2_gadget).unwrap();
+            let allocated_test_g2_gadget =
+                P::G2PreparedVar::new_variable(cs.clone(), || Ok(test_g2_prepared.clone()), mode)
+                    .unwrap();
 
-#[test]
-fn test_expecting_message_externally_tagged_enum() {
-    #[derive(Deserialize)]
-    #[serde(expecting = "something strange...")]
-    enum Enum {
-        ExternallyTagged,
+            let prepared_test_g2_gadget_bytes = prepared_test_g2_gadget.to_bytes().unwrap();
+            let allocated_test_g2_gadget_bytes = allocated_test_g2_gadget.to_bytes().unwrap();
+
+            prepared_test_g2_gadget_bytes
+                .enforce_equal(&allocated_test_g2_gadget_bytes)
+                .unwrap();
+
+            assert!(cs.is_satisfied().unwrap(), "cs is not satisfied");
+        }
+        Ok(())
     }
-
-    assert_de_tokens_error::<Enum>(
-        &[Token::Str("ExternallyTagged")],
-        r#"invalid type: string "ExternallyTagged", expected something strange..."#,
-    );
-
-    // Check that #[serde(expecting = "...")] doesn't affect variant identifier error message
-    assert_de_tokens_error::<Enum>(
-        &[Token::Enum { name: "Enum" }, Token::Unit],
-        r#"invalid type: unit value, expected variant identifier"#,
-    );
-}
-
-#[test]
-fn test_expecting_message_internally_tagged_enum() {
-    #[derive(Deserialize)]
-    #[serde(tag = "tag")]
-    #[serde(expecting = "something strange...")]
-    enum Enum {
-        InternallyTagged,
-    }
-
-    assert_de_tokens_error::<Enum>(
-        &[Token::Str("InternallyTagged")],
-        r#"invalid type: string "InternallyTagged", expected something strange..."#,
-    );
-
-    // Check that #[serde(expecting = "...")] doesn't affect variant identifier error message
-    assert_de_tokens_error::<Enum>(
-        &[Token::Map { len: None }, Token::Str("tag"), Token::Unit],
-        r#"invalid type: unit value, expected variant identifier"#,
-    );
-}
-
-#[test]
-fn test_expecting_message_adjacently_tagged_enum() {
-    #[derive(Deserialize)]
-    #[serde(tag = "tag", content = "content")]
-    #[serde(expecting = "something strange...")]
-    enum Enum {
-        AdjacentlyTagged,
-    }
-
-    assert_de_tokens_error::<Enum>(
-        &[Token::Str("AdjacentlyTagged")],
-        r#"invalid type: string "AdjacentlyTagged", expected something strange..."#,
-    );
-
-    assert_de_tokens_error::<Enum>(
-        &[Token::Map { len: None }, Token::Unit],
-        r#"invalid type: unit value, expected "tag", "content", or other ignored fields"#,
-    );
-
-    // Check that #[serde(expecting = "...")] doesn't affect variant identifier error message
-    assert_de_tokens_error::<Enum>(
-        &[Token::Map { len: None }, Token::Str("tag"), Token::Unit],
-        r#"invalid type: unit value, expected variant identifier"#,
-    );
-}
-
-#[test]
-fn test_expecting_message_untagged_tagged_enum() {
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    #[serde(expecting = "something strange...")]
-    enum Enum {
-        Untagged,
-    }
-
-    assert_de_tokens_error::<Enum>(&[Token::Str("Untagged")], r#"something strange..."#);
-}
-
-#[test]
-fn test_expecting_message_identifier_enum() {
-    #[derive(Deserialize)]
-    #[serde(field_identifier)]
-    #[serde(expecting = "something strange...")]
-    enum FieldEnum {
-        Field,
-    }
-
-    #[derive(Deserialize)]
-    #[serde(variant_identifier)]
-    #[serde(expecting = "something strange...")]
-    enum VariantEnum {
-        Variant,
-    }
-
-    assert_de_tokens_error::<FieldEnum>(
-        &[Token::Unit],
-        r#"invalid type: unit value, expected something strange..."#,
-    );
-
-    assert_de_tokens_error::<FieldEnum>(
-        &[
-            Token::Enum { name: "FieldEnum" },
-            Token::Str("Unknown"),
-            Token::None,
-        ],
-        r#"invalid type: map, expected something strange..."#,
-    );
-
-    assert_de_tokens_error::<VariantEnum>(
-        &[Token::Unit],
-        r#"invalid type: unit value, expected something strange..."#,
-    );
-
-    assert_de_tokens_error::<VariantEnum>(
-        &[
-            Token::Enum {
-                name: "VariantEnum",
-            },
-            Token::Str("Unknown"),
-            Token::None,
-        ],
-        r#"invalid type: map, expected something strange..."#,
-    );
 }

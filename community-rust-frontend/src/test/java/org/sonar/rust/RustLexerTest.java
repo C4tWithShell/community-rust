@@ -66,9 +66,15 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "  let Some(f1) = pieces.next() else {\n" +
-      "        return Err(de::Error::invalid_length(0, &\"2\"));\n" +
-      "    };";
+    String sexpr = "pub fn f<AF>() -> int32\n" +
+      "    where\n" +
+      "\n" +
+      "    //for<'a> &'a AF: FieldOpsBounds<'a, F, AF>,\n" +
+      "            for<'a> AF: FieldOpsBounds<'a, F, AF>,\n" +
+      "{\n" +
+      "    let modes = 42;\n" +
+      "    42\n" +
+      "}";
 
     // Print out Ast node content for debugging purpose
 

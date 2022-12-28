@@ -183,6 +183,24 @@ public class TypeTest {
   }
 
   @Test
+  public void testReferenceType() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.REFERENCE_TYPE))
+      .matches("&i32")
+      .matches("&(i32, u8)")
+      .matches("&Circle")
+      .notMatches("&Circle{")
+      .matches("&[u8]")
+      .matches("&Token![#]")
+      .matches("&'a i32")
+      .matches("&mut Circle")
+      .matches("&'b mut Circle")
+      .matches("&'a AF")
+
+
+    ;
+  }
+
+  @Test
   public void testType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE))
       .matches("extern \"C\" fn(this: *mut iasset) -> i32")
@@ -213,6 +231,8 @@ public class TypeTest {
       .matches("impl Future<Output = ()> + 'm")
       .matches("::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char)>")
       .matches("::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char, ...)>")
+      .matches("&'a AF")
+
 
     ;
   }
