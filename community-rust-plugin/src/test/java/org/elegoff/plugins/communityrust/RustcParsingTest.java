@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.fest.assertions.Assertions;
-import org.junit.Before;
 import org.junit.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
@@ -30,8 +29,8 @@ public class RustcParsingTest {
   private SensorContextTester tester;
   private RustSensor sensor;
 
-  @Before
-  public void init() {
+
+  public void reinit() {
     tester = SensorContextTester.create(dir);
 
     MapSettings settings = CommunityRustPluginConfigurationTest.getDefaultSettings();
@@ -67,6 +66,7 @@ public class RustcParsingTest {
 
 
   private void checkme(String testfile) throws IOException {
+    reinit();
     DefaultInputFile inputFile = executeSensorOnSingleFile(testfile);
     verify(fileLinesContext).save();
     Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
@@ -75,6 +75,7 @@ public class RustcParsingTest {
   @Test
   public void DebugInfoTest() throws IOException {
     checkme("debuginfo/associated-types.rs");
+    checkme("debuginfo/borrowed-enums.rs");
   }
 
 
