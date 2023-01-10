@@ -78,5 +78,13 @@ public class RustcParsingTest {
     checkme("debuginfo/borrowed-enums.rs");
   }
 
+  @Test
+  public void UITest() throws IOException {
+    checkme("ui/cfg/cfg-panic.rs");
+    checkme("ui/cfg/cfg-panic-abort.rs");
+    checkme("ui/fmt/format-args-capture.rs");
+    checkme("ui/issues/issue-68696-catch-during-unwind.rs");
+  }
+
 
 }
