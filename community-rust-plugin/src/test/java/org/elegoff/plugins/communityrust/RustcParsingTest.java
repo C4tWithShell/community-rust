@@ -87,6 +87,7 @@ public class RustcParsingTest {
   public void UITest() throws IOException {
     checkme("ui/cfg/cfg-panic.rs");
     checkme("ui/cfg/cfg-panic-abort.rs");
+    checkme("ui/feature-gates/feature-gate-cfg-target-has-atomic-equal-alignment.rs");
     checkme("ui/fmt/format-args-capture.rs");
     checkme("ui/issues/issue-68696-catch-during-unwind.rs");
   }
