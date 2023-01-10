@@ -79,6 +79,11 @@ public class RustcParsingTest {
   }
 
   @Test
+  public void RunMakeFulldepsTest() throws IOException {
+    checkme("run-make-fulldeps/atomic-lock-free/atomic_lock_free.rs");
+  }
+
+  @Test
   public void UITest() throws IOException {
     checkme("ui/cfg/cfg-panic.rs");
     checkme("ui/cfg/cfg-panic-abort.rs");
