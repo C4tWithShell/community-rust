@@ -86,10 +86,12 @@ public class RustcParsingTest {
   @Test
   public void UITest() throws IOException {
     checkme("ui/cfg/cfg-panic.rs");
+
     checkme("ui/borrowck/issue-88434-minimal-example.rs");
     checkme("ui/borrowck/issue-88434-removal-index-should-be-less.rs");
     checkme("ui/const-generics/generic_const_exprs/issue-85848.rs");
     checkme("ui/const-generics/issues/issue-79674.rs");
+
     checkme("ui/cfg/cfg-panic-abort.rs");
     checkme("ui/feature-gates/feature-gate-cfg-target-has-atomic-equal-alignment.rs");
     checkme("ui/fmt/format-args-capture.rs");
