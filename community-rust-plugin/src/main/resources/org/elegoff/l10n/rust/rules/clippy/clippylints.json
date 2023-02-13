@@ -361,7 +361,7 @@
   },
   {
     "key": "clippy::dbg_macro",
-    "name": "Checks for usage of dbg!() macro.",
+    "name": "Checks for usage of the [`dbg!`](https://doc.rust-lang.org/std/macro.dbg.html) macro.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#dbg_macro"
   },
   {
@@ -425,11 +425,6 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derivable_impls"
   },
   {
-    "key": "clippy::derive_hash_xor_eq",
-    "name": "Checks for deriving `Hash` but implementing `PartialEq` explicitly or vice versa.",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derive_hash_xor_eq"
-  },
-  {
     "key": "clippy::derive_ord_xor_partial_ord",
     "name": "Checks for deriving `Ord` but implementing `PartialOrd` explicitly or vice versa.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derive_ord_xor_partial_ord"
@@ -438,6 +433,11 @@
     "key": "clippy::derive_partial_eq_without_eq",
     "name": "Checks for types that derive `PartialEq` and could implement `Eq`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derive_partial_eq_without_eq"
+  },
+  {
+    "key": "clippy::derived_hash_with_manual_eq",
+    "name": "Checks for deriving `Hash` but implementing `PartialEq` explicitly or vice versa.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#derived_hash_with_manual_eq"
   },
   {
     "key": "clippy::disallowed_macros",
@@ -668,6 +668,11 @@
     "key": "clippy::extra_unused_lifetimes",
     "name": "Checks for lifetimes in generics that are never used anywhere else.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#extra_unused_lifetimes"
+  },
+  {
+    "key": "clippy::extra_unused_type_parameters",
+    "name": "Checks for type parameters in generics that are never used anywhere else.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#extra_unused_type_parameters"
   },
   {
     "key": "clippy::fallible_impl_from",
@@ -1565,6 +1570,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#multiple_inherent_impl"
   },
   {
+    "key": "clippy::multiple_unsafe_ops_per_block",
+    "name": "Checks for `unsafe` blocks that contain more than one unsafe operation.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#multiple_unsafe_ops_per_block"
+  },
+  {
     "key": "clippy::must_use_candidate",
     "name": "Checks for public functions that have no `#[must_use]` attribute, but return something not already m",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#must_use_candidate"
@@ -2151,7 +2161,7 @@
   },
   {
     "key": "clippy::reversed_empty_ranges",
-    "name": "Checks for range expressions `x..y` where both `x` and `y` are constant and `x` is greater or equal",
+    "name": "Checks for range expressions `x..y` where both `x` and `y` are constant and `x` is greater to `y`. A",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#reversed_empty_ranges"
   },
   {
@@ -2393,6 +2403,11 @@
     "key": "clippy::suspicious_assignment_formatting",
     "name": "Checks for use of the non-existent `=*`, `=!` and `=-` operators.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_assignment_formatting"
+  },
+  {
+    "key": "clippy::suspicious_command_arg_space",
+    "name": "Checks for `Command::arg()` invocations that look like they should be multiple arguments instead, s",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_command_arg_space"
   },
   {
     "key": "clippy::suspicious_else_formatting",
