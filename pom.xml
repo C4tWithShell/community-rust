@@ -64,19 +64,19 @@
         <sonar.version>9.7.1.62043</sonar.version>
         <sonar.plugin.api.version>9.11.0.290</sonar.plugin.api.version>
 
-        <!-- Advertise minimal required JRE version -->
-        <jre.min.version>11</jre.min.version>
+      <!-- Advertise minimal required JRE version -->
+      <jre.min.version>11</jre.min.version>
 
-        <!-- JDK Build versions -->
-        <jdk.min.version>11</jdk.min.version>
+      <!-- JDK Build versions -->
+      <jdk.min.version>11</jdk.min.version>
         <jdk.source.version>11</jdk.source.version>
         <jdk.target.version>11</jdk.target.version>
 
         <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
-        <mockito.version>4.8.0</mockito.version>
+        <mockito.version>4.11.0</mockito.version>
         <assertj-core.version>3.23.1</assertj-core.version>
-        <jacoco.version>0.8.7</jacoco.version>
+        <jacoco.version>0.8.8</jacoco.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
@@ -95,7 +95,7 @@
     <dependencyManagement>
         <dependencies>
             <!-- compile dependencies -->
-            <dependency>
+          <dependency>
                 <groupId>org.sonarsource.sslr</groupId>
                 <artifactId>sslr-core</artifactId>
                 <version>${sslr.version}</version>
@@ -171,7 +171,6 @@
             <groupId>org.easytesting</groupId>
             <artifactId>fest-assert</artifactId>
           </exclusion>
-            <!-- junit 4.12 depends on more recent hamcrest -->
             <exclusion>
             <artifactId>hamcrest-all</artifactId>
             <groupId>org.hamcrest</groupId>
@@ -229,8 +228,8 @@
                 <version>1.10.12</version>
             </dependency>
 
-            <!-- test dependencies -->
-            <dependency>
+          <!-- test dependencies -->
+          <dependency>
                 <groupId>org.jacoco</groupId>
                 <artifactId>org.jacoco.agent</artifactId>
                 <version>${jacoco.version}</version>
