@@ -54,15 +54,15 @@ public class ClippySensor implements Sensor {
   private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
   private static final int MAX_LOGGED_FILE_NAMES = 20;
 
-  private static FileAdjustor fileAdjustor;
+  private FileAdjustor fileAdjustor;
 
   @CheckForNull
-  private static InputFile inputFile(SensorContext context, String filePath) {
+  private  InputFile inputFile(SensorContext context, String filePath) {
     String relativePath = fileAdjustor.relativePath(filePath);
     return context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(relativePath));
   }
 
-  private static void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
+  private  void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
     if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
       LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
       return;
