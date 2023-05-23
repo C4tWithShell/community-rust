@@ -28,7 +28,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Paths;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -46,16 +45,15 @@ public class ClippyJsonReportReader {
   private static final String VISIT_MSG = "for further information visit";
   private static final String MESSAGE = "message";
   private final JSONParser jsonParser = new JSONParser();
-  private final String projectDir;
+
   private final Consumer<ClippyIssue> consumer;
 
-  private ClippyJsonReportReader(String projectDir, Consumer<ClippyIssue> consumer) {
-    this.projectDir = projectDir;
+  private ClippyJsonReportReader(Consumer<ClippyIssue> consumer) {
     this.consumer = consumer;
   }
 
-  static void read(InputStream in, String projectDir, Consumer<ClippyIssue> consumer) throws IOException, ParseException {
-    new ClippyJsonReportReader(projectDir, consumer).read(in);
+  static void read(InputStream in,  Consumer<ClippyIssue> consumer) throws IOException, ParseException {
+    new ClippyJsonReportReader(consumer).read(in);
   }
 
   private static String suggestedMessage(JSONObject obj) {
@@ -113,6 +111,7 @@ public class ClippyJsonReportReader {
     }
   }
 
+
   private void onResult(JSONObject result) {
 
     var clippyIssue = new ClippyIssue();
@@ -132,7 +131,7 @@ public class ClippyJsonReportReader {
       return; // Exit silently when JSON is not compliant
 
     JSONObject span = (JSONObject) spans.get(0);
-    clippyIssue.filePath = Paths.get(this.projectDir, (String) span.get("file_name")).toString();
+    clippyIssue.filePath = (String) span.get("file_name");
     clippyIssue.message = (String) message.get(MESSAGE);
     JSONArray children = (JSONArray) message.get("children");
 
