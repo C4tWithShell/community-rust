@@ -13,7 +13,7 @@ manage code quality.
 |SonarQube | Rust plugin  |
 |----------|--------------|
 | > 9.9 LTS| not tested   | 
-| 9.9 LTS  | 0.2.0        |
+| 9.9 LTS  | 0.2.1        |
 | 8.9 - 9.9| 0.1.0        |
 | <8.9     | not supported|
 
