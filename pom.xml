@@ -88,8 +88,8 @@
         <commons.io.version>2.11.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.13.2</junit.version>
-        <sonar-analyzer-commons.version>2.1.0.1111</sonar-analyzer-commons.version>
-        <sonar.orchestrator.version>3.40.0.183</sonar.orchestrator.version>
+        <sonar-analyzer-commons.version>2.5.0.1358</sonar-analyzer-commons.version>
+        <sonar.orchestrator.version>3.41.0.295</sonar.orchestrator.version>
         <woodstox.version>6.2.7</woodstox.version>
 
     </properties>
