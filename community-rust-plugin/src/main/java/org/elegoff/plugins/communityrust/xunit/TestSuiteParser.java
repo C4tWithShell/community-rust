@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import javax.xml.stream.XMLStreamException;
 import org.codehaus.staxmate.in.ElementFilter;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
@@ -39,7 +40,7 @@ public class TestSuiteParser implements StaxParser.XmlStreamHandler {
     Double time = parseTime(testCaseCursor);
     TestCaseStatus status = TestCaseStatus.OK;
     String stack = "";
-    String msg = "";
+    Optional<String> msg = Optional.empty();
 
     String file = testCaseCursor.getAttrValue("file");
     String testClassName = testCaseCursor.getAttrValue("classname");
@@ -52,15 +53,19 @@ public class TestSuiteParser implements StaxParser.XmlStreamHandler {
         status = TestCaseStatus.SKIPPED;
       } else if (TestCaseStatus.FAILURE.equals(testCaseStatus)) {
         status = TestCaseStatus.FAILURE;
-        msg = getExpectedAttribute(childCursor, "message");
+        msg = getOptionalAttribute(childCursor, "message");
         stack = childCursor.collectDescendantText();
       } else if (TestCaseStatus.ERROR.equals(testCaseStatus)) {
         status = TestCaseStatus.ERROR;
-        msg = getExpectedAttribute(childCursor, "message");
+        msg = getOptionalAttribute(childCursor, "message");
         stack = childCursor.collectDescendantText();
       }
     }
-    return new TestCase(name, status, stack, msg, time.intValue(), file, testClassName);
+    String message ="";
+    if (msg.isPresent()){
+      message=msg.get();
+    }
+    return new TestCase(name, status, stack, message, time.intValue(), file, testClassName);
   }
 
   private static double parseTime(SMInputCursor testCaseCursor) throws XMLStreamException {
@@ -80,6 +85,14 @@ public class TestSuiteParser implements StaxParser.XmlStreamHandler {
       throw new IllegalStateException(String.format("Missing attribute '%s' at line %d", attributeName, testCaseCursor.getStreamLocation().getLineNumber()));
     }
     return attrValue;
+  }
+
+  private static Optional<String> getOptionalAttribute(SMInputCursor testCaseCursor, String attributeName) throws XMLStreamException {
+    String attrValue = testCaseCursor.getAttrValue(attributeName);
+    if (attrValue == null) {
+      return Optional.empty();
+    }
+    return Optional.of(attrValue);
   }
 
   private static String parseTestCaseName(SMInputCursor testCaseCursor) throws XMLStreamException {

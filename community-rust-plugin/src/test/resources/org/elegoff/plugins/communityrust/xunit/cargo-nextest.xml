@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="nextest-run" tests="6" failures="1" errors="0" uuid="2535f8b1-dc49-4ef5-984a-0d138c39f82c" timestamp="2023-09-27T12:19:18.220+00:00" time="0.201">
+    <testsuite name="unicode-xid" tests="4" disabled="0" errors="0" failures="1">
+        <testcase name="tests::test_is_not_xid_continue" classname="unicode-xid" timestamp="2023-09-27T12:19:18.222+00:00" time="0.014">
+        </testcase>
+        <testcase name="tests::test_is_not_xid_start" classname="unicode-xid" timestamp="2023-09-27T12:19:18.225+00:00" time="0.016">
+        </testcase>
+        <testcase name="tests::test_is_xid_continue" classname="unicode-xid" timestamp="2023-09-27T12:19:18.226+00:00" time="0.018">
+        </testcase>
+        <testcase name="tests::test_is_xid_start" classname="unicode-xid" timestamp="2023-09-27T12:19:18.228+00:00" time="0.017">
+            <failure type="test failure">thread &apos;tests::test_is_xid_start&apos; panicked at &apos;assertion failed: false&apos;, src/tests.rs:62:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace</failure>
+            <system-out>
+running 1 test
+test tests::test_is_xid_start ... FAILED
+
+failures:
+
+failures:
+    tests::test_is_xid_start
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+</system-out>
+            <system-err>thread &apos;tests::test_is_xid_start&apos; panicked at &apos;assertion failed: false&apos;, src/tests.rs:62:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+</system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="unicode-xid::exhaustive_tests" tests="2" disabled="0" errors="0" failures="0">
+        <testcase name="all_valid_chars_do_not_panic_for_is_xid_start" classname="unicode-xid::exhaustive_tests" timestamp="2023-09-27T12:19:18.241+00:00" time="0.167">
+        </testcase>
+        <testcase name="all_valid_chars_do_not_panic_for_is_xid_continue" classname="unicode-xid::exhaustive_tests" timestamp="2023-09-27T12:19:18.236+00:00" time="0.184">
+        </testcase>
+    </testsuite>
+</testsuites>

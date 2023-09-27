@@ -81,6 +81,20 @@ public class XUnitSensorTest {
     assertThat(context.measures(context.module().key())).isEmpty();
   }
 
+  @Test
+  public void test_report_with_failure_no_message() {
+
+    settings.setProperty(XUnitSensor.REPORT_PATH_KEY, "cargo-nextest.xml");
+    context = SensorContextTester.create(moduleBaseDir);
+    context.setSettings(settings);
+
+    unitSensor.execute(context);
+    assertThat(moduleMeasure(CoreMetrics.TESTS)).isEqualTo(6);
+    assertThat(moduleMeasure(CoreMetrics.SKIPPED_TESTS)).isEqualTo(0);
+    assertThat(moduleMeasure(CoreMetrics.TEST_ERRORS)).isEqualTo(0);
+    assertThat(moduleMeasure(CoreMetrics.TEST_FAILURES)).isEqualTo(1);
+  }
+
   private Integer moduleMeasure(Metric<Integer> metric) {
     return measure(context.module(), metric);
   }
