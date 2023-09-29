@@ -55,7 +55,8 @@ public class EnumerationTest {
         "        x2: Number,\n" +
         "        y2: Number,\n" +
         "    }")
-
+      .matches("FreeCollectorForPair(foo) = 42")
+      .matches("FreeCollector = 0")
 
     ;
   }
@@ -115,6 +116,11 @@ public class EnumerationTest {
         "    QOS_CLASS_BACKGROUND = 0x09,\n" +
         "    QOS_CLASS_UNSPECIFIED = 0x00,\n" +
         "}")
+
+      .matches("enum Purpose<AssetId> {\n" +
+        "     FreeCollector = 0,\n" +
+        "     FreeCollectorForPair(foo) = 42,\n" +
+        "     }")
 
 
     ;

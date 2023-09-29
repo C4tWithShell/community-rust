@@ -21,13 +21,14 @@
 package org.sonar.rust;
 
 import com.sonar.sslr.api.GenericTokenType;
-import java.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.rust.api.RustTokenType;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
+
+import java.util.Arrays;
 
 public enum RustGrammar implements GrammarRuleKey {
   ABI,
@@ -563,7 +564,7 @@ public enum RustGrammar implements GrammarRuleKey {
       SPC, b.optional(ENUM_ITEMS), SPC, "}");
     b.rule(ENUM_ITEMS).is(seq(b, ENUM_ITEM, RustPunctuator.COMMA));
     b.rule(ENUM_ITEM).is(b.zeroOrMore(OUTER_ATTRIBUTE, SPC), b.optional(VISIBILITY, SPC),
-      IDENTIFIER, SPC, b.optional(b.firstOf(ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT, ENUM_ITEM_DISCRIMINANT)));
+      IDENTIFIER, SPC, b.optional(b.firstOf(ENUM_ITEM_TUPLE, ENUM_ITEM_STRUCT)), SPC, b.optional(ENUM_ITEM_DISCRIMINANT));
     b.rule(ENUM_ITEM_TUPLE).is("(", SPC, b.optional(TUPLE_FIELDS), SPC, ")");
     b.rule(ENUM_ITEM_STRUCT).is("{", SPC, b.optional(STRUCT_FIELDS), SPC, "}");
     b.rule(ENUM_ITEM_DISCRIMINANT).is(RustPunctuator.EQ, SPC, EXPRESSION);
