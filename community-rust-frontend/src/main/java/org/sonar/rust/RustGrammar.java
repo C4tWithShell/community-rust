@@ -1912,8 +1912,8 @@ public enum RustGrammar implements GrammarRuleKey {
         b.sequence(SPC, RustPunctuator.PATHSEP, SPC, GENERIC_ARGS),
         b.sequence(SPC, RustPunctuator.PATHSEP, SPC, TYPE_PATH_FN))));
     b.rule(TYPE_PATH_FN).is(
-      "(",
-      b.optional(TYPE_PATH_FN_INPUTS),
+      "(",SPC,
+      b.optional(TYPE_PATH_FN_INPUTS),SPC,
       ")",
       b.optional(b.sequence(SPC, RustPunctuator.RARROW, SPC, TYPE)));
     b.rule(TYPE_PATH_FN_INPUTS).is(
