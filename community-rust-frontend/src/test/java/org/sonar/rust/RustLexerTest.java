@@ -24,12 +24,13 @@ import com.google.common.base.Charsets;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.impl.ast.AstXmlPrinter;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import org.junit.Test;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 import org.sonar.sslr.tests.Assertions;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -66,15 +67,14 @@ public class RustLexerTest {
 
   @Test
   public void testParsing() {
-    String sexpr = "pub fn f<AF>() -> int32\n" +
-      "    where\n" +
-      "\n" +
-      "    //for<'a> &'a AF: FieldOpsBounds<'a, F, AF>,\n" +
-      "            for<'a> AF: FieldOpsBounds<'a, F, AF>,\n" +
-      "{\n" +
-      "    let modes = 42;\n" +
-      "    42\n" +
-      "}";
+    String sexpr = "fn update_rates(\n" +
+      "         rates: BoundedVec<(T::Symbol, u64), T::MaxRelaySymbols>,\n" +
+      "         resolve_time: u64,\n" +
+      "         request_id: u64,\n" +
+      "         f: impl Fn( &mut Option<BandRate<BlockNumberFor<T>>>))\n" +
+      "             {\n" +
+      "             todo!()\n" +
+      "             }";
 
     // Print out Ast node content for debugging purpose
 
