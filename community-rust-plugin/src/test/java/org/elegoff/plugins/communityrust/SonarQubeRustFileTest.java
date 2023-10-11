@@ -23,7 +23,7 @@ package org.elegoff.plugins.communityrust;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.rust.RustFile;

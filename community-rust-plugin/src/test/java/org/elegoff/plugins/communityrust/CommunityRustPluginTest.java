@@ -22,7 +22,7 @@ package org.elegoff.plugins.communityrust;
 
 import junit.framework.TestCase;
 import org.elegoff.plugins.communityrust.clippy.ClippyRulesDefinition;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.utils.Version;

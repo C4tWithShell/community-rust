@@ -20,7 +20,7 @@
  */
 package org.sonar.rust.parser.lexer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;

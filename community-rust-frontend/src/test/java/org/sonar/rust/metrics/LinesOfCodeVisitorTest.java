@@ -24,7 +24,7 @@ import com.sonar.sslr.api.AstNode;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustFile;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustVisitorContext;

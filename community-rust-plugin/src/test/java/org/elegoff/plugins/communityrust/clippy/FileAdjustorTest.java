@@ -21,13 +21,14 @@
 package org.elegoff.plugins.communityrust.clippy;
 
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import org.junit.Before;
-import org.junit.Test;
-import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +41,7 @@ public class FileAdjustorTest {
 
   private SensorContextTester context;
 
-  @Before
+  @BeforeEach
   public void setup() {
     context =  SensorContextTester.create(PROJECT_DIR);
     addInputFiles("main.rs", "subfolder/main.rs");

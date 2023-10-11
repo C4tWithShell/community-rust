@@ -21,7 +21,7 @@
 package org.elegoff.plugins.communityrust.rules;
 
 import org.elegoff.rust.checks.CheckList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;

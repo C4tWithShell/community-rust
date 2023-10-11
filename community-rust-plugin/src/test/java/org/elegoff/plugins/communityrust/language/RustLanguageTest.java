@@ -21,7 +21,7 @@
 package org.elegoff.plugins.communityrust.language;
 
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.config.internal.ConfigurationBridge;
 import org.sonar.api.config.internal.MapSettings;
 

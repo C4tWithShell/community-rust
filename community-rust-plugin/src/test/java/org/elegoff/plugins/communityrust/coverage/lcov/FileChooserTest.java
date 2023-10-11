@@ -20,7 +20,7 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 

@@ -21,7 +21,7 @@
 package org.elegoff.plugins.communityrust;
 
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.config.internal.MapSettings;
 
 import java.nio.charset.Charset;

@@ -20,7 +20,7 @@
  */
 package org.elegoff.plugins.communityrust.clippy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.server.rule.RulesDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;

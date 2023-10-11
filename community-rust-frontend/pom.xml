@@ -20,7 +20,11 @@
             <groupId>org.sonarsource.sslr</groupId>
             <artifactId>sslr-core</artifactId>
         </dependency>
-
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
 
         <!-- provided by SonarQube -->
         <dependency>

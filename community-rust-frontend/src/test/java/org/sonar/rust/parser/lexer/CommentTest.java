@@ -22,7 +22,7 @@ package org.sonar.rust.parser.lexer;
 
 import com.google.common.base.Charsets;
 import com.sonar.sslr.api.Token;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.RustParser;
 import org.sonar.rust.RustParserConfiguration;
