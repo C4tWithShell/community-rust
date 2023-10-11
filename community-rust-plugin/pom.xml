@@ -65,10 +65,20 @@
             <artifactId>woodstox-core</artifactId>
             <version>6.4.0</version>
         </dependency>
+         <dependency>
+             <groupId>org.sonarsource.api.plugin</groupId>
+             <artifactId>sonar-plugin-api-test-fixtures</artifactId>
+             <scope>test</scope>
+         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+           <groupId>org.junit.jupiter</groupId>
+           <artifactId>junit-jupiter-api</artifactId>
+           <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.sonarsource.sslr</groupId>

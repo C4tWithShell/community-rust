@@ -20,16 +20,11 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.elegoff.plugins.communityrust.coverage.RustFileSystem;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -37,11 +32,17 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.WildcardPattern;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+
+import javax.annotation.CheckForNull;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class LCOVSensor implements Sensor {
-  private static final Logger LOG = Loggers.get(LCOVSensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LCOVSensor.class);
 
   private static void saveCoverageFromLcovFiles(SensorContext context, List<File> lcovFiles) {
     LOG.info("Importing {}", lcovFiles);

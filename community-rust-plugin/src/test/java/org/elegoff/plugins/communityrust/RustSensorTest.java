@@ -20,15 +20,12 @@
  */
 package org.elegoff.plugins.communityrust;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Collections;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.fest.assertions.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
@@ -40,7 +37,13 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
-import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,13 +56,15 @@ public class RustSensorTest {
   private static final String LIBFILE = "sensor/lib.rs";
   private static final String SIMPLE = "sensor/simple.rs";
   private final File dir = new File("src/test/resources/");
-  @org.junit.Rule
-  public LogTester logTester = new LogTester();
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
+  @RegisterExtension
+  public LogTesterJUnit5 traceLogTester = new LogTesterJUnit5().setLevel(Level.TRACE);
   private FileLinesContext fileLinesContext;
   private SensorContextTester tester;
   private RustSensor sensor;
 
-  @Before
+  @BeforeEach
   public void init() {
     tester = SensorContextTester.create(dir);
 

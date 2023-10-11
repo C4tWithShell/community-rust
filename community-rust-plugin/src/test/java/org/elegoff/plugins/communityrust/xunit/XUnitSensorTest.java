@@ -20,28 +20,29 @@
  */
 package org.elegoff.plugins.communityrust.xunit;
 
-import java.io.File;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
-import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+
+import java.io.File;
 
 import static org.fest.assertions.Assertions.assertThat;
 
 public class XUnitSensorTest {
   private final File moduleBaseDir = new File("src/test/resources/org/elegoff/plugins/communityrust/xunit").getAbsoluteFile();
-  @Rule
-  public LogTester logTester = new LogTester();
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
   private XUnitSensor unitSensor;
   private SensorContextTester context;
   private MapSettings settings;
 
-  @Before
+  @BeforeEach
   public void init() {
 
     unitSensor = new XUnitSensor();

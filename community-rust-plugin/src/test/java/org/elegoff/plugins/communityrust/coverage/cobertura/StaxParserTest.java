@@ -19,25 +19,25 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package org.elegoff.plugins.communityrust.coverage.cobertura;
+
 import org.codehaus.staxmate.in.SMHierarchicCursor;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.stream.XMLStreamException;
-
 import java.io.File;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StaxParserTest {
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void should_fail_parsing_if_file_does_not_exist() throws Exception {
-        thrown.expect(XMLStreamException.class);
         StaxParser parser = new StaxParser(rootCursor -> {});
-        parser.parse(new File("fake.xml"));
+        assertThrows(
+          XMLStreamException.class,
+          () -> parser.parse(new File("fake.xml")));
     }
 
 
@@ -47,11 +47,11 @@ public class StaxParserTest {
         parser.parse(getClass().getClassLoader().getResourceAsStream(resource));
     }
 
-    @Test(expected = Test.None.class /* no exception expected */)
+    @Test
     public void test_grammars() throws XMLStreamException {
-        test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/dtd-test.xml");
-        test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test.xml");
-        test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test-with-entity.xml");
+        assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/dtd-test.xml"));
+        assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test.xml"));
+        assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test-with-entity.xml"));
     }
 
     private static StaxParser.XmlStreamHandler getTestHandler() {

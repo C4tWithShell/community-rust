@@ -20,18 +20,14 @@
  */
 package org.elegoff.plugins.communityrust.coverage.cobertura;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import org.assertj.core.api.Assertions;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.elegoff.plugins.communityrust.Utils;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputFile.Type;
@@ -40,8 +36,15 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
-import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.log.LoggerLevel;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,15 +55,15 @@ public class CoberturaSensorTest {
   private static final String TESTFILE2 = "moduleKey:src/cgroups/test.rs";
   private static final String TESTFILE3 = "moduleKey:src/process/init.rs";
   private final File moduleBaseDir = new File("src/test/resources/org/elegoff/plugins/communityrust/cobertura").getAbsoluteFile();
-  @Rule
-  public LogTester logTester = new LogTester();
-  @Rule
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  @RegisterExtension
   public TemporaryFolder tmpDir = new TemporaryFolder();
   private SensorContextTester context;
   private MapSettings settings;
   private CoberturaSensor coberturaSensor;
 
-  @Before
+  @BeforeEach
   public void init() {
 
     coberturaSensor = new CoberturaSensor();
@@ -177,16 +180,18 @@ public class CoberturaSensorTest {
     assertThat(context.lineHits(TESTFILE3, 12)).isZero();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void fail_with_invalid_report() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "invalid.xml");
-    coberturaSensor.execute(context);
+    IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
+    Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void fail_with_invalid_eof() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "wrong_eof.xml");
-    coberturaSensor.execute(context);
+    IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
+    Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
   }
 
   @Test
