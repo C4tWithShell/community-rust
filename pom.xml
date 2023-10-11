@@ -84,10 +84,10 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <commons.io.version>2.11.0</commons.io.version>
+        <commons.io.version>2.13.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>5.9.3</junit.version>
-        <sonar-analyzer-commons.version>2.6.0.1473</sonar-analyzer-commons.version>
+        <sonar-analyzer-commons.version>2.7.0.1482</sonar-analyzer-commons.version>
         <sonar.orchestrator.version>4.0.0.404</sonar.orchestrator.version>
         <woodstox.version>6.2.7</woodstox.version>
 

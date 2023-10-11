@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
+            <version>1.7.36</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.sonarsource.analyzer-commons/sonar-analyzer-commons -->
         <dependency>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.4.0</version>
+            <version>6.5.1</version>
         </dependency>
          <dependency>
              <groupId>org.sonarsource.api.plugin</groupId>
