@@ -20,14 +20,9 @@
  */
 package org.elegoff.plugins.communityrust.clippy;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.Severity;
@@ -36,12 +31,17 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.rules.RuleType;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.analyzer.commons.ExternalReportProvider;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
 import javax.annotation.CheckForNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
@@ -50,7 +50,7 @@ public class ClippySensor implements Sensor {
   public static final String REPORT_PROPERTY_KEY = "community.rust.clippy.reportPaths";
   static final String LINTER_KEY = "clippy";
   static final String LINTER_NAME = "Clippy";
-  private static final Logger LOG = Loggers.get(ClippySensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ClippySensor.class);
   private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
   private static final int MAX_LOGGED_FILE_NAMES = 20;
 

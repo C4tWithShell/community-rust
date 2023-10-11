@@ -20,6 +20,20 @@
  */
 package org.elegoff.plugins.communityrust.coverage.cobertura;
 
+import org.elegoff.plugins.communityrust.CommunityRustPlugin;
+import org.elegoff.plugins.communityrust.coverage.RustFileSystem;
+import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.sensor.Sensor;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.batch.sensor.coverage.NewCoverage;
+import org.sonar.api.config.Configuration;
+import org.sonar.api.utils.WildcardPattern;
+
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,23 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.xml.stream.XMLStreamException;
-import org.elegoff.plugins.communityrust.CommunityRustPlugin;
-import org.elegoff.plugins.communityrust.coverage.RustFileSystem;
-import org.elegoff.plugins.communityrust.language.RustLanguage;
-import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.sensor.Sensor;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.batch.sensor.coverage.NewCoverage;
-import org.sonar.api.config.Configuration;
-import org.sonar.api.utils.WildcardPattern;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 
 public class CoberturaSensor implements Sensor {
 
-  private static final Logger LOG = Loggers.get(CoberturaSensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CoberturaSensor.class);
 
   private static Set<File> deduplicate(List<File> reports) {
     return reports.stream()

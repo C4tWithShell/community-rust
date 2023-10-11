@@ -24,13 +24,12 @@ import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.api.RecognitionException;
 import com.sonar.sslr.impl.Parser;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.elegoff.rust.checks.CheckList;
 import org.elegoff.rust.checks.Issue;
 import org.elegoff.rust.checks.RustCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
@@ -40,17 +39,19 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContextFactory;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonar.rust.RustLexer;
 import org.sonar.rust.RustParser;
 import org.sonar.rust.RustParserConfiguration;
 import org.sonar.rust.RustVisitorContext;
 import org.sonar.rust.metrics.MetricsVisitor;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+
 public class RustSensor implements Sensor {
 
-  private static final Logger LOG = Loggers.get(RustSensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RustSensor.class);
 
   private final FileLinesContextFactory fileLinesContextFactory;
   private final Checks<RustCheck> checks;

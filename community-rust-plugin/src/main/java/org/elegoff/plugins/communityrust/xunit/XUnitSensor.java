@@ -20,10 +20,9 @@
  */
 package org.elegoff.plugins.communityrust.xunit;
 
-import java.io.File;
-import java.util.List;
-import javax.xml.stream.XMLStreamException;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
@@ -32,14 +31,16 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonarsource.analyzer.commons.FileProvider;
+
+import javax.xml.stream.XMLStreamException;
+import java.io.File;
+import java.util.List;
 
 public class XUnitSensor implements Sensor {
   public static final String REPORT_PATH_KEY = "community.rust.test.reportPath";
   public static final String DEFAULT_REPORT_PATH = "rust-test.xml";
-  private static final Logger LOG = Loggers.get(XUnitSensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(XUnitSensor.class);
 
   public static List<File> getReports(Configuration conf, String baseDirPath, String reportPathPropertyKey, String reportPath) {
     LOG.debug("Using pattern '{}' to find reports", reportPath);
