@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <coverage lines-covered="531" lines-valid="1750" line-rate="0.2976275896924354" branches-covered="0" branches-valid="0"
-		  branch-rate="0" complexity="0" version="1.9" timestamp="1622749392">
+          branch-rate="0" complexity="0" version="1.9" timestamp="1622749392">
 	<sources>
 		<source>src/test/resources/org/elegoff/plugins/rust/cobertura</source>
 	</sources>

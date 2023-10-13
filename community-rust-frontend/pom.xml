@@ -20,14 +20,14 @@
             <groupId>org.sonarsource.sslr</groupId>
             <artifactId>sslr-core</artifactId>
         </dependency>
-        <!-- test dependencies -->
-        <dependency>
+      <!-- test dependencies -->
+      <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
         </dependency>
 
-        <!-- provided by SonarQube -->
-        <dependency>
+      <!-- provided by SonarQube -->
+      <dependency>
       <groupId>org.sonarsource.api.plugin</groupId>
       <artifactId>sonar-plugin-api</artifactId>
       <scope>provided</scope>
@@ -45,7 +45,7 @@
         </dependency>
         <dependency>
             <!-- packaged with the plugin -->
-            <groupId>commons-lang</groupId>
+          <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
         </dependency>
         <dependency>

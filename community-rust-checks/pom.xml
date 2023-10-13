@@ -21,8 +21,8 @@
             <artifactId>community-rust-frontend</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- provided by SonarQube -->
-        <dependency>
+      <!-- provided by SonarQube -->
+      <dependency>
       <groupId>org.sonarsource.api.plugin</groupId>
       <artifactId>sonar-plugin-api</artifactId>
       <scope>provided</scope>
@@ -37,8 +37,8 @@
             <artifactId>sonar-analyzer-test-commons</artifactId>
         </dependency>
 
-        <!-- test dependencies -->
-        <dependency>
+      <!-- test dependencies -->
+      <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
         </dependency>

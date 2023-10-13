@@ -41,7 +41,7 @@
         </dependency>
         <dependency>
             <!-- packaged with the plugin -->
-            <groupId>commons-lang</groupId>
+          <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.6</version>
         </dependency>
@@ -50,8 +50,8 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.36</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.sonarsource.analyzer-commons/sonar-analyzer-commons -->
-        <dependency>
+      <!-- https://mvnrepository.com/artifact/org.sonarsource.analyzer-commons/sonar-analyzer-commons -->
+      <dependency>
             <groupId>org.sonarsource.analyzer-commons</groupId>
             <artifactId>sonar-analyzer-commons</artifactId>
         </dependency>

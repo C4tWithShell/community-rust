@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="nextest-run" tests="6" failures="1" errors="0" uuid="2535f8b1-dc49-4ef5-984a-0d138c39f82c" timestamp="2023-09-27T12:19:18.220+00:00" time="0.201">
+<testsuites name="nextest-run" tests="6" failures="1" errors="0" uuid="2535f8b1-dc49-4ef5-984a-0d138c39f82c"
+            timestamp="2023-09-27T12:19:18.220+00:00" time="0.201">
     <testsuite name="unicode-xid" tests="4" disabled="0" errors="0" failures="1">
         <testcase name="tests::test_is_not_xid_continue" classname="unicode-xid" timestamp="2023-09-27T12:19:18.222+00:00" time="0.014">
         </testcase>
@@ -28,9 +29,11 @@ note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
         </testcase>
     </testsuite>
     <testsuite name="unicode-xid::exhaustive_tests" tests="2" disabled="0" errors="0" failures="0">
-        <testcase name="all_valid_chars_do_not_panic_for_is_xid_start" classname="unicode-xid::exhaustive_tests" timestamp="2023-09-27T12:19:18.241+00:00" time="0.167">
+        <testcase name="all_valid_chars_do_not_panic_for_is_xid_start" classname="unicode-xid::exhaustive_tests"
+                  timestamp="2023-09-27T12:19:18.241+00:00" time="0.167">
         </testcase>
-        <testcase name="all_valid_chars_do_not_panic_for_is_xid_continue" classname="unicode-xid::exhaustive_tests" timestamp="2023-09-27T12:19:18.236+00:00" time="0.184">
+        <testcase name="all_valid_chars_do_not_panic_for_is_xid_continue" classname="unicode-xid::exhaustive_tests"
+                  timestamp="2023-09-27T12:19:18.236+00:00" time="0.184">
         </testcase>
     </testsuite>
 </testsuites>
