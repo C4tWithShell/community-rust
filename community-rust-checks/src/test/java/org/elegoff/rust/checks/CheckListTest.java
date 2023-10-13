@@ -22,12 +22,13 @@ package org.elegoff.rust.checks;
 
 import org.junit.jupiter.api.Test;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
- class CheckListTest {
+class CheckListTest {
 
   @Test
-   void testSize() {
+  void testSize() {
     assertThat(CheckList.getRustChecks()).hasSize(3);
   }
 }

@@ -154,7 +154,7 @@ class IfExpressionTest {
   }
 
   @Test
-  public void tesIfLetExpression() {
+  void testIfLetExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.IF_LET_EXPRESSION))
       .matches("if let (\"Bacon\",b) = dish {\n" +
         "    println!(\"Bacon is served with {}\", b);\n" +

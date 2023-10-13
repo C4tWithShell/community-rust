@@ -37,7 +37,7 @@ import org.sonar.rust.RustParserConfiguration;
 import org.sonar.rust.RustVisitorContext;
 import org.sonarsource.analyzer.commons.checks.verifier.SingleFileVerifier;
 
-class RustCheckVerifier {
+public class RustCheckVerifier {
   static void verify(File file, RustCheck check) {
     createVerifier(file, check, true, Integer.MAX_VALUE).assertOneOrMoreIssues();
   }
