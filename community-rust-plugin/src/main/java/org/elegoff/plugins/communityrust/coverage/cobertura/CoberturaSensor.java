@@ -80,9 +80,7 @@ public class CoberturaSensor implements Sensor {
   private static void saveCoverageMeasures(Map<InputFile, NewCoverage> coverageMeasures, HashSet<InputFile> coveredFiles) {
     coverageMeasures.forEach((inputFile, value) -> {
       coveredFiles.add(inputFile);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Saving coverage measures for file '{}'", inputFile.toString());
-      }
+      if (LOG.isDebugEnabled()) LOG.debug("Saving coverage measures for file '{}'", inputFile);
       value.save();
     });
   }

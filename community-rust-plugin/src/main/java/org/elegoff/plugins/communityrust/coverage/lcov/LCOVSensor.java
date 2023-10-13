@@ -65,11 +65,11 @@ public class LCOVSensor implements Sensor {
 
     List<String> unresolvedPaths = parser.unknownPaths();
     if (!unresolvedPaths.isEmpty()) {
-      LOG.warn(String.format("Could not resolve %d file paths in %s", unresolvedPaths.size(), lcovFiles));
+      LOG.warn("Could not resolve {} file paths in {}", unresolvedPaths.size(), lcovFiles);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Unresolved paths:\n" + String.join("\n", unresolvedPaths));
+        LOG.debug("Unresolved paths:\n{}" , String.join("\n", unresolvedPaths));
       } else {
-        LOG.warn("First unresolved path: " + unresolvedPaths.get(0) + " (Run in DEBUG mode to get full list of unresolved paths)");
+        LOG.warn("First unresolved path: {} (Run in DEBUG mode to get full list of unresolved paths)", unresolvedPaths.get(0));
       }
     }
 
