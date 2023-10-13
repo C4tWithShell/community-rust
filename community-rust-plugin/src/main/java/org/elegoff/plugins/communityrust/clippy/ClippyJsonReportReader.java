@@ -36,6 +36,7 @@ import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.JSONParser;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ClippyJsonReportReader {
@@ -52,7 +53,7 @@ public class ClippyJsonReportReader {
     this.consumer = consumer;
   }
 
-  static void read(InputStream in,  Consumer<ClippyIssue> consumer) throws IOException, ParseException {
+  static void read(InputStream in, Consumer<ClippyIssue> consumer) throws IOException, ParseException {
     new ClippyJsonReportReader(consumer).read(in);
   }
 
@@ -110,7 +111,6 @@ public class ClippyJsonReportReader {
       ((Stream<JSONObject>) results.stream()).forEach(this::onResult);
     }
   }
-
 
   private void onResult(JSONObject result) {
 

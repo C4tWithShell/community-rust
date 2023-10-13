@@ -34,8 +34,7 @@ public class TestSuite {
   /**
    * Creates a testsuite instance uniquely identified by the given key
    *
-   * @param key
-   *          The key to construct a testsuite for
+   * @param key The key to construct a testsuite for
    */
   public TestSuite(String key) {
     this.key = key;

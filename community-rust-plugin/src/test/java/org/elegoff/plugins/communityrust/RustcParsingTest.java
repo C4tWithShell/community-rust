@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.fest.assertions.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
@@ -37,20 +37,19 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
 
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
-public class RustcParsingTest {
+class RustcParsingTest {
   private final File dir = new File("src/test/resources/rustc");
   private FileLinesContext fileLinesContext;
   private SensorContextTester tester;
   private RustSensor sensor;
 
-
-  public void reinit() {
+  void reinit() {
     tester = SensorContextTester.create(dir);
 
     MapSettings settings = CommunityRustPluginConfigurationTest.getDefaultSettings();
@@ -84,7 +83,6 @@ public class RustcParsingTest {
     return inputFile;
   }
 
-
   private void checkme(String testfile) throws IOException {
     reinit();
     DefaultInputFile inputFile = executeSensorOnSingleFile(testfile);
@@ -93,18 +91,18 @@ public class RustcParsingTest {
   }
 
   @Test
-  public void DebugInfoTest() throws IOException {
+  void DebugInfoTest() throws IOException {
     checkme("debuginfo/associated-types.rs");
     checkme("debuginfo/borrowed-enums.rs");
   }
 
   @Test
-  public void RunMakeFulldepsTest() throws IOException {
+  void RunMakeFulldepsTest() throws IOException {
     checkme("run-make-fulldeps/atomic-lock-free/atomic_lock_free.rs");
   }
 
   @Test
-  public void UITest() throws IOException {
+  void UITest() throws IOException {
     checkme("ui/cfg/cfg-panic.rs");
 
     checkme("ui/borrowck/issue-88434-minimal-example.rs");
@@ -117,6 +115,5 @@ public class RustcParsingTest {
     checkme("ui/fmt/format-args-capture.rs");
     checkme("ui/issues/issue-68696-catch-during-unwind.rs");
   }
-
 
 }

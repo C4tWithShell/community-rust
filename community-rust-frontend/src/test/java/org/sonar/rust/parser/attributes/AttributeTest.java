@@ -20,78 +20,69 @@
  */
 package org.sonar.rust.parser.attributes;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class AttributeTest {
+class AttributeTest {
 
+  @Test
+  void testAttribute() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ATTR))
+      .matches("foo")
+      .matches("foo_bar")
+      .matches("foo_type")
+      .matches("crate_type");
+  }
 
-    @Test
-    public void testAttribute() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ATTR))
-                .matches("foo")
-                .matches("foo_bar")
-                .matches("foo_type")
-                .matches("crate_type")
-        ;
-    }
+  @Test
+  void testInnerAttribute() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.INNER_ATTRIBUTE))
+      .matches("#![crate_type = \"lib\"]")
+      .matches("#![feature(const_fn_fn_ptr_basics)]")
+      .matches("#![allow(unused_variables)]");
+  }
 
+  @Test
+  void testOuterAttribute() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_ATTRIBUTE))
+      .matches("#[test]")
+      .matches("#[cfg(feature = \"serde\")]")
+      .matches("#[inline]")
+      .matches("#[allow(unrooted_must_root)]")
+      .matches("#[cfg(not(any(target_os = \"macos\", windows)))]")
+      .matches("#[allow(non_camel_case_types)]");
+  }
 
-    @Test
-    public void testInnerAttribute() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.INNER_ATTRIBUTE))
-                .matches("#![crate_type = \"lib\"]")
-                .matches("#![feature(const_fn_fn_ptr_basics)]")
-                .matches("#![allow(unused_variables)]")
-        ;
-    }
+  @Test
+  void testMetaWord() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.META_WORD))
+      .matches("no_std");
+  }
 
-    @Test
-    public void testOuterAttribute() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_ATTRIBUTE))
-                .matches("#[test]")
-                .matches("#[cfg(feature = \"serde\")]")
-                .matches("#[inline]")
-                .matches("#[allow(unrooted_must_root)]")
-                .matches("#[cfg(not(any(target_os = \"macos\", windows)))]")
-                .matches("#[allow(non_camel_case_types)]")
-        ;
-    }
+  @Test
+  void testMetaNameValueStr() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.META_NAME_VALUE_STR))
+      .matches("doc = \"example\"");
+  }
 
-    @Test
-    public void testMetaWord() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.META_WORD))
-                .matches("no_std")
-        ;
-    }
+  @Test
+  void testMetaListPaths() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_PATHS))
+      .matches("allow(unused, clippy::inline_always)");
+  }
 
-    @Test
-    public void testMetaNameValueStr() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.META_NAME_VALUE_STR))
-                .matches("doc = \"example\"")
-        ;
-    }
+  @Test
+  void testMetaListIdents() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_IDENTS))
+      .matches("macro_use(foo, bar)");
+  }
 
-    @Test
-    public void testMetaListPaths() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_PATHS))
-                .matches("allow(unused, clippy::inline_always)")
-        ;
-    }
-
-    @Test
-    public void testMetaListIdents() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_IDENTS))
-                .matches("macro_use(foo, bar)")
-        ;
-    }
-
-    @Test
-    public void testMetaListNameValueStr() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_NAME_VALUE_STR))
-                .matches("link(name = \"CoreFoundation\", kind = \"framework\")")
-        ;
-    }
+  @Test
+  void testMetaListNameValueStr() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.META_LIST_NAME_VALUE_STR))
+      .matches("link(name = \"CoreFoundation\", kind = \"framework\")");
+  }
 }

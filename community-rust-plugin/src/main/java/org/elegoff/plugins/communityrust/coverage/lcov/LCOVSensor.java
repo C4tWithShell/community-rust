@@ -20,16 +20,11 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.elegoff.plugins.communityrust.coverage.RustFileSystem;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -37,11 +32,17 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.WildcardPattern;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+
+import javax.annotation.CheckForNull;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class LCOVSensor implements Sensor {
-  private static final Logger LOG = Loggers.get(LCOVSensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LCOVSensor.class);
 
   private static void saveCoverageFromLcovFiles(SensorContext context, List<File> lcovFiles) {
     LOG.info("Importing {}", lcovFiles);
@@ -53,7 +54,7 @@ public class LCOVSensor implements Sensor {
 
     Map<InputFile, NewCoverage> coveredFiles = parser.getFileCoverage();
 
-    for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext();) {
+    for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext(); ) {
       var inputFile = iterator.next();
       NewCoverage fileCoverage = coveredFiles.get(inputFile);
 
@@ -64,11 +65,11 @@ public class LCOVSensor implements Sensor {
 
     List<String> unresolvedPaths = parser.unknownPaths();
     if (!unresolvedPaths.isEmpty()) {
-      LOG.warn(String.format("Could not resolve %d file paths in %s", unresolvedPaths.size(), lcovFiles));
+      LOG.warn("Could not resolve {} file paths in {}", unresolvedPaths.size(), lcovFiles);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Unresolved paths:\n" + String.join("\n", unresolvedPaths));
+        LOG.debug("Unresolved paths:\n{}", String.join("\n", unresolvedPaths));
       } else {
-        LOG.warn("First unresolved path: " + unresolvedPaths.get(0) + " (Run in DEBUG mode to get full list of unresolved paths)");
+        LOG.warn("First unresolved path: {} (Run in DEBUG mode to get full list of unresolved paths)", unresolvedPaths.get(0));
       }
     }
 

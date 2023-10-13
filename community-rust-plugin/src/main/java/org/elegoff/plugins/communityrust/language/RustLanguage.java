@@ -20,14 +20,15 @@
  */
 package org.elegoff.plugins.communityrust.language;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.resources.AbstractLanguage;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class defines the Rust language.
@@ -36,7 +37,7 @@ public final class RustLanguage extends AbstractLanguage {
 
   public static final String NAME = "Rust";
   public static final String KEY = "rust";
-  private static final Logger LOGGER = Loggers.get(RustLanguage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RustLanguage.class);
   private final Configuration config;
 
   public RustLanguage(Configuration config) {
@@ -50,7 +51,7 @@ public final class RustLanguage extends AbstractLanguage {
     if (suffixes.length == 0) {
       suffixes = StringUtils.split(RustLanguageSettings.FILE_SUFFIXES_DEFAULT_VALUE, ",");
     }
-    LOGGER.debug("Rust language file suffixes " + suffixes.length + " => " + suffixes[0]);
+    LOGGER.debug("Rust language file suffixes {}", suffixes);
     return suffixes;
   }
 

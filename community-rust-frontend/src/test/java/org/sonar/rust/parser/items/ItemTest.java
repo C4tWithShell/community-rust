@@ -20,20 +20,21 @@
  */
 package org.sonar.rust.parser.items;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ItemTest {
+class ItemTest {
 
   /*
-   * 
+   *
    * Item:
    * OuterAttribute*
    * VisItem
    * | MacroItem
-   * 
+   *
    * VisItem:
    * Visibility?
    * (
@@ -51,14 +52,14 @@ public class ItemTest {
    * | Implementation
    * | ExternBlock
    * )
-   * 
+   *
    * MacroItem:
    * MacroInvocationSemi
    * | MacroRulesDefinition
    */
 
   @Test
-  public void VisItem() {
+  void VisItem() {
 
     assertThat(RustGrammar.create().build().rule(RustGrammar.VIS_ITEM))
       // MODULE,
@@ -84,13 +85,13 @@ public class ItemTest {
      * STATIC_ITEM,
      * IMPLEMENTATION,
      * EXTERN_BLOCK
-     * 
+     *
      */
     ;
   }
 
   @Test
-  public void MacroItem() {
+  void MacroItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_ITEM))
       .matches("j!(AS);")
       .matches("println!(\"hello\");")
@@ -102,7 +103,7 @@ public class ItemTest {
   }
 
   @Test
-  public void testItem() {
+  void testItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ITEM))
       .matches("mod foo ;") // module item
       .matches("extern crate pcre;") // extern crate item

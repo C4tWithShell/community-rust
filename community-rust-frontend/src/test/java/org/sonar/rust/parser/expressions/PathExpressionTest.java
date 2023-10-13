@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class PathExpressionTest {
+class PathExpressionTest {
 
   @Test
-  public void testPathExpression() {
+  void testPathExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.PATH_EXPRESSION))
       .matches("local_var")
       .matches("globals::STATIC_VAR")

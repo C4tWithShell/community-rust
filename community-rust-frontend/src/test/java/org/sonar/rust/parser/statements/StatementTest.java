@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.statements;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class StatementTest {
+class StatementTest {
 
   @Test
-  public void testLetStatement() {
+  void testLetStatement() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.LET_STATEMENT))
       .matches("let y=42;")
       .matches("let x;")
@@ -70,7 +71,7 @@ public class StatementTest {
   }
 
   @Test
-  public void testExpressionStatement() {
+  void testExpressionStatement() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_STATEMENT))
       .matches("return None;")
       .matches("a.b();")
@@ -79,7 +80,7 @@ public class StatementTest {
   }
 
   @Test
-  public void testStatement() {
+  void testStatement() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT))
       .matches(";")
       .matches("extern crate pcre;")
@@ -115,7 +116,7 @@ public class StatementTest {
   }
 
   @Test
-  public void testStatements() {
+  void testStatements() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENTS))
 
       .matches(";")

@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class CompilationUnitTest {
+class CompilationUnitTest {
 
   @Test
-  public void testAnyTokens() {
+  void testAnyTokens() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN))
       .matches("u")
       .matches("us")
@@ -40,7 +41,7 @@ public class CompilationUnitTest {
   }
 
   @Test
-  public void testCompilationUnit() {
+  void testCompilationUnit() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
       .matches("use std::fmt;")
       .matches("use std::hash;")

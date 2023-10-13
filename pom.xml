@@ -61,8 +61,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonar.version>9.7.1.62043</sonar.version>
-        <sonar.plugin.api.version>9.11.0.290</sonar.plugin.api.version>
+        <sonar.version>9.9.1.69595</sonar.version>
+        <sonar.plugin.api.version>10.1.0.809</sonar.plugin.api.version>
 
 
       <!-- Advertise minimal required JRE version -->
@@ -84,11 +84,11 @@
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <commons.io.version>2.11.0</commons.io.version>
+        <commons.io.version>2.13.0</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
-        <junit.version>4.13.2</junit.version>
-        <sonar-analyzer-commons.version>2.5.0.1358</sonar-analyzer-commons.version>
-        <sonar.orchestrator.version>3.41.0.295</sonar.orchestrator.version>
+        <junit.version>5.9.3</junit.version>
+        <sonar-analyzer-commons.version>2.7.0.1482</sonar-analyzer-commons.version>
+        <sonar.orchestrator.version>4.0.0.404</sonar.orchestrator.version>
         <woodstox.version>6.2.7</woodstox.version>
 
     </properties>
@@ -157,6 +157,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>org.sonarsource.api.plugin</groupId>
+        <artifactId>sonar-plugin-api-test-fixtures</artifactId>
+        <version>${sonar.plugin.api.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.sonarsource.sonarqube</groupId>
         <artifactId>sonar-testing-harness</artifactId>
         <version>${sonar.version}</version>
@@ -205,7 +211,7 @@
             </dependency>
             <dependency>
                 <groupId>org.sonarsource.orchestrator</groupId>
-                <artifactId>sonar-orchestrator</artifactId>
+                <artifactId>sonar-orchestrator-junit5</artifactId>
                 <version>${sonar.orchestrator.version}</version>
             </dependency>
             <dependency>
@@ -242,11 +248,15 @@
                 <version>3.3.0</version>
                 <scope>test</scope>
             </dependency>
-
-
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
+              <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>

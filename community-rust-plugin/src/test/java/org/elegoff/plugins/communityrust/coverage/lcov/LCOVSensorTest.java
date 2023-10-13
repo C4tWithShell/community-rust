@@ -25,11 +25,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.FileMetadata;
@@ -37,27 +39,28 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
-import org.sonar.api.utils.log.LogTester;
-import org.sonar.api.utils.log.LoggerLevel;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LCOVSensorTest {
+class LCOVSensorTest {
 
   private static final String REPORT1 = "reports/report_1.lcov";
   private static final String REPORT2 = "reports/report_2.lcov";
   private static final String TWO_REPORTS = REPORT1 + ", " + REPORT2;
-  @ClassRule
-  public static TemporaryFolder temp = new TemporaryFolder();
+  @TempDir
+  static Path tmpDir;
+  static Path tmpFile;
   private final LCOVSensor coverageSensor = new LCOVSensor();
   private final File moduleBaseDir = new File("src/test/resources/lcov/").getAbsoluteFile();
-  @org.junit.Rule
-  public LogTester logTester = new LogTester();
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
   private SensorContextTester context;
   private MapSettings settings;
 
-  @Before
-  public void init() throws FileNotFoundException {
+  @BeforeEach
+  void init() throws FileNotFoundException {
     settings = new MapSettings();
 
     context = SensorContextTester.create(moduleBaseDir);
@@ -82,14 +85,14 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void report_not_found() throws Exception {
+  void report_not_found() throws Exception {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "/wrong/path/lcov_report.dat");
     coverageSensor.execute(context);
     assertThat(context.lineHits("moduleKey:file1.js", 1)).isNull();
   }
 
   @Test
-  public void test_coverage() {
+  void test_coverage() {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, TWO_REPORTS);
     coverageSensor.execute(context);
     assertTwoReportsCoverageDataPresent();
@@ -112,7 +115,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_ignore_and_log_warning_for_invalid_line() {
+  void should_ignore_and_log_warning_for_invalid_line() {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/wrong_line_report.lcov");
     coverageSensor.execute(context);
 
@@ -131,33 +134,31 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void test_unresolved_path() {
+  void test_unresolved_path() {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/report_with_unresolved_path.lcov");
     coverageSensor.execute(context);
     String fileName = File.separator + "reports" + File.separator + "report_with_unresolved_path.lcov";
-    assertThat(logTester.logs(LoggerLevel.WARN))
+    assertThat(logTester.logs(Level.WARN))
       .contains("Could not resolve 2 file paths in [" + moduleBaseDir.getAbsolutePath() + fileName + "]")
       .contains("First unresolved path: unresolved/file1.rs (Run in DEBUG mode to get full list of unresolved paths)");
-    assertThat(logTester.logs(LoggerLevel.DEBUG))
-      .contains("Using pattern 'reports/report_with_unresolved_path.lcov' to find reports");
   }
 
   @Test
-  public void test_unresolved_path_with_debug_log() {
-    logTester.setLevel(LoggerLevel.DEBUG);
+  void test_unresolved_path_with_debug_log() {
+    logTester.setLevel(Level.DEBUG);
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/report_with_unresolved_path.lcov");
     coverageSensor.execute(context);
     String fileName = File.separator + "reports" + File.separator + "report_with_unresolved_path.lcov";
-    assertThat(logTester.logs(LoggerLevel.WARN))
+    assertThat(logTester.logs(Level.WARN))
       .contains("Could not resolve 2 file paths in [" + moduleBaseDir.getAbsolutePath() + fileName + "]");
-    assertThat(logTester.logs(LoggerLevel.DEBUG))
+    assertThat(logTester.logs(Level.DEBUG))
       .contains("Unresolved paths:\n" +
         "unresolved/file1.rs\n" +
         "unresolved/file2.rs");
   }
 
   @Test
-  public void should_log_warning_when_wrong_data() throws Exception {
+  void should_log_warning_when_wrong_data() throws Exception {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/wrong_data_report.lcov");
     coverageSensor.execute(context);
 
@@ -167,18 +168,18 @@ public class LCOVSensorTest {
     assertThat(context.conditions("moduleKey:file1.rs", 2)).isEqualTo(2);
     assertThat(context.coveredConditions("moduleKey:file1.rs", 2)).isEqualTo(2);
 
-    assertThat(logTester.logs(LoggerLevel.DEBUG))
+    assertThat(logTester.logs(Level.DEBUG))
       .contains("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.NumberFormatException: For input string: \"1.\").");
-    String stringIndexOutOfBoundLogMessage = logTester.logs(LoggerLevel.DEBUG).get(1);
+    String stringIndexOutOfBoundLogMessage = logTester.logs(Level.DEBUG).get(1);
     assertThat(stringIndexOutOfBoundLogMessage)
       .startsWith("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.NumberFormatException:");
-    assertThat(logTester.logs(LoggerLevel.DEBUG).get(logTester.logs(LoggerLevel.DEBUG).size() - 1))
+    assertThat(logTester.logs(Level.DEBUG).get(logTester.logs(Level.DEBUG).size() - 1))
       .startsWith("Error while parsing LCOV report: can't save BRDA data for line 6 of coverage report file (java.lang.ArrayIndexOutOfBoundsException: ");
-    assertThat(logTester.logs(LoggerLevel.WARN)).contains("Found 3 inconsistencies in coverage report");
+    assertThat(logTester.logs(Level.WARN)).contains("Found 3 inconsistencies in coverage report");
   }
 
   @Test
-  public void sensor_descriptor() {
+  void sensor_descriptor() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     coverageSensor.describe(descriptor);
     assertThat(descriptor.name()).isEqualTo("LCOV Sensor for Rust coverage");
@@ -186,7 +187,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_resolve_relative_path() throws Exception {
+  void should_resolve_relative_path() throws Exception {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/report_relative_path.lcov");
     inputFile("deeply/nested/example/file1.rs", InputFile.Type.MAIN);
     inputFile("deeply/nested/example/file2.rs", InputFile.Type.MAIN);
@@ -208,8 +209,8 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_resolve_absolute_path() throws Exception {
-    File lcovFile = temp.newFile();
+  void should_resolve_absolute_path() throws Exception {
+    File lcovFile = Files.createFile(tmpDir.resolve("test.txt")).toFile();
     String absolutePathFile1 = new File("src/test/resources/lcov/file1.rs").getAbsolutePath();
     String absolutePathFile2 = new File("src/test/resources/lcov/file2.rs").getAbsolutePath();
 

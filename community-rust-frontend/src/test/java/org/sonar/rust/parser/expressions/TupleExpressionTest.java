@@ -20,16 +20,16 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class TupleExpressionTest {
-
+class TupleExpressionTest {
 
   @Test
-  public void testTupleElements() {
+  void testTupleElements() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_ELEMENTS))
       .matches("42,")
       .matches("42 ,")
@@ -42,12 +42,11 @@ public class TupleExpressionTest {
       .matches("0..top() ,")
       .matches("..,")
 
-
     ;
   }
 
   @Test
-  public void testTupleIndexingExpression() {
+  void testTupleIndexingExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("point.1")
       .matches("self.0")
@@ -55,7 +54,7 @@ public class TupleExpressionTest {
   }
 
   @Test
-  public void testTupleExpression() {
+  void testTupleExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_EXPRESSION))
       .matches("(0.0,4.5)")
       .matches("(0.0, 4.5)")

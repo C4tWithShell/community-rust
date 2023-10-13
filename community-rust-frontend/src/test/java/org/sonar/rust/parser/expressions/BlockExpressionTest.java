@@ -20,12 +20,13 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class BlockExpressionTest {
+class BlockExpressionTest {
 
     /*
     BlockExpression :
@@ -40,82 +41,76 @@ Statements :
    | ExpressionWithoutBlock
      */
 
+  @Test
+  void testAsyncBlockExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_BLOCK_EXPRESSION))
+      .matches("async {}")
+      .matches("async move {}")
+    ;
+  }
 
+  @Test
+  void testBlockExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_EXPRESSION))
+      .matches("{}")
+      .matches("{\n" +
+        "    // comment\n" +
+        "}")
+      .matches("{let y=42;}")
+      .matches("{println!(\"hi there\");}")
+      .matches("{abc()}")
+      .matches("{\n" +
+        "    println!(\"Hello, world!\");\n" +
+        "    abc()\n" +
+        "}")
+      .matches("{\n" +
+        "    fn_call();\n" +
+        "}")
+      .matches("{\n" +
+        "    fn_call();\n" +
+        "    5\n" +
+        "}")
+      .matches("{println!(\"hello,{}\",k)}")
+      .matches("{ println!(\"hello, {}\", j); }")
+      .matches("{ i.set(i.get()); false }")
+      .matches("{ i.set(i.get() + 1); false }")
+      .matches("{\n" +
+        "      node_fetch::create_http_client(user_agent.clone(), my_data.clone())\n" +
+        "          .unwrap()\n" +
+        "    }")
+      .matches("{\n" +
+        "            return None;\n" +
+        "        }")
+      .matches("{\n" +
+        "        self.len() as u32\n" +
+        "    }")
+      .matches("{\n" +
+        "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
+        "}")
 
+      .matches("{ Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+        "        let mut b = 42;\n" +
+        "    })\n" +
+        "}")
+      .matches("{\n" +
+        "            PathBuf::from(\"/demo_dir/\")\n" +
+        "        }")
+      .matches("{PathBuf::from(r\"C:\\demodir\\\")}")
+      .matches("{\n" +
+        "            if check {\n" +
+        "                check_source_files(config, paths).res1;\n" +
+        "            } else {\n" +
+        "                format_source_files(config, paths).res2;\n" +
+        "            }\n" +
+        "            Ok(())\n" +
+        "        }")
+      .matches("{\n" +
+        "    JsError {}     \n" +
+        "}")
+      .matches("{\n" +
+        "  continue 'outer;\n" +
+        "}")
 
-    @Test
-    public void testAsyncBlockExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_BLOCK_EXPRESSION))
-                .matches("async {}")
-                .matches("async move {}")
-        ;
-    }
-
-    @Test
-    public void testBlockExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BLOCK_EXPRESSION))
-                .matches("{}")
-                .matches("{\n" +
-                        "    // comment\n" +
-                        "}")
-                .matches("{let y=42;}")
-                .matches("{println!(\"hi there\");}")
-                .matches("{abc()}")
-                .matches("{\n" +
-                        "    println!(\"Hello, world!\");\n" +
-                        "    abc()\n" +
-                        "}")
-                .matches("{\n" +
-                        "    fn_call();\n" +
-                        "}")
-                .matches("{\n" +
-                        "    fn_call();\n" +
-                        "    5\n" +
-                        "}")
-                .matches("{println!(\"hello,{}\",k)}")
-                .matches("{ println!(\"hello, {}\", j); }")
-                .matches("{ i.set(i.get()); false }")
-                .matches("{ i.set(i.get() + 1); false }")
-                .matches("{\n" +
-                        "      node_fetch::create_http_client(user_agent.clone(), my_data.clone())\n" +
-                        "          .unwrap()\n" +
-                        "    }")
-                .matches("{\n" +
-                        "            return None;\n" +
-                        "        }")
-                .matches("{\n" +
-                        "        self.len() as u32\n" +
-                        "    }")
-                .matches("{\n" +
-                        "    &[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]\n" +
-                        "}")
-
-                .matches("{ Box::new(move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
-                        "        let mut b = 42;\n" +
-                        "    })\n" +
-                        "}")
-                .matches("{\n" +
-                        "            PathBuf::from(\"/demo_dir/\")\n" +
-                        "        }")
-                .matches("{PathBuf::from(r\"C:\\demodir\\\")}")
-                .matches("{\n" +
-                        "            if check {\n" +
-                        "                check_source_files(config, paths).res1;\n" +
-                        "            } else {\n" +
-                        "                format_source_files(config, paths).res2;\n" +
-                        "            }\n" +
-                        "            Ok(())\n" +
-                        "        }")
-                .matches("{\n" +
-                        "    JsError {}     \n" +
-                        "}")
-                .matches("{\n" +
-                        "  continue 'outer;\n" +
-                        "}")
-
-
-
-
-        ;
-    }
+    ;
+  }
 }

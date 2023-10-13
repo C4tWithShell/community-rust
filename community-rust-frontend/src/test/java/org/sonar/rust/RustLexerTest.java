@@ -24,7 +24,7 @@ import com.google.common.base.Charsets;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.impl.ast.AstXmlPrinter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 import org.sonar.sslr.tests.Assertions;
@@ -32,11 +32,12 @@ import org.sonar.sslr.tests.Assertions;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RustLexerTest {
+class RustLexerTest {
   @Test
-  public void testSize() {
+  void testSize() {
     assertThat(lex("")).hasSize(1);
     assertThat(lex("   ")).hasSize(1);
     assertThat(lex("foo")).hasSize(2);
@@ -53,7 +54,7 @@ public class RustLexerTest {
   }
 
   @Test
-  public void testTokens() {
+  void testTokens() {
     Assertions.assertThat(RustLexer.create().build().rule(RustLexer.TOKENS))
       .matches("")
       .matches("fn")
@@ -66,7 +67,7 @@ public class RustLexerTest {
   }
 
   @Test
-  public void testParsing() {
+  void testParsing() {
     String sexpr = "fn update_rates(\n" +
       "         rates: BoundedVec<(T::Symbol, u64), T::MaxRelaySymbols>,\n" +
       "         resolve_time: u64,\n" +

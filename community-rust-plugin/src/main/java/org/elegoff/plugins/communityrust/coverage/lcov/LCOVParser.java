@@ -20,6 +20,13 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.coverage.NewCoverage;
+
+import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,12 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.CheckForNull;
-import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.coverage.NewCoverage;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+
 
 import static org.elegoff.plugins.communityrust.coverage.lcov.LCOVFields.BRDA;
 import static org.elegoff.plugins.communityrust.coverage.lcov.LCOVFields.DA;
@@ -45,7 +47,7 @@ import static org.elegoff.plugins.communityrust.coverage.lcov.LCOVFields.SF;
 
 public class LCOVParser {
 
-  private static final Logger LOG = Loggers.get(LCOVParser.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LCOVParser.class);
   private final Map<InputFile, NewCoverage> fileCoverage;
   private final SensorContext sensorContext;
   private final Set<String> unknownPaths = new LinkedHashSet<>();
@@ -142,7 +144,7 @@ public class LCOVParser {
   }
 
   private void logMismatch(String dataType, int linum, Exception e) {
-    LOG.debug(String.format("Error while parsing LCOV report: can't save %s data for line %s of coverage report file (%s).", dataType, linum, e.toString()));
+    LOG.debug("Error while parsing LCOV report: can't save {} data for line {} of coverage report file ({}).", dataType, linum, e);
     pbCount++;
   }
 

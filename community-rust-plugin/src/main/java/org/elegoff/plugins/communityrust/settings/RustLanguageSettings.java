@@ -25,6 +25,7 @@ import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
 
+
 import static java.util.Arrays.asList;
 
 /**

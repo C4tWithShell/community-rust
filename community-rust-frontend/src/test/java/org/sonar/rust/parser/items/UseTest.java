@@ -20,25 +20,24 @@
  */
 package org.sonar.rust.parser.items;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class UseTest {
+class UseTest {
 
+  @Test
+  void testUseDeclaration() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.USE_DECLARATION))
+      .matches("use std::option::Option::{Some, None};")
+      .matches("use std::collections::hash_map::{self, HashMap};")
+      .matches("use std::collections::hash_map::{self, HashMap, Foo, Bar};")
+      .matches("use serde::de::{self, Deserialize, Deserializer, Visitor};")
+      .matches("use rusty_v8 as v8;")
 
-    @Test
-    public void testUseDeclaration() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.USE_DECLARATION))
-                .matches("use std::option::Option::{Some, None};")
-                .matches("use std::collections::hash_map::{self, HashMap};")
-                .matches("use std::collections::hash_map::{self, HashMap, Foo, Bar};")
-                .matches("use serde::de::{self, Deserialize, Deserializer, Visitor};")
-                .matches("use rusty_v8 as v8;")
+    ;
 
-
-        ;
-
-    }
+  }
 }

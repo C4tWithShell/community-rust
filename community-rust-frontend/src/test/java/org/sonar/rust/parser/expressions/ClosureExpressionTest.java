@@ -20,57 +20,57 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ClosureExpressionTest {
+class ClosureExpressionTest {
 
+  @Test
+  void testClosureParameters() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAMETERS))
+      .matches("k:i32")
+      .matches("j")
+      .matches("state: Rc<RefCell<OpState>>, bufs: BufVec")
+    ;
+  }
 
-    @Test
-    public void testClosureParameters() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAMETERS))
-                .matches("k:i32")
-                .matches("j")
-                .matches("state: Rc<RefCell<OpState>>, bufs: BufVec")
-        ;
-    }
+  @Test
+  void testClosureParameter() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAM))
+      .matches("k:i32")
+      .matches("j")
+      .matches("state: Rc<RefCell< OpState>>")
+      .matches("bufs : BufVec")
+      .matches("&i")
+      .notMatches("&i| i")
+    ;
+  }
 
-    @Test
-    public void testClosureParameter() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAM))
-                .matches("k:i32")
-                .matches("j")
-                .matches("state: Rc<RefCell< OpState>>")
-                .matches("bufs : BufVec")
-                .matches("&i")
-                .notMatches("&i| i")
-        ;
-    }
+  @Test
+  void testClosureExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_EXPRESSION))
+      .matches("|k:i32|->(){println!(\"hello,{}\",k)}")
+      .matches("|j: i32| -> () { println!(\"hello, {}\", j); }")
+      .matches("move |j| println!(\"{}, {}\", word, j)")
+      .matches("move |state: Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+        "        let mut bufs_iter = bufs.into_iter();\n" +
+        "}")
+      .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
+        "        let mut b = 42;\n" +
+        "    }")
+      .matches("|paths: Vec<PathBuf>| {\n" +
+        "        let config = get_typescript_config();\n" +
+        "        a\n" +
+        "            .boxed_local()\n" +
+        "    }")
+      .matches("|&i|{i==NUM_MSG}")
+      .matches("|| i == NUM_MSG")
+      .matches("|i| i == NUM_MSG")
+      .matches("|&i| i == NUM_MSG")
 
-    @Test
-    public void testClosureExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_EXPRESSION))
-                .matches("|k:i32|->(){println!(\"hello,{}\",k)}")
-                .matches("|j: i32| -> () { println!(\"hello, {}\", j); }")
-                .matches("move |j| println!(\"{}, {}\", word, j)")
-                .matches("move |state: Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
-                        "        let mut bufs_iter = bufs.into_iter();\n" +
-                        "}")
-                .matches("move |state : Rc<RefCell<OpState>>, bufs: BufVec| -> Op {\n" +
-                        "        let mut b = 42;\n" +
-                        "    }")
-                .matches("|paths: Vec<PathBuf>| {\n" +
-                        "        let config = get_typescript_config();\n" +
-                        "        a\n" +
-                        "            .boxed_local()\n" +
-                        "    }")
-                .matches("|&i|{i==NUM_MSG}")
-                .matches("|| i == NUM_MSG")
-                .matches("|i| i == NUM_MSG")
-                .matches("|&i| i == NUM_MSG")
-
-            ;
-    }
+    ;
+  }
 }

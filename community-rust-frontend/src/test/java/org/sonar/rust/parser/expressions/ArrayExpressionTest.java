@@ -20,44 +20,45 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ArrayExpressionTest {
-    @Test
-    public void testArrayExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ARRAY_EXPRESSION))
-                .matches("[]")
-                .matches("[42]")
-                .matches("[42,43]")
-                .matches("[ 42 , 43 ]")
-                .matches("[\"forty_two\"]")
-                .matches("[\"s1\",\"s2\",\"s3\"]")
-                .matches("[BIT1, BIT2]")
-                .matches("[1, 2, 3, 4]")
-                .matches("[\"a\", \"b\", \"c\", \"d\"]")
-                .matches("[0; 128]")// array with 128 zeros
-                .matches("[0u8, 0u8, 0u8, 0u8,]")
-                .matches("[[1, 0, 0], [0, 1, 0], [0, 0, 1]]") // 2D array
-                .matches("[b' ', b' ', b' ']")
-     ;
-    }
+class ArrayExpressionTest {
+  @Test
+  void testArrayExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ARRAY_EXPRESSION))
+      .matches("[]")
+      .matches("[42]")
+      .matches("[42,43]")
+      .matches("[ 42 , 43 ]")
+      .matches("[\"forty_two\"]")
+      .matches("[\"s1\",\"s2\",\"s3\"]")
+      .matches("[BIT1, BIT2]")
+      .matches("[1, 2, 3, 4]")
+      .matches("[\"a\", \"b\", \"c\", \"d\"]")
+      .matches("[0; 128]")// array with 128 zeros
+      .matches("[0u8, 0u8, 0u8, 0u8,]")
+      .matches("[[1, 0, 0], [0, 1, 0], [0, 0, 1]]") // 2D array
+      .matches("[b' ', b' ', b' ']")
+    ;
+  }
 
-    @Test
-    public void testIndexExpression() {
+  @Test
+  void testIndexExpression() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.INDEX_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("arr[42]")
-                .matches("pair[0]")
-                .matches("[42,43][0]")
-                .matches("[42,43][0..1]")
-                .matches("[b' ', b' ', b' '][0]")
-                .matches("[b' ', b' ', b' '][0..1]")
-                //FIXME.matches("[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
-                .matches("resp_header[0..8]")
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("arr[42]")
+      .matches("pair[0]")
+      .matches("[42,43][0]")
+      .matches("[42,43][0..1]")
+      .matches("[b' ', b' ', b' '][0]")
+      .matches("[b' ', b' ', b' '][0..1]")
+      //FIXME.matches("[b' ', b' ', b' '][0..(4 - (len & 3)) & 3]")
+      .matches("resp_header[0..8]")
 
-        ;
-    }
+    ;
+  }
 }

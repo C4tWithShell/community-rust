@@ -37,9 +37,10 @@ public class TestCase {
 
   /**
    * Constructs a testcase instance out of following parameters
+   *
    * @param status The execution status of the testcase
-   * @param time The execution time in milliseconds
-   * @param file The optional file to which this test case applies.
+   * @param time   The execution time in milliseconds
+   * @param file   The optional file to which this test case applies.
    */
   public TestCase(String name, TestCaseStatus status, String stackTrace, String errorMessage, int time, @Nullable String file, @Nullable String testClassname) {
     this.name = name;

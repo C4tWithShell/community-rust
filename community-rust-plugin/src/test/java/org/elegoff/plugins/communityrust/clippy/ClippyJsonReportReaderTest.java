@@ -25,35 +25,36 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONArray;
 import org.sonarsource.analyzer.commons.internal.json.simple.JSONObject;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.JSONParser;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.fest.assertions.Assertions.assertThat;
 
-public class ClippyJsonReportReaderTest {
+class ClippyJsonReportReaderTest {
   private final JSONParser jsonParser = new JSONParser();
 
   @Test
-  public void noReportProvided() {
+  void noReportProvided() {
     assertThatThrownBy(() -> {
       InputStream in = ClippyJsonReportReader.toJSON(null);
     }).isInstanceOf(IOException.class);
   }
 
   @Test
-  public void invalidReportPathProvided() {
+  void invalidReportPathProvided() {
     assertThatThrownBy(() -> {
       InputStream in = ClippyJsonReportReader.toJSON(new File("invalid.txt"));
     }).isInstanceOf(IOException.class);
   }
 
   @Test
-  public void emptyReport() {
+  void emptyReport() {
     File empty = this.getFileFromResources("clippy/empty-report.txt");
     InputStream in = null;
     try {
@@ -68,7 +69,7 @@ public class ClippyJsonReportReaderTest {
   }
 
   @Test
-  public void validReport() {
+  void validReport() {
     File report = this.getFileFromResources("clippy/catboard.txt");
     InputStream in = null;
     try {

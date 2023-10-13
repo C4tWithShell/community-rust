@@ -20,14 +20,15 @@
  */
 package org.sonar.rust.parser.lexer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class CompilationUnitTest {
+class CompilationUnitTest {
   @Test
-  public void reallife() {
+  void reallife() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.COMPILATION_UNIT))
       .matches("")
       .matches("println!(\"hello\");")

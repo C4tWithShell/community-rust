@@ -25,7 +25,6 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 
-
 import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
@@ -34,68 +33,64 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-
-
-
 public class Utils {
 
-    private Utils() {
-        // utility class
+  private Utils() {
+    // utility class
+  }
+
+  public static File loadResource(String resourceName) {
+    URL resource = Utils.class.getResource(resourceName);
+    File resourceAsFile = null;
+    try {
+      resourceAsFile = new File(resource.toURI());
+    } catch (URISyntaxException e) {
+      System.out.println("Cannot load resource: " + resourceName);
     }
 
-    public static File loadResource(String resourceName) {
-        URL resource = Utils.class.getResource(resourceName);
-        File resourceAsFile = null;
-        try {
-            resourceAsFile = new File(resource.toURI());
-        } catch (URISyntaxException e) {
-            System.out.println("Cannot load resource: " + resourceName);
-        }
+    return resourceAsFile;
+  }
 
-        return resourceAsFile;
+  /**
+   * Search for a test resource in the classpath. For example getResource("org/sonar/MyClass/foo.txt");
+   *
+   * @param path the starting slash is optional
+   * @return the resource. Null if resource not found
+   */
+  @CheckForNull
+  public static File getResource(String path) {
+    String resourcePath = path;
+    if (!resourcePath.startsWith("/")) {
+      resourcePath = "/" + resourcePath;
     }
-
-    /**
-     * Search for a test resource in the classpath. For example getResource("org/sonar/MyClass/foo.txt");
-     *
-     * @param path the starting slash is optional
-     * @return the resource. Null if resource not found
-     */
-    @CheckForNull
-    public static File getResource(String path) {
-        String resourcePath = path;
-        if (!resourcePath.startsWith("/")) {
-            resourcePath = "/" + resourcePath;
-        }
-        URL url = Utils.class.getResource(resourcePath);
-        if (url != null) {
-            try {
-                return new File(url.toURI());
-            } catch (URISyntaxException e) {
-                return null;
-            }
-        }
+    URL url = Utils.class.getResource(resourcePath);
+    if (url != null) {
+      try {
+        return new File(url.toURI());
+      } catch (URISyntaxException e) {
         return null;
+      }
     }
+    return null;
+  }
 
-    public static DefaultInputFile buildInputFile(File baseDir, String fileName) throws IOException {
-        File target = new File(baseDir, fileName);
-        String content = Files.contentOf(target, StandardCharsets.UTF_8);
-        DefaultInputFile inputFile = TestInputFileBuilder.create("ProjectKey", baseDir, target)
-                .setContents(content)
-                .setCharset(StandardCharsets.UTF_8)
-                .setLanguage("Rust")
-                .setType(InputFile.Type.MAIN).build();
-        return inputFile;
+  public static DefaultInputFile buildInputFile(File baseDir, String fileName) throws IOException {
+    File target = new File(baseDir, fileName);
+    String content = Files.contentOf(target, StandardCharsets.UTF_8);
+    DefaultInputFile inputFile = TestInputFileBuilder.create("ProjectKey", baseDir, target)
+      .setContents(content)
+      .setCharset(StandardCharsets.UTF_8)
+      .setLanguage("Rust")
+      .setType(InputFile.Type.MAIN).build();
+    return inputFile;
+  }
+
+  public static String fileContent(File file, Charset charset) {
+    try {
+      return new String(java.nio.file.Files.readAllBytes(file.toPath()), charset);
+    } catch (IOException e) {
+      throw new IllegalStateException("Cannot read " + file, e);
     }
-
-    public static String fileContent(File file, Charset charset) {
-        try {
-            return new String(java.nio.file.Files.readAllBytes(file.toPath()), charset);
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot read " + file, e);
-        }
-    }
-
+  }
 
 }

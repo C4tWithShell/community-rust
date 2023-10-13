@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class CallExpressionTest {
+class CallExpressionTest {
 
   @Test
-  public void testCallParams() {
+  void testCallParams() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_PARAMS))
       .matches("..")
       .matches("1i32")
@@ -54,7 +55,7 @@ public class CallExpressionTest {
   }
 
   @Test
-  public void testCallExpression() {
+  void testCallExpression() {
     // assertThat(RustGrammar.create().build().rule(RustGrammar.CALL_EXPRESSION))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("foo()")

@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.macro;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class MacroTest {
+class MacroTest {
 
   @Test
-  public void testTokenExceptDelimiters() {
+  void testTokenExceptDelimiters() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TOKEN_EXCEPT_DELIMITERS))
       .matches("abc")
       .matches("42")
@@ -41,7 +42,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testDelimTokenTree() {
+  void testDelimTokenTree() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.DELIM_TOKEN_TREE))
       .matches("(abc)")
       .matches("(\"hello\")")
@@ -51,7 +52,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testTokenTree() {
+  void testTokenTree() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TOKEN_TREE))
       .matches("abc")
       .matches("\"hello\"")
@@ -65,7 +66,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroInvocationSemi() {
+  void testMacroInvocationSemi() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_INVOCATION_SEMI))
       .matches("j!(AS);")
       .matches("println!(\"hello\");")
@@ -79,7 +80,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroInvocation() {
+  void testMacroInvocation() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_INVOCATION))
       .matches("std::io::Write!()")
       .matches("panic!()")
@@ -98,7 +99,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroFragSpec() {
+  void testMacroFragSpec() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_FRAG_SPEC))
       .matches("block")
       .matches("expr")
@@ -119,7 +120,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testRepOp() {
+  void testRepOp() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_REP_OP))
       .matches("+")
       .matches("*")
@@ -132,7 +133,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testRepSep() {
+  void testRepSep() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_REP_SEP))
       .matches("else")
 
@@ -140,7 +141,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroMatch() {
+  void testMacroMatch() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_MATCH))
       .matches("token")
       .matches("$(token token)*")
@@ -164,7 +165,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroMatcher() {
+  void testMacroMatcher() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_MATCHER))
       .matches("(token)")
       .matches("($(token token)*)")
@@ -193,7 +194,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroRule() {
+  void testMacroRule() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULE))
       .matches("($l:tt) => { bar!($l); }")
       .matches("($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
@@ -229,7 +230,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroRules() {
+  void testMacroRules() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES))
       .matches("($l:tt) => { bar!($l); }")
       .matches("($($name:ident($ty:ty, $to:ident, $lt:lifetime);)*) => {\n" +
@@ -251,7 +252,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroRulesDef() {
+  void testMacroRulesDef() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEF))
       .matches("{($l:tt) => { bar!($l); }}")
       .matches("{($ l:tt) => { bar!($ l); }}")
@@ -288,7 +289,7 @@ public class MacroTest {
   }
 
   @Test
-  public void testMacroRulesDefinition() {
+  void testMacroRulesDefinition() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MACRO_RULES_DEFINITION))
       .matches("macro_rules! foo {\n" +
         "    ($l:tt) => { bar!($l); }\n" +

@@ -26,12 +26,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import org.assertj.core.api.Assertions;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.elegoff.plugins.communityrust.Utils;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputFile.Type;
@@ -40,28 +42,29 @@ import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
-import org.sonar.api.utils.log.LogTester;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.log.LoggerLevel;
+
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CoberturaSensorTest {
+class CoberturaSensorTest {
 
   private static final String TESTFILE1 = "moduleKey:src/cgroups/common.rs";
   private static final String TESTFILE2 = "moduleKey:src/cgroups/test.rs";
   private static final String TESTFILE3 = "moduleKey:src/process/init.rs";
   private final File moduleBaseDir = new File("src/test/resources/org/elegoff/plugins/communityrust/cobertura").getAbsoluteFile();
-  @Rule
-  public LogTester logTester = new LogTester();
-  @Rule
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  @RegisterExtension
   public TemporaryFolder tmpDir = new TemporaryFolder();
   private SensorContextTester context;
   private MapSettings settings;
   private CoberturaSensor coberturaSensor;
 
-  @Before
-  public void init() {
+  @BeforeEach
+  void init() {
 
     coberturaSensor = new CoberturaSensor();
     settings = new MapSettings();
@@ -89,7 +92,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void absolute_path() {
+  void absolute_path() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, new File(moduleBaseDir, "cobertura.xml").getAbsolutePath());
 
     coberturaSensor.execute(context);
@@ -98,7 +101,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_coverage() {
+  void test_coverage() {
     coberturaSensor.execute(context);
     Map<Integer, Integer> file1Expected = new HashMap<>();
     file1Expected.put(42, 1);
@@ -124,7 +127,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_ambigous_locations() {
+  void test_ambigous_locations() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "coverage-other-2.xml");
     coberturaSensor.execute(context);
 
@@ -135,7 +138,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_report_with_absolute_path() throws Exception {
+  void test_report_with_absolute_path() throws Exception {
     String reportPath = generateReportWithAbsPaths();
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, reportPath);
 
@@ -147,7 +150,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_unresolved_path() {
+  void test_unresolved_path() {
     String separator = File.separator;
 
     logTester.clear();
@@ -166,7 +169,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_multiple_reports() {
+  void test_multiple_reports() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "cobertura.xml,coverage-other*.xml");
     coberturaSensor.execute(context);
 
@@ -177,27 +180,29 @@ public class CoberturaSensorTest {
     assertThat(context.lineHits(TESTFILE3, 12)).isZero();
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void fail_with_invalid_report() {
+  @Test
+  void fail_with_invalid_report() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "invalid.xml");
-    coberturaSensor.execute(context);
-  }
-
-  @Test(expected = IllegalStateException.class)
-  public void fail_with_invalid_eof() {
-    settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "wrong_eof.xml");
-    coberturaSensor.execute(context);
+    IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
+    Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
   }
 
   @Test
-  public void ok_when_empty_report() {
+  void fail_with_invalid_eof() {
+    settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "wrong_eof.xml");
+    IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
+    Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
+  }
+
+  @Test
+  void ok_when_empty_report() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "empty.xml");
     coberturaSensor.execute(context);
     assertThat(context.lineHits(TESTFILE1, 42)).isNull();
   }
 
   @Test
-  public void default_debug_logs() {
+  void default_debug_logs() {
     settings.clear();
     CoberturaSensor sensor = new CoberturaSensor();
     sensor.execute(context);
@@ -205,7 +210,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void sensor_descriptor() {
+  void sensor_descriptor() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     new CoberturaSensor().describe(descriptor);
     assertThat(descriptor.name()).isEqualTo("Cobertura Sensor for Rust");
@@ -228,7 +233,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void report_not_found() {
+  void report_not_found() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "/report/not/found.xml");
     coberturaSensor.execute(context);
     assertThat(context.lineHits(TESTFILE1, 1)).isNull();

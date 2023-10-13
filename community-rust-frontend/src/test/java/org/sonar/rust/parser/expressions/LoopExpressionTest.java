@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class LoopExpressionTest {
+class LoopExpressionTest {
 
   @Test
-  public void testBreakExpression() {
+  void testBreakExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BREAK_EXPRESSION))
       .matches("break")
       .matches("break 42")
@@ -39,7 +40,7 @@ public class LoopExpressionTest {
   }
 
   @Test
-  public void testContinueExpression() {
+  void testContinueExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CONTINUE_EXPRESSION))
       .matches("continue 'outer")
 
@@ -47,7 +48,7 @@ public class LoopExpressionTest {
   }
 
   @Test
-  public void testIteratorLoopExpression() {
+  void testIteratorLoopExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ITERATOR_LOOP_EXPRESSION))
       .matches("for elem in arr {}")
       .matches("for elem in &mut arr {}")
@@ -58,7 +59,7 @@ public class LoopExpressionTest {
   }
 
   @Test
-  public void testLoopExpression() {
+  void testLoopExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.LOOP_EXPRESSION))
       .matches("while i < 10 {\n" +
         "    println!(\"hello\");\n" +

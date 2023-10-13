@@ -61,9 +61,9 @@ public class TestSuiteParser implements StaxParser.XmlStreamHandler {
         stack = childCursor.collectDescendantText();
       }
     }
-    String message ="";
-    if (msg.isPresent()){
-      message=msg.get();
+    String message = "";
+    if (msg.isPresent()) {
+      message = msg.get();
     }
     return new TestCase(name, status, stack, message, time.intValue(), file, testClassName);
   }

@@ -1,21 +1,21 @@
-|     |     |     
-| --- | --- | 
-|  [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=coverage) |
-| [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)|[Download latest release](https://github.com/elegoff/sonar-rust/releases) |
+|                                                                                                                                                                           |                                                                                                          |     
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------| 
+| [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=coverage) |
+| [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)                                                           | [Download latest release](https://github.com/elegoff/sonar-rust/releases)                                |
 
 ## SonarQube plugin for Rust (Community)
 
 The plugin enables analysis of Rust language within [SonarQube](https://www.sonarqube.org), which is an open platform to
-manage code quality. 
+manage code quality.
 
 ### Compatibility with SonarQube versions :
 
-|SonarQube | Rust plugin  |
-|----------|--------------|
-| > 9.9 LTS| not tested   | 
-| 9.9 LTS  | 0.2.1        |
-| 8.9 - 9.9| 0.1.0        |
-| <8.9     | not supported|
+| SonarQube | Rust plugin   |
+|-----------|---------------|
+| > 9.9 LTS | not tested    | 
+| 9.9 LTS   | 0.2.1         |
+| 8.9 - 9.9 | 0.1.0         |
+| <8.9      | not supported |
 
 It leverages [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) to raise issues against coding
 rules,  [LCOV](https://wiki.documentfoundation.org/Development/Lcov)

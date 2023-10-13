@@ -38,19 +38,19 @@ import org.sonar.rust.RustVisitorContext;
 import org.sonarsource.analyzer.commons.checks.verifier.SingleFileVerifier;
 
 public class RustCheckVerifier {
-  public static void verify(File file, RustCheck check) {
+  static void verify(File file, RustCheck check) {
     createVerifier(file, check, true, Integer.MAX_VALUE).assertOneOrMoreIssues();
   }
 
-  public static void verifyWithMarginRight(File file, RustCheck check, int marginRight) {
+  static void verifyWithMarginRight(File file, RustCheck check, int marginRight) {
     createVerifier(file, check, true, marginRight).assertOneOrMoreIssues();
   }
 
-  public static void verifyNoIssue(File file, RustCheck check) {
+  static void verifyNoIssue(File file, RustCheck check) {
     createVerifier(file, check, true, Integer.MAX_VALUE).assertNoIssues();
   }
 
-  public static void verifyNoIssueIgnoringExpected(File file, RustCheck check) {
+  static void verifyNoIssueIgnoringExpected(File file, RustCheck check) {
     createVerifier(file, check, false, Integer.MAX_VALUE).assertNoIssues();
   }
 

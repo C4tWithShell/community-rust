@@ -20,16 +20,16 @@
  */
 package org.sonar.rust.parser.items;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class EnumerationTest {
-
+class EnumerationTest {
 
   @Test
-  public void testEnumerationItem() {
+  void testEnumerationItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ENUM_ITEM))
       .matches("Dog")
 
@@ -62,7 +62,7 @@ public class EnumerationTest {
   }
 
   @Test
-  public void testEnumeration() {
+  void testEnumeration() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ENUMERATION))
       .matches("enum Empty {}")
       .matches("enum Animal {\n" +
@@ -87,7 +87,6 @@ public class EnumerationTest {
         "    #[value_info(other_values = \"step-start,step-end\")]\n" +
         "    Steps(Integer, #[css(skip_if = \"is_end\")] StepPosition),\n" +
         "}")
-
 
       .matches("enum TimingFunction<Integer, Number> {\n" +
         "    /// `linear | ease | ease-in | ease-out | ease-in-out`\n" +
@@ -121,7 +120,6 @@ public class EnumerationTest {
         "     FreeCollector = 0,\n" +
         "     FreeCollectorForPair(foo) = 42,\n" +
         "     }")
-
 
     ;
 

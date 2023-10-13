@@ -28,28 +28,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.event.Level;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarQubeSide;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.ExternalIssue;
 import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.rules.RuleType;
+import org.sonar.api.issue.impact.Severity;
+import org.sonar.api.issue.impact.SoftwareQuality;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.Version;
-import org.sonar.api.utils.log.LogTester;
-import org.sonar.api.utils.log.LoggerLevel;
+
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ClippySensorTest {
+class ClippySensorTest {
   private static final String CLIPPY_FILE = "clippy-project:cat.rs";
   private static final String CLIPPY_AEC = "external_clippy:clippy::absurd_extreme_comparisons";
   private static final String CLIPPY_UNUSED = "external_clippy:unused_imports";
@@ -60,13 +61,13 @@ public class ClippySensorTest {
 
   private static final ClippySensor clippySensor = new ClippySensor();
 
-  @Rule
-  public LogTester logTester = new LogTester();
+  @RegisterExtension
+  LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  public static void assertNoErrorWarnDebugLogs(LogTester logTester) {
-    org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
-    org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.WARN)).isEmpty();
-    org.assertj.core.api.Assertions.assertThat(logTester.logs(LoggerLevel.DEBUG)).isEmpty();
+  static void assertNoErrorWarnDebugLogs(LogTesterJUnit5 logTester) {
+    org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.ERROR)).isEmpty();
+    org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.WARN)).isEmpty();
+    org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.DEBUG)).isEmpty();
   }
 
   private static List<ExternalIssue> executeSensorImporting(int majorVersion, int minorVersion, @Nullable String reportFileName) throws IOException {
@@ -108,7 +109,7 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void testDescriptor() {
+  void testDescriptor() {
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     clippySensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("Import of Clippy issues");
@@ -118,14 +119,13 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void issuesDetection() throws IOException {
+  void issuesDetection() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, CLIPPY_REPORT_TXT);
     assertThat(externalIssues).hasSize(278);
 
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.ruleKey()).hasToString(CLIPPY_UNUSED);
-    assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
-    assertThat(first.severity()).isEqualTo(Severity.MINOR);
+    assertThat(first.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.MEDIUM);
     IssueLocation firstPrimaryLoc = first.primaryLocation();
     assertThat(firstPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(firstPrimaryLoc.message())
@@ -138,8 +138,7 @@ public class ClippySensorTest {
 
     ExternalIssue second = externalIssues.get(1);
     assertThat(second.ruleKey()).hasToString("external_clippy:unused_doc_comments");
-    assertThat(second.type()).isEqualTo(RuleType.CODE_SMELL);
-    assertThat(second.severity()).isEqualTo(Severity.MINOR);
+    assertThat(second.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.MEDIUM);
     IssueLocation secondPrimaryLoc = second.primaryLocation();
     assertThat(secondPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(secondPrimaryLoc.message())
@@ -153,50 +152,49 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void noIssuesWithoutReportPathsProperty() throws IOException {
+  void noIssuesWithoutReportPathsProperty() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, null);
     assertThat(externalIssues).isEmpty();
     assertNoErrorWarnDebugLogs(logTester);
   }
 
   @Test
-  public void noIssuesWithInvalidReportPath() throws IOException {
+  void noIssuesWithInvalidReportPath() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "invalid-path.txt");
     assertThat(externalIssues).isEmpty();
-    assertThat(onlyOneLogElement(logTester.logs(LoggerLevel.ERROR)))
+    assertThat(onlyOneLogElement(logTester.logs(Level.ERROR)))
       .startsWith("No issues information will be saved as the report file '")
       .contains("invalid-path.txt' can't be read.");
   }
 
   @Test
-  public void issuesWhenClippyFileHasErrors() throws IOException {
+  void issuesWhenClippyFileHasErrors() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "wrongpaths.txt");
     assertThat(externalIssues).hasSize(1);
 
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.primaryLocation().inputComponent().key()).isEqualTo("clippy-project:main.rs");
     assertThat(first.ruleKey()).hasToString(CLIPPY_AEC);
-    assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
-    assertThat(first.severity()).isEqualTo(Severity.MAJOR);
+    assertThat(first.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.HIGH);
     assertThat(first.primaryLocation().message()).isEqualTo("A message");
     assertThat(first.primaryLocation().textRange()).isNull();
 
-    assertThat(logTester.logs(LoggerLevel.ERROR)).isEmpty();
-    assertThat(onlyOneLogElement(logTester.logs(LoggerLevel.WARN)))
+    assertThat(logTester.logs(Level.ERROR)).isEmpty();
+    assertThat(onlyOneLogElement(logTester.logs(Level.WARN)))
       .startsWith("Failed to resolve 1 file path(s) in Clippy report. No issues imported related to file(s)");
-    assertThat(logTester.logs(LoggerLevel.DEBUG)).hasSize(1);
-    assertThat(logTester.logs(LoggerLevel.DEBUG).get(0)).startsWith("Missing information for ruleKey:'clippy::absurd_extreme_comparisons'");
+    assertThat(logTester.logs(Level.WARN)).hasSize(1);
+    assertThat(logTester.logs(Level.WARN).get(0)).startsWith("Missing information for ruleKey:'clippy::absurd_extreme_comparisons'");
   }
 
   @Test
-  public void noIssuesWithEmptyClippyReport() throws IOException {
+  void noIssuesWithEmptyClippyReport() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
     assertThat(externalIssues).isEmpty();
     assertNoErrorWarnDebugLogs(logTester);
   }
 
   @Test
-  public void clippyReportWithSuggestedChanges() throws IOException {
+  void clippyReportWithSuggestedChanges() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, UNKNOWN_KEY_REPORT);
     assertThat(externalIssues).hasSize(4);
 

@@ -27,21 +27,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.CheckForNull;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
-import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.rules.RuleType;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+import org.sonar.api.issue.impact.Severity;
+import org.sonar.api.issue.impact.SoftwareQuality;
 import org.sonarsource.analyzer.commons.ExternalReportProvider;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
-import javax.annotation.CheckForNull;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
@@ -50,19 +50,19 @@ public class ClippySensor implements Sensor {
   public static final String REPORT_PROPERTY_KEY = "community.rust.clippy.reportPaths";
   static final String LINTER_KEY = "clippy";
   static final String LINTER_NAME = "Clippy";
-  private static final Logger LOG = Loggers.get(ClippySensor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ClippySensor.class);
   private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
   private static final int MAX_LOGGED_FILE_NAMES = 20;
 
   private FileAdjustor fileAdjustor;
 
   @CheckForNull
-  private  InputFile inputFile(SensorContext context, String filePath) {
+  private InputFile inputFile(SensorContext context, String filePath) {
     String relativePath = fileAdjustor.relativePath(filePath);
     return context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(relativePath));
   }
 
-  private  void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
+  private void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
     if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
       LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
       return;
@@ -76,9 +76,7 @@ public class ClippySensor implements Sensor {
     }
 
     var newExternalIssue = context.newExternalIssue();
-    newExternalIssue
-      .type(RuleType.CODE_SMELL)
-      .severity(toSonarQubeSeverity(clippyIssue.severity))
+    newExternalIssue.addImpact(SoftwareQuality.MAINTAINABILITY, toSonarQubeSeverity(clippyIssue.severity))
       .remediationEffortMinutes(DEFAULT_CONSTANT_DEBT_MINUTES);
 
     NewIssueLocation primaryLocation = newExternalIssue.newLocation()
@@ -101,9 +99,9 @@ public class ClippySensor implements Sensor {
 
   private static Severity toSonarQubeSeverity(String severity) {
     if ("error".equalsIgnoreCase(severity)) {
-      return Severity.MAJOR;
+      return Severity.HIGH;
     } else
-      return Severity.MINOR;
+      return Severity.MEDIUM;
   }
 
   @Override
@@ -143,7 +141,8 @@ public class ClippySensor implements Sensor {
     if (unresolvedInputFiles.size() > MAX_LOGGED_FILE_NAMES) {
       fileList += ";...";
     }
-    logger().warn("Failed to resolve {} file path(s) in " + linterName() + " report. No issues imported related to file(s): {}", unresolvedInputFiles.size(), fileList);
+    String linterName = linterName();
+    logger().warn("Failed to resolve {} file path(s) in {} report. No issues imported related to file(s): {}", unresolvedInputFiles.size(), linterName, fileList);
   }
 
   protected String linterName() {

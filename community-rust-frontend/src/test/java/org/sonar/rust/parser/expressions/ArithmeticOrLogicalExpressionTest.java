@@ -20,116 +20,102 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ArithmeticOrLogicalExpressionTest {
+class ArithmeticOrLogicalExpressionTest {
 
-    @Test
-    public void testShlExpression() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.SHL_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("1 << 0")
-                .matches("0<< 1 <<2")
-        ;
-    }
+  @Test
+  void testShlExpression() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.SHL_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("1 << 0")
+      .matches("0<< 1 <<2");
+  }
 
+  @Test
+  void testAddition() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.ADDITION_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("0+0")
+      .matches("0 + 0")
+      .matches("40 + 2")
+      .matches("a+ 2")
+      .matches("2 + b")
+      .matches("a + b + c")
+      .matches("1+2+3+a+b + 56 + foo")
+      .matches("calc() + 12")
+      .matches("m.get(i) + 1")
+      .matches("(40+1)+1");
+  }
 
+  @Test
+  void testSubstraction() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.SUBTRACTION_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("0-0")
+      .matches("0 - 0")
+      .matches("40 - 2")
+      .matches("a- 2")
+      .matches("2 - b")
+      .matches("a- b - c")
+      .matches("1-2-3-a-b - 56 - foo");
+  }
 
+  @Test
+  void testMultiplication() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.MULTIPLICATION_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("0*0")
+      .matches("0 * 0")
+      .matches("40 * 2")
+      .matches("a* 2")
+      .matches("2 * b")
+      .matches("a* b* c")
+      .matches("1*2*3*a*b * 56 * foo");
+  }
 
-    @Test
-    public void testAddition() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.ADDITION_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("0+0")
-                .matches("0 + 0")
-                .matches("40 + 2")
-                .matches("a+ 2")
-                .matches("2 + b")
-                .matches("a + b + c")
-                .matches("1+2+3+a+b + 56 + foo")
-                .matches("calc() + 12")
-                .matches("m.get(i) + 1")
-                .matches("(40+1)+1")
-                ;
-    }
+  @Test
+  void testBitAnd() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.BITAND_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("0&0")
+      .matches("0 & 0")
+      .matches("40 & 2")
+      .matches("a& 2")
+      .matches("2 & b")
+      .matches("a& b& c")
+      .matches("1&2&3&a&b & 56 & foo");
+  }
 
-    @Test
-    public void testSubstraction() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.SUBTRACTION_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("0-0")
-                .matches("0 - 0")
-                .matches("40 - 2")
-                .matches("a- 2")
-                .matches("2 - b")
-                .matches("a- b - c")
-                .matches("1-2-3-a-b - 56 - foo")
-        ;
-    }
+  @Test
+  void testDivision() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.DIVISION_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("0/0")
+      .matches("0 / 0")
+      .matches("40 / 2")
+      .matches("a/ 2")
+      .matches("2 / b")
+      .matches("a/ b/ c")
+      .matches("1/2/3/a/b / 56 / foo");
+  }
 
-    @Test
-    public void testMultiplication() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.MULTIPLICATION_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("0*0")
-                .matches("0 * 0")
-                .matches("40 * 2")
-                .matches("a* 2")
-                .matches("2 * b")
-                .matches("a* b* c")
-                .matches("1*2*3*a*b * 56 * foo")
-        ;
-    }
-
-    @Test
-    public void testBitAnd() {
-       // assertThat(RustGrammar.create().build().rule(RustGrammar.BITAND_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("0&0")
-                .matches("0 & 0")
-                .matches("40 & 2")
-                .matches("a& 2")
-                .matches("2 & b")
-                .matches("a& b& c")
-                .matches("1&2&3&a&b & 56 & foo")
-        ;
-    }
-
-
-    @Test
-    public void testDivision() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.DIVISION_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("0/0")
-                .matches("0 / 0")
-                .matches("40 / 2")
-                .matches("a/ 2")
-                .matches("2 / b")
-                .matches("a/ b/ c")
-                .matches("1/2/3/a/b / 56 / foo")
-        ;
-    }
-
-
-
-
-
-    @Test
-    public void testArithmeticOrLogicalExpression() {
-//        assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("1<<0")
-                .matches("40+2")
-                .matches("39+1+2")
-                .matches("1+2+3+4*7-3/10")
-                .matches("calc()+2")
-                .notMatches("== b")
-                .matches("m.get(i) + 1")
-        ;
-    }
+  @Test
+  void testArithmeticOrLogicalExpression() {
+    // assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("1<<0")
+      .matches("40+2")
+      .matches("39+1+2")
+      .matches("1+2+3+4*7-3/10")
+      .matches("calc()+2")
+      .notMatches("== b")
+      .matches("m.get(i) + 1");
+  }
 }

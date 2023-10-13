@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ExpressionTest {
+class ExpressionTest {
 
   @Test
-  public void testScrutinee() {
+  void testScrutinee() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.SCRUTINEE))
       .matches("a")
       .matches("a || b")
@@ -71,7 +72,7 @@ public class ExpressionTest {
   }
 
   @Test
-  public void testExpression() {
+  void testExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("{let y=42;}")
       .matches("{;}")

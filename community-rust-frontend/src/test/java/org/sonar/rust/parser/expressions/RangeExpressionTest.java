@@ -20,15 +20,16 @@
  */
 package org.sonar.rust.parser.expressions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class RangeExpressionTest {
+class RangeExpressionTest {
 
   @Test
-  public void testRangeExpr() {
+  void testRangeExpr() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPR))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("1..2")
@@ -39,7 +40,7 @@ public class RangeExpressionTest {
   }
 
   @Test
-  public void testRangeFrom() {
+  void testRangeFrom() {
     //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FROM_EXPR))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("1..")
@@ -48,7 +49,7 @@ public class RangeExpressionTest {
   }
 
   @Test
-  public void testRangeTo() {
+  void testRangeTo() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_TO_EXPR))
       .matches("..42")
 
@@ -56,7 +57,7 @@ public class RangeExpressionTest {
   }
 
   @Test
-  public void testRangeFull() {
+  void testRangeFull() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_FULL_EXPR))
       .matches("..")
 
@@ -64,7 +65,7 @@ public class RangeExpressionTest {
   }
 
   @Test
-  public void testRangeInclusive() {
+  void testRangeInclusive() {
     //assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_INCLUSIVE_EXPR))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("40..=42")
@@ -73,16 +74,15 @@ public class RangeExpressionTest {
   }
 
   @Test
-  public void testRangeToInclusive() {
+  void testRangeToInclusive() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_TO_INCLUSIVE_EXPR))
       .matches("..=7")
 
     ;
   }
 
-
   @Test
-  public void testRangeExpression() {
+  void testRangeExpression() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("1..2")// std::ops::Range
@@ -95,6 +95,5 @@ public class RangeExpressionTest {
       .matches("5..=6")// std::ops::RangeInclusive
     ;
   }
-
 
 }
