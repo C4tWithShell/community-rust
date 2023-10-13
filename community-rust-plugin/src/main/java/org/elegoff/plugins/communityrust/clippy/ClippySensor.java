@@ -20,21 +20,6 @@
  */
 package org.elegoff.plugins.communityrust.clippy;
 
-import org.elegoff.plugins.communityrust.language.RustLanguage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.TextRange;
-import org.sonar.api.batch.rule.Severity;
-import org.sonar.api.batch.sensor.Sensor;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.rules.RuleType;
-import org.sonarsource.analyzer.commons.ExternalReportProvider;
-import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
-
-import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +27,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.CheckForNull;
+import org.elegoff.plugins.communityrust.language.RustLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.TextRange;
+import org.sonar.api.batch.sensor.Sensor;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.batch.sensor.issue.NewIssueLocation;
+import org.sonar.api.issue.impact.Severity;
+import org.sonar.api.issue.impact.SoftwareQuality;
+import org.sonarsource.analyzer.commons.ExternalReportProvider;
+import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -77,9 +76,7 @@ public class ClippySensor implements Sensor {
     }
 
     var newExternalIssue = context.newExternalIssue();
-    newExternalIssue
-      .type(RuleType.CODE_SMELL)
-      .severity(toSonarQubeSeverity(clippyIssue.severity))
+    newExternalIssue.addImpact(SoftwareQuality.MAINTAINABILITY, toSonarQubeSeverity(clippyIssue.severity))
       .remediationEffortMinutes(DEFAULT_CONSTANT_DEBT_MINUTES);
 
     NewIssueLocation primaryLocation = newExternalIssue.newLocation()
@@ -102,9 +99,9 @@ public class ClippySensor implements Sensor {
 
   private static Severity toSonarQubeSeverity(String severity) {
     if ("error".equalsIgnoreCase(severity)) {
-      return Severity.MAJOR;
+      return Severity.HIGH;
     } else
-      return Severity.MINOR;
+      return Severity.MEDIUM;
   }
 
   @Override

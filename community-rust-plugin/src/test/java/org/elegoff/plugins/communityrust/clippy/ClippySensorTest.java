@@ -36,13 +36,13 @@ import org.sonar.api.SonarQubeSide;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.ExternalIssue;
 import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.rules.RuleType;
+import org.sonar.api.issue.impact.Severity;
+import org.sonar.api.issue.impact.SoftwareQuality;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.Version;
 
@@ -125,8 +125,7 @@ class ClippySensorTest {
 
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.ruleKey()).hasToString(CLIPPY_UNUSED);
-    assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
-    assertThat(first.severity()).isEqualTo(Severity.MINOR);
+    assertThat(first.impacts().get(SoftwareQuality.MAINTAINABILITY)).isEqualTo(Severity.MEDIUM);
     IssueLocation firstPrimaryLoc = first.primaryLocation();
     assertThat(firstPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(firstPrimaryLoc.message())
@@ -139,8 +138,7 @@ class ClippySensorTest {
 
     ExternalIssue second = externalIssues.get(1);
     assertThat(second.ruleKey()).hasToString("external_clippy:unused_doc_comments");
-    assertThat(second.type()).isEqualTo(RuleType.CODE_SMELL);
-    assertThat(second.severity()).isEqualTo(Severity.MINOR);
+    assertThat(second.impacts().get(SoftwareQuality.MAINTAINABILITY)).isEqualTo(Severity.MEDIUM);
     IssueLocation secondPrimaryLoc = second.primaryLocation();
     assertThat(secondPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(secondPrimaryLoc.message())
@@ -177,8 +175,7 @@ class ClippySensorTest {
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.primaryLocation().inputComponent().key()).isEqualTo("clippy-project:main.rs");
     assertThat(first.ruleKey()).hasToString(CLIPPY_AEC);
-    assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
-    assertThat(first.severity()).isEqualTo(Severity.MAJOR);
+    assertThat(first.impacts().get(SoftwareQuality.MAINTAINABILITY)).isEqualTo(Severity.HIGH);
     assertThat(first.primaryLocation().message()).isEqualTo("A message");
     assertThat(first.primaryLocation().textRange()).isNull();
 
