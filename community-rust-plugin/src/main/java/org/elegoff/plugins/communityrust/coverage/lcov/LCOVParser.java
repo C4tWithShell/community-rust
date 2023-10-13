@@ -20,13 +20,6 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.coverage.NewCoverage;
-
-import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +32,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.CheckForNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.coverage.NewCoverage;
 
 
 import static org.elegoff.plugins.communityrust.coverage.lcov.LCOVFields.BRDA;
@@ -144,7 +143,7 @@ public class LCOVParser {
   }
 
   private void logMismatch(String dataType, int linum, Exception e) {
-    LOG.debug("Error while parsing LCOV report: can't save {} data for line {} of coverage report file ({}).", dataType, linum, e);
+    LOG.debug("Error while parsing LCOV report: can't save {} data for line {} of coverage report file ({}).", dataType, linum, e.toString());
     pbCount++;
   }
 

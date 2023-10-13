@@ -36,13 +36,13 @@ import org.sonar.api.SonarQubeSide;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
+import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.ExternalIssue;
 import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.issue.impact.Severity;
-import org.sonar.api.issue.impact.SoftwareQuality;
+import org.sonar.api.rules.RuleType;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.Version;
 
@@ -62,7 +62,7 @@ class ClippySensorTest {
   private static final ClippySensor clippySensor = new ClippySensor();
 
   @RegisterExtension
-  LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
 
   static void assertNoErrorWarnDebugLogs(LogTesterJUnit5 logTester) {
     org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.ERROR)).isEmpty();
@@ -125,7 +125,8 @@ class ClippySensorTest {
 
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.ruleKey()).hasToString(CLIPPY_UNUSED);
-    assertThat(first.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.MEDIUM);
+    assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
+    assertThat(first.severity()).isEqualTo(Severity.MINOR);
     IssueLocation firstPrimaryLoc = first.primaryLocation();
     assertThat(firstPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(firstPrimaryLoc.message())
@@ -138,7 +139,8 @@ class ClippySensorTest {
 
     ExternalIssue second = externalIssues.get(1);
     assertThat(second.ruleKey()).hasToString("external_clippy:unused_doc_comments");
-    assertThat(second.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.MEDIUM);
+    assertThat(second.type()).isEqualTo(RuleType.CODE_SMELL);
+    assertThat(second.severity()).isEqualTo(Severity.MINOR);
     IssueLocation secondPrimaryLoc = second.primaryLocation();
     assertThat(secondPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(secondPrimaryLoc.message())
@@ -175,15 +177,16 @@ class ClippySensorTest {
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.primaryLocation().inputComponent().key()).isEqualTo("clippy-project:main.rs");
     assertThat(first.ruleKey()).hasToString(CLIPPY_AEC);
-    assertThat(first.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.HIGH);
+    assertThat(first.type()).isEqualTo(RuleType.CODE_SMELL);
+    assertThat(first.severity()).isEqualTo(Severity.MAJOR);
     assertThat(first.primaryLocation().message()).isEqualTo("A message");
     assertThat(first.primaryLocation().textRange()).isNull();
 
     assertThat(logTester.logs(Level.ERROR)).isEmpty();
     assertThat(onlyOneLogElement(logTester.logs(Level.WARN)))
       .startsWith("Failed to resolve 1 file path(s) in Clippy report. No issues imported related to file(s)");
-    assertThat(logTester.logs(Level.WARN)).hasSize(1);
-    assertThat(logTester.logs(Level.WARN).get(0)).startsWith("Missing information for ruleKey:'clippy::absurd_extreme_comparisons'");
+    assertThat(logTester.logs(Level.DEBUG)).hasSize(1);
+    assertThat(logTester.logs(Level.DEBUG).get(0)).startsWith("Missing information for ruleKey:'clippy::absurd_extreme_comparisons'");
   }
 
   @Test

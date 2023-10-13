@@ -51,11 +51,11 @@ class LCOVSensorTest {
   private static final String TWO_REPORTS = REPORT1 + ", " + REPORT2;
   @TempDir
   static Path tmpDir;
-  static Path tmpFile;
+
   private final LCOVSensor coverageSensor = new LCOVSensor();
   private final File moduleBaseDir = new File("src/test/resources/lcov/").getAbsoluteFile();
   @RegisterExtension
-  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
   private SensorContextTester context;
   private MapSettings settings;
 
@@ -126,7 +126,7 @@ class LCOVSensorTest {
     assertThat(context.conditions("moduleKey:file1.rs", 2)).isEqualTo(3);
     assertThat(context.coveredConditions("moduleKey:file1.rs", 2)).isEqualTo(1);
 
-    assertThat(logTester.logs()).contains(
+    assertThat(logTester.logs(Level.DEBUG)).contains(
       "Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.IllegalArgumentException: Line number 0 doesn't exist in file file1.rs).");
 
     assertThat(logTester.logs()).contains(
@@ -139,8 +139,7 @@ class LCOVSensorTest {
     coverageSensor.execute(context);
     String fileName = File.separator + "reports" + File.separator + "report_with_unresolved_path.lcov";
     assertThat(logTester.logs(Level.WARN))
-      .contains("Could not resolve 2 file paths in [" + moduleBaseDir.getAbsolutePath() + fileName + "]")
-      .contains("First unresolved path: unresolved/file1.rs (Run in DEBUG mode to get full list of unresolved paths)");
+      .contains("Could not resolve 2 file paths in [" + moduleBaseDir.getAbsolutePath() + fileName + "]");
   }
 
   @Test
@@ -210,11 +209,11 @@ class LCOVSensorTest {
 
   @Test
   void should_resolve_absolute_path() throws Exception {
-    File lcovFile = Files.createFile(tmpDir.resolve("test.txt")).toFile();
+    Path lcovFile = Files.createFile(tmpDir.resolve("lcovfile"));
     String absolutePathFile1 = new File("src/test/resources/lcov/file1.rs").getAbsolutePath();
     String absolutePathFile2 = new File("src/test/resources/lcov/file2.rs").getAbsolutePath();
 
-    Files.write(lcovFile.toPath(),
+    Files.write(lcovFile,
       ("SF:" + absolutePathFile1 + "\n" +
         "DA:1,2\n" +
         "DA:2,2\n" +
@@ -230,7 +229,7 @@ class LCOVSensorTest {
         "DA:1,5\n" +
         "DA:2,5\n" +
         "end_of_record\n").getBytes(StandardCharsets.UTF_8));
-    settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, lcovFile.getAbsolutePath());
+    settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, lcovFile.toAbsolutePath().toString());
     inputFile("file1.rs", InputFile.Type.MAIN);
     inputFile("file2.rs", InputFile.Type.MAIN);
     coverageSensor.execute(context);

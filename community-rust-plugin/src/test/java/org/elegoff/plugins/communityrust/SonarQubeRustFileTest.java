@@ -29,13 +29,14 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.rust.RustFile;
 
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SonarQubeRustFileTest {
 
-  private final InputFile inputFile = mock(InputFile.class);
+  private final InputFile inputFile = mock(InputFile.class, "file1.rs");
 
   @Rule
   ExpectedException thrown = ExpectedException.none();
@@ -55,8 +56,7 @@ class SonarQubeRustFileTest {
   void unknownFile() throws Exception {
     when(inputFile.contents()).thenThrow(new FileNotFoundException());
     RustFile rustFile = SonarQubeRustFile.create(inputFile);
-    thrown.expect(IllegalStateException.class);
-    rustFile.content();
+    assertThatThrownBy(rustFile::content).isInstanceOf(IllegalStateException.class);
   }
 
 }
