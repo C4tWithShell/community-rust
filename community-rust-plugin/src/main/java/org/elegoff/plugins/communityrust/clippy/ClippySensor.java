@@ -143,7 +143,8 @@ public class ClippySensor implements Sensor {
     if (unresolvedInputFiles.size() > MAX_LOGGED_FILE_NAMES) {
       fileList += ";...";
     }
-    logger().warn("Failed to resolve {} file path(s) in {} report. No issues imported related to file(s): {}", unresolvedInputFiles.size(), linterName(), fileList);
+    String linterName = linterName();
+    logger().warn("Failed to resolve {} file path(s) in {} report. No issues imported related to file(s): {}", unresolvedInputFiles.size(), linterName, fileList);
   }
 
   protected String linterName() {
