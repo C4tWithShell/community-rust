@@ -125,7 +125,7 @@ class ClippySensorTest {
 
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.ruleKey()).hasToString(CLIPPY_UNUSED);
-    assertThat(first.impacts().get(SoftwareQuality.MAINTAINABILITY)).isEqualTo(Severity.MEDIUM);
+    assertThat(first.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.MEDIUM);
     IssueLocation firstPrimaryLoc = first.primaryLocation();
     assertThat(firstPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(firstPrimaryLoc.message())
@@ -138,7 +138,7 @@ class ClippySensorTest {
 
     ExternalIssue second = externalIssues.get(1);
     assertThat(second.ruleKey()).hasToString("external_clippy:unused_doc_comments");
-    assertThat(second.impacts().get(SoftwareQuality.MAINTAINABILITY)).isEqualTo(Severity.MEDIUM);
+    assertThat(second.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.MEDIUM);
     IssueLocation secondPrimaryLoc = second.primaryLocation();
     assertThat(secondPrimaryLoc.inputComponent().key()).isEqualTo(CLIPPY_FILE);
     assertThat(secondPrimaryLoc.message())
@@ -175,7 +175,7 @@ class ClippySensorTest {
     ExternalIssue first = externalIssues.get(0);
     assertThat(first.primaryLocation().inputComponent().key()).isEqualTo("clippy-project:main.rs");
     assertThat(first.ruleKey()).hasToString(CLIPPY_AEC);
-    assertThat(first.impacts().get(SoftwareQuality.MAINTAINABILITY)).isEqualTo(Severity.HIGH);
+    assertThat(first.impacts()).containsEntry(SoftwareQuality.MAINTAINABILITY, Severity.HIGH);
     assertThat(first.primaryLocation().message()).isEqualTo("A message");
     assertThat(first.primaryLocation().textRange()).isNull();
 

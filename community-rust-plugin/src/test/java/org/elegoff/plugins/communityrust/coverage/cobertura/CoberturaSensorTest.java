@@ -233,7 +233,7 @@ class CoberturaSensorTest {
   }
 
   @Test
-  public void report_not_found() {
+  void report_not_found() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "/report/not/found.xml");
     coberturaSensor.execute(context);
     assertThat(context.lineHits(TESTFILE1, 1)).isNull();
