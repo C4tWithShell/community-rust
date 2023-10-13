@@ -25,6 +25,7 @@ import org.sonar.rust.RustGrammar;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class ArithmeticOrLogicalExpressionTest {
@@ -80,7 +81,7 @@ class ArithmeticOrLogicalExpressionTest {
   }
 
   @Test
-   void testBitAnd() {
+  void testBitAnd() {
     // assertThat(RustGrammar.create().build().rule(RustGrammar.BITAND_EXPRESSION))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("0&0")
@@ -93,7 +94,7 @@ class ArithmeticOrLogicalExpressionTest {
   }
 
   @Test
-   void testDivision() {
+  void testDivision() {
     // assertThat(RustGrammar.create().build().rule(RustGrammar.DIVISION_EXPRESSION))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("0/0")
@@ -106,7 +107,7 @@ class ArithmeticOrLogicalExpressionTest {
   }
 
   @Test
-   void testArithmeticOrLogicalExpression() {
+  void testArithmeticOrLogicalExpression() {
     // assertThat(RustGrammar.create().build().rule(RustGrammar.ARITHMETIC_OR_LOGICAL_EXPRESSION))
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
       .matches("1<<0")

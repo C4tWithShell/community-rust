@@ -173,10 +173,8 @@ class MethodCallExpressionTest {
       .matches("321.into()")
       .matches("crate_root.call(me)")
 
-
     ;
 
   }
-
 
 }

@@ -43,13 +43,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 class RustcParsingTest {
   private final File dir = new File("src/test/resources/rustc");
   private FileLinesContext fileLinesContext;
   private SensorContextTester tester;
   private RustSensor sensor;
-
 
   void reinit() {
     tester = SensorContextTester.create(dir);
@@ -85,7 +83,6 @@ class RustcParsingTest {
     return inputFile;
   }
 
-
   private void checkme(String testfile) throws IOException {
     reinit();
     DefaultInputFile inputFile = executeSensorOnSingleFile(testfile);
@@ -118,6 +115,5 @@ class RustcParsingTest {
     checkme("ui/fmt/format-args-capture.rs");
     checkme("ui/issues/issue-68696-catch-during-unwind.rs");
   }
-
 
 }

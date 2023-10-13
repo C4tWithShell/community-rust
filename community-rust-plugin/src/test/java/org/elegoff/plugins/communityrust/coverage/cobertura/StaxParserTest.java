@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StaxParserTest {
 
-
   @Test
   void should_fail_parsing_if_file_does_not_exist() throws Exception {
     StaxParser parser = new StaxParser(rootCursor -> {
@@ -40,7 +39,6 @@ class StaxParserTest {
       XMLStreamException.class,
       () -> parser.parse(new File("fake.xml")));
   }
-
 
   private void test_grammar_parsable(String resource) throws XMLStreamException {
     StaxParser parser = new StaxParser(getTestHandler());

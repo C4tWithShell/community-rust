@@ -51,7 +51,7 @@ public final class RustLanguage extends AbstractLanguage {
     if (suffixes.length == 0) {
       suffixes = StringUtils.split(RustLanguageSettings.FILE_SUFFIXES_DEFAULT_VALUE, ",");
     }
-    LOGGER.debug("Rust language file suffixes {}" , suffixes);
+    LOGGER.debug("Rust language file suffixes {}", suffixes);
     return suffixes;
   }
 

@@ -41,7 +41,6 @@ Statements :
    | ExpressionWithoutBlock
      */
 
-
   @Test
   void testAsyncBlockExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ASYNC_BLOCK_EXPRESSION))
@@ -111,7 +110,6 @@ Statements :
       .matches("{\n" +
         "  continue 'outer;\n" +
         "}")
-
 
     ;
   }

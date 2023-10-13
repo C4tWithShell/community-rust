@@ -20,89 +20,85 @@
  */
 package org.elegoff.plugins.communityrust.clippy;
 
-
 import java.io.File;
 import java.nio.file.Path;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.sensor.SensorContext;
 
-  /**
-   * Adjust file paths from clippy reports into a path relative to the project.
-   * The context in which the report was created and the analyzer context may possibly be different.
-   */
-  public class FileAdjustor {
+/**
+ * Adjust file paths from clippy reports into a path relative to the project.
+ * The context in which the report was created and the analyzer context may possibly be different.
+ */
+public class FileAdjustor {
 
-    private final FileSystem fileSystem;
+  private final FileSystem fileSystem;
 
-    private int relativePathOffset = 0;
+  private int relativePathOffset = 0;
 
-    private FileAdjustor(FileSystem fileSystem) {
-      this.fileSystem = fileSystem;
-    }
+  private FileAdjustor(FileSystem fileSystem) {
+    this.fileSystem = fileSystem;
+  }
 
-    public static FileAdjustor create(SensorContext context) {
-      return new FileAdjustor(context.fileSystem());
-    }
+  public static FileAdjustor create(SensorContext context) {
+    return new FileAdjustor(context.fileSystem());
+  }
 
-    public String relativePath(String fileName) {
+  public String relativePath(String fileName) {
 
-      if (isKnown(fileName)) {
-        return fileName;
-      }
-
-      String normalizedPath = chooseSeparator(fileName);
-      if (normalizedPath == null) {
-        return fileName;
-      }
-
-      Path path = Path.of(normalizedPath);
-      int pathNameCount = path.getNameCount();
-
-      if (relativePathOffset > 0) {
-        if (path.getNameCount() > relativePathOffset) {
-          path = path.subpath(relativePathOffset, pathNameCount);
-          if (isKnown(path)) {
-            return path.toString();
-          }
-        }
-        return fileName;
-      }
-
-
-      for (int i = 1; i < pathNameCount; i++) {
-        Path subpath = path.subpath(i, pathNameCount);
-        if (isKnown(subpath)) {
-          relativePathOffset = i;
-          return subpath.toString();
-        }
-      }
-
+    if (isKnown(fileName)) {
       return fileName;
     }
 
-
-    private static String chooseSeparator(String path) {
-      return isWindows() ? windowsSeparators(path) : unixSeparators(path);
+    String normalizedPath = chooseSeparator(fileName);
+    if (normalizedPath == null) {
+      return fileName;
     }
 
-    private static boolean isWindows() {
-      return File.separatorChar == '\\';
+    Path path = Path.of(normalizedPath);
+    int pathNameCount = path.getNameCount();
+
+    if (relativePathOffset > 0) {
+      if (path.getNameCount() > relativePathOffset) {
+        path = path.subpath(relativePathOffset, pathNameCount);
+        if (isKnown(path)) {
+          return path.toString();
+        }
+      }
+      return fileName;
     }
 
-    private static String unixSeparators(String path) {
-      return path.indexOf(92) != -1 ? path.replace('\\', '/') : path;
+    for (int i = 1; i < pathNameCount; i++) {
+      Path subpath = path.subpath(i, pathNameCount);
+      if (isKnown(subpath)) {
+        relativePathOffset = i;
+        return subpath.toString();
+      }
     }
 
-    private static String windowsSeparators(String path) {
-      return path.indexOf(47) != -1 ? path.replace('/', '\\') : path;
-    }
+    return fileName;
+  }
 
+  private static String chooseSeparator(String path) {
+    return isWindows() ? windowsSeparators(path) : unixSeparators(path);
+  }
 
-    private boolean isKnown(Path path) {
-      return isKnown(path.toString());
-    }
+  private static boolean isWindows() {
+    return File.separatorChar == '\\';
+  }
 
-    private boolean isKnown(String path) {
-      return fileSystem.hasFiles(fileSystem.predicates().hasPath(path));
-    }
+  private static String unixSeparators(String path) {
+    return path.indexOf(92) != -1 ? path.replace('\\', '/') : path;
+  }
+
+  private static String windowsSeparators(String path) {
+    return path.indexOf(47) != -1 ? path.replace('/', '\\') : path;
+  }
+
+  private boolean isKnown(Path path) {
+    return isKnown(path.toString());
+  }
+
+  private boolean isKnown(String path) {
+    return fileSystem.hasFiles(fileSystem.predicates().hasPath(path));
+  }
 }

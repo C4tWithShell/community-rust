@@ -39,7 +39,6 @@ class StaticTest {
         "    function\n" +
         "};")
 
-
     ;
 
   }

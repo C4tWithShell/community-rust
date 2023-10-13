@@ -28,7 +28,6 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class TraitTest {
 
-
   @Test
   void testTrait() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT))
@@ -40,7 +39,6 @@ class TraitTest {
       .matches("trait Thing {\n" +
         " const FIELD : Self;\n" +
         "}")
-
 
     ;
 

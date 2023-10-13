@@ -197,7 +197,6 @@ class TypeTest {
       .matches("&'b mut Circle")
       .matches("&'a AF")
 
-
     ;
   }
 
@@ -233,7 +232,6 @@ class TypeTest {
       .matches("::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char)>")
       .matches("::Option<unsafe extern \"C\" fn(::c_int, *const ::c_char, ...)>")
       .matches("&'a AF")
-
 
     ;
   }

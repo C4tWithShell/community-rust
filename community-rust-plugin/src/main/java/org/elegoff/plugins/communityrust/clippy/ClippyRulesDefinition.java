@@ -24,6 +24,7 @@ import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonarsource.analyzer.commons.ExternalRuleLoader;
 
+
 import static org.elegoff.plugins.communityrust.clippy.ClippySensor.LINTER_KEY;
 import static org.elegoff.plugins.communityrust.clippy.ClippySensor.LINTER_NAME;
 

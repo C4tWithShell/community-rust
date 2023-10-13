@@ -55,7 +55,6 @@ class RustGrammarTest {
           .notMatches("");
       }
 
-
     }
 
   }
@@ -82,6 +81,5 @@ class RustGrammarTest {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches(";");
     assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).matches(";");
   }
-
 
 }

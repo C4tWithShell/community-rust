@@ -64,7 +64,7 @@ public class RustSensor implements Sensor {
   }
 
   private static void logParseError(SensorContext sensorContext, InputFile inputFile, RecognitionException e) {
-    LOG.error("Unable to parse file: {}" , inputFile);
+    LOG.error("Unable to parse file: {}", inputFile);
     LOG.error(e.getMessage());
 
     sensorContext.newAnalysisError()
@@ -116,7 +116,7 @@ public class RustSensor implements Sensor {
     var rustFile = SonarQubeRustFile.create(inputFile);
     RustVisitorContext visitorContext;
     String fileName = inputFile.filename();
-    LOG.debug("Rust parsing {}" , fileName);
+    LOG.debug("Rust parsing {}", fileName);
     try {
       AstNode tree = parser.parse(inputFile.contents());
       visitorContext = new RustVisitorContext(rustFile, tree);

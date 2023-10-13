@@ -28,7 +28,6 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class ClosureExpressionTest {
 
-
   @Test
   void testClosureParameters() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CLOSURE_PARAMETERS))

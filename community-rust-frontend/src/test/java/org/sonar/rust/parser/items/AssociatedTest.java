@@ -28,7 +28,6 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class AssociatedTest {
 
-
   @Test
   void testTypedSelf() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPED_SELF))
@@ -51,7 +50,6 @@ class AssociatedTest {
       .matches("&self")
       .matches("&mut self")
       .matches("&'ABC self")
-
 
     ;
   }
@@ -84,6 +82,5 @@ class AssociatedTest {
 
     ;
   }
-
 
 }

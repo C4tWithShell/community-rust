@@ -36,10 +36,8 @@ class PatternTest {
       .matches("b'c'")
       .notMatches("&i| i")
 
-
     ;
   }
-
 
   @Test
   void testIdentifierPattern() {
@@ -49,7 +47,6 @@ class PatternTest {
       .matches("None")
       .matches("true_prior")
       .notMatches("b'c'")
-
 
     ;
 
@@ -79,7 +76,6 @@ class PatternTest {
       .matches("1")
       .matches("'a'")
       .matches("'z'")
-
 
     ;
 
@@ -139,7 +135,6 @@ class PatternTest {
       .matches("x,y")
       .matches("x,y")
 
-
     ;
 
   }
@@ -154,7 +149,6 @@ class PatternTest {
       .matches("ref mut bar")
       .matches("x:10")
 
-
     ;
 
   }
@@ -168,7 +162,6 @@ class PatternTest {
       .matches("TokenOrComment::Comment { .. }")
       .matches("ModuleSource{code,module_url_specified,module_url_found,}")
 
-
     ;
 
   }
@@ -180,7 +173,6 @@ class PatternTest {
       .matches("S(z @ 1, _)")
       .matches("Error::Engine(EngineError(EngineErrorInner::Request(e)))")
       .matches("Error::Engine(box EngineError(EngineErrorInner::Request(e)))")
-
 
     ;
 
@@ -204,7 +196,6 @@ class PatternTest {
 
   }
 
-
   @Test
   void testTuplePattern() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_PATTERN))
@@ -215,7 +206,6 @@ class PatternTest {
       .matches("(\"bacon\",42)")
       .matches("( field_1, )")
 
-
     ;
 
   }
@@ -225,7 +215,6 @@ class PatternTest {
     assertThat(RustGrammar.create().build().rule(RustGrammar.GROUPED_PATTERN))
       .matches("(42)")
       .matches("( foo )")
-
 
     ;
 
@@ -241,7 +230,6 @@ class PatternTest {
       .matches("[b'#']")
       .notMatches("[b'#'](")
 
-
     ;
 
   }
@@ -252,7 +240,6 @@ class PatternTest {
       .matches("Vec::<u8>::with_capacity")
       .matches("<S as T1>::f")
       .matches("Token::BackQuote")
-
 
     ;
 
@@ -266,7 +253,6 @@ class PatternTest {
     ;
 
   }
-
 
   @Test
   void testPatternNoTopAlt() {
@@ -348,6 +334,5 @@ class PatternTest {
 
     ;
   }
-
 
 }

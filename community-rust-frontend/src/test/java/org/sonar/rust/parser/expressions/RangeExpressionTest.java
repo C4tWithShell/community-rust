@@ -81,7 +81,6 @@ class RangeExpressionTest {
     ;
   }
 
-
   @Test
   void testRangeExpression() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.RANGE_EXPRESSION))
@@ -96,6 +95,5 @@ class RangeExpressionTest {
       .matches("5..=6")// std::ops::RangeInclusive
     ;
   }
-
 
 }

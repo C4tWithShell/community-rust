@@ -28,7 +28,6 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class OperatorExpressionTest {
 
-
   @Test
   void testBoxExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BOX_EXPRESSION))
@@ -38,7 +37,6 @@ class OperatorExpressionTest {
       .matches("box Ok(Poll::Pending)")
     ;
   }
-
 
   @Test
   void testBorrowExpression() {
@@ -53,7 +51,6 @@ class OperatorExpressionTest {
       .matches("&& && mut 10")
       .matches("& & & & mut 10")
       .matches("&[b' ', b' ', b' ']")
-
 
     ;
   }
@@ -83,7 +80,6 @@ class OperatorExpressionTest {
         "         }?")
       .matches("check_source_files(config, paths).await?")
 
-
     ;
   }
 
@@ -94,7 +90,6 @@ class OperatorExpressionTest {
       .matches("-5")
       .matches("-bar")
       .notMatches("== b")
-
 
     ;
   }
@@ -125,7 +120,6 @@ class OperatorExpressionTest {
       .matches("*position == 42")
       .matches("*position == StepPosition::JumpEnd")
 
-
     ;
   }
 
@@ -153,7 +147,6 @@ class OperatorExpressionTest {
       .matches("len(vals) as f64")
     ;
   }
-
 
   @Test
   void testAssignmentExpression() {
@@ -233,7 +226,6 @@ class OperatorExpressionTest {
       .matches("value = 42")
       //compound assignment
       .matches("counter += 1")
-
 
     ;
   }

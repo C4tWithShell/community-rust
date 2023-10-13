@@ -52,13 +52,11 @@ class StructExpressionTest {
 
   }
 
-
   @Test
   void testStructExprBase() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_BASE))
       .matches("..foo")
       .matches(".. bar")
-
 
     ;
 
@@ -98,7 +96,6 @@ class StructExpressionTest {
     ;
   }
 
-
   @Test
   void testStructExprFields() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT_EXPR_FIELDS))
@@ -106,7 +103,6 @@ class StructExpressionTest {
       .matches("name: \"Joe\", age : 35, score : 100_000")
       .matches("0: 10.0, 1: 20.0")
     ;
-
 
   }
 
@@ -123,9 +119,7 @@ class StructExpressionTest {
       .matches("name: user.name")
     ;
 
-
   }
-
 
   @Test
   void testStructExpression() {
@@ -171,9 +165,7 @@ class StructExpressionTest {
         "            dpr,\n" +
         "        }")
 
-
     ;
-
 
   }
 }

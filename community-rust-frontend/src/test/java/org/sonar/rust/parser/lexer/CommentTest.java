@@ -86,7 +86,6 @@ class CommentTest {
     ;
   }
 
-
   @Test
   void testOuterBlockDoc() {
     Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.OUTER_BLOCK_DOC))

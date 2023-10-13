@@ -54,7 +54,7 @@ public class LCOVSensor implements Sensor {
 
     Map<InputFile, NewCoverage> coveredFiles = parser.getFileCoverage();
 
-    for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext();) {
+    for (Iterator<InputFile> iterator = fileSystem.inputFiles(mainFilePredicate).iterator(); iterator.hasNext(); ) {
       var inputFile = iterator.next();
       NewCoverage fileCoverage = coveredFiles.get(inputFile);
 
@@ -67,7 +67,7 @@ public class LCOVSensor implements Sensor {
     if (!unresolvedPaths.isEmpty()) {
       LOG.warn("Could not resolve {} file paths in {}", unresolvedPaths.size(), lcovFiles);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Unresolved paths:\n{}" , String.join("\n", unresolvedPaths));
+        LOG.debug("Unresolved paths:\n{}", String.join("\n", unresolvedPaths));
       } else {
         LOG.warn("First unresolved path: {} (Run in DEBUG mode to get full list of unresolved paths)", unresolvedPaths.get(0));
       }

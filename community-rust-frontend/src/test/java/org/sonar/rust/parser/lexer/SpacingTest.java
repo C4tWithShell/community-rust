@@ -26,7 +26,6 @@ import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-
 class SpacingTest {
 
   @Test

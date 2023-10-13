@@ -35,7 +35,6 @@ class UnionTest {
         "    f2: f32,\n" +
         "}")
 
-
     ;
 
   }

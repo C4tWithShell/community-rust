@@ -28,7 +28,6 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class EnumerationTest {
 
-
   @Test
   void testEnumerationItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ENUM_ITEM))
@@ -89,7 +88,6 @@ class EnumerationTest {
         "    Steps(Integer, #[css(skip_if = \"is_end\")] StepPosition),\n" +
         "}")
 
-
       .matches("enum TimingFunction<Integer, Number> {\n" +
         "    /// `linear | ease | ease-in | ease-out | ease-in-out`\n" +
         "    Keyword(TimingKeyword),\n" +
@@ -122,7 +120,6 @@ class EnumerationTest {
         "     FreeCollector = 0,\n" +
         "     FreeCollectorForPair(foo) = 42,\n" +
         "     }")
-
 
     ;
 

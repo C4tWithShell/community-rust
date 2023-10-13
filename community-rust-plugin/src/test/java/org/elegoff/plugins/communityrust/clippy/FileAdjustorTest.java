@@ -20,7 +20,6 @@
  */
 package org.elegoff.plugins.communityrust.clippy;
 
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -59,7 +58,6 @@ class FileAdjustorTest {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "subfolder", "main.rs"))).isEqualTo(path("subfolder", "main.rs"));
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "main.rs"))).isEqualTo("main.rs");
   }
-
 
   @Test
   void should_not_return_relative_when_files_are_unknown() {
@@ -116,7 +114,6 @@ class FileAdjustorTest {
     assertThat(fileAdjustor.relativePath(path("bar", "main.rs"))).isEqualTo(path("bar", "main.rs"));
   }
 
-
   private void addInputFiles(String... paths) {
     Arrays.stream(paths).forEach(path -> context.fileSystem().add(TestInputFileBuilder.create(MODULE_KEY, path).build()));
   }
@@ -124,6 +121,5 @@ class FileAdjustorTest {
   private static String path(String first, String... more) {
     return Path.of(first, more).toString();
   }
-
 
 }

@@ -31,6 +31,7 @@ import org.sonar.rust.RustVisitorContext;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.sslr.parser.ParserAdapter;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LinesOfCodeVisitorTest {

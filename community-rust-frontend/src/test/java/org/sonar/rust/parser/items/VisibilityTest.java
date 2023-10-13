@@ -35,7 +35,6 @@ class VisibilityTest {
       .matches("pub (self)")
       .matches("pub(in outer_mod)")
 
-
     ;
 
   }

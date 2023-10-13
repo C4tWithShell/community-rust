@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
 public class ClippySensor implements Sensor {
@@ -57,12 +58,12 @@ public class ClippySensor implements Sensor {
   private FileAdjustor fileAdjustor;
 
   @CheckForNull
-  private  InputFile inputFile(SensorContext context, String filePath) {
+  private InputFile inputFile(SensorContext context, String filePath) {
     String relativePath = fileAdjustor.relativePath(filePath);
     return context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(relativePath));
   }
 
-  private  void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
+  private void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
     if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
       LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
       return;

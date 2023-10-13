@@ -26,8 +26,7 @@ import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class TupleExpressionTest {
-
+class TupleExpressionTest {
 
   @Test
   void testTupleElements() {
@@ -42,7 +41,6 @@ public class TupleExpressionTest {
       .matches("3..,")
       .matches("0..top() ,")
       .matches("..,")
-
 
     ;
   }

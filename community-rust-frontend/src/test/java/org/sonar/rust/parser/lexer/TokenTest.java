@@ -39,7 +39,6 @@ class TokenTest {
     ;
   }
 
-
   @Test
   void testToken() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TOKEN))

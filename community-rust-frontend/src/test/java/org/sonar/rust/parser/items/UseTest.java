@@ -28,7 +28,6 @@ import static org.sonar.sslr.tests.Assertions.assertThat;
 
 class UseTest {
 
-
   @Test
   void testUseDeclaration() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.USE_DECLARATION))
@@ -37,7 +36,6 @@ class UseTest {
       .matches("use std::collections::hash_map::{self, HashMap, Foo, Bar};")
       .matches("use serde::de::{self, Deserialize, Deserializer, Visitor};")
       .matches("use rusty_v8 as v8;")
-
 
     ;
 

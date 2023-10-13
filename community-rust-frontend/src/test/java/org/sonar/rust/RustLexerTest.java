@@ -32,6 +32,7 @@ import org.sonar.sslr.tests.Assertions;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RustLexerTest {
@@ -44,8 +45,8 @@ class RustLexerTest {
 
   private List<Token> lex(String source) {
     List<Token> li = RustLexer.create(RustParserConfiguration.builder()
-      .setCharset(Charsets.UTF_8)
-      .build())
+        .setCharset(Charsets.UTF_8)
+        .build())
       .parse(source)
       .getTokens();
 
