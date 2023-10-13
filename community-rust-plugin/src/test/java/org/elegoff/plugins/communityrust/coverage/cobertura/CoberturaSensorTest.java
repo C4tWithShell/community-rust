@@ -34,7 +34,8 @@ import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputFile.Type;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
@@ -56,9 +57,9 @@ class CoberturaSensorTest {
   private static final String TESTFILE3 = "moduleKey:src/process/init.rs";
   private final File moduleBaseDir = new File("src/test/resources/org/elegoff/plugins/communityrust/cobertura").getAbsoluteFile();
   @RegisterExtension
-  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
-  @RegisterExtension
-  public TemporaryFolder tmpDir = new TemporaryFolder();
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
+  @TempDir
+  public Path tmpDir;
   private SensorContextTester context;
   private MapSettings settings;
   private CoberturaSensor coberturaSensor;
@@ -184,14 +185,14 @@ class CoberturaSensorTest {
   void fail_with_invalid_report() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "invalid.xml");
     IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
-    Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
+    Assertions.assertThat(e.getCause().toString()).contains("Unexpected character");
   }
 
   @Test
   void fail_with_invalid_eof() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "wrong_eof.xml");
     IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
-    Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
+    Assertions.assertThat(e.getCause().toString()).contains("Unexpected EOF");
   }
 
   @Test
@@ -218,7 +219,8 @@ class CoberturaSensorTest {
   }
 
   private String generateReportWithAbsPaths() throws Exception {
-    Path tmpPath = tmpDir.newFolder("sonar-rust").toPath().toAbsolutePath();
+    Path tmpPath = tmpDir.toAbsolutePath().resolve("rust");
+    Files.createDirectory(tmpPath);
     String reportName = "unresolved.xml";
 
     String absoluteSourcePath = new File(moduleBaseDir, TESTFILE1).getAbsolutePath();

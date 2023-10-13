@@ -77,8 +77,8 @@
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
         <mockito.version>4.11.0</mockito.version>
         <assertj-core.version>3.23.1</assertj-core.version>
-        <jacoco.version>0.8.8</jacoco.version>
-        <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+        <jacoco.version>0.8.10</jacoco.version>
+        <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
         <sonar.projectKey>elegoff_sonar-rust</sonar.projectKey>
         <sonar.organization>elegoff-1</sonar.organization>
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
@@ -207,7 +207,7 @@
             <dependency>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.11.0</version>
             </dependency>
             <dependency>
                 <groupId>org.sonarsource.orchestrator</groupId>

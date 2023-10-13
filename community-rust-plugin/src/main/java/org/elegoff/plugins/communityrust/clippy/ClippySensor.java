@@ -33,12 +33,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
+import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.issue.impact.Severity;
-import org.sonar.api.issue.impact.SoftwareQuality;
+import org.sonar.api.rules.RuleType;
 import org.sonarsource.analyzer.commons.ExternalReportProvider;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
@@ -76,7 +76,9 @@ public class ClippySensor implements Sensor {
     }
 
     var newExternalIssue = context.newExternalIssue();
-    newExternalIssue.addImpact(SoftwareQuality.MAINTAINABILITY, toSonarQubeSeverity(clippyIssue.severity))
+    newExternalIssue
+      .type(RuleType.CODE_SMELL)
+      .severity(toSonarQubeSeverity(clippyIssue.severity))
       .remediationEffortMinutes(DEFAULT_CONSTANT_DEBT_MINUTES);
 
     NewIssueLocation primaryLocation = newExternalIssue.newLocation()
@@ -97,11 +99,11 @@ public class ClippySensor implements Sensor {
     newExternalIssue.save();
   }
 
-  private static Severity toSonarQubeSeverity(String severity) {
+  private static org.sonar.api.batch.rule.Severity toSonarQubeSeverity(String severity) {
     if ("error".equalsIgnoreCase(severity)) {
-      return Severity.HIGH;
+      return Severity.MAJOR;
     } else
-      return Severity.MEDIUM;
+      return Severity.MINOR;
   }
 
   @Override
