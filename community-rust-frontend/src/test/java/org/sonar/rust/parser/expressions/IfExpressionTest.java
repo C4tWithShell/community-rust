@@ -23,12 +23,13 @@ package org.sonar.rust.parser.expressions;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class IfExpressionTest {
+class IfExpressionTest {
 
   @Test
-  public void tesIfExpression() {
+  void tesIfExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.IF_EXPRESSION))
       .matches("if x == 4 {\n" +
         "    println!(\"x is four\");\n" +

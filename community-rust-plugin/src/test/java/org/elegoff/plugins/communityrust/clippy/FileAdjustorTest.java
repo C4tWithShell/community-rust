@@ -21,18 +21,18 @@
 package org.elegoff.plugins.communityrust.clippy;
 
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class FileAdjustorTest {
+class FileAdjustorTest {
 
   private static final Path PROJECT_DIR = Paths.get("src", "test", "resources", "FileAdjustor");
   private static final String MODULE_KEY = "FileAdjustor";
@@ -42,78 +42,78 @@ public class FileAdjustorTest {
   private SensorContextTester context;
 
   @BeforeEach
-  public void setup() {
-    context =  SensorContextTester.create(PROJECT_DIR);
+  void setup() {
+    context = SensorContextTester.create(PROJECT_DIR);
     addInputFiles("main.rs", "subfolder/main.rs");
     fileAdjustor = FileAdjustor.create(context);
   }
 
   @Test
-  public void should_return_relative_path_when_all_files_are_known() {
+  void should_return_relative_path_when_all_files_are_known() {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "main.rs"))).isEqualTo("main.rs");
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "subfolder", "main.rs"))).isEqualTo(path("subfolder", "main.rs"));
   }
 
   @Test
-  public void should_return_relative_path_when_first_file_is_in_subfolder() {
+  void should_return_relative_path_when_first_file_is_in_subfolder() {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "subfolder", "main.rs"))).isEqualTo(path("subfolder", "main.rs"));
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "main.rs"))).isEqualTo("main.rs");
   }
 
 
   @Test
-  public void should_not_return_relative_when_files_are_unknown() {
+  void should_not_return_relative_when_files_are_unknown() {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "unknown.rs"))).isEqualTo(path("foo", "bar", "FileAdjustor", "unknown.rs"));
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "subfolder", "unknown.rs"))).isEqualTo(path("foo", "bar", "FileAdjustor", "subfolder", "unknown.rs"));
   }
 
   @Test
-  public void should_return_relative_when_first_file_is_unknown() {
+  void should_return_relative_when_first_file_is_unknown() {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "unknown.rs"))).isEqualTo(path("foo", "bar", "FileAdjustor", "unknown.rs"));
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "subfolder", "main.rs"))).isEqualTo(path("subfolder", "main.rs"));
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "main.rs"))).isEqualTo("main.rs");
   }
 
   @Test
-  public void should_return_relative_path_when_already_relative() {
+  void should_return_relative_path_when_already_relative() {
     assertThat(fileAdjustor.relativePath("main.rs")).isEqualTo("main.rs");
     assertThat(fileAdjustor.relativePath(path("subfolder", "main.rs"))).isEqualTo(path("subfolder", "main.rs"));
   }
 
   @Test
-  public void test() {
+  void test() {
     assertThat(fileAdjustor.relativePath(path("unknown", "main.rs"))).isEqualTo(path("main.rs"));
     assertThat(fileAdjustor.relativePath("main.rs")).isEqualTo("main.rs");
   }
 
   @Test
-  public void should_return_relative_path_for_second_file_when_unknown() {
+  void should_return_relative_path_for_second_file_when_unknown() {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileHandler", "main.rs"))).isEqualTo("main.rs");
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileHandler", "subfolder", "unknown.rs"))).isEqualTo(path("foo", "bar", "FileHandler", "subfolder", "unknown.rs"));
   }
 
   @Test
-  public void should_return_relative_path_for_unix_path() {
+  void should_return_relative_path_for_unix_path() {
     assertThat(fileAdjustor.relativePath("/foo/bar/FileAdjustor/main.rs")).isEqualTo("main.rs");
     assertThat(fileAdjustor.relativePath("/foo/bar/FileAdjustor/subfolder/main.rs")).isEqualTo(path("subfolder", "main.rs"));
   }
 
   @Test
-  public void should_return_relative_path_for_fqn_windows_path() {
+  void should_return_relative_path_for_fqn_windows_path() {
     assertThat(fileAdjustor.relativePath("C:\\foo\\bar\\FileAdjustor\\main.rs")).isEqualTo("main.rs");
     assertThat(fileAdjustor.relativePath("C:\\foo\\bar\\FileAdjustor\\subfolder\\main.rs")).isEqualTo(path("subfolder", "main.rs"));
   }
 
   @Test
-  public void should_return_relative_path_for_relative_windows_path() {
+  void should_return_relative_path_for_relative_windows_path() {
     assertThat(fileAdjustor.relativePath("main.rs")).isEqualTo("main.rs");
     assertThat(fileAdjustor.relativePath("subfolder\\main.rs")).isEqualTo("subfolder\\main.rs");
   }
 
   @Test
-  public void should_return_handle_shorter_path() {
+  void should_return_handle_shorter_path() {
     assertThat(fileAdjustor.relativePath(path("foo", "bar", "FileAdjustor", "main.rs"))).isEqualTo("main.rs");
-    assertThat(fileAdjustor.relativePath(path("bar",  "main.rs"))).isEqualTo(path("bar","main.rs"));
+    assertThat(fileAdjustor.relativePath(path("bar", "main.rs"))).isEqualTo(path("bar", "main.rs"));
   }
 
 

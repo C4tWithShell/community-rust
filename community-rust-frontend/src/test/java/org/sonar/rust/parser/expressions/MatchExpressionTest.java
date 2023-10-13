@@ -23,12 +23,13 @@ package org.sonar.rust.parser.expressions;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class MatchExpressionTest {
+class MatchExpressionTest {
 
   @Test
-  public void tesMatchArmGuard() {
+  void tesMatchArmGuard() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_ARM_GUARD))
       .matches("if { i.set(i.get() + 1); false }")
 
@@ -36,7 +37,7 @@ public class MatchExpressionTest {
   }
 
   @Test
-  public void tesMatchArm() {
+  void tesMatchArm() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_ARM))
       .matches("1")
       .matches("a|b")
@@ -53,7 +54,7 @@ public class MatchExpressionTest {
   }
 
   @Test
-  public void tesMatchArms() {
+  void tesMatchArms() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_ARMS))
       .matches("1 => println!(\"one\")")
       .matches("_ => println!(\"anything else\")")
@@ -106,7 +107,7 @@ public class MatchExpressionTest {
   }
 
   @Test
-  public void tesMatchExpression() {
+  void tesMatchExpression() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MATCH_EXPRESSION))
       .matches("match x {\n" +
         "    1 => println!(\"one\"),\n" +

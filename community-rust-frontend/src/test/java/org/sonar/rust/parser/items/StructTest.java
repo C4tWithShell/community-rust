@@ -23,11 +23,12 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class StructTest {
+class StructTest {
   @Test
-  public void testStruct() {
+  void testStruct() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STRUCT))
       .matches("struct Point {x:i32, y: i32}")
       .matches("struct UnaryPermission<T: Eq + Hash> {\n" +

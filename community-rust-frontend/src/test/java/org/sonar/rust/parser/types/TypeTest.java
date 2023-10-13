@@ -23,12 +23,13 @@ package org.sonar.rust.parser.types;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class TypeTest {
+class TypeTest {
 
   @Test
-  public void testParenthesisType() {
+  void testParenthesisType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.PARENTHESIZED_TYPE))
       .matches("(i32)")
       .matches("( i32 )")
@@ -37,7 +38,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testImplTraitTypeOneBound() {
+  void testImplTraitTypeOneBound() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.IMPL_TRAIT_TYPE_ONE_BOUND))
       .matches("impl ? abc::def")
       .matches("impl for <'a> abc::def")
@@ -52,7 +53,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testTraitObjectTypeOneBound() {
+  void testTraitObjectTypeOneBound() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_OBJECT_TYPE_ONE_BOUND))
       .matches("? abc::def")
       .matches("for <'a> abc::def")
@@ -76,7 +77,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testMaybeNamedParam() {
+  void testMaybeNamedParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MAYBE_NAMED_PARAM))
       .matches("this: *mut iasset")
       .matches("::c_int")
@@ -86,7 +87,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testMaybeNamedFunctionParam() {
+  void testMaybeNamedFunctionParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.MAYBE_NAMED_FUNCTION_PARAMETERS))
       .matches("this: *mut iasset")
       .matches("::c_int")
@@ -97,7 +98,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testFunctionParameterMaybeNamedVariadic() {
+  void testFunctionParameterMaybeNamedVariadic() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_PARAMETERS_MAYBE_NAMED_VARIADIC))
       .matches("this: *mut iasset")
       .matches("::c_int, *const ::c_char")
@@ -107,7 +108,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testBareFunctionType() {
+  void testBareFunctionType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BARE_FUNCTION_TYPE))
       .matches("extern \"C\" fn(this: *mut iasset) -> i32")
       .matches("unsafe extern \"C\" fn(::c_int, *const ::c_char)")
@@ -117,7 +118,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testTypeNoBounds() {
+  void testTypeNoBounds() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_NO_BOUNDS))
       .matches("i32")
       .matches("(i32, u8)")
@@ -131,7 +132,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testimplTraitType() {
+  void testimplTraitType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.IMPL_TRAIT_TYPE))
       .matches("impl Foo")
       .matches("impl Foo")
@@ -142,7 +143,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testTraitObjectType() {
+  void testTraitObjectType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_OBJECT_TYPE))
       .matches("'a")
       .matches("'a+'a")
@@ -183,7 +184,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testReferenceType() {
+  void testReferenceType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.REFERENCE_TYPE))
       .matches("&i32")
       .matches("&(i32, u8)")
@@ -201,7 +202,7 @@ public class TypeTest {
   }
 
   @Test
-  public void testType() {
+  void testType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE))
       .matches("extern \"C\" fn(this: *mut iasset) -> i32")
       .matches("i32")

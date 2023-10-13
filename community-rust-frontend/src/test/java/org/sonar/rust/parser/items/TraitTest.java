@@ -23,25 +23,26 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class TraitTest {
+class TraitTest {
 
 
-    @Test
-    public void testTrait() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT))
-                .matches("trait Seq<T> {\n" +
-                        "    fn len(&self) -> u32;\n" +
-                        "    fn elt_at(&self, n: u32) -> T;\n" +
-                        "    fn iter<F>(&self, f:F) where F: Fn(T);\n" +
-                        "}")
-                .matches("trait Thing {\n" +
-                        " const FIELD : Self;\n" +
-                        "}")
+  @Test
+  void testTrait() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT))
+      .matches("trait Seq<T> {\n" +
+        "    fn len(&self) -> u32;\n" +
+        "    fn elt_at(&self, n: u32) -> T;\n" +
+        "    fn iter<F>(&self, f:F) where F: Fn(T);\n" +
+        "}")
+      .matches("trait Thing {\n" +
+        " const FIELD : Self;\n" +
+        "}")
 
 
-        ;
+    ;
 
-    }
+  }
 }

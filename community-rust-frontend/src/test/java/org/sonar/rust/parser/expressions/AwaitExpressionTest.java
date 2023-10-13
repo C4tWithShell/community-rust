@@ -22,22 +22,21 @@ package org.sonar.rust.parser.expressions;
 
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
-import org.sonar.sslr.grammar.LexerlessGrammarBuilder;
-import org.sonar.sslr.parser.LexerlessGrammar;
+
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class AwaitExpressionTest {
+class AwaitExpressionTest {
 
-    @Test
-    public void testAwaitExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
-                .matches("a.await")
-                .matches("m().await")
-                .matches("check_source_files(config, paths).await")
+  @Test
+  void testAwaitExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
+      .matches("a.await")
+      .matches("m().await")
+      .matches("check_source_files(config, paths).await")
 
-        ;
-    }
+    ;
+  }
 
 
 }

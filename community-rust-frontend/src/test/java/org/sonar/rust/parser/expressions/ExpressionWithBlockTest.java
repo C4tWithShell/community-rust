@@ -23,34 +23,35 @@ package org.sonar.rust.parser.expressions;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ExpressionWithBlockTest {
+class ExpressionWithBlockTest {
 
-    @Test
-    public void testExpressionWithBlock() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITH_BLOCK))
-                .matches("{}")
-                .notMatches("== b")
-                .matches("{node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()}")
-                .matches("match path.parent() {\n" +
-                        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
-                        "             None => Ok(()),\n" +
-                        "         }")
-                .matches("if run_coverage {\n" +
-                        "        println!(\"Coverage is running\");" +
-                        " } ")
-                .matches("async move {}")
-                .notMatches("async move {}.f()")
-                .matches("async move {\n" +
-                        "            if check {\n" +
-                        "                check_source_files(config, paths).await?;\n" +
-                        "            } else {\n" +
-                        "                format_source_files(config, paths).await?;\n" +
-                        "            }\n" +
-                        "            Ok(())\n" +
-                        "        }")
-                .notMatches("async {}.inc()")
-        ;
-    }
+  @Test
+  void testExpressionWithBlock() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITH_BLOCK))
+      .matches("{}")
+      .notMatches("== b")
+      .matches("{node_fetch::create_http_client(user_agent.clone(), my_data.clone()).unwrap()}")
+      .matches("match path.parent() {\n" +
+        "             Some(ref parent) => self.ensure_dir_exists(parent),\n" +
+        "             None => Ok(()),\n" +
+        "         }")
+      .matches("if run_coverage {\n" +
+        "        println!(\"Coverage is running\");" +
+        " } ")
+      .matches("async move {}")
+      .notMatches("async move {}.f()")
+      .matches("async move {\n" +
+        "            if check {\n" +
+        "                check_source_files(config, paths).await?;\n" +
+        "            } else {\n" +
+        "                format_source_files(config, paths).await?;\n" +
+        "            }\n" +
+        "            Ok(())\n" +
+        "        }")
+      .notMatches("async {}.inc()")
+    ;
+  }
 }

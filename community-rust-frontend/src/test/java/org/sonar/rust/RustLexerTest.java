@@ -34,9 +34,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RustLexerTest {
+class RustLexerTest {
   @Test
-  public void testSize() {
+  void testSize() {
     assertThat(lex("")).hasSize(1);
     assertThat(lex("   ")).hasSize(1);
     assertThat(lex("foo")).hasSize(2);
@@ -44,8 +44,8 @@ public class RustLexerTest {
 
   private List<Token> lex(String source) {
     List<Token> li = RustLexer.create(RustParserConfiguration.builder()
-        .setCharset(Charsets.UTF_8)
-        .build())
+      .setCharset(Charsets.UTF_8)
+      .build())
       .parse(source)
       .getTokens();
 
@@ -53,7 +53,7 @@ public class RustLexerTest {
   }
 
   @Test
-  public void testTokens() {
+  void testTokens() {
     Assertions.assertThat(RustLexer.create().build().rule(RustLexer.TOKENS))
       .matches("")
       .matches("fn")
@@ -66,7 +66,7 @@ public class RustLexerTest {
   }
 
   @Test
-  public void testParsing() {
+  void testParsing() {
     String sexpr = "fn update_rates(\n" +
       "         rates: BoundedVec<(T::Symbol, u64), T::MaxRelaySymbols>,\n" +
       "         resolve_time: u64,\n" +

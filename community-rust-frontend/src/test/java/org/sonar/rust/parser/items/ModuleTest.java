@@ -23,50 +23,51 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ModuleTest {
+class ModuleTest {
 
-    @Test
-    public void testModule() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.MODULE))
-                .matches("mod foo ;")
-                .matches("mod bar {}")
-                .matches("mod foobar{#![crate_type = \"lib\"]}")
-                .matches("mod foobar{#![crate_type = \"lib\"]\n" +
-                        "}")
-                .matches("mod tests {\n" +
-                        "    use super::Identifier;\n" +
-                        "    use super::MyError;\n" +
-                        "    use super::Version;\n" +
-                        "    use std::result;\n" +
-                        "}")
-                .matches("mod math {\n" +
-                        "    type Complex = (f64, f64);\n" +
-                        "    fn sin(f: f64) -> f64 {\n" +
-                        "        /* ... */\n" +
-                        "    }\n" +
-                        "    fn cos(f: f64) -> f64 {\n" +
-                        "        /* ... */\n" +
-                        "    }\n" +
-                        "    fn tan(f: f64) -> f64 {\n" +
-                        "        /* ... */\n" +
-                        "    }\n" +
-                        "}")
-                .matches("unsafe mod math {\n" +
-                        "    type Complex = (f64, f64);\n" +
-                        "    fn sin(f: f64) -> f64 {\n" +
-                        "        /* ... */\n" +
-                        "    }\n" +
-                        "    fn cos(f: f64) -> f64 {\n" +
-                        "        /* ... */\n" +
-                        "    }\n" +
-                        "    fn tan(f: f64) -> f64 {\n" +
-                        "        /* ... */\n" +
-                        "    }\n" +
-                        "}")
+  @Test
+  void testModule() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.MODULE))
+      .matches("mod foo ;")
+      .matches("mod bar {}")
+      .matches("mod foobar{#![crate_type = \"lib\"]}")
+      .matches("mod foobar{#![crate_type = \"lib\"]\n" +
+        "}")
+      .matches("mod tests {\n" +
+        "    use super::Identifier;\n" +
+        "    use super::MyError;\n" +
+        "    use super::Version;\n" +
+        "    use std::result;\n" +
+        "}")
+      .matches("mod math {\n" +
+        "    type Complex = (f64, f64);\n" +
+        "    fn sin(f: f64) -> f64 {\n" +
+        "        /* ... */\n" +
+        "    }\n" +
+        "    fn cos(f: f64) -> f64 {\n" +
+        "        /* ... */\n" +
+        "    }\n" +
+        "    fn tan(f: f64) -> f64 {\n" +
+        "        /* ... */\n" +
+        "    }\n" +
+        "}")
+      .matches("unsafe mod math {\n" +
+        "    type Complex = (f64, f64);\n" +
+        "    fn sin(f: f64) -> f64 {\n" +
+        "        /* ... */\n" +
+        "    }\n" +
+        "    fn cos(f: f64) -> f64 {\n" +
+        "        /* ... */\n" +
+        "    }\n" +
+        "    fn tan(f: f64) -> f64 {\n" +
+        "        /* ... */\n" +
+        "    }\n" +
+        "}")
 
-        ;
+    ;
 
-    }
+  }
 }

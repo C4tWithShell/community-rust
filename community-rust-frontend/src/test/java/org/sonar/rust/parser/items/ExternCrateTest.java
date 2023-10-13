@@ -23,19 +23,20 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ExternCrateTest {
+class ExternCrateTest {
 
   @Test
-  public void testCrateRef() {
+  void testCrateRef() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CRATE_REF))
       .matches("abc")
       .matches("self");
   }
 
   @Test
-  public void testAsClause() {
+  void testAsClause() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.AS_CLAUSE))
       .matches("as foo")
       .matches("as _")
@@ -43,7 +44,7 @@ public class ExternCrateTest {
   }
 
   @Test
-  public void testExternCrates() {
+  void testExternCrates() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXTERN_CRATE))
       .matches("extern crate pcre;")
       .matches("extern crate std;") // equivalent to: extern crate std as std

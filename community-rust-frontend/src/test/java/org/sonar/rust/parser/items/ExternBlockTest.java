@@ -23,12 +23,13 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ExternBlockTest {
+class ExternBlockTest {
 
   @Test
-  public void testExternalItem() {
+  void testExternalItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXTERNAL_ITEM))
       .matches("println!(\"hi\");") // macro invocation semi
       .matches("#[outer] println!(\"hi\");")
@@ -44,7 +45,7 @@ public class ExternBlockTest {
   }
 
   @Test
-  public void testExternBlock() {
+  void testExternBlock() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXTERN_BLOCK))
       .matches("extern \"stdcall\" {}")
       .matches("extern \"stdcall\" {\n}")

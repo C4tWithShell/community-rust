@@ -23,12 +23,13 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ImplementationTest {
+class ImplementationTest {
 
   @Test
-  public void testInherentImplItem() {
+  void testInherentImplItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ASSOCIATED_ITEM))
       .matches("println!(\"hello\");") // macro invocation semi
       .matches("#[outer] println!(\"hello\");") // macro invocation semi
@@ -70,7 +71,7 @@ public class ImplementationTest {
   }
 
   @Test
-  public void testInherentImpl() {
+  void testInherentImpl() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.INHERENT_IMPL))
       .matches("impl Color {}")
       .matches("impl <T> Color {}")
@@ -133,7 +134,7 @@ public class ImplementationTest {
   }
 
   @Test
-  public void testTraitImpl() {
+  void testTraitImpl() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_IMPL))
       .matches("impl abc::(isize) -> isize for Circle {}")
       .matches("impl abc::(isize) -> isize for Circle {println!(\"hello\");}")
@@ -198,7 +199,7 @@ public class ImplementationTest {
   }
 
   @Test
-  public void testTraitImplItem() {
+  void testTraitImplItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ASSOCIATED_ITEM))
       .matches("println!(\"hello\");") // macro invocation semi
       .matches("#[outer] println!(\"hello\");") // macro invocation semi
@@ -222,7 +223,7 @@ public class ImplementationTest {
   }
 
   @Test
-  public void testImplementation() {
+  void testImplementation() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.IMPLEMENTATION))
       // trait impl
       .matches("impl abc::(isize) -> isize for Circle {}")

@@ -23,12 +23,13 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class TypeAliasTest {
+class TypeAliasTest {
 
   @Test
-  public void testTypeAlias() {
+  void testTypeAlias() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_ALIAS))
       .matches("type Point = (u8, u8);")
       .matches("type Ok = JsValue<'a>;")

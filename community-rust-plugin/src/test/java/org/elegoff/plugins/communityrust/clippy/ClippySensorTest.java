@@ -20,6 +20,14 @@
  */
 package org.elegoff.plugins.communityrust.clippy;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.event.Level;
@@ -38,19 +46,11 @@ import org.sonar.api.rules.RuleType;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.Version;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ClippySensorTest {
+class ClippySensorTest {
   private static final String CLIPPY_FILE = "clippy-project:cat.rs";
   private static final String CLIPPY_AEC = "external_clippy:clippy::absurd_extreme_comparisons";
   private static final String CLIPPY_UNUSED = "external_clippy:unused_imports";
@@ -62,9 +62,9 @@ public class ClippySensorTest {
   private static final ClippySensor clippySensor = new ClippySensor();
 
   @RegisterExtension
-  public LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  public static void assertNoErrorWarnDebugLogs(LogTesterJUnit5 logTester) {
+  static void assertNoErrorWarnDebugLogs(LogTesterJUnit5 logTester) {
     org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.ERROR)).isEmpty();
     org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.WARN)).isEmpty();
     org.assertj.core.api.Assertions.assertThat(logTester.logs(Level.DEBUG)).isEmpty();
@@ -109,7 +109,7 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void testDescriptor() {
+  void testDescriptor() {
     DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
     clippySensor.describe(sensorDescriptor);
     assertThat(sensorDescriptor.name()).isEqualTo("Import of Clippy issues");
@@ -119,7 +119,7 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void issuesDetection() throws IOException {
+  void issuesDetection() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, CLIPPY_REPORT_TXT);
     assertThat(externalIssues).hasSize(278);
 
@@ -154,14 +154,14 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void noIssuesWithoutReportPathsProperty() throws IOException {
+  void noIssuesWithoutReportPathsProperty() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, null);
     assertThat(externalIssues).isEmpty();
     assertNoErrorWarnDebugLogs(logTester);
   }
 
   @Test
-  public void noIssuesWithInvalidReportPath() throws IOException {
+  void noIssuesWithInvalidReportPath() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "invalid-path.txt");
     assertThat(externalIssues).isEmpty();
     assertThat(onlyOneLogElement(logTester.logs(Level.ERROR)))
@@ -170,7 +170,7 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void issuesWhenClippyFileHasErrors() throws IOException {
+  void issuesWhenClippyFileHasErrors() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "wrongpaths.txt");
     assertThat(externalIssues).hasSize(1);
 
@@ -190,14 +190,14 @@ public class ClippySensorTest {
   }
 
   @Test
-  public void noIssuesWithEmptyClippyReport() throws IOException {
+  void noIssuesWithEmptyClippyReport() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, "empty-report.txt");
     assertThat(externalIssues).isEmpty();
     assertNoErrorWarnDebugLogs(logTester);
   }
 
   @Test
-  public void clippyReportWithSuggestedChanges() throws IOException {
+  void clippyReportWithSuggestedChanges() throws IOException {
     List<ExternalIssue> externalIssues = executeSensorImporting(7, 9, UNKNOWN_KEY_REPORT);
     assertThat(externalIssues).hasSize(4);
 

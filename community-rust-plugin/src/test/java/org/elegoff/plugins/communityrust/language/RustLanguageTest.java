@@ -25,23 +25,24 @@ import org.junit.jupiter.api.Test;
 import org.sonar.api.config.internal.ConfigurationBridge;
 import org.sonar.api.config.internal.MapSettings;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RustLanguageTest {
-    @Test
-    public void test() {
-        RustLanguage language = new RustLanguage(new ConfigurationBridge(new MapSettings()));
-        assertThat(language.getKey()).isEqualTo("rust");
-        assertThat(language.getName()).isEqualTo("Rust");
-        assertThat(language.getFileSuffixes()).hasSize(1).contains(".rs");
-    }
+class RustLanguageTest {
+  @Test
+  void test() {
+    RustLanguage language = new RustLanguage(new ConfigurationBridge(new MapSettings()));
+    assertThat(language.getKey()).isEqualTo("rust");
+    assertThat(language.getName()).isEqualTo("Rust");
+    assertThat(language.getFileSuffixes()).hasSize(1).contains(".rs");
+  }
 
-    @Test
-    public void custom_file_suffixes() {
-        MapSettings settings = new MapSettings();
-        settings.setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, "foo,bar");
+  @Test
+  void custom_file_suffixes() {
+    MapSettings settings = new MapSettings();
+    settings.setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, "foo,bar");
 
-        RustLanguage language = new RustLanguage(new ConfigurationBridge(settings));
-        assertThat(language.getFileSuffixes()).hasSize(2).contains("foo");
-    }
+    RustLanguage language = new RustLanguage(new ConfigurationBridge(settings));
+    assertThat(language.getFileSuffixes()).hasSize(2).contains("foo");
+  }
 }

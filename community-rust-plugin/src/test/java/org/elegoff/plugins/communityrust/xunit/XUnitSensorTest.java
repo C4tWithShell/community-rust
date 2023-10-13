@@ -20,6 +20,7 @@
  */
 package org.elegoff.plugins.communityrust.xunit;
 
+import java.io.File;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -30,11 +31,10 @@ import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
-import java.io.File;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-public class XUnitSensorTest {
+class XUnitSensorTest {
   private final File moduleBaseDir = new File("src/test/resources/org/elegoff/plugins/communityrust/xunit").getAbsoluteFile();
   @RegisterExtension
   public LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -43,7 +43,7 @@ public class XUnitSensorTest {
   private MapSettings settings;
 
   @BeforeEach
-  public void init() {
+  void init() {
 
     unitSensor = new XUnitSensor();
     settings = new MapSettings();
@@ -53,7 +53,7 @@ public class XUnitSensorTest {
   }
 
   @Test
-  public void test_basic_report() {
+  void test_basic_report() {
     unitSensor.execute(context);
     assertThat(moduleMeasure(CoreMetrics.TESTS)).isEqualTo(1);
     assertThat(moduleMeasure(CoreMetrics.SKIPPED_TESTS)).isEqualTo(0);
@@ -62,7 +62,7 @@ public class XUnitSensorTest {
   }
 
   @Test
-  public void test_report_with_failure() {
+  void test_report_with_failure() {
 
     settings.setProperty(XUnitSensor.REPORT_PATH_KEY, "report_with_failure.xml");
     context = SensorContextTester.create(moduleBaseDir);
@@ -76,14 +76,14 @@ public class XUnitSensorTest {
   }
 
   @Test
-  public void shouldReportNothingWhenNoReportFound() {
+  void shouldReportNothingWhenNoReportFound() {
     settings.setProperty(XUnitSensor.REPORT_PATH_KEY, "notexistingpath");
     unitSensor.execute(context);
     assertThat(context.measures(context.module().key())).isEmpty();
   }
 
   @Test
-  public void test_report_with_failure_no_message() {
+  void test_report_with_failure_no_message() {
 
     settings.setProperty(XUnitSensor.REPORT_PATH_KEY, "cargo-nextest.xml");
     context = SensorContextTester.create(moduleBaseDir);

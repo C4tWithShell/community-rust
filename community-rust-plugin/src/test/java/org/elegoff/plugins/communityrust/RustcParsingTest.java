@@ -37,20 +37,21 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
 
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
-public class RustcParsingTest {
+class RustcParsingTest {
   private final File dir = new File("src/test/resources/rustc");
   private FileLinesContext fileLinesContext;
   private SensorContextTester tester;
   private RustSensor sensor;
 
 
-  public void reinit() {
+  void reinit() {
     tester = SensorContextTester.create(dir);
 
     MapSettings settings = CommunityRustPluginConfigurationTest.getDefaultSettings();
@@ -93,18 +94,18 @@ public class RustcParsingTest {
   }
 
   @Test
-  public void DebugInfoTest() throws IOException {
+  void DebugInfoTest() throws IOException {
     checkme("debuginfo/associated-types.rs");
     checkme("debuginfo/borrowed-enums.rs");
   }
 
   @Test
-  public void RunMakeFulldepsTest() throws IOException {
+  void RunMakeFulldepsTest() throws IOException {
     checkme("run-make-fulldeps/atomic-lock-free/atomic_lock_free.rs");
   }
 
   @Test
-  public void UITest() throws IOException {
+  void UITest() throws IOException {
     checkme("ui/cfg/cfg-panic.rs");
 
     checkme("ui/borrowck/issue-88434-minimal-example.rs");

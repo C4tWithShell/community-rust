@@ -23,12 +23,13 @@ package org.elegoff.plugins.communityrust.clippy;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.server.rule.RulesDefinition;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ClippyRulesDefinitionTest {
+class ClippyRulesDefinitionTest {
 
   @Test
-  public void clippyExternalRepository() {
+  void clippyExternalRepository() {
     RulesDefinition.Context context = new RulesDefinition.Context();
     ClippyRulesDefinition rulesDefinition = new ClippyRulesDefinition();
     rulesDefinition.define(context);

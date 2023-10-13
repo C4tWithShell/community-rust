@@ -20,68 +20,68 @@
  */
 package org.sonar.rust.parser;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class RustGrammarTest {
-    @Test
-    public void matchingEmpty() {
-        LexerlessGrammar g = RustGrammar.create().build();
-        RustGrammar[] rustGrammars = RustGrammar.values();
+class RustGrammarTest {
+  @Test
+  void matchingEmpty() {
+    LexerlessGrammar g = RustGrammar.create().build();
+    RustGrammar[] rustGrammars = RustGrammar.values();
 
-        Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
-                // RustGrammar.CALL_PARAMS_TERM,
-                RustGrammar.COMPILATION_UNIT,
-                RustGrammar.EOF,
-                RustGrammar.FUNCTION_QUALIFIERS,
-                RustGrammar.FUNCTION_TYPE_QUALIFIERS,
-                RustGrammar.LIFETIME_BOUNDS,
-                RustGrammar.SPC
-        ));
+    Set<RustGrammar> couldMatch = new HashSet<RustGrammar>(Arrays.asList(
+      // RustGrammar.CALL_PARAMS_TERM,
+      RustGrammar.COMPILATION_UNIT,
+      RustGrammar.EOF,
+      RustGrammar.FUNCTION_QUALIFIERS,
+      RustGrammar.FUNCTION_TYPE_QUALIFIERS,
+      RustGrammar.LIFETIME_BOUNDS,
+      RustGrammar.SPC
+    ));
 
-        for (RustGrammar r : rustGrammars) {
-            if (couldMatch.contains(r)) {
-                assertThat(RustGrammar.create().build().rule(r))
-                        .matches("");
-            } else {
-                assertThat(RustGrammar.create().build().rule(r))
-                        .notMatches("");
-            }
+    for (RustGrammar r : rustGrammars) {
+      if (couldMatch.contains(r)) {
+        assertThat(RustGrammar.create().build().rule(r))
+          .matches("");
+      } else {
+        assertThat(RustGrammar.create().build().rule(r))
+          .notMatches("");
+      }
 
-
-        }
 
     }
 
-    @Test
-    public void minimal() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.DELIMITERS)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_STRING_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.INTEGER_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.HEX_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.OCT_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_BYTE_STRING_LITERAL)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches("");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).notMatches("");
-        //semi colon
-        assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches(";");
-        assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).matches(";");
-    }
+  }
+
+  @Test
+  void minimal() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.DELIMITERS)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_STRING_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.INTEGER_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.HEX_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.OCT_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_BYTE_STRING_LITERAL)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.KEYWORD)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches("");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).notMatches("");
+    //semi colon
+    assertThat(RustGrammar.create().build().rule(RustGrammar.ANY_TOKEN)).notMatches(";");
+    assertThat(RustGrammar.create().build().rule(RustGrammar.STATEMENT)).matches(";");
+  }
 
 
 }

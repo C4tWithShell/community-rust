@@ -20,6 +20,12 @@
  */
 package org.elegoff.plugins.communityrust.coverage.cobertura;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.elegoff.plugins.communityrust.Utils;
@@ -39,17 +45,11 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.log.LoggerLevel;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CoberturaSensorTest {
+class CoberturaSensorTest {
 
   private static final String TESTFILE1 = "moduleKey:src/cgroups/common.rs";
   private static final String TESTFILE2 = "moduleKey:src/cgroups/test.rs";
@@ -64,7 +64,7 @@ public class CoberturaSensorTest {
   private CoberturaSensor coberturaSensor;
 
   @BeforeEach
-  public void init() {
+  void init() {
 
     coberturaSensor = new CoberturaSensor();
     settings = new MapSettings();
@@ -92,7 +92,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void absolute_path() {
+  void absolute_path() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, new File(moduleBaseDir, "cobertura.xml").getAbsolutePath());
 
     coberturaSensor.execute(context);
@@ -101,7 +101,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_coverage() {
+  void test_coverage() {
     coberturaSensor.execute(context);
     Map<Integer, Integer> file1Expected = new HashMap<>();
     file1Expected.put(42, 1);
@@ -127,7 +127,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_ambigous_locations() {
+  void test_ambigous_locations() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "coverage-other-2.xml");
     coberturaSensor.execute(context);
 
@@ -138,7 +138,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_report_with_absolute_path() throws Exception {
+  void test_report_with_absolute_path() throws Exception {
     String reportPath = generateReportWithAbsPaths();
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, reportPath);
 
@@ -150,7 +150,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_unresolved_path() {
+  void test_unresolved_path() {
     String separator = File.separator;
 
     logTester.clear();
@@ -169,7 +169,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void test_multiple_reports() {
+  void test_multiple_reports() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "cobertura.xml,coverage-other*.xml");
     coberturaSensor.execute(context);
 
@@ -181,28 +181,28 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void fail_with_invalid_report() {
+  void fail_with_invalid_report() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "invalid.xml");
     IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
     Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
   }
 
   @Test
-  public void fail_with_invalid_eof() {
+  void fail_with_invalid_eof() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "wrong_eof.xml");
     IllegalStateException e = Assert.assertThrows(IllegalStateException.class, () -> coberturaSensor.execute(context));
     Assertions.assertThat(e.getMessage()).isEqualTo("Unable to compile regular expression: a+*(");
   }
 
   @Test
-  public void ok_when_empty_report() {
+  void ok_when_empty_report() {
     settings.setProperty(CommunityRustPlugin.COBERTURA_REPORT_PATHS, "empty.xml");
     coberturaSensor.execute(context);
     assertThat(context.lineHits(TESTFILE1, 42)).isNull();
   }
 
   @Test
-  public void default_debug_logs() {
+  void default_debug_logs() {
     settings.clear();
     CoberturaSensor sensor = new CoberturaSensor();
     sensor.execute(context);
@@ -210,7 +210,7 @@ public class CoberturaSensorTest {
   }
 
   @Test
-  public void sensor_descriptor() {
+  void sensor_descriptor() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     new CoberturaSensor().describe(descriptor);
     assertThat(descriptor.name()).isEqualTo("Cobertura Sensor for Rust");

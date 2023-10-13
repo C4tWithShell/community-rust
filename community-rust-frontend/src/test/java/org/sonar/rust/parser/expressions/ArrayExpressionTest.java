@@ -25,9 +25,9 @@ import org.sonar.rust.RustGrammar;
 
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ArrayExpressionTest {
+ class ArrayExpressionTest {
     @Test
-    public void testArrayExpression() {
+     void testArrayExpression() {
         assertThat(RustGrammar.create().build().rule(RustGrammar.ARRAY_EXPRESSION))
                 .matches("[]")
                 .matches("[42]")
@@ -46,7 +46,7 @@ public class ArrayExpressionTest {
     }
 
     @Test
-    public void testIndexExpression() {
+     void testIndexExpression() {
 //        assertThat(RustGrammar.create().build().rule(RustGrammar.INDEX_EXPRESSION))
         assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION))
                 .matches("arr[42]")

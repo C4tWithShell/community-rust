@@ -20,27 +20,27 @@
  */
 package org.elegoff.plugins.communityrust;
 
+import java.nio.charset.Charset;
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.config.internal.MapSettings;
 
-import java.nio.charset.Charset;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class CommunityRustPluginConfigurationTest {
-    @Test
-    public void getParserConfigurationCharset() {
-        CommunityRustPluginConfiguration pluginConf = new CommunityRustPluginConfiguration();
+class CommunityRustPluginConfigurationTest {
+  @Test
+  void getParserConfigurationCharset() {
+    CommunityRustPluginConfiguration pluginConf = new CommunityRustPluginConfiguration();
 
-        Charset charset = mock(Charset.class);
-        assertThat(pluginConf.getParserConfiguration(charset).getCharset()).isEqualTo(charset);
-    }
+    Charset charset = mock(Charset.class);
+    assertThat(pluginConf.getParserConfiguration(charset).getCharset()).isEqualTo(charset);
+  }
 
-    static MapSettings getDefaultSettings() {
-        return new MapSettings()
-                .setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, ".foo");
+  static MapSettings getDefaultSettings() {
+    return new MapSettings()
+      .setProperty(RustLanguageSettings.FILE_SUFFIXES_KEY, ".foo");
 
-    }
+  }
 }

@@ -24,10 +24,10 @@ import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 import org.sonar.sslr.tests.Assertions;
 
-public class IdentifierTest {
+class IdentifierTest {
 
   @Test
-  public void checkRawIdentifier() {
+  void checkRawIdentifier() {
     Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_IDENTIFIER))
       .notMatches("r#")
       .matches("r#a")
@@ -44,7 +44,7 @@ public class IdentifierTest {
   }
 
   @Test
-  public void testNonKeywords() {
+  void testNonKeywords() {
     Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.NON_KEYWORD_IDENTIFIER))
       .matches("a")
       .matches("bc")
@@ -70,7 +70,7 @@ public class IdentifierTest {
   }
 
   @Test
-  public void testIdentifierOrKeyword() {
+  void testIdentifierOrKeyword() {
     Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER_OR_KEYWORD))
       .matches("a")
       .matches("bc")
@@ -96,7 +96,7 @@ public class IdentifierTest {
   }
 
   @Test
-  public void testIdentifier() {
+  void testIdentifier() {
     Assertions.assertThat(RustGrammar.create().build().rule(RustGrammar.IDENTIFIER))
       .matches("a")
       .matches("bc")

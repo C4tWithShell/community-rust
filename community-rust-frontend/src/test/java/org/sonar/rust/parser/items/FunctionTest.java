@@ -23,12 +23,13 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class FunctionTest {
+class FunctionTest {
 
   @Test
-  public void testFunctionQualifiers() {
+  void testFunctionQualifiers() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_QUALIFIERS))
       .matches("const")
       .matches("async")
@@ -44,7 +45,7 @@ public class FunctionTest {
   }
 
   @Test
-  public void testAbi() {
+  void testAbi() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ABI))
       .matches("r\"foo\"")
       .matches("\"abc\"")
@@ -54,7 +55,7 @@ public class FunctionTest {
   }
 
   @Test
-  public void testFunctionReturnType() {
+  void testFunctionReturnType() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_RETURN_TYPE))
       .matches("->i32")
       .matches("-> i32");
@@ -62,7 +63,7 @@ public class FunctionTest {
   }
 
   @Test
-  public void testFunctionParam() {
+  void testFunctionParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_PARAM))
       .matches("x : i32")
       .matches("y:i64")
@@ -75,7 +76,7 @@ public class FunctionTest {
   }
 
   @Test
-  public void testFunctionParameters() {
+  void testFunctionParameters() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION_PARAMETERS))
       .matches("y:i64")
       .matches("x : i32")
@@ -89,7 +90,7 @@ public class FunctionTest {
   }
 
   @Test
-  public void testFunction() {
+  void testFunction() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FUNCTION))
       .matches("fn same(x : i32)->i32 {;}")
       .matches("fn same(x : i32) -> i32 {;}")

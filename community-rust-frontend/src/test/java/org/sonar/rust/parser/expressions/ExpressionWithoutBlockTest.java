@@ -23,11 +23,12 @@ package org.sonar.rust.parser.expressions;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ExpressionWithoutBlockTest {
+class ExpressionWithoutBlockTest {
   @Test
-  public void testExpressionWithoutBlock() {
+  void testExpressionWithoutBlock() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.EXPRESSION_WITHOUT_BLOCK))
       .notMatches("== b")
       .matches("&7")

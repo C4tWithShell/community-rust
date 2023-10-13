@@ -31,15 +31,16 @@ import org.sonar.api.server.rule.RulesDefinition.Context;
 import org.sonar.api.server.rule.RulesDefinition.Repository;
 import org.sonar.api.utils.Version;
 
+
 import static org.fest.assertions.Assertions.assertThat;
 
-public class RustRulesDefinitionTest {
+class RustRulesDefinitionTest {
 
   private static final SonarRuntime SONAR_RUNTIME_9_8 = SonarRuntimeImpl.forSonarQube(Version.create(9, 8), SonarQubeSide.SERVER, SonarEdition.COMMUNITY);
   private final Context context = new Context();
 
   @Test
-  public void test() {
+  void test() {
     Repository repository = createRepository();
 
     assertThat(repository.name()).isEqualTo("Community RUST");

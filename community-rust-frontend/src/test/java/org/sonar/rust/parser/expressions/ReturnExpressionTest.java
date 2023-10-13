@@ -23,19 +23,20 @@ package org.sonar.rust.parser.expressions;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class ReturnExpressionTest {
-    @Test
-    public void testReturnExpression() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.RETURN_EXPRESSION))
-                .matches("return")
-                .matches("return result")
-                .matches("return calc()")
-                .matches("return m.run()")
-                .matches("return None")
-                .matches("return 42")
+class ReturnExpressionTest {
+  @Test
+  void testReturnExpression() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.RETURN_EXPRESSION))
+      .matches("return")
+      .matches("return result")
+      .matches("return calc()")
+      .matches("return m.run()")
+      .matches("return None")
+      .matches("return 42")
 
-        ;
-    }
+    ;
+  }
 }

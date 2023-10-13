@@ -20,6 +20,11 @@
  */
 package org.elegoff.plugins.communityrust;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Collections;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.fest.assertions.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,11 +44,6 @@ import org.sonar.api.measures.FileLinesContext;
 import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,7 +51,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class RustSensorTest {
+class RustSensorTest {
 
   private static final String LIBFILE = "sensor/lib.rs";
   private static final String SIMPLE = "sensor/simple.rs";
@@ -65,7 +65,7 @@ public class RustSensorTest {
   private RustSensor sensor;
 
   @BeforeEach
-  public void init() {
+  void init() {
     tester = SensorContextTester.create(dir);
 
     MapSettings settings = CommunityRustPluginConfigurationTest.getDefaultSettings();
@@ -80,7 +80,7 @@ public class RustSensorTest {
   }
 
   @Test
-  public void analyseSimple() throws IOException {
+  void analyseSimple() throws IOException {
     DefaultInputFile inputFile = executeSensorOnSingleFile(SIMPLE);
 
     assertEquals((Integer) 10, tester.measure(inputFile.key(), CoreMetrics.NCLOC).value());
@@ -107,14 +107,14 @@ public class RustSensorTest {
   }
 
   @Test
-  public void canParse() throws IOException {
+  void canParse() throws IOException {
     DefaultInputFile inputFile = executeSensorOnSingleFile("sensor/checkme.rs");
     verify(fileLinesContext).save();
     Assertions.assertThat(tester.allAnalysisErrors()).isEmpty();
   }
 
   @Test
-  public void checkDuplication() throws IOException {
+  void checkDuplication() throws IOException {
     DefaultInputFile inputFile = executeSensorOnSingleFile("sensor/cpd.rs");
 
     assertEquals(212, tester.cpdTokens(inputFile.key()).size());
@@ -124,7 +124,7 @@ public class RustSensorTest {
   }
 
   @Test
-  public void checkDuplicationIgnoringTests() throws IOException {
+  void checkDuplicationIgnoringTests() throws IOException {
     tester.settings().setProperty(CommunityRustPlugin.IGNORE_DUPLICATION_FOR_TESTS, true);
     DefaultInputFile inputFile = executeSensorOnSingleFile("sensor/cpd.rs");
 
@@ -141,7 +141,7 @@ public class RustSensorTest {
   }
 
   @Test
-  public void two_files_without_cancellation() throws Exception {
+  void two_files_without_cancellation() throws Exception {
     DefaultInputFile file1 = addInputFile(LIBFILE);
     DefaultInputFile file2 = addInputFile(SIMPLE);
     sensor.execute(tester);
@@ -150,7 +150,7 @@ public class RustSensorTest {
   }
 
   @Test
-  public void two_files_with_cancellation() throws Exception {
+  void two_files_with_cancellation() throws Exception {
     DefaultInputFile file1 = addInputFile(LIBFILE);
     DefaultInputFile file2 = addInputFile(SIMPLE);
     tester.setCancelled(true);

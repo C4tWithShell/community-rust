@@ -23,13 +23,14 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class EnumerationTest {
+class EnumerationTest {
 
 
   @Test
-  public void testEnumerationItem() {
+  void testEnumerationItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ENUM_ITEM))
       .matches("Dog")
 
@@ -62,7 +63,7 @@ public class EnumerationTest {
   }
 
   @Test
-  public void testEnumeration() {
+  void testEnumeration() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ENUMERATION))
       .matches("enum Empty {}")
       .matches("enum Animal {\n" +

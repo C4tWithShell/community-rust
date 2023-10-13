@@ -23,35 +23,36 @@ package org.sonar.rust.parser.lexer;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class TokenTest {
+class TokenTest {
 
-    @Test
-    public void testTupleIndex() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_INDEX))
-                .matches("0")
-                .matches("42")
-                .matches("123")
-                .matches("1")
+  @Test
+  void testTupleIndex() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.TUPLE_INDEX))
+      .matches("0")
+      .matches("42")
+      .matches("123")
+      .matches("1")
 
-        ;
-    }
+    ;
+  }
 
 
-    @Test
-    public void testToken() {
-        assertThat(RustGrammar.create().build().rule(RustGrammar.TOKEN))
-                .matches("a") //identifiers
-                .matches("abc")
-                .matches("A")
-                .matches("AbCD")
-                .matches("U123")
-                .matches("as") //keywords
-                .matches("break")
-                .matches("const")
-                .matches("continue")
-                .matches("\"hello,world!\"")
-                ;
-    }
+  @Test
+  void testToken() {
+    assertThat(RustGrammar.create().build().rule(RustGrammar.TOKEN))
+      .matches("a") //identifiers
+      .matches("abc")
+      .matches("A")
+      .matches("AbCD")
+      .matches("U123")
+      .matches("as") //keywords
+      .matches("break")
+      .matches("const")
+      .matches("continue")
+      .matches("\"hello,world!\"")
+    ;
+  }
 }

@@ -23,11 +23,12 @@ package org.sonar.rust.parser.lexer;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class LitteralsTest {
+class LitteralsTest {
   @Test
-  public void charLitterals() {
+  void charLitterals() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL))
       .matches("'f'")
       .matches("'\"'")
@@ -38,20 +39,20 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testUnicode() {
+  void testUnicode() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.UNICODE_ESCAPE))
       .matches("\\u{0027}");
   }
 
   @Test
-  public void testQuote() {
+  void testQuote() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.QUOTE_ESCAPE))
       .matches("\\'")
       .matches("\\\"");
   }
 
   @Test
-  public void testAscii() {
+  void testAscii() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ASCII_ESCAPE))
       .matches("\\x7f")
       .matches("\\r")
@@ -63,7 +64,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testChars() {
+  void testChars() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CHAR_LITERAL))
       .matches("'a'")
       .matches("'5'")
@@ -77,7 +78,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testStringContent() {
+  void testStringContent() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_CONTENT))
       .matches("abc")
       .matches("abc,def!@")
@@ -92,7 +93,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testStrings() {
+  void testStrings() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.STRING_LITERAL))
       .matches("\"a\"")
       .matches("\"5\"")
@@ -121,7 +122,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testRawStringContent() {
+  void testRawStringContent() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_CONTENT))
       .matches("\"a string\"")
 
@@ -129,7 +130,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testRawStrings() {
+  void testRawStrings() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_STRING_LITERAL))
       .matches("r\"foo\"")
       .matches("r#\"foo\"#")
@@ -157,7 +158,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testByteEscape() {
+  void testByteEscape() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_ESCAPE))
       .matches("\\xff")
       .matches("\\xBB")
@@ -173,7 +174,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testByteLiteral() {
+  void testByteLiteral() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_LITERAL))
       .matches("b'a'")
       .matches("b'5'")
@@ -189,7 +190,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testAsciiForString() {
+  void testAsciiForString() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.ASCII_FOR_STRING))
       .matches("a")
       .matches("y")
@@ -199,7 +200,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testByteStringLiteral() {
+  void testByteStringLiteral() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BYTE_STRING_LITERAL))
       .matches("b\"a\"")
       .matches("b\"5\"")
@@ -224,7 +225,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testRawByteStrings() {
+  void testRawByteStrings() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.RAW_BYTE_STRING_LITERAL))
       .matches("br\"foo\"")
       .matches("br#\"\"foo\"\"#")
@@ -237,14 +238,14 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testDecLiteral() {
+  void testDecLiteral() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.DEC_LITERAL))
       .matches("123");
 
   }
 
   @Test
-  public void testHexa() {
+  void testHexa() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.HEX_LITERAL))
       .matches("0xf") // type i32
       .matches("0xff")
@@ -253,7 +254,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testOct() {
+  void testOct() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.OCT_LITERAL))
       .matches("0o70")
 
@@ -262,7 +263,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testBin() {
+  void testBin() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BIN_LITERAL))
       .matches("0b1111_1111")
 
@@ -271,7 +272,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testInteger() {
+  void testInteger() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.INTEGER_LITERAL))
       .matches("123") // type i32
 
@@ -315,14 +316,14 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testFloatSuffix() {
+  void testFloatSuffix() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_SUFFIX))
       .matches("f32")
       .matches("f64");
   }
 
   @Test
-  public void testFloatExponent() {
+  void testFloatExponent() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_EXPONENT))
       .matches("E-33")
       .matches("e5_1")
@@ -330,7 +331,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testFloat() {
+  void testFloat() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FLOAT_LITERAL))
       .matches("12E+99f32")
       .matches("12E+99_f64") // type f64
@@ -344,7 +345,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testBoolean() {
+  void testBoolean() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.BOOLEAN_LITERAL))
       .matches("true")
       .matches("false")
@@ -352,7 +353,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testPunctuation() {
+  void testPunctuation() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.PUNCTUATION))
       .matches("+")
       .matches("-")
@@ -401,7 +402,7 @@ public class LitteralsTest {
   }
 
   @Test
-  public void testDelimiters() {
+  void testDelimiters() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.DELIMITERS))
       .matches("{")
       .matches("}")

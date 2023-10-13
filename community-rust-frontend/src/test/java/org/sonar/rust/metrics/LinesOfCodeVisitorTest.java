@@ -33,11 +33,10 @@ import org.sonar.sslr.parser.ParserAdapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LinesOfCodeVisitorTest {
-
+class LinesOfCodeVisitorTest {
 
   @Test
-  public void testVisit() {
+  void testVisit() {
 
     ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(StandardCharsets.UTF_8, RustGrammar.create().build());
     AstNode rootNode = parser.parse("");
@@ -64,7 +63,6 @@ public class LinesOfCodeVisitorTest {
     Set<Integer> lines = lcv.linesOfCode();
 
     assertThat(lines).isEmpty();
-
 
   }
 

@@ -20,49 +20,49 @@
  */
 package org.elegoff.plugins.communityrust.coverage.cobertura;
 
+import java.io.File;
+import javax.xml.stream.XMLStreamException;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.junit.jupiter.api.Test;
 
-import javax.xml.stream.XMLStreamException;
-import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class StaxParserTest {
+class StaxParserTest {
 
 
-    @Test
-    public void should_fail_parsing_if_file_does_not_exist() throws Exception {
-        StaxParser parser = new StaxParser(rootCursor -> {});
-        assertThrows(
-          XMLStreamException.class,
-          () -> parser.parse(new File("fake.xml")));
-    }
+  @Test
+  void should_fail_parsing_if_file_does_not_exist() throws Exception {
+    StaxParser parser = new StaxParser(rootCursor -> {
+    });
+    assertThrows(
+      XMLStreamException.class,
+      () -> parser.parse(new File("fake.xml")));
+  }
 
 
+  private void test_grammar_parsable(String resource) throws XMLStreamException {
+    StaxParser parser = new StaxParser(getTestHandler());
+    parser.parse(getClass().getClassLoader().getResourceAsStream(resource));
+  }
 
-    private void test_grammar_parsable(String resource) throws XMLStreamException {
-        StaxParser parser = new StaxParser(getTestHandler());
-        parser.parse(getClass().getClassLoader().getResourceAsStream(resource));
-    }
+  @Test
+  void test_grammars() throws XMLStreamException {
+    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/dtd-test.xml"));
+    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test.xml"));
+    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test-with-entity.xml"));
+  }
 
-    @Test
-    public void test_grammars() throws XMLStreamException {
-        assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/dtd-test.xml"));
-        assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test.xml"));
-        assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test-with-entity.xml"));
-    }
-
-    private static StaxParser.XmlStreamHandler getTestHandler() {
-        return new StaxParser.XmlStreamHandler() {
-            public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
-                rootCursor.advance();
-                while (rootCursor.getNext() != null) {
-                    // do nothing intentionally
-                }
-            }
-        };
-    }
+  private static StaxParser.XmlStreamHandler getTestHandler() {
+    return new StaxParser.XmlStreamHandler() {
+      public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
+        rootCursor.advance();
+        while (rootCursor.getNext() != null) {
+          // do nothing intentionally
+        }
+      }
+    };
+  }
 
 }

@@ -23,12 +23,13 @@ package org.sonar.rust.parser.items;
 import org.junit.jupiter.api.Test;
 import org.sonar.rust.RustGrammar;
 
+
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-public class LifeTimeTest {
+class LifeTimeTest {
 
   @Test
-  public void testForLifetimes() {
+  void testForLifetimes() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.FOR_LIFETIMES))
       .matches("for <'a>")
       .matches("for <'ABC>")
@@ -41,7 +42,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testTypeBoundWhereClauseItem() {
+  void testTypeBoundWhereClauseItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_BOUND_CLAUSE_ITEM))
       .matches("i32 :")
       .matches("for <'ABC> i32 :")
@@ -50,7 +51,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testLifetimeWhereClauseItem() {
+  void testLifetimeWhereClauseItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_WHERE_CLAUSE_ITEM))
       .matches("'a:'b+'c+'d")
       .matches("'a : 'b+'c+'d")
@@ -60,7 +61,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testWhereClauseItem() {
+  void testWhereClauseItem() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.WHERE_CLAUSE_ITEM))
       // type bound clause item
       .matches("i32 :")
@@ -76,7 +77,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testWhereClause() {
+  void testWhereClause() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.WHERE_CLAUSE))
       .matches("where i32 :")
       .matches("where i32 :,f64:")
@@ -95,7 +96,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testLifetime() {
+  void testLifetime() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME))
       .matches("'a")
       .matches("'ABC")
@@ -107,7 +108,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testTraitBound() {
+  void testTraitBound() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TRAIT_BOUND))
       .matches("? abc::def")
       .matches("for <'a> abc::def")
@@ -123,7 +124,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testTypeParamBound() {
+  void testTypeParamBound() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PARAM_BOUND))
       // lifetime
       .matches("'a")
@@ -145,7 +146,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testTypeParamBounds() {
+  void testTypeParamBounds() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PARAM_BOUNDS))
       .matches("'a")
       .matches("'a+'a")
@@ -167,7 +168,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testTypeParam() {
+  void testTypeParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.TYPE_PARAM))
       .matches("AAA")
       .matches("AAA : 'a")
@@ -178,7 +179,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testConstParam() {
+  void testConstParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.CONST_PARAM))
       .matches("const AAA : i32")
 
@@ -186,7 +187,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testLifetimeParam() {
+  void testLifetimeParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_PARAM))
       .matches("'a")
       .matches("'de")
@@ -200,7 +201,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testLifetimeBounds() {
+  void testLifetimeBounds() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.LIFETIME_BOUNDS))
       .matches("'a+'b+'c")
       .matches("'a + 'b + 'c")
@@ -208,7 +209,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testGenericParam() {
+  void testGenericParam() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAM))
       .matches("T")
       .matches("'de")
@@ -230,7 +231,7 @@ public class LifeTimeTest {
   }
 
   @Test
-  public void testGenericParams() {
+  void testGenericParams() {
     assertThat(RustGrammar.create().build().rule(RustGrammar.GENERIC_PARAMS))
       .matches("<>")
       .matches("< >")

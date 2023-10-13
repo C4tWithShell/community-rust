@@ -20,6 +20,12 @@
  */
 package org.elegoff.plugins.communityrust.coverage.lcov;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.elegoff.plugins.communityrust.CommunityRustPlugin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,16 +41,10 @@ import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LCOVSensorTest {
+class LCOVSensorTest {
 
   private static final String REPORT1 = "reports/report_1.lcov";
   private static final String REPORT2 = "reports/report_2.lcov";
@@ -60,7 +60,7 @@ public class LCOVSensorTest {
   private MapSettings settings;
 
   @BeforeEach
-  public void init() throws FileNotFoundException {
+  void init() throws FileNotFoundException {
     settings = new MapSettings();
 
     context = SensorContextTester.create(moduleBaseDir);
@@ -85,14 +85,14 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void report_not_found() throws Exception {
+  void report_not_found() throws Exception {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "/wrong/path/lcov_report.dat");
     coverageSensor.execute(context);
     assertThat(context.lineHits("moduleKey:file1.js", 1)).isNull();
   }
 
   @Test
-  public void test_coverage() {
+  void test_coverage() {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, TWO_REPORTS);
     coverageSensor.execute(context);
     assertTwoReportsCoverageDataPresent();
@@ -115,7 +115,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_ignore_and_log_warning_for_invalid_line() {
+  void should_ignore_and_log_warning_for_invalid_line() {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/wrong_line_report.lcov");
     coverageSensor.execute(context);
 
@@ -134,7 +134,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void test_unresolved_path() {
+  void test_unresolved_path() {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/report_with_unresolved_path.lcov");
     coverageSensor.execute(context);
     String fileName = File.separator + "reports" + File.separator + "report_with_unresolved_path.lcov";
@@ -144,7 +144,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void test_unresolved_path_with_debug_log() {
+  void test_unresolved_path_with_debug_log() {
     logTester.setLevel(Level.DEBUG);
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/report_with_unresolved_path.lcov");
     coverageSensor.execute(context);
@@ -158,7 +158,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_log_warning_when_wrong_data() throws Exception {
+  void should_log_warning_when_wrong_data() throws Exception {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/wrong_data_report.lcov");
     coverageSensor.execute(context);
 
@@ -179,7 +179,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void sensor_descriptor() {
+  void sensor_descriptor() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     coverageSensor.describe(descriptor);
     assertThat(descriptor.name()).isEqualTo("LCOV Sensor for Rust coverage");
@@ -187,7 +187,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_resolve_relative_path() throws Exception {
+  void should_resolve_relative_path() throws Exception {
     settings.setProperty(CommunityRustPlugin.LCOV_REPORT_PATHS, "reports/report_relative_path.lcov");
     inputFile("deeply/nested/example/file1.rs", InputFile.Type.MAIN);
     inputFile("deeply/nested/example/file2.rs", InputFile.Type.MAIN);
@@ -209,7 +209,7 @@ public class LCOVSensorTest {
   }
 
   @Test
-  public void should_resolve_absolute_path() throws Exception {
+  void should_resolve_absolute_path() throws Exception {
     File lcovFile = Files.createFile(tmpDir.resolve("test.txt")).toFile();
     String absolutePathFile1 = new File("src/test/resources/lcov/file1.rs").getAbsolutePath();
     String absolutePathFile2 = new File("src/test/resources/lcov/file2.rs").getAbsolutePath();
