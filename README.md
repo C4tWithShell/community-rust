@@ -10,12 +10,12 @@ manage code quality.
 
 ### Compatibility with SonarQube versions :
 
-| SonarQube | Rust plugin   |
-|-----------|---------------|
-| > 9.9 LTS | not tested    | 
-| 9.9 LTS   | 0.2.1         |
-| 8.9 - 9.9 | 0.1.0         |
-| <8.9      | not supported |
+| SonarQube | Community Rust plugin |
+|-----------|-----------------------|
+| 10.x      | 0.2.2                 | 
+| 9.9 LTS   | 0.2.1                 |
+| 8.9 - 9.9 | 0.1.0                 |
+| <8.9      | not supported         |
 
 It leverages [Clippy lints](https://rust-lang.github.io/rust-clippy/master/) to raise issues against coding
 rules,  [LCOV](https://wiki.documentfoundation.org/Development/Lcov)
