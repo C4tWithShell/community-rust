@@ -127,10 +127,10 @@ class LCOVSensorTest {
     assertThat(context.coveredConditions("moduleKey:file1.rs", 2)).isEqualTo(1);
 
     assertThat(logTester.logs(Level.DEBUG)).contains(
-      "Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.IllegalArgumentException: Line number 0 doesn't exist in file file1.rs).");
+      "Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (Line number 0 doesn't exist in file file1.rs).");
 
     assertThat(logTester.logs()).contains(
-      "Error while parsing LCOV report: can't save BRDA data for line 8 of coverage report file (java.lang.IllegalArgumentException: Line number 102 doesn't exist in file file1.rs).");
+      "Error while parsing LCOV report: can't save BRDA data for line 8 of coverage report file (Line number 102 doesn't exist in file file1.rs).");
   }
 
   @Test
@@ -168,12 +168,12 @@ class LCOVSensorTest {
     assertThat(context.coveredConditions("moduleKey:file1.rs", 2)).isEqualTo(2);
 
     assertThat(logTester.logs(Level.DEBUG))
-      .contains("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.NumberFormatException: For input string: \"1.\").");
+      .contains("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (For input string: \"1.\").");
     String stringIndexOutOfBoundLogMessage = logTester.logs(Level.DEBUG).get(1);
     assertThat(stringIndexOutOfBoundLogMessage)
-      .startsWith("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (java.lang.NumberFormatException:");
+      .startsWith("Error while parsing LCOV report: can't save DA data for line 3 of coverage report file (For input string: \"1.\").");
     assertThat(logTester.logs(Level.DEBUG).get(logTester.logs(Level.DEBUG).size() - 1))
-      .startsWith("Error while parsing LCOV report: can't save BRDA data for line 6 of coverage report file (java.lang.ArrayIndexOutOfBoundsException: ");
+      .startsWith("Error while parsing LCOV report: can't save BRDA data for line 6 of coverage report file (Index 3 out of bounds for length 3)");
     assertThat(logTester.logs(Level.WARN)).contains("Found 3 inconsistencies in coverage report");
   }
 

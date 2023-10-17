@@ -143,7 +143,8 @@ public class LCOVParser {
   }
 
   private void logMismatch(String dataType, int linum, Exception e) {
-    LOG.debug("Error while parsing LCOV report: can't save {} data for line {} of coverage report file ({}).", dataType, linum, e.toString());
+    String msg = e.getMessage();
+    LOG.debug("Error while parsing LCOV report: can't save {} data for line {} of coverage report file ({}).", dataType, linum, msg);
     pbCount++;
   }
 
