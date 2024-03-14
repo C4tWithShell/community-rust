@@ -1,3 +1,24 @@
+## Important deprecation notice 
+
+Dear Community Rust plugin users,
+
+I hope this message finds you well. I am writing to you today with an important announcement regarding the future of our beloved project.
+
+After much consideration and reflection, I have made the difficult decision to step down as the maintainer of that Rust plugin for SonarQube. This decision has not been easy, but recent changes in my personal and professional life have made it increasingly challenging for me to dedicate the time and energy necessary to effectively maintain the project.
+
+I want to take this opportunity to express my deepest gratitude to each and every one of you who have supported and contributed to the project over the years.
+
+While I will no longer be actively maintaining the project, I am committed to ensuring that it continues to thrive in the hands of those who are passionate about its mission and goals. As such, I am open to transferring ownership of the project to someone who is willing to take on the responsibilities of maintaining it. If you are interested in becoming the new maintainer of tjis Sonqr plugin or have any questions about the transition process, please don't hesitate to reach out to me directly.
+
+In the coming weeks, I will work on facilitating a smooth transition process for the new maintainer(s). I will provide guidance on how to proceed with the transfer of ownership and offer support wherever needed.
+
+Once again, thank you all for your incredible support and dedication to [Project Name]. It has been an honor and a privilege to serve as the project's maintainer, and I look forward to seeing it continue to grow and thrive in the future.
+
+Best regards,
+
+Eric
+
+
 |                                                                                                                                                                           |                                                                                                          |     
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------| 
 | [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=coverage) |
