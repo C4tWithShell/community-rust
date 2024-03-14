@@ -1,4 +1,4 @@
-## Important deprecation notice 
+## Important : this project is no longer maintained
 
 Dear Community Rust plugin users,
 
