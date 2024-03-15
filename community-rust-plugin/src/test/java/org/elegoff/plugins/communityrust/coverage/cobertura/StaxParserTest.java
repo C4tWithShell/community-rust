@@ -47,9 +47,9 @@ class StaxParserTest {
 
   @Test
   void test_grammars() throws XMLStreamException {
-    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/dtd-test.xml"));
-    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test.xml"));
-    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityRust/cobertura/xsd-test-with-entity.xml"));
+    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityrust/cobertura/dtd-test.xml"));
+    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityrust/cobertura/xsd-test.xml"));
+    assertDoesNotThrow(() -> test_grammar_parsable("org/elegoff/plugins/communityrust/cobertura/xsd-test-with-entity.xml"));
   }
 
   private static StaxParser.XmlStreamHandler getTestHandler() {
