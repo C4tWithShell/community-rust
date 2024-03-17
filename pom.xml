@@ -62,7 +62,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.version>9.9.1.69595</sonar.version>
-        <sonar.plugin.api.version>10.5.0.2090</sonar.plugin.api.version>
+        <sonar.plugin.api.version>10.6.0.2114</sonar.plugin.api.version>
 
 
       <!-- Advertise minimal required JRE version -->
