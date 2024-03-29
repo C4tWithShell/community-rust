@@ -80,6 +80,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assign_op_pattern"
   },
   {
+    "key": "clippy::assigning_clones",
+    "name": "Checks for code like `foo = bar.clone();`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#assigning_clones"
+  },
+  {
     "key": "clippy::async_yields_async",
     "name": "Checks for async blocks that yield values of types that can themselves be awaited.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#async_yields_async"
@@ -120,9 +125,9 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#blanket_clippy_restriction_lints"
   },
   {
-    "key": "clippy::blocks_in_if_conditions",
-    "name": "Checks for `if` conditions that use blocks containing an expression, statements or conditions that u",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#blocks_in_if_conditions"
+    "key": "clippy::blocks_in_conditions",
+    "name": "Checks for `if` and `match` conditions that use blocks containing an expression, statements or condi",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#blocks_in_conditions"
   },
   {
     "key": "clippy::bool_assert_comparison",
@@ -355,6 +360,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#comparison_to_empty"
   },
   {
+    "key": "clippy::const_is_empty",
+    "name": "It identifies calls to `.is_empty()` on constant values.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#const_is_empty"
+  },
+  {
     "key": "clippy::copy_iterator",
     "name": "Checks for types that implement `Copy` as well as `Iterator`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#copy_iterator"
@@ -425,8 +435,13 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#deprecated_cfg_attr"
   },
   {
+    "key": "clippy::deprecated_clippy_cfg_attr",
+    "name": "Checks for `#[cfg_attr(feature = \"cargo-clippy\", ...)]` and for `#[cfg(feature = \"cargo-clippy\")]` a",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#deprecated_clippy_cfg_attr"
+  },
+  {
     "key": "clippy::deprecated_semver",
-    "name": "Checks for `#[deprecated]` annotations with a `since` field that is not a valid semantic version.",
+    "name": "Checks for `#[deprecated]` annotations with a `since` field that is not a valid semantic version. Al",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#deprecated_semver"
   },
   {
@@ -540,14 +555,29 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#duplicate_underscore_argument"
   },
   {
+    "key": "clippy::duplicated_attributes",
+    "name": "Checks for attributes that appear two or more times.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#duplicated_attributes"
+  },
+  {
     "key": "clippy::duration_subsec",
     "name": "Checks for calculation of subsecond microseconds or milliseconds from other `Duration` methods.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#duration_subsec"
   },
   {
+    "key": "clippy::eager_transmute",
+    "name": "Checks for integer validity checks, followed by a transmute that is (incorrectly) evaluated eagerly",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#eager_transmute"
+  },
+  {
     "key": "clippy::else_if_without_else",
     "name": "Checks for usage of if expressions with an `else if` branch, but without a final `else` branch.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#else_if_without_else"
+  },
+  {
+    "key": "clippy::empty_docs",
+    "name": "Detects documentation that is empty.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_docs"
   },
   {
     "key": "clippy::empty_drop",
@@ -560,8 +590,13 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_enum"
   },
   {
+    "key": "clippy::empty_enum_variants_with_brackets",
+    "name": "Finds enum variants without fields that are declared with empty brackets.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_enum_variants_with_brackets"
+  },
+  {
     "key": "clippy::empty_line_after_doc_comments",
-    "name": "Checks for empty lines after documenation comments.",
+    "name": "Checks for empty lines after documentation comments.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#empty_line_after_doc_comments"
   },
   {
@@ -636,7 +671,7 @@
   },
   {
     "key": "clippy::exhaustive_structs",
-    "name": "Warns on any exported `structs`s that are not tagged `#[non_exhaustive]`",
+    "name": "Warns on any exported `struct`s that are not tagged `#[non_exhaustive]`",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#exhaustive_structs"
   },
   {
@@ -851,7 +886,7 @@
   },
   {
     "key": "clippy::get_first",
-    "name": "Checks for usage of `x.get(0)` instead of `x.first()`.",
+    "name": "Checks for usage of `x.get(0)` instead of `x.first()` or `x.front()`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#get_first"
   },
   {
@@ -905,6 +940,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ignored_unit_patterns"
   },
   {
+    "key": "clippy::impl_hash_borrow_with_str_and_bytes",
+    "name": "This lint is concerned with the semantics of `Borrow` and `Hash` for a type that implements all thr",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#impl_hash_borrow_with_str_and_bytes"
+  },
+  {
     "key": "clippy::impl_trait_in_params",
     "name": "Lints when `impl Trait` is being used in a function's parameters.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#impl_trait_in_params"
@@ -950,6 +990,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#imprecise_flops"
   },
   {
+    "key": "clippy::incompatible_msrv",
+    "name": "This lint checks that no function newer than the defined MSRV (minimum supported rust version) is u",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#incompatible_msrv"
+  },
+  {
     "key": "clippy::inconsistent_digit_grouping",
     "name": "Warns if an integral or floating-point constant is grouped inconsistently with underscores.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inconsistent_digit_grouping"
@@ -975,6 +1020,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ineffective_bit_mask"
   },
   {
+    "key": "clippy::ineffective_open_options",
+    "name": "Checks if both `.write(true)` and `.append(true)` methods are called on a same `OpenOptions`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ineffective_open_options"
+  },
+  {
     "key": "clippy::inefficient_to_string",
     "name": "Checks for usage of `.to_string()` on an `&&T` where `T` implements `ToString` directly (like `&&str",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#inefficient_to_string"
@@ -988,6 +1038,11 @@
     "key": "clippy::infinite_iter",
     "name": "Checks for iteration that is guaranteed to be infinite.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#infinite_iter"
+  },
+  {
+    "key": "clippy::infinite_loop",
+    "name": "Checks for infinite loops in a function where the return type is not `!` and lint accordingly.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#infinite_loop"
   },
   {
     "key": "clippy::inherent_to_string",
@@ -1038,6 +1093,11 @@
     "key": "clippy::integer_division",
     "name": "Checks for division of integers",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#integer_division"
+  },
+  {
+    "key": "clippy::integer_division_remainder_used",
+    "name": "Checks for the usage of division (/) and remainder (%) operations when performed on any integer type",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#integer_division_remainder_used"
   },
   {
     "key": "clippy::into_iter_on_ref",
@@ -1095,6 +1155,16 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_count"
   },
   {
+    "key": "clippy::iter_filter_is_ok",
+    "name": "Checks for usage of `.filter(Result::is_ok)` that may be replaced with a `.flatten()` call. This lin",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_filter_is_ok"
+  },
+  {
+    "key": "clippy::iter_filter_is_some",
+    "name": "Checks for usage of `.filter(Option::is_some)` that may be replaced with a `.flatten()` call. This l",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_filter_is_some"
+  },
+  {
     "key": "clippy::iter_kv_map",
     "name": "Checks for iterating a map (`HashMap` or `BTreeMap`) and ignoring either the keys or values.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_kv_map"
@@ -1116,7 +1186,7 @@
   },
   {
     "key": "clippy::iter_nth",
-    "name": "Checks for usage of `.iter().nth()` (and the related `.iter_mut().nth()`) on standard library types",
+    "name": "Checks for usage of `.iter().nth()`/`.iter_mut().nth()` on standard library types that have equivale",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_nth"
   },
   {
@@ -1138,6 +1208,11 @@
     "key": "clippy::iter_out_of_bounds",
     "name": "Looks for iterator combinator calls such as `.take(x)` or `.skip(x)` where `x` is greater than the a",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_out_of_bounds"
+  },
+  {
+    "key": "clippy::iter_over_hash_type",
+    "name": "This is a restriction lint which prevents the use of hash types (i.e., `HashSet` and `HashMap`) in f",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iter_over_hash_type"
   },
   {
     "key": "clippy::iter_overeager_cloned",
@@ -1168,6 +1243,11 @@
     "key": "clippy::iterator_step_by_zero",
     "name": "Checks for calling `.step_by(0)` on iterators which panics.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#iterator_step_by_zero"
+  },
+  {
+    "key": "clippy::join_absolute_paths",
+    "name": "Checks for calls to `Path::join` that start with a path separator (`\\\\` or `/`).",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#join_absolute_paths"
   },
   {
     "key": "clippy::just_underscores_and_digits",
@@ -1270,6 +1350,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#linkedlist"
   },
   {
+    "key": "clippy::lint_groups_priority",
+    "name": "Checks for lint groups with the same priority as lints in the `Cargo.toml` [`[lints]` table](https:/",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#lint_groups_priority"
+  },
+  {
     "key": "clippy::little_endian_bytes",
     "name": "Checks for the usage of the `to_le_bytes` method and/or the function `from_le_bytes`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#little_endian_bytes"
@@ -1303,6 +1388,11 @@
     "key": "clippy::manual_bits",
     "name": "Checks for usage of `std::mem::size_of::<T>() * 8` when `T::BITS` is available.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_bits"
+  },
+  {
+    "key": "clippy::manual_c_str_literals",
+    "name": "Checks for the manual creation of C strings (a string with a `NUL` byte at the end), either through",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_c_str_literals"
   },
   {
     "key": "clippy::manual_clamp",
@@ -1358,6 +1448,11 @@
     "key": "clippy::manual_is_infinite",
     "name": "Checks for manual `is_infinite` reimplementations (i.e., `x == <float>::INFINITY || x == <float>::NE",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_is_infinite"
+  },
+  {
+    "key": "clippy::manual_is_variant_and",
+    "name": "Checks for usage of `option.map(f).unwrap_or_default()` and `result.map(f).unwrap_or_default()` wher",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_is_variant_and"
   },
   {
     "key": "clippy::manual_let_else",
@@ -1458,6 +1553,11 @@
     "key": "clippy::manual_unwrap_or",
     "name": "Finds patterns that reimplement `Option::unwrap_or` or `Result::unwrap_or`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_unwrap_or"
+  },
+  {
+    "key": "clippy::manual_unwrap_or_default",
+    "name": "Checks if a `match` or `if let` expression can be simplified using `.unwrap_or_default()`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#manual_unwrap_or_default"
   },
   {
     "key": "clippy::manual_while_let_some",
@@ -1571,7 +1671,7 @@
   },
   {
     "key": "clippy::maybe_misused_cfg",
-    "name": "Checks for `#[cfg(features = \"...\")]` and suggests to replace it with `#[cfg(feature = \"...\")]`.",
+    "name": "Checks for `#[cfg(features = \"...\")]` and suggests to replace it with `#[cfg(feature = \"...\")]`.  It",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#maybe_misused_cfg"
   },
   {
@@ -1646,7 +1746,7 @@
   },
   {
     "key": "clippy::missing_enforced_import_renames",
-    "name": "Checks for imports that do not rename the item as specified in the `enforce-import-renames` config o",
+    "name": "Checks for imports that do not rename the item as specified in the `enforced-import-renames` config",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_enforced_import_renames"
   },
   {
@@ -1685,9 +1785,19 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_trait_methods"
   },
   {
+    "key": "clippy::missing_transmute_annotations",
+    "name": "Checks if transmute calls have all generics specified.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#missing_transmute_annotations"
+  },
+  {
     "key": "clippy::mistyped_literal_suffixes",
     "name": "Warns for mistyped suffix in literals",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mistyped_literal_suffixes"
+  },
+  {
+    "key": "clippy::mixed_attributes_style",
+    "name": "Checks for items that have the same kind of attributes with mixed styles (inner/outer).",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#mixed_attributes_style"
   },
   {
     "key": "clippy::mixed_case_hex_literals",
@@ -1728,6 +1838,11 @@
     "key": "clippy::multi_assignments",
     "name": "Checks for nested assignments.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#multi_assignments"
+  },
+  {
+    "key": "clippy::multiple_bound_locations",
+    "name": "Check if a generic is defined both in the bound predicate and in the `where` clause.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#multiple_bound_locations"
   },
   {
     "key": "clippy::multiple_crate_versions",
@@ -2070,6 +2185,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#op_ref"
   },
   {
+    "key": "clippy::option_as_ref_cloned",
+    "name": "Checks for usage of `.as_ref().cloned()` and `.as_mut().cloned()` on `Option`s",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#option_as_ref_cloned"
+  },
+  {
     "key": "clippy::option_as_ref_deref",
     "name": "Checks for usage of `_.as_ref().map(Deref::deref)` or its aliases (such as String::as_str).",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#option_as_ref_deref"
@@ -2081,13 +2201,18 @@
   },
   {
     "key": "clippy::option_filter_map",
-    "name": "Checks for indirect collection of populated `Option`",
+    "name": "Checks for iterators of `Option`s using `.filter(Option::is_some).map(Option::unwrap)` that may be r",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#option_filter_map"
   },
   {
     "key": "clippy::option_if_let_else",
     "name": "Lints usage of `if let Some(v) = ... { y } else { x }` and `match .. { Some(v) => y, None/_ => x }`",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#option_if_let_else"
+  },
+  {
+    "key": "clippy::option_map_or_err_ok",
+    "name": "Checks for usage of `_.map_or(Err(_), Ok)`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#option_map_or_err_ok"
   },
   {
     "key": "clippy::option_map_or_none",
@@ -2245,6 +2370,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ptr_offset_with_cast"
   },
   {
+    "key": "clippy::pub_underscore_fields",
+    "name": "Checks whether any field of the struct is prefixed with an `_` (underscore) and also marked `pub` (p",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#pub_underscore_fields"
+  },
+  {
     "key": "clippy::pub_use",
     "name": "Restricts the usage of `pub use ...`",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#pub_use"
@@ -2326,7 +2456,7 @@
   },
   {
     "key": "clippy::redundant_as_str",
-    "name": "Checks for usage of `as_str()` on a `String`` chained with a method available on the `String` itself",
+    "name": "Checks for usage of `as_str()` on a `String` chained with a method available on the `String` itself.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#redundant_as_str"
   },
   {
@@ -2396,7 +2526,7 @@
   },
   {
     "key": "clippy::redundant_pattern_matching",
-    "name": "Lint for redundant pattern matching over `Result`, `Option`, `std::task::Poll` or `std::net::IpAddr`",
+    "name": "Lint for redundant pattern matching over `Result`, `Option`, `std::task::Poll`, `std::net::IpAddr` o",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#redundant_pattern_matching"
   },
   {
@@ -2420,6 +2550,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#redundant_type_annotations"
   },
   {
+    "key": "clippy::ref_as_ptr",
+    "name": "Checks for casts of references to pointer using `as` and suggests `std::ptr::from_ref` and `std::ptr",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_as_ptr"
+  },
+  {
     "key": "clippy::ref_binding_to_reference",
     "name": "Checks for `ref` bindings which create a reference to a reference.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_binding_to_reference"
@@ -2440,6 +2575,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#repeat_once"
   },
   {
+    "key": "clippy::repeat_vec_with_capacity",
+    "name": "Looks for patterns such as `vec![Vec::with_capacity(x); n]` or `iter::repeat(Vec::with_capacity(x))`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#repeat_vec_with_capacity"
+  },
+  {
     "key": "clippy::reserve_after_initialization",
     "name": "Informs the user about a more concise way to create a vector with a known capacity.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#reserve_after_initialization"
@@ -2448,6 +2588,11 @@
     "key": "clippy::rest_pat_in_fully_bound_structs",
     "name": "Checks for unnecessary '..' pattern binding on struct when all fields are explicitly matched.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#rest_pat_in_fully_bound_structs"
+  },
+  {
+    "key": "clippy::result_filter_map",
+    "name": "Checks for iterators of `Result`s using `.filter(Result::is_ok).map(Result::unwrap)` that may be rep",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#result_filter_map"
   },
   {
     "key": "clippy::result_large_err",
@@ -2501,7 +2646,7 @@
   },
   {
     "key": "clippy::seek_from_current",
-    "name": "Checks an argument of `seek` method of `Seek` trait and if it start seek from `SeekFrom::Current(0)",
+    "name": "Checks if the `seek` method of the `Seek` trait is called with `SeekFrom::Current(0)`, and if it is",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#seek_from_current"
   },
   {
@@ -2546,7 +2691,7 @@
   },
   {
     "key": "clippy::serde_api_misuse",
-    "name": "Checks for mis-uses of the serde API.",
+    "name": "Checks for misuses of the serde API.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#serde_api_misuse"
   },
   {
@@ -2675,6 +2820,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#std_instead_of_core"
   },
   {
+    "key": "clippy::str_split_at_newline",
+    "name": "Checks for usages of `str.trim().split(\"\\n\")` and `str.trim().split(\"\\r\\n\")`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#str_split_at_newline"
+  },
+  {
     "key": "clippy::str_to_string",
     "name": "This lint checks for `.to_string()` method calls on values of type `&str`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#str_to_string"
@@ -2730,6 +2880,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#struct_excessive_bools"
   },
   {
+    "key": "clippy::struct_field_names",
+    "name": "Detects struct fields that are prefixed or suffixed by the same characters or the name of the struct",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#struct_field_names"
+  },
+  {
     "key": "clippy::suboptimal_flops",
     "name": "Looks for floating-point expressions that can be expressed using built-in methods to improve both ac",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suboptimal_flops"
@@ -2768,6 +2923,11 @@
     "key": "clippy::suspicious_op_assign_impl",
     "name": "Lints for suspicious operations in impls of OpAssign, e.g. subtracting elements in an AddAssign impl",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_op_assign_impl"
+  },
+  {
+    "key": "clippy::suspicious_open_options",
+    "name": "Checks for the suspicious use of `OpenOptions::create()` without an explicit `OpenOptions::truncate(",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#suspicious_open_options"
   },
   {
     "key": "clippy::suspicious_operation_groupings",
@@ -2810,9 +2970,19 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#temporary_assignment"
   },
   {
+    "key": "clippy::test_attr_in_doctest",
+    "name": "Checks for `#[test]` in doctests unless they are marked with either `ignore`, `no_run` or `compile_f",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#test_attr_in_doctest"
+  },
+  {
     "key": "clippy::tests_outside_test_module",
     "name": "Triggers when a testing function (marked with the `#[test]` attribute) isn't inside a testing module",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#tests_outside_test_module"
+  },
+  {
+    "key": "clippy::thread_local_initializer_can_be_made_const",
+    "name": "Suggests to use `const` in `thread_local!` macro if possible.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#thread_local_initializer_can_be_made_const"
   },
   {
     "key": "clippy::to_digit_is_some",
@@ -2823,6 +2993,11 @@
     "key": "clippy::to_string_in_format_args",
     "name": "Checks for [`ToString::to_string`](https://doc.rust-lang.org/std/string/trait.ToString.html#tymethod",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#to_string_in_format_args"
+  },
+  {
+    "key": "clippy::to_string_trait_impl",
+    "name": "Checks for direct implementations of `ToString`.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#to_string_trait_impl"
   },
   {
     "key": "clippy::todo",
@@ -2961,8 +3136,13 @@
   },
   {
     "key": "clippy::unchecked_duration_subtraction",
-    "name": "Lints subtraction between an [`Instant`] and a [`Duration`].",
+    "name": "Lints subtraction between an `Instant` and a `Duration`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unchecked_duration_subtraction"
+  },
+  {
+    "key": "clippy::unconditional_recursion",
+    "name": "Checks that there isn't an infinite recursion in trait implementations.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unconditional_recursion"
   },
   {
     "key": "clippy::undocumented_unsafe_blocks",
@@ -2978,6 +3158,11 @@
     "key": "clippy::unimplemented",
     "name": "Checks for usage of `unimplemented!`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unimplemented"
+  },
+  {
+    "key": "clippy::uninhabited_references",
+    "name": "It detects references to uninhabited types, such as `!` and warns when those are either dereferenced",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#uninhabited_references"
   },
   {
     "key": "clippy::uninit_assumed_init",
@@ -3025,6 +3210,16 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_cast"
   },
   {
+    "key": "clippy::unnecessary_clippy_cfg",
+    "name": "Checks for `#[cfg_attr(clippy, allow(clippy::lint))]` and suggests to replace it with `#[allow(clipp",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_clippy_cfg"
+  },
+  {
+    "key": "clippy::unnecessary_fallible_conversions",
+    "name": "Checks for calls to `TryInto::try_into` and `TryFrom::try_from` when their infallible counterparts c",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_fallible_conversions"
+  },
+  {
     "key": "clippy::unnecessary_filter_map",
     "name": "Checks for `filter_map` calls that could be replaced by `filter` or `map`. More specifically it chec",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_filter_map"
@@ -3038,6 +3233,11 @@
     "key": "clippy::unnecessary_fold",
     "name": "Checks for usage of `fold` when a more succinct alternative exists. Specifically, this checks for `f",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_fold"
+  },
+  {
+    "key": "clippy::unnecessary_get_then_check",
+    "name": "Checks the usage of `.get().is_some()` or `.get().is_none()` on std map types.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_get_then_check"
   },
   {
     "key": "clippy::unnecessary_join",
@@ -3056,7 +3256,7 @@
   },
   {
     "key": "clippy::unnecessary_map_on_constructor",
-    "name": "Suggest removing the use of a may (or map_err) method when an Option or Result is being construted.",
+    "name": "Suggests removing the use of a `map()` (or `map_err()`) method when an `Option` or `Result` is being",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_map_on_constructor"
   },
   {
@@ -3073,6 +3273,11 @@
     "key": "clippy::unnecessary_owned_empty_strings",
     "name": "Detects cases of owned empty strings being passed as an argument to a function expecting `&str`",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_owned_empty_strings"
+  },
+  {
+    "key": "clippy::unnecessary_result_map_or_else",
+    "name": "Checks for usage of `.map_or_else()` \"map closure\" for `Result` type.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unnecessary_result_map_or_else"
   },
   {
     "key": "clippy::unnecessary_safety_comment",
@@ -3163,6 +3368,11 @@
     "key": "clippy::unused_async",
     "name": "Checks for functions that are declared `async` but have no `.await`s inside of them.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unused_async"
+  },
+  {
+    "key": "clippy::unused_enumerate_index",
+    "name": "Checks for uses of the `enumerate` method where the index is unused (`_`)",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#unused_enumerate_index"
   },
   {
     "key": "clippy::unused_format_specs",
@@ -3295,9 +3505,9 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#verbose_file_reads"
   },
   {
-    "key": "clippy::vtable_address_comparisons",
-    "name": "Checks for comparisons with an address of a trait vtable.",
-    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#vtable_address_comparisons"
+    "key": "clippy::waker_clone_wake",
+    "name": "Checks for usage of `waker.clone().wake()`",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#waker_clone_wake"
   },
   {
     "key": "clippy::while_immutable_condition",
@@ -3373,6 +3583,11 @@
     "key": "clippy::zero_ptr",
     "name": "Catch casts from `0` to some pointer type",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#zero_ptr"
+  },
+  {
+    "key": "clippy::zero_repeat_side_effects",
+    "name": "Checks for array or vec initializations which call a function or method, but which have a repeat cou",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#zero_repeat_side_effects"
   },
   {
     "key": "clippy::zero_sized_map_values",
