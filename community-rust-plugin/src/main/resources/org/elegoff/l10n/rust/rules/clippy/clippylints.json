@@ -171,7 +171,7 @@
   },
   {
     "key": "clippy::box_default",
-    "name": "checks for `Box::new(T::default())`, which is better written as `Box::<T>::default()`.",
+    "name": "checks for `Box::new(Default::default())`, which can be written as `Box::default()`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#box_default"
   },
   {
@@ -503,6 +503,11 @@
     "key": "clippy::diverging_sub_expression",
     "name": "Checks for diverging calls that are not match arms or statements.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#diverging_sub_expression"
+  },
+  {
+    "key": "clippy::doc_lazy_continuation",
+    "name": "In CommonMark Markdown, the language used to write doc comments, a paragraph nested within a list o",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#doc_lazy_continuation"
   },
   {
     "key": "clippy::doc_link_with_quotes",
@@ -1295,6 +1300,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#large_types_passed_by_value"
   },
   {
+    "key": "clippy::legacy_numeric_constants",
+    "name": "Checks for usage of `<integer>::max_value()`, `std::<integer>::MAX`, `std::<float>::EPSILON`, etc.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#legacy_numeric_constants"
+  },
+  {
     "key": "clippy::len_without_is_empty",
     "name": "Checks for items that implement `.len()` but not `.is_empty()`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#len_without_is_empty"
@@ -1363,6 +1373,11 @@
     "key": "clippy::lossy_float_literal",
     "name": "Checks for whole number float literals that cannot be represented as the underlying type without los",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#lossy_float_literal"
+  },
+  {
+    "key": "clippy::macro_metavars_in_unsafe",
+    "name": "Looks for macros that expand metavariables in an unsafe block.",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#macro_metavars_in_unsafe"
   },
   {
     "key": "clippy::macro_use_imports",
@@ -1941,7 +1956,7 @@
   },
   {
     "key": "clippy::needless_borrows_for_generic_args",
-    "name": "Checks for borrow operations (`&`) that used as a generic argument to a function when the borrowed v",
+    "name": "Checks for borrow operations (`&`) that are used as a generic argument to a function when the borrow",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#needless_borrows_for_generic_args"
   },
   {
@@ -2570,6 +2585,11 @@
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#ref_patterns"
   },
   {
+    "key": "clippy::renamed_function_params",
+    "name": "Lints when the name of function parameters from trait impl is different than its default implementat",
+    "url": "https://rust-lang.github.io/rust-clippy/master/index.html#renamed_function_params"
+  },
+  {
     "key": "clippy::repeat_once",
     "name": "Checks for usage of `.repeat(1)` and suggest the following method for each types. - `.to_string()` f",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#repeat_once"
@@ -3126,7 +3146,7 @@
   },
   {
     "key": "clippy::type_id_on_box",
-    "name": "Looks for calls to `<Box<dyn Any> as Any>::type_id`.",
+    "name": "Looks for calls to `.type_id()` on a `Box<dyn _>`.",
     "url": "https://rust-lang.github.io/rust-clippy/master/index.html#type_id_on_box"
   },
   {
