@@ -62,7 +62,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.version>9.9.1.69595</sonar.version>
-        <sonar.plugin.api.version>10.6.0.2114</sonar.plugin.api.version>
+        <sonar.plugin.api.version>10.10.0.2391</sonar.plugin.api.version>
 
 
       <!-- Advertise minimal required JRE version -->
@@ -87,7 +87,7 @@
         <commons.io.version>2.15.1</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>5.9.3</junit.version>
-        <sonar-analyzer-commons.version>2.8.0.2699</sonar-analyzer-commons.version>
+        <sonar-analyzer-commons.version>2.13.0.3004</sonar-analyzer-commons.version>
         <sonar.orchestrator.version>4.0.0.404</sonar.orchestrator.version>
         <woodstox.version>6.2.7</woodstox.version>
 
