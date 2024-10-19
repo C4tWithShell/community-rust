@@ -1,8 +1,8 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021-2023 Eric Le Goff
+ * Copyright (C) 2021-2024 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
- * http://github.com/elegoff/sonar-rust
+ * http://github.com/C4tWithShell/community-rust
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,11 +40,11 @@ class ClippyRulesDefinitionTest {
     assertThat(repository.name()).isEqualTo("Clippy");
     assertThat(repository.language()).isEqualTo("rust");
     assertThat(repository.isExternal()).isTrue();
-    assertThat(repository.rules()).hasSize(720);
+    assertThat(repository.rules()).hasSize(749);
 
     RulesDefinition.Rule rule = repository.rule("clippy::absurd_extreme_comparisons");
     assertThat(rule).isNotNull();
-    assertThat(rule.name()).isEqualTo("Checks for comparisons where one side of the relation is either the minimum or maximum value for its");
+    assertThat(rule.name()).isEqualTo("Checks for comparisons where one side of the relation is either the minimum or maximum value for its type and warns if it involves a case that is always true or always false. Only integer and boolean types are checked.");
     assertThat(rule.htmlDescription()).isEqualTo("See description of Clippy rule <code>clippy::absurd_extreme_comparisons</code> at" +
       " the <a href=\"https://rust-lang.github.io/rust-clippy/master/index.html#absurd_extreme_comparisons\">Clippy website</a>.");
     assertThat(rule.tags()).isEmpty();

@@ -1,8 +1,8 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021-2023 Eric Le Goff
+ * Copyright (C) 2021-2024 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
- * http://github.com/elegoff/sonar-rust
+ * http://github.com/C4tWithShell/community-rust
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,11 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
 import org.elegoff.plugins.communityrust.language.RustLanguage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.batch.sensor.Sensor;
@@ -54,21 +52,13 @@ public class ClippySensor implements Sensor {
   private static final Long DEFAULT_CONSTANT_DEBT_MINUTES = 5L;
   private static final int MAX_LOGGED_FILE_NAMES = 20;
 
-  private FileAdjustor fileAdjustor;
-
-  @CheckForNull
-  private InputFile inputFile(SensorContext context, String filePath) {
-    String relativePath = fileAdjustor.relativePath(filePath);
-    return context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(relativePath));
-  }
-
   private void saveIssue(SensorContext context, ClippyJsonReportReader.ClippyIssue clippyIssue, Set<String> unresolvedInputFiles) {
     if (isEmpty(clippyIssue.ruleKey) || isEmpty(clippyIssue.filePath) || isEmpty(clippyIssue.message)) {
       LOG.debug("Missing information for ruleKey:'{}', filePath:'{}', message:'{}'", clippyIssue.ruleKey, clippyIssue.filePath, clippyIssue.message);
       return;
     }
 
-    InputFile inputFile = inputFile(context, clippyIssue.filePath);
+    var inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(clippyIssue.filePath));
 
     if (inputFile == null) {
       unresolvedInputFiles.add(clippyIssue.filePath);
@@ -109,7 +99,6 @@ public class ClippySensor implements Sensor {
   @Override
   public void execute(SensorContext context) {
     Set<String> unresolvedInputFiles = new HashSet<>();
-    fileAdjustor = FileAdjustor.create(context);
     List<File> reportFiles = ExternalReportProvider.getReportFiles(context, reportPathKey());
     reportFiles.forEach(report -> importReport(report, context, unresolvedInputFiles));
     logUnresolvedInputFiles(unresolvedInputFiles);

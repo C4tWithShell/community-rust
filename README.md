@@ -1,8 +1,8 @@
 
 |                                                                                                                                                                           |                                                                                                          |     
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------| 
-| [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=alert_status)](https://sonarcloud.io/dashboard?id=elegoff_sonar-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=elegoff_sonar-rust&metric=coverage) |
-| [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)                                                           | [Download latest release](https://github.com/elegoff/sonar-rust/releases)                                |
+| [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=C4tWithShell_community-rust&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=C4tWithShell_community-rust) | ![Coverage](https://sonarcloud.io/api/project_badges/measure?project=C4tWithShell_community-rust&metric=coverage) |
+| [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)                                                           | [Download latest release](https://github.com/C4tWithShell/community-rust/releases)                                |
 
 ## SonarQube plugin for Rust (Community)
 
@@ -13,7 +13,7 @@ manage code quality.
 
 | SonarQube   | Community Rust plugin |
 |-------------|-----------------------|
-| 10.4+       | 0.2.3                 |
+| 10.4+       | 0.2.3 - 0.2.5         |
 | 10.0 - 10.3 | 0.2.2                 | 
 | 9.9 LTS     | 0.2.1                 |
 | 8.9 - 9.9   | 0.1.0                 |
