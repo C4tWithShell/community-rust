@@ -61,7 +61,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonar.version>9.9.1.69595</sonar.version>
+        <sonar.version>10.7.0.96327</sonar.version>
         <sonar.plugin.api.version>10.12.0.2522</sonar.plugin.api.version>
 
 
