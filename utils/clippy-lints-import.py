@@ -12,6 +12,7 @@ def get_name_from_docstring(docs):
         code_tag.replace_with(f"`{code_tag.text}`")
     docstring = paragraph.get_text()
     s = docstring.replace('\n',' ')
+    s = s[:100] if len(s) > 101 else s
     return s.strip()
 
 
