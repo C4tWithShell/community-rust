@@ -1,8 +1,8 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021-2023 Eric Le Goff
+ * Copyright (C) 2021-2024 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
- * http://github.com/elegoff/sonar-rust
+ * http://github.com/C4tWithShell/community-rust
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ public class ClippyJsonReportReader {
   private static final String ENDJSON = "]}";
   private static final String VISIT_MSG = "for further information visit";
   private static final String MESSAGE = "message";
+  private static final String TARGET = "target";
   private final JSONParser jsonParser = new JSONParser();
 
   private final Consumer<ClippyIssue> consumer;
@@ -130,14 +131,20 @@ public class ClippyJsonReportReader {
     if ((spans == null) || spans.isEmpty())
       return; // Exit silently when JSON is not compliant
 
-    JSONObject span = (JSONObject) spans.get(0);
-    clippyIssue.filePath = (String) span.get("file_name");
+    JSONObject reportTarget = (JSONObject) result.get(TARGET);
+    if (reportTarget == null)
+      return; // Exit silently when JSON is not compliant
+
+    clippyIssue.filePath = (String) reportTarget.get("src_path");
+    System.out.println(reportTarget.get("src_path"));
     clippyIssue.message = (String) message.get(MESSAGE);
     JSONArray children = (JSONArray) message.get("children");
 
     if ((clippyIssue.message != null) && (children != null) && !children.isEmpty()) {
       addHelpDetails(clippyIssue, children);
     }
+
+    JSONObject span = (JSONObject) spans.get(0);
 
     clippyIssue.lineNumberStart = toInteger(span.get("line_start"));
     clippyIssue.lineNumberEnd = toInteger(span.get("line_end"));
