@@ -3,6 +3,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
+    - id: commit
+      uses: prompt/actions-commit-hash@v3
     - uses: actions/checkout@v4
     - uses: actions/setup-java@v4
       with:
@@ -12,5 +14,5 @@ jobs:
       run: mvn --batch-mode --update-snapshots verify
     - uses: actions/upload-artifact@v4
       with:
-        name: plug-in
+        name: community-rust-plugin-${{ steps.commit.outputs.short }}.jar
         path: community-rust-plugin/target/community-rust-plugin-*.jar
