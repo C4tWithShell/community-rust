@@ -49,14 +49,14 @@
     </modules>
 
     <scm>
-        <connection>scm:git:https://github.com/elegoff/sonar-rust.git</connection>
-        <developerConnection>scm:git:ssh://github.com/elegoff/sonar-rust.git</developerConnection>
-        <url>https://github.com/elegoff/sonar-rust.git</url>
+        <connection>scm:git:https://github.com/C4tWithShell/community-rust.git</connection>
+        <developerConnection>scm:git:ssh://github.com/C4tWithShell/community-rust.git</developerConnection>
+        <url>https://github.com/C4tWithShell/community-rust.git</url>
         <tag>HEAD</tag>
     </scm>
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/elegoff/sonar-rust/issues</url>
+        <url>https://github.com/C4tWithShell/community-rust/issues</url>
     </issueManagement>
 
     <properties>
