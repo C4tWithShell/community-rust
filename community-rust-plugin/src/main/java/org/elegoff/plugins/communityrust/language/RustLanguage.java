@@ -20,7 +20,7 @@
  */
 package org.elegoff.plugins.communityrust.language;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.elegoff.plugins.communityrust.settings.RustLanguageSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -62,7 +62,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.version>10.7.0.96327</sonar.version>
-        <sonar.plugin.api.version>10.11.0.2468</sonar.plugin.api.version>
+        <sonar.plugin.api.version>11.1.0.2693</sonar.plugin.api.version>
 
 
       <!-- Advertise minimal required JRE version -->
@@ -75,21 +75,21 @@
 
         <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
-        <mockito.version>4.11.0</mockito.version>
-        <assertj-core.version>3.23.1</assertj-core.version>
-        <jacoco.version>0.8.10</jacoco.version>
-        <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+        <mockito.version>5.15.2</mockito.version>
+        <assertj-core.version>3.27.3</assertj-core.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
         <sonar.projectKey>community-rust</sonar.projectKey>
         <sonar.organization>c4twithshell</sonar.organization>
         <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <commons.io.version>2.16.1</commons.io.version>
-        <commons.lang.version>2.6</commons.lang.version>
-        <junit.version>5.9.3</junit.version>
-        <sonar-analyzer-commons.version>2.13.0.3004</sonar-analyzer-commons.version>
-        <sonar.orchestrator.version>4.0.0.404</sonar.orchestrator.version>
-        <woodstox.version>6.2.7</woodstox.version>
+        <commons.io.version>2.18.0</commons.io.version>
+        <commons.lang.version>3.17.0</commons.lang.version>
+        <junit.version>5.11.4</junit.version>
+        <sonar-analyzer-commons.version>2.16.0.3141</sonar-analyzer-commons.version>
+        <sonar.orchestrator.version>5.2.0.2403</sonar.orchestrator.version>
+        <woodstox.version>7.1.0</woodstox.version>
 
     </properties>
 
@@ -215,8 +215,8 @@
                 <version>${sonar.orchestrator.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-lang</groupId>
-                <artifactId>commons-lang</artifactId>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
                 <version>${commons.lang.version}</version>
             </dependency>
             <dependency>
@@ -286,7 +286,7 @@
                 <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
-                    <version>3.0</version>
+                    <version>4.6</version>
                     <configuration>
                         <header>NOTICE</header>
                         <quiet>false</quiet>
@@ -312,7 +312,7 @@
                 <plugin>
                     <groupId>org.sonarsource.scanner.maven</groupId>
                     <artifactId>sonar-maven-plugin</artifactId>
-                    <version>3.8.0.2131</version>
+                    <version>5.0.0.4389</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>

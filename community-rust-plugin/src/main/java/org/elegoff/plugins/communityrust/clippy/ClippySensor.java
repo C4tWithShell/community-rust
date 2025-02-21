@@ -41,7 +41,7 @@ import org.sonarsource.analyzer.commons.ExternalReportProvider;
 import org.sonarsource.analyzer.commons.internal.json.simple.parser.ParseException;
 
 
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public class ClippySensor implements Sensor {
 

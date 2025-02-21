@@ -22,7 +22,7 @@ package org.elegoff.plugins.communityrust.coverage.cobertura;
 
 import com.ctc.wstx.exc.WstxEOFException;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

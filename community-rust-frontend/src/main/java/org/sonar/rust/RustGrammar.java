@@ -21,7 +21,7 @@
 package org.sonar.rust;
 
 import com.sonar.sslr.api.GenericTokenType;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.rust.api.RustTokenType;
