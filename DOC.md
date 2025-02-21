@@ -8,7 +8,7 @@
 
 ## Installation
 
-1. Download the [latest plugin JAR file](https://github.com/elegoff/sonar-rust/releases) and copy it into
+1. Download the [latest plugin JAR file](https://github.com/C4tWithShell/community-rust/releases) and copy it into
    the `extensions/plugins` folder of SonarQube
 2. Restart your SonarQube server
 

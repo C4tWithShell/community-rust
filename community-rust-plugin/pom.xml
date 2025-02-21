@@ -16,7 +16,7 @@
 
     <name>Rust language analyzer</name>
     <description>Plugin analyzing rust file and importing Clippy reports</description>
-    <url>https://github.com/elegoff/sonar-rust</url>
+    <url>https://github.com/C4tWithShell/community-rust</url>
 
     <dependencies>
             <dependency>
