@@ -1,4 +1,4 @@
-/**
+/*
  * Community Rust Plugin
  * Copyright (C) 2021-2025 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
