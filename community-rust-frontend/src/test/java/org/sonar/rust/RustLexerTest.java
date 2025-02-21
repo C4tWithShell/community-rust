@@ -87,4 +87,23 @@ class RustLexerTest {
     System.out.println(AstXmlPrinter.print(astNode));
 
   }
+
+  @Test
+  void testSelfInsideImportTokens() {
+      testImportParsing("selfish");
+      testImportParsing("self_api");
+  }
+
+  private void testImportParsing(String filename) {
+    String sexpr = "\n" +
+        "use api::" + filename + "::MyService; \n" +
+        "       fn update_rates(){" +
+        "             todo!()\n" +
+        "             }";
+
+    ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(
+        StandardCharsets.UTF_8, RustGrammar.create().build());
+    
+    parser.parse(sexpr);
+  }
 }

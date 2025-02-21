@@ -1852,7 +1852,8 @@ public enum RustGrammar implements GrammarRuleKey {
       b.zeroOrMore(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, SIMPLE_PATH_SEGMENT)));
     b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
       b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
-      RustKeyword.KW_SELF_VALUE, b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
+      b.sequence(RustKeyword.KW_SELF_VALUE, b.nextNot(b.regexp("[a-zA-Z0-9_]"))),
+      b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
 
     b.rule(PATH_IN_EXPRESSION).is(
       b.optional(SPC, RustPunctuator.PATHSEP, SPC),
