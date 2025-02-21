@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021-2023 Eric Le Goff
+ * Copyright (C) 2021-2025 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
  * http://github.com/C4tWithShell/community-rust
  *
@@ -40,7 +40,7 @@ class ClippyRulesDefinitionTest {
     assertThat(repository.name()).isEqualTo("Clippy");
     assertThat(repository.language()).isEqualTo("rust");
     assertThat(repository.isExternal()).isTrue();
-    assertThat(repository.rules()).hasSize(749);
+    assertThat(repository.rules()).hasSize(775);
 
     RulesDefinition.Rule rule = repository.rule("clippy::absurd_extreme_comparisons");
     assertThat(rule).isNotNull();

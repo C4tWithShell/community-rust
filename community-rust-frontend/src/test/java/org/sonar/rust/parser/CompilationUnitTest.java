@@ -1,6 +1,6 @@
 /**
  * Community Rust Plugin
- * Copyright (C) 2021-2024 Vladimir Shelkovnikov
+ * Copyright (C) 2021-2025 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
  * http://github.com/C4tWithShell/community-rust
  *
