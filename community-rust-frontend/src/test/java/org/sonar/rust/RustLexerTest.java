@@ -106,4 +106,21 @@ class RustLexerTest {
     
     parser.parse(sexpr);
   }
+
+  @Test
+  void testNumRange() {
+    String sexpr = "\n" +
+        "fn get_referral_tier(referrals_count: i64) -> Result<i64, CustomError> {\n" +
+        "       match referrals_count {\n" +
+        "             ..0 => Ok(0),\n" +
+        "             1 => Ok(1),\n" +
+        "             2..5 => Ok(2)\n" +
+        "             5.. => Ok(3)\n" +
+        "       }\n" +
+        "}";
+    ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(
+        StandardCharsets.UTF_8, RustGrammar.create().build());
+    
+    parser.parse(sexpr);
+  }
 }

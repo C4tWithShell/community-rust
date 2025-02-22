@@ -908,9 +908,14 @@ public enum RustGrammar implements GrammarRuleKey {
       PATTERN_NO_TOP_ALT, SPC,
       b.zeroOrMore(b.sequence(RustPunctuator.OR, SPC, PATTERN_NO_TOP_ALT, SPC)));
     b.rule(PATTERN_NO_TOP_ALT).is(b.firstOf(
-      RANGE_PATTERN,
-      PATTERN_WITHOUT_RANGE));
-
+        b.sequence(
+            INTEGER_LITERAL,
+            RustPunctuator.DOTDOT,
+            INTEGER_LITERAL
+        ),
+        RANGE_PATTERN,
+        PATTERN_WITHOUT_RANGE
+    ));
     b.rule(PATTERN_WITHOUT_RANGE).is(b.firstOf(
       TUPLE_STRUCT_PATTERN,
       STRUCT_PATTERN,
@@ -961,7 +966,26 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(WILDCARD_PATTERN).is(RustPunctuator.UNDERSCORE);
     b.rule(REST_PATTERN).is(RustPunctuator.DOTDOT);
 
-    b.rule(RANGE_PATTERN).is(b.firstOf(OBSOLETE_RANGE_PATTERN, INCLUSIVE_RANGE_PATTERN, HALF_OPEN_RANGE_PATTERN));
+    b.rule(RANGE_PATTERN).is(b.firstOf(
+        OBSOLETE_RANGE_PATTERN,
+        INCLUSIVE_RANGE_PATTERN,
+        HALF_OPEN_RANGE_PATTERN,
+        b.sequence(
+            INTEGER_LITERAL,
+            RustPunctuator.DOTDOT,
+            INTEGER_LITERAL
+        ),
+        // Left-unbounded range: ..5
+        b.sequence(
+            RustPunctuator.DOTDOT,
+            INTEGER_LITERAL
+        ),
+        // Right-unbounded range: 5..
+        b.sequence(
+            INTEGER_LITERAL,
+            RustPunctuator.DOTDOT
+        )
+    ));
     b.rule(INCLUSIVE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, SPC, RustPunctuator.DOTDOTEQ, SPC, RANGE_PATTERN_BOUND));
     b.rule(HALF_OPEN_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, SPC, RustPunctuator.DOTDOT));
     b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, SPC, RustPunctuator.DOTDOTDOT, SPC, RANGE_PATTERN_BOUND));
