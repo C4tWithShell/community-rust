@@ -60,6 +60,9 @@
     </issueManagement>
 
     <properties>
+        <sonar.organization>c4twithshell</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.version>10.7.0.96327</sonar.version>
         <sonar.plugin.api.version>10.11.0.2468</sonar.plugin.api.version>
