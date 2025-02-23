@@ -1506,7 +1506,8 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(BREAK_EXPRESSION).is(RustKeyword.KW_BREAK, SPC, b.optional(LIFETIME_OR_LABEL, SPC), b.optional(EXPRESSION, SPC));
     b.rule(BOX_EXPRESSION).is(RustKeyword.KW_BOX, SPC, EXPRESSION);
     b.rule(CONTINUE_EXPRESSION).is(
-      RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL));
+      RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL),
+      b.nextNot(IDENTIFIER));
 
   }
 

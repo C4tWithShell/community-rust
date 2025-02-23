@@ -123,4 +123,39 @@ class RustLexerTest {
     
     parser.parse(sexpr);
   }
+
+  @Test
+  void testContinueProcessingCondition() {
+    String source = 
+        "fn process_event() {\n" +
+        "    let reward_fut = client.transfer_rewards(process_reward_rx);\n" +
+        "    let (_res1, _res2) = tokio::join!(process_event_fut, reward_fut);\n" +
+        "\n" +
+        "    if let Err(err) = super::state::del(\"quest\", \".\", redis_pool.clone()).await {\n" +
+        "        tracing::error!(\"fail to remove quest from queue due to {err}\");\n" +
+        "    }\n" +
+        "\n" +
+        "    tracing::info!(\"process event sleep for 15 sec\");\n" +
+        "    tokio::time::sleep(std::time::Duration::from_secs(15)).await;\n" +
+        "\n" +
+        "    let continue_processing = true;\n" +
+        "    if !continue_processing {\n" +
+        "        println!(\"Stopping processing\");\n" +
+        "    }\n" +
+        "}";
+
+    ParserAdapter parser = new ParserAdapter<>(
+        StandardCharsets.UTF_8, RustGrammar.create().build()
+    );
+
+    // Expect this to be parsed successfully or reproduce the issue
+    AstNode rootNode = parser.parse(source);
+
+    // Debug output
+    System.out.println(AstXmlPrinter.print(rootNode));
+
+    // Ensure parsing is successful
+    assertThat(rootNode).isNotNull();
+  }
+
 }
