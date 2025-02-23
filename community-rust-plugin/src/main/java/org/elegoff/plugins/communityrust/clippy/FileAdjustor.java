@@ -25,14 +25,8 @@ import java.nio.file.Path;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.sensor.SensorContext;
 
-/**
- * Adjust file paths from clippy reports into a path relative to the project.
- * The context in which the report was created and the analyzer context may possibly be different.
- */
 public class FileAdjustor {
-
   private final FileSystem fileSystem;
-
   private int relativePathOffset = 0;
 
   private FileAdjustor(FileSystem fileSystem) {
@@ -44,7 +38,6 @@ public class FileAdjustor {
   }
 
   public String relativePath(String fileName) {
-
     if (isKnown(fileName)) {
       return fileName;
     }
@@ -54,11 +47,16 @@ public class FileAdjustor {
       return fileName;
     }
 
+    // Handle absolute paths by removing the root component
     Path path = Path.of(normalizedPath);
+    if (path.isAbsolute()) {
+      path = path.getRoot().relativize(path);
+    }
+    
     int pathNameCount = path.getNameCount();
 
     if (relativePathOffset > 0) {
-      if (path.getNameCount() > relativePathOffset) {
+      if (pathNameCount > relativePathOffset) {
         path = path.subpath(relativePathOffset, pathNameCount);
         if (isKnown(path)) {
           return path.toString();
@@ -67,12 +65,20 @@ public class FileAdjustor {
       return fileName;
     }
 
-    for (int i = 1; i < pathNameCount; i++) {
+    // Try to find the correct offset by removing path components from the start
+    for (int i = 0; i < pathNameCount - 1; i++) {
       Path subpath = path.subpath(i, pathNameCount);
       if (isKnown(subpath)) {
         relativePathOffset = i;
         return subpath.toString();
       }
+    }
+
+    // Try just the file name as a last resort
+    Path lastComponent = path.getFileName();
+    if (isKnown(lastComponent)) {
+      relativePathOffset = pathNameCount - 1;
+      return lastComponent.toString();
     }
 
     return fileName;
