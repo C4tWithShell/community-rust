@@ -2056,12 +2056,15 @@ public enum RustGrammar implements GrammarRuleKey {
   }
 
   private static String exceptKeywords() {
-    StringBuilder sb = new StringBuilder("(?<!(");
     String[] values = RustKeyword.keywordValues();
+    if (values.length == 0) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder("(?<!(");
     sb.append("^").append(values[0]).append("$");
-    for (String kw : values) {
-      sb.append("|^");
-      sb.append(kw).append("$");
+    for (int i = 1; i < values.length; i++) {
+      sb.append("|^").append(values[i]).append("$");
     }
     sb.append("))");
 

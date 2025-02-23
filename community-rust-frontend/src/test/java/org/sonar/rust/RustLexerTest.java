@@ -84,7 +84,7 @@ class RustLexerTest {
     assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
     AstNode astNode = rootNode;
     // org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
-    System.out.println(AstXmlPrinter.print(astNode));
+    // System.out.println(AstXmlPrinter.print(astNode));
 
   }
 
@@ -104,7 +104,8 @@ class RustLexerTest {
     ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(
         StandardCharsets.UTF_8, RustGrammar.create().build());
     
-    parser.parse(sexpr);
+    AstNode rootNode = parser.parse(sexpr);
+    assertThat(rootNode).isNotNull();
   }
 
   @Test
@@ -121,7 +122,8 @@ class RustLexerTest {
     ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(
         StandardCharsets.UTF_8, RustGrammar.create().build());
     
-    parser.parse(sexpr);
+    AstNode rootNode = parser.parse(sexpr);
+    assertThat(rootNode).isNotNull();
   }
 
   @Test
@@ -150,10 +152,6 @@ class RustLexerTest {
 
     // Expect this to be parsed successfully or reproduce the issue
     AstNode rootNode = parser.parse(source);
-
-    // Debug output
-    System.out.println(AstXmlPrinter.print(rootNode));
-
     // Ensure parsing is successful
     assertThat(rootNode).isNotNull();
   }
