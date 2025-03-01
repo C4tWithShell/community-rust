@@ -1,6 +1,6 @@
-/**
+/*
  * Community Rust Plugin
- * Copyright (C) 2021-2024 Vladimir Shelkovnikov
+ * Copyright (C) 2021-2025 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
  * http://github.com/C4tWithShell/community-rust
  *
@@ -21,7 +21,7 @@
 package org.sonar.rust;
 
 import com.sonar.sslr.api.GenericTokenType;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.sonar.rust.api.RustKeyword;
 import org.sonar.rust.api.RustPunctuator;
 import org.sonar.rust.api.RustTokenType;
@@ -908,9 +908,14 @@ public enum RustGrammar implements GrammarRuleKey {
       PATTERN_NO_TOP_ALT, SPC,
       b.zeroOrMore(b.sequence(RustPunctuator.OR, SPC, PATTERN_NO_TOP_ALT, SPC)));
     b.rule(PATTERN_NO_TOP_ALT).is(b.firstOf(
-      RANGE_PATTERN,
-      PATTERN_WITHOUT_RANGE));
-
+        b.sequence(
+            INTEGER_LITERAL,
+            RustPunctuator.DOTDOT,
+            INTEGER_LITERAL
+        ),
+        RANGE_PATTERN,
+        PATTERN_WITHOUT_RANGE
+    ));
     b.rule(PATTERN_WITHOUT_RANGE).is(b.firstOf(
       TUPLE_STRUCT_PATTERN,
       STRUCT_PATTERN,
@@ -961,7 +966,26 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(WILDCARD_PATTERN).is(RustPunctuator.UNDERSCORE);
     b.rule(REST_PATTERN).is(RustPunctuator.DOTDOT);
 
-    b.rule(RANGE_PATTERN).is(b.firstOf(OBSOLETE_RANGE_PATTERN, INCLUSIVE_RANGE_PATTERN, HALF_OPEN_RANGE_PATTERN));
+    b.rule(RANGE_PATTERN).is(b.firstOf(
+        OBSOLETE_RANGE_PATTERN,
+        INCLUSIVE_RANGE_PATTERN,
+        HALF_OPEN_RANGE_PATTERN,
+        b.sequence(
+            INTEGER_LITERAL,
+            RustPunctuator.DOTDOT,
+            INTEGER_LITERAL
+        ),
+        // Left-unbounded range: ..5
+        b.sequence(
+            RustPunctuator.DOTDOT,
+            INTEGER_LITERAL
+        ),
+        // Right-unbounded range: 5..
+        b.sequence(
+            INTEGER_LITERAL,
+            RustPunctuator.DOTDOT
+        )
+    ));
     b.rule(INCLUSIVE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, SPC, RustPunctuator.DOTDOTEQ, SPC, RANGE_PATTERN_BOUND));
     b.rule(HALF_OPEN_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, SPC, RustPunctuator.DOTDOT));
     b.rule(OBSOLETE_RANGE_PATTERN).is(b.sequence(RANGE_PATTERN_BOUND, SPC, RustPunctuator.DOTDOTDOT, SPC, RANGE_PATTERN_BOUND));
@@ -1482,7 +1506,8 @@ public enum RustGrammar implements GrammarRuleKey {
     b.rule(BREAK_EXPRESSION).is(RustKeyword.KW_BREAK, SPC, b.optional(LIFETIME_OR_LABEL, SPC), b.optional(EXPRESSION, SPC));
     b.rule(BOX_EXPRESSION).is(RustKeyword.KW_BOX, SPC, EXPRESSION);
     b.rule(CONTINUE_EXPRESSION).is(
-      RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL));
+      RustKeyword.KW_CONTINUE, b.optional(SPC, LIFETIME_OR_LABEL),
+      b.nextNot(IDENTIFIER));
 
   }
 
@@ -1852,7 +1877,8 @@ public enum RustGrammar implements GrammarRuleKey {
       b.zeroOrMore(b.sequence(SPC, RustPunctuator.PATHSEP, SPC, SIMPLE_PATH_SEGMENT)));
     b.rule(SIMPLE_PATH_SEGMENT).is(b.firstOf(
       b.sequence(RustKeyword.KW_SUPER, b.nextNot(IDENTIFIER)),
-      RustKeyword.KW_SELF_VALUE, b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
+      b.sequence(RustKeyword.KW_SELF_VALUE, b.nextNot(b.regexp("[a-zA-Z0-9_]"))),
+      b.regexp("^crate$"), b.regexp(DOLLAR_CRATE_REGEX), IDENTIFIER));
 
     b.rule(PATH_IN_EXPRESSION).is(
       b.optional(SPC, RustPunctuator.PATHSEP, SPC),
@@ -2030,12 +2056,15 @@ public enum RustGrammar implements GrammarRuleKey {
   }
 
   private static String exceptKeywords() {
-    StringBuilder sb = new StringBuilder("(?<!(");
     String[] values = RustKeyword.keywordValues();
+    if (values.length == 0) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder("(?<!(");
     sb.append("^").append(values[0]).append("$");
-    for (String kw : values) {
-      sb.append("|^");
-      sb.append(kw).append("$");
+    for (int i = 1; i < values.length; i++) {
+      sb.append("|^").append(values[i]).append("$");
     }
     sb.append("))");
 

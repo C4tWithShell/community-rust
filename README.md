@@ -13,7 +13,7 @@ manage code quality.
 
 | SonarQube   | Community Rust plugin |
 |-------------|-----------------------|
-| 10.7        | 0.2.5                 |
+| 10.7        | 0.2.5 - 0.2.6         |
 | 10.4 - 10.6 | 0.2.3 - 0.2.4         |
 | 10.0 - 10.3 | 0.2.2                 | 
 | 9.9 LTS     | 0.2.1                 |
@@ -78,7 +78,7 @@ While I will no longer be actively maintaining the project, I am committed to en
 
 In the coming weeks, I will work on facilitating a smooth transition process for the new maintainer(s). I will provide guidance on how to proceed with the transfer of ownership and offer support wherever needed.
 
-Once again, thank you all for your incredible support and dedication to [Project Name]. It has been an honor and a privilege to serve as the project's maintainer, and I look forward to seeing it continue to grow and thrive in the future.
+Once again, thank you all for your incredible support and dedication to the SonarQube plugin for Rust. It has been an honor and a privilege to serve as the project's maintainer, and I look forward to seeing it continue to grow and thrive in the future.
 
 Best regards,
 

@@ -1,6 +1,6 @@
-/**
+/*
  * Community Rust Plugin
- * Copyright (C) 2021-2024 Vladimir Shelkovnikov
+ * Copyright (C) 2021-2025 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
  * http://github.com/C4tWithShell/community-rust
  *
@@ -22,7 +22,7 @@ package org.elegoff.plugins.communityrust.coverage.cobertura;
 
 import com.ctc.wstx.exc.WstxEOFException;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

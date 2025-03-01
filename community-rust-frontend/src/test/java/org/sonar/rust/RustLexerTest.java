@@ -1,6 +1,6 @@
-/**
+/*
  * Community Rust Plugin
- * Copyright (C) 2021-2024 Vladimir Shelkovnikov
+ * Copyright (C) 2021-2025 Vladimir Shelkovnikov
  * mailto:community-rust AT pm DOT me
  * http://github.com/C4tWithShell/community-rust
  *
@@ -84,7 +84,76 @@ class RustLexerTest {
     assertThat(rootNode.getType()).isSameAs(RustGrammar.COMPILATION_UNIT);
     AstNode astNode = rootNode;
     // org.fest.assertions.Assertions.assertThat(astNode.getNumberOfChildren()).isEqualTo(4);
-    System.out.println(AstXmlPrinter.print(astNode));
+    // System.out.println(AstXmlPrinter.print(astNode));
 
   }
+
+  @Test
+  void testSelfInsideImportTokens() {
+      testImportParsing("selfish");
+      testImportParsing("self_api");
+  }
+
+  private void testImportParsing(String filename) {
+    String sexpr = "\n" +
+        "use api::" + filename + "::MyService; \n" +
+        "       fn update_rates(){" +
+        "             todo!()\n" +
+        "             }";
+
+    ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(
+        StandardCharsets.UTF_8, RustGrammar.create().build());
+    
+    AstNode rootNode = parser.parse(sexpr);
+    assertThat(rootNode).isNotNull();
+  }
+
+  @Test
+  void testNumRange() {
+    String sexpr = "\n" +
+        "fn get_referral_tier(referrals_count: i64) -> Result<i64, CustomError> {\n" +
+        "       match referrals_count {\n" +
+        "             ..0 => Ok(0),\n" +
+        "             1 => Ok(1),\n" +
+        "             2..5 => Ok(2)\n" +
+        "             5.. => Ok(3)\n" +
+        "       }\n" +
+        "}";
+    ParserAdapter<LexerlessGrammar> parser = new ParserAdapter<>(
+        StandardCharsets.UTF_8, RustGrammar.create().build());
+    
+    AstNode rootNode = parser.parse(sexpr);
+    assertThat(rootNode).isNotNull();
+  }
+
+  @Test
+  void testContinueProcessingCondition() {
+    String source = 
+        "fn process_event() {\n" +
+        "    let reward_fut = client.transfer_rewards(process_reward_rx);\n" +
+        "    let (_res1, _res2) = tokio::join!(process_event_fut, reward_fut);\n" +
+        "\n" +
+        "    if let Err(err) = super::state::del(\"quest\", \".\", redis_pool.clone()).await {\n" +
+        "        tracing::error!(\"fail to remove quest from queue due to {err}\");\n" +
+        "    }\n" +
+        "\n" +
+        "    tracing::info!(\"process event sleep for 15 sec\");\n" +
+        "    tokio::time::sleep(std::time::Duration::from_secs(15)).await;\n" +
+        "\n" +
+        "    let continue_processing = true;\n" +
+        "    if !continue_processing {\n" +
+        "        println!(\"Stopping processing\");\n" +
+        "    }\n" +
+        "}";
+
+    ParserAdapter parser = new ParserAdapter<>(
+        StandardCharsets.UTF_8, RustGrammar.create().build()
+    );
+
+    // Expect this to be parsed successfully or reproduce the issue
+    AstNode rootNode = parser.parse(source);
+    // Ensure parsing is successful
+    assertThat(rootNode).isNotNull();
+  }
+
 }

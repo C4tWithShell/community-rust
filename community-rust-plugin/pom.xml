@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.elegoff</groupId>
         <artifactId>community-rust</artifactId>
-        <version>0.2.5</version>
+        <version>0.2.6</version>
     </parent>
     <artifactId>community-rust-plugin</artifactId>
     <packaging>sonar-plugin</packaging>
@@ -16,7 +16,7 @@
 
     <name>Rust language analyzer</name>
     <description>Plugin analyzing rust file and importing Clippy reports</description>
-    <url>https://github.com/elegoff/sonar-rust</url>
+    <url>https://github.com/C4tWithShell/community-rust</url>
 
     <dependencies>
             <dependency>
