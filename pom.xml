@@ -88,7 +88,7 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectVersion>${project.version}</sonar.projectVersion>
         <commons.io.version>2.18.0</commons.io.version>
-        <commons.lang.version>3.17.0</commons.lang.version>
+        <commons.lang.version>3.20.0</commons.lang.version>
         <junit.version>5.11.4</junit.version>
         <sonar-analyzer-commons.version>2.16.0.3141</sonar-analyzer-commons.version>
         <sonar.orchestrator.version>5.2.0.2403</sonar.orchestrator.version>
