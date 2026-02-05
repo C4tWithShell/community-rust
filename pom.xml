@@ -79,7 +79,7 @@
         <sslr.version>1.24.0.633</sslr.version>
         <sslr-squid-bridge.version>2.7.1.392</sslr-squid-bridge.version>
         <mockito.version>5.15.2</mockito.version>
-        <assertj-core.version>3.27.3</assertj-core.version>
+        <assertj-core.version>3.27.7</assertj-core.version>
         <jacoco.version>0.8.12</jacoco.version>
         <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
         <sonar.projectKey>community-rust</sonar.projectKey>
